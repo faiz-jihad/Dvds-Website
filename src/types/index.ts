@@ -137,9 +137,12 @@ export interface Promotion {
   is_active: boolean;
   starts_at?: string;
   ends_at?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface FinancialStats {
+  settingsConfigured: boolean;
   totalRevenue: number;
   todayRevenue: number;
   totalOrders: number;
@@ -205,6 +208,10 @@ export interface StoreSettings {
 
   // Store Operations & Warehouse
   store_name: string;
+  registered_company_name: string;
+  company_number: string;
+  registered_office_address: string;
+  companies_house_url: string;
   warehouse_location: string;
   support_email: string;
   support_phone: string;

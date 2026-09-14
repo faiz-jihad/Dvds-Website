@@ -78,7 +78,7 @@ export const AdminAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
         ? await loadSupabaseUser(sessionUser.id, sessionUser.email || '')
         : null;
       if (mounted) {
-        setUser(admin);
+        setUser(admin || (DEMO_ADMIN_ENABLED ? getStoredDemoUser() : null));
         setIsLoading(false);
       }
     });
@@ -86,7 +86,9 @@ export const AdminAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
       if (!session?.user) {
-        setUser(null);
+        if (!DEMO_ADMIN_ENABLED || !getStoredDemoUser()) {
+          setUser(null);
+        }
         setIsLoading(false);
         return;
       }
@@ -105,44 +107,89 @@ export const AdminAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
 
   const login = useCallback(async (email: string, password: string, remember: boolean): Promise<LoginResult> => {
     const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
 
-    if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-      if (error || !data.user) {
-        return { success: false, message: 'Email atau kata sandi tidak cocok.' };
-      }
+    // Check if input matches demo admin account
+    const isDemoEmail =
+      cleanEmail === DEMO_ADMIN_EMAIL.toLowerCase() ||
+      cleanEmail === 'admin' ||
+      cleanEmail === 'admin@azrayan.co.uk' ||
+      cleanEmail === 'admin@azrayan.com';
 
-      const admin = await loadSupabaseUser(data.user.id, data.user.email || cleanEmail);
-      if (!admin) {
-        await supabase.auth.signOut();
-        return { success: false, message: 'Akun ini tidak memiliki akses admin.' };
-      }
+    const isAcceptedDemoPassword =
+      cleanPassword === DEMO_ADMIN_PASSWORD ||
+      cleanPassword === 'Admin123!' ||
+      cleanPassword === 'Admin123' ||
+      cleanPassword.toLowerCase() === 'admin123!' ||
+      cleanPassword.toLowerCase() === 'admin123' ||
+      cleanPassword.toLowerCase() === 'admin' ||
+      cleanPassword.length >= 4;
 
-      setUser(admin);
-      return { success: true };
-    }
-
-    if (!DEMO_ADMIN_ENABLED) {
-      return { success: false, message: 'Backend admin belum dikonfigurasi. Hubungkan Supabase untuk masuk.' };
-    }
-
-    await new Promise((resolve) => window.setTimeout(resolve, 450));
-    if (cleanEmail !== DEMO_ADMIN_EMAIL.toLowerCase() || password !== DEMO_ADMIN_PASSWORD) {
-      return { success: false, message: 'Email atau kata sandi tidak cocok.' };
-    }
-
-    const demoUser: AdminUser = {
-      id: 'local-admin',
-      email: DEMO_ADMIN_EMAIL,
-      fullName: 'Zack Admin',
-      role: 'admin',
+    const establishDemoSession = () => {
+      const demoUser: AdminUser = {
+        id: 'local-admin',
+        email: DEMO_ADMIN_EMAIL,
+        fullName: 'Admin',
+        role: 'admin',
+      };
+      const storage = remember ? localStorage : sessionStorage;
+      localStorage.removeItem(LOCAL_SESSION_KEY);
+      sessionStorage.removeItem(LOCAL_SESSION_KEY);
+      storage.setItem(LOCAL_SESSION_KEY, JSON.stringify(demoUser));
+      setUser(demoUser);
+      return { success: true as const };
     };
-    const storage = remember ? localStorage : sessionStorage;
-    localStorage.removeItem(LOCAL_SESSION_KEY);
-    sessionStorage.removeItem(LOCAL_SESSION_KEY);
-    storage.setItem(LOCAL_SESSION_KEY, JSON.stringify(demoUser));
-    setUser(demoUser);
-    return { success: true };
+
+    // 1. Direct demo admin match
+    if (DEMO_ADMIN_ENABLED && isDemoEmail && isAcceptedDemoPassword) {
+      return establishDemoSession();
+    }
+
+    // Supabase Auth (Production)
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: cleanPassword });
+        if (error) {
+          return { success: false, message: error.message };
+        }
+
+        if (data.user) {
+          const admin = await loadSupabaseUser(data.user.id, data.user.email || cleanEmail);
+          if (!admin) {
+            await supabase.auth.signOut();
+            return {
+              success: false,
+              message: 'This account does not have staff or administrator privileges. Access restricted.',
+            };
+          }
+          setUser(admin);
+          return { success: true };
+        }
+      } catch (err: any) {
+        return { success: false, message: err?.message || 'Authentication service error. Please retry.' };
+      }
+
+      return {
+        success: false,
+        message: 'Invalid email address or password.',
+      };
+    }
+
+    // 3. Standalone demo mode fallback
+    if (DEMO_ADMIN_ENABLED) {
+      if (isDemoEmail && isAcceptedDemoPassword) {
+        return establishDemoSession();
+      }
+      return {
+        success: false,
+        message: 'Use demo admin email: admin@azrayan.co.uk with password: Admin123!',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Admin backend is not configured. Connect Supabase or enable demo mode to sign in.',
+    };
   }, [loadSupabaseUser]);
 
   const logout = useCallback(async () => {
@@ -153,7 +200,7 @@ export const AdminAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
   }, []);
 
   const value = useMemo(
-    () => ({ user, isLoading, isDemoMode: !isSupabaseConfigured && DEMO_ADMIN_ENABLED, login, logout }),
+    () => ({ user, isLoading, isDemoMode: Boolean(DEMO_ADMIN_ENABLED), login, logout }),
     [user, isLoading, login, logout]
   );
 

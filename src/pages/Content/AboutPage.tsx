@@ -1,25 +1,50 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Disc, Shield, Film, Award } from 'lucide-react';
 import { Button } from '../../components/common/Button';
+import { StoreDataState } from '../../components/common/StoreDataState';
+import { publicApi } from '../../lib/publicApi';
 
 export const AboutPage: React.FC = () => {
+  const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: publicApi.getStoreSettings });
+
+  if (settingsQuery.isLoading || settingsQuery.error || !settingsQuery.data) {
+    return <StoreDataState loading={settingsQuery.isLoading} error={settingsQuery.error || (!settingsQuery.data ? new Error('Company information is unavailable.') : null)} retry={() => settingsQuery.refetch()} />;
+  }
+
+  const settings = settingsQuery.data;
+
   return (
-    <div className="bg-white min-h-screen py-16">
-      <div className="max-w-3xl mx-auto px-6 space-y-12">
+    <div className="bg-white min-h-screen py-8 sm:py-16">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-12">
         <div className="space-y-4 text-center">
-          <div className="w-14 h-14 rounded-full bg-brand-blue-soft text-brand-blue flex items-center justify-center mx-auto">
-            <Disc className="w-8 h-8 stroke-[1.75]" />
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-brand-blue-soft text-brand-blue flex items-center justify-center mx-auto">
+            <Disc className="w-6 h-6 sm:w-8 sm:h-8 stroke-[1.75]" />
           </div>
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
-            ESTABLISHED IN LONDON, UK
+            REGISTERED IN ENGLAND AND WALES
           </span>
-          <h1 className="font-display font-extrabold text-4xl sm:text-5xl text-dark tracking-tight">
+          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-dark tracking-tight">
             Films Worth Owning.
           </h1>
           <p className="text-base text-gray-600 leading-relaxed font-light max-w-xl mx-auto">
-            AZ Rayan DVDs was founded with a singular conviction: physical media represents the purest, most permanent bond between the filmmaker and the audience.
+            {settings.store_name} is operated by {settings.registered_company_name}, company number {settings.company_number}. We believe physical media creates a lasting connection between filmmakers and audiences.
           </p>
+        </div>
+
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600 leading-relaxed">
+          <h2 className="font-display font-bold text-base text-dark mb-2">Registered company information</h2>
+          <p>{settings.registered_company_name} · Company no. {settings.company_number}</p>
+          <p>Registered office: {settings.registered_office_address}</p>
+          <a
+            href={settings.companies_house_url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-block font-semibold text-brand-blue hover:underline"
+          >
+            View the official Companies House record
+          </a>
         </div>
 
         <div className="border-t border-b border-gray-100 py-10 space-y-8 text-gray-700 text-sm leading-relaxed">
@@ -36,15 +61,15 @@ export const AboutPage: React.FC = () => {
           <div className="space-y-3">
             <h2 className="font-display font-bold text-xl text-dark">Uncompressed Cinema Audio & Special Features</h2>
             <p>
-              Every edition at AZ Rayan DVDs is curated for its physical presentation: original aspect ratios, director commentaries, retrospective documentaries, and tangible sleeve artwork.
+              Each listing records the physical format, region, soundtrack, subtitles and edition details that have been verified for that specific item.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4">
             <div className="p-4 bg-gray-50 rounded-md border border-gray-200">
               <Film className="w-5 h-5 text-brand-blue mb-2" />
-              <h4 className="font-bold text-xs text-dark mb-1">Authentic UK PAL</h4>
-              <p className="text-xs text-gray-500">Region 2 UK certified releases with BBFC age ratings.</p>
+              <h4 className="font-bold text-xs text-dark mb-1">Clear Disc Specifications</h4>
+              <p className="text-xs text-gray-500">Region, language and classification are shown per verified listing.</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-md border border-gray-200">
               <Shield className="w-5 h-5 text-brand-blue mb-2" />

@@ -10,14 +10,19 @@ import { MobileNavDrawer } from './MobileNavDrawer';
 import { ToastContainer } from '../common/Toast';
 import { publicApi } from '../../lib/publicApi';
 import { useCartStore } from '../../stores/useCartStore';
+import { StoreDataState } from '../common/StoreDataState';
 
 export const RootLayout: React.FC = () => {
   const { pathname } = useLocation();
   const setOperationalPricing = useCartStore((state) => state.setOperationalPricing);
   const syncCatalogue = useCartStore((state) => state.syncCatalogue);
-  const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: publicApi.getStoreSettings, staleTime: 60_000 });
-  const promotionsQuery = useQuery({ queryKey: ['active-promotions'], queryFn: publicApi.getActivePromotions, staleTime: 30_000 });
-  const productsQuery = useQuery({ queryKey: ['store', 'products'], queryFn: publicApi.getProducts, staleTime: 30_000 });
+  const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: publicApi.getStoreSettings, staleTime: 30_000, refetchInterval: 60_000 });
+  const promotionsQuery = useQuery({ queryKey: ['active-promotions'], queryFn: publicApi.getActivePromotions, staleTime: 15_000, refetchInterval: 30_000 });
+  const productsQuery = useQuery({ queryKey: ['store', 'products'], queryFn: publicApi.getProducts, staleTime: 15_000, refetchInterval: 30_000 });
+  const categoriesQuery = useQuery({ queryKey: ['store', 'categories'], queryFn: publicApi.getCategories, staleTime: 30_000, refetchInterval: 60_000 });
+  const genresQuery = useQuery({ queryKey: ['store', 'genres'], queryFn: publicApi.getGenres, staleTime: 30_000, refetchInterval: 60_000 });
+  const operationalLoading = settingsQuery.isLoading || promotionsQuery.isLoading || productsQuery.isLoading || categoriesQuery.isLoading || genresQuery.isLoading;
+  const operationalError = settingsQuery.error || promotionsQuery.error || productsQuery.error || categoriesQuery.error || genresQuery.error;
 
   useEffect(() => {
     if (settingsQuery.data && !promotionsQuery.isLoading) {
@@ -48,7 +53,21 @@ export const RootLayout: React.FC = () => {
 
       {/* Primary Page Content */}
       <main className="flex-1">
-        <Outlet />
+        {operationalLoading || operationalError ? (
+          <StoreDataState
+            loading={operationalLoading}
+            error={operationalError || null}
+            retry={() => {
+              settingsQuery.refetch();
+              promotionsQuery.refetch();
+              productsQuery.refetch();
+              categoriesQuery.refetch();
+              genresQuery.refetch();
+            }}
+          />
+        ) : (
+          <Outlet />
+        )}
       </main>
 
       {/* Clean European UK Footer */}

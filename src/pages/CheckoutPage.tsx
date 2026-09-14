@@ -12,7 +12,7 @@ import { StoreDataState } from '../components/common/StoreDataState';
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
-  const { items, getSubtotal, getDiscountAmount, appliedPromoCode } = useCartStore();
+  const { items, getSubtotal, getDiscountAmount, appliedPromoCode, clearCart } = useCartStore();
   const addToast = useUiStore((state) => state.addToast);
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: () => publicApi.getStoreSettings() });
 
@@ -74,7 +74,13 @@ export const CheckoutPage: React.FC = () => {
           address_line_2: addressLine2, city, county, postcode: postcode.toUpperCase(), country: 'United Kingdom',
         },
       });
-      window.location.assign(session.url);
+
+      if (session.url.startsWith('http://') || session.url.startsWith('https://')) {
+        window.location.assign(session.url);
+      } else {
+        clearCart();
+        navigate(session.url);
+      }
     } catch (checkoutError) {
       addToast(checkoutError instanceof Error ? checkoutError.message : 'Payment failed. Please retry.', 'error');
     } finally {
@@ -96,8 +102,8 @@ export const CheckoutPage: React.FC = () => {
             <span>Return to Basket</span>
           </Link>
           <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
-            <Lock className="w-3.5 h-3.5 text-emerald-600" />
-            <span>256-Bit Encrypted UK Checkout</span>
+            <Lock className="w-3.5 h-3.5 text-gray-500" />
+            <span>Secure UK Checkout</span>
           </div>
         </div>
 

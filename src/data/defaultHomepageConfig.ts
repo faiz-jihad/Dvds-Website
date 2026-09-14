@@ -201,7 +201,7 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
       id: 'section-editorial',
       type: 'editorial',
       enabled: true,
-      sortOrder: 4,
+      sortOrder: 5,
       data: {
         eyebrow: 'ESSAYS & CULTURE',
         title: 'The Art of Physical Cinema',
@@ -236,7 +236,7 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
       id: 'section-spotlight',
       type: 'spotlight',
       enabled: true,
-      sortOrder: 5,
+      sortOrder: 6,
       data: {
         eyebrow: 'COLLECTOR SPOTLIGHT',
         title: 'Boutique-Worthy Nights at Home.',
@@ -257,7 +257,7 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
       id: 'section-campaign',
       type: 'campaign',
       enabled: true,
-      sortOrder: 6,
+      sortOrder: 7,
       data: {
         badgeText: 'LIMITED RUN DROP',
         title: 'Spring Archive Clearance & Special Offers',
@@ -278,7 +278,7 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
       id: 'section-newsletter',
       type: 'newsletter',
       enabled: true,
-      sortOrder: 7,
+      sortOrder: 8,
       data: {
         eyebrow: 'VIP DISPATCH LIST',
         title: 'Keep the collection growing.',

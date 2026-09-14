@@ -57,6 +57,21 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      {!stats.settingsConfigured && (
+        <div className="flex flex-col gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div>
+              <p className="text-sm font-bold text-amber-950">Store settings not yet configured</p>
+              <p className="mt-1 text-xs text-amber-800">Sales and order metrics remain active. Configure delivery fees, low stock limits, and store identity to complete operational statistics.</p>
+            </div>
+          </div>
+          <Link to="/admin/settings" className="shrink-0">
+            <Button variant="secondary" size="sm">Configure now</Button>
+          </Link>
+        </div>
+      )}
+
       {/* 4 Key Financial & Operational Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Revenue */}

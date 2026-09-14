@@ -48,6 +48,7 @@ import { Modal } from '../../components/common/Modal';
 import { MediaPickerModal } from '../../components/admin/MediaPickerModal';
 import { HomepageSectionRenderer } from '../../components/homepage/HomepageSectionRenderer';
 import { useUiStore } from '../../stores/useUiStore';
+import { AdminDataState } from '../../components/admin/AdminDataState';
 
 export const AdminHomepage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -101,12 +102,18 @@ export const AdminHomepage: React.FC = () => {
     }
   }, [draftQuery.data]);
 
-  if (draftQuery.isLoading || !config) {
-    return (
-      <div className="p-8 text-center text-gray-500 font-mono text-xs">
-        Loading Homepage Builder & CMS...
-      </div>
-    );
+  const loading = draftQuery.isLoading || productsQuery.isLoading || categoriesQuery.isLoading;
+  const error = draftQuery.error || productsQuery.error || categoriesQuery.error;
+  if (loading || error || !config) {
+    return <AdminDataState
+      loading={loading}
+      error={error || (!config && !loading ? new Error('Homepage configuration could not be initialized.') : null)}
+      onRetry={() => {
+        draftQuery.refetch();
+        productsQuery.refetch();
+        categoriesQuery.refetch();
+      }}
+    />;
   }
 
   const products = productsQuery.data || [];

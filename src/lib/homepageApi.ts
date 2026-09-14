@@ -2,13 +2,19 @@ import { isSupabaseConfigured, supabase } from './supabase';
 import { HomepageConfig, MediaAsset } from '../types/homepage';
 import { DEFAULT_HOMEPAGE_CONFIG, PRESET_MEDIA_LIBRARY } from '../data/defaultHomepageConfig';
 
+const STORAGE_KEY_MEDIA = 'az_rayan_homepage_media_v1';
+
+function client() {
+  if (!isSupabaseConfigured || !supabase) return null;
+  return supabase;
+}
+
 const STORAGE_KEY_PUBLISHED = 'az_rayan_homepage_published_v1';
 const STORAGE_KEY_DRAFT = 'az_rayan_homepage_draft_v1';
-const STORAGE_KEY_MEDIA = 'az_rayan_homepage_media_v1';
 
 function getLocalItem<T>(key: string, fallback: T): T {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
     if (!raw) return fallback;
     return JSON.parse(raw) as T;
   } catch {
@@ -18,7 +24,9 @@ function getLocalItem<T>(key: string, fallback: T): T {
 
 function setLocalItem<T>(key: string, value: T): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
   } catch (err) {
     console.warn('[homepageApi] Failed to write localStorage:', err);
   }
@@ -26,26 +34,30 @@ function setLocalItem<T>(key: string, value: T): void {
 
 export const homepageApi = {
   /**
-   * Fetches published homepage configuration for public storefront
+   * Fetches published homepage configuration for public storefront.
+   * Resilient fallback: Always returns DEFAULT_HOMEPAGE_CONFIG if database is unseeded.
    */
   async getHomepageConfig(): Promise<HomepageConfig> {
     try {
-      if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase
+      const sb = client();
+      if (sb) {
+        const { data, error } = await sb
           .from('homepage_config')
           .select('config_data')
           .eq('id', 'published')
           .maybeSingle();
-
         if (!error && data?.config_data) {
           return data.config_data as HomepageConfig;
         }
       }
     } catch (err) {
-      console.warn('[homepageApi] Supabase fetch failed, checking local cache:', err);
+      console.warn('[homepageApi] Live homepage configuration query warning:', err);
     }
 
-    return getLocalItem<HomepageConfig>(STORAGE_KEY_PUBLISHED, DEFAULT_HOMEPAGE_CONFIG);
+    const localPublished = getLocalItem<HomepageConfig | null>(STORAGE_KEY_PUBLISHED, null);
+    if (localPublished) return localPublished;
+
+    return DEFAULT_HOMEPAGE_CONFIG;
   },
 
   /**
@@ -53,27 +65,35 @@ export const homepageApi = {
    */
   async getDraftHomepageConfig(): Promise<HomepageConfig> {
     try {
-      if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase
+      const sb = client();
+      if (sb) {
+        const { data, error } = await sb
           .from('homepage_config')
           .select('config_data')
           .eq('id', 'draft')
           .maybeSingle();
+        if (!error && data?.config_data) return data.config_data as HomepageConfig;
 
-        if (!error && data?.config_data) {
-          return data.config_data as HomepageConfig;
+        const { data: published, error: publishedError } = await sb
+          .from('homepage_config')
+          .select('config_data')
+          .eq('id', 'published')
+          .maybeSingle();
+        if (!publishedError && published?.config_data) {
+          return { ...(published.config_data as HomepageConfig), status: 'draft' };
         }
       }
     } catch (err) {
-      console.warn('[homepageApi] Supabase draft fetch failed:', err);
+      console.warn('[homepageApi] Draft homepage configuration query warning:', err);
     }
 
     const localDraft = getLocalItem<HomepageConfig | null>(STORAGE_KEY_DRAFT, null);
     if (localDraft) return localDraft;
 
-    // If no draft exists, fork published or default
-    const published = await this.getHomepageConfig();
-    return { ...published, status: 'draft' };
+    const localPublished = getLocalItem<HomepageConfig | null>(STORAGE_KEY_PUBLISHED, null);
+    if (localPublished) return { ...localPublished, status: 'draft' };
+
+    return { ...DEFAULT_HOMEPAGE_CONFIG, status: 'draft' };
   },
 
   /**
@@ -89,15 +109,19 @@ export const homepageApi = {
     setLocalItem(STORAGE_KEY_DRAFT, draftConfig);
 
     try {
-      if (isSupabaseConfigured && supabase) {
-        await supabase.from('homepage_config').upsert({
+      const sb = client();
+      if (sb) {
+        const { error } = await sb.from('homepage_config').upsert({
           id: 'draft',
           config_data: draftConfig,
           updated_at: new Date().toISOString(),
         });
+        if (error) {
+          console.warn('[homepageApi] Could not save draft to Supabase, persisted locally:', error.message);
+        }
       }
     } catch (err) {
-      console.warn('[homepageApi] Supabase draft save failed:', err);
+      console.warn('[homepageApi] Supabase draft upsert error:', err);
     }
 
     return draftConfig;
@@ -117,8 +141,9 @@ export const homepageApi = {
     setLocalItem(STORAGE_KEY_DRAFT, publishedConfig);
 
     try {
-      if (isSupabaseConfigured && supabase) {
-        await supabase.from('homepage_config').upsert([
+      const sb = client();
+      if (sb) {
+        const { error } = await sb.from('homepage_config').upsert([
           {
             id: 'published',
             config_data: publishedConfig,
@@ -130,9 +155,12 @@ export const homepageApi = {
             updated_at: new Date().toISOString(),
           },
         ]);
+        if (error) {
+          console.warn('[homepageApi] Could not publish to Supabase, persisted locally:', error.message);
+        }
       }
     } catch (err) {
-      console.warn('[homepageApi] Supabase publish failed:', err);
+      console.warn('[homepageApi] Supabase publish error:', err);
     }
 
     return publishedConfig;
@@ -149,6 +177,18 @@ export const homepageApi = {
       updatedAt: new Date().toISOString(),
     };
     setLocalItem(STORAGE_KEY_DRAFT, reverted);
+    try {
+      const sb = client();
+      if (sb) {
+        await sb.from('homepage_config').upsert({
+          id: 'draft',
+          config_data: reverted,
+          updated_at: reverted.updatedAt,
+        });
+      }
+    } catch (err) {
+      console.warn('[homepageApi] Supabase draft revert error:', err);
+    }
     return reverted;
   },
 

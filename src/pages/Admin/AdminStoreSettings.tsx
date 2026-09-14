@@ -49,7 +49,9 @@ export const AdminStoreSettings: React.FC = () => {
       settings.hero_badge_text, settings.hero_headline_line1, settings.hero_headline_highlight,
       settings.hero_subheadline, settings.hero_cta_primary, settings.hero_cta_secondary, settings.hero_bg_image,
       settings.director_badge, settings.director_name, settings.director_quote, settings.director_bio,
-      settings.store_name, settings.warehouse_location, settings.support_email,
+      settings.store_name, settings.registered_company_name, settings.company_number,
+      settings.registered_office_address, settings.companies_house_url,
+      settings.warehouse_location, settings.support_email,
       settings.support_phone, settings.dispatch_cutoff_time, settings.standard_shipping_name,
       settings.standard_shipping_eta, settings.express_shipping_name, settings.express_shipping_eta,
     ];
@@ -124,6 +126,10 @@ export const AdminStoreSettings: React.FC = () => {
       vip_promo_discount: 0,
       vip_min_spend: 0,
       store_name: '',
+      registered_company_name: 'AZ Rayan Ltd',
+      company_number: '13894195',
+      registered_office_address: 'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
+      companies_house_url: 'https://find-and-update.company-information.service.gov.uk/company/13894195',
       warehouse_location: '',
       support_email: '',
       support_phone: '',
@@ -608,14 +614,47 @@ export const AdminStoreSettings: React.FC = () => {
                 label="Registered Company / Store Name"
                 value={settings.store_name}
                 onChange={(e) => handleChange('store_name', e.target.value)}
-                placeholder="AZ Rayan DVDs Ltd"
+                placeholder="AZ Rayan DVDs"
               />
 
               <Input
-                label="Warehouse Location"
+                label="Registered Legal Entity"
+                value={settings.registered_company_name}
+                onChange={(e) => handleChange('registered_company_name', e.target.value)}
+                placeholder="AZ Rayan Ltd"
+              />
+
+              <Input
+                label="Companies House Number"
+                value={settings.company_number}
+                onChange={(e) => handleChange('company_number', e.target.value)}
+                placeholder="13894195"
+              />
+
+              <div className="sm:col-span-3">
+                <Input
+                  label="Registered Office Address"
+                  value={settings.registered_office_address}
+                  onChange={(e) => handleChange('registered_office_address', e.target.value)}
+                  placeholder="Official Companies House registered office"
+                />
+              </div>
+
+              <div className="sm:col-span-3">
+                <Input
+                  label="Companies House Public Record URL"
+                  type="url"
+                  value={settings.companies_house_url}
+                  onChange={(e) => handleChange('companies_house_url', e.target.value)}
+                  placeholder="https://find-and-update.company-information.service.gov.uk/company/..."
+                />
+              </div>
+
+              <Input
+                label="Store / Warehouse Location"
                 value={settings.warehouse_location}
                 onChange={(e) => handleChange('warehouse_location', e.target.value)}
-                placeholder="London, United Kingdom"
+                placeholder="Operational dispatch location"
               />
 
               <Input

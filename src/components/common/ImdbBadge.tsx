@@ -23,6 +23,7 @@ export const ImdbBadge: React.FC<ImdbBadgeProps> = ({
   className,
 }) => {
   const data = getImdbData(product);
+  if (!data) return null;
   const ratingStr = data.rating.toFixed(1);
   const imdbUrl = getImdbUrl(product);
 

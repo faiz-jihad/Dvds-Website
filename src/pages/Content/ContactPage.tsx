@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { useUiStore } from '../../stores/useUiStore';
@@ -35,21 +35,21 @@ export const ContactPage: React.FC = () => {
   const settings = settingsQuery.data;
 
   return (
-    <div className="bg-white min-h-screen py-16">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="text-center mb-12">
+    <div className="bg-white min-h-screen py-8 sm:py-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-8 sm:mb-12">
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
             CUSTOMER ASSISTANCE
           </span>
-          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-dark tracking-tight mt-1 mb-3">
+          <h1 className="font-display font-extrabold text-2xl sm:text-4xl md:text-5xl text-dark tracking-tight mt-1 mb-3">
             Contact AZ Rayan DVDs
           </h1>
-          <p className="text-sm text-gray-600 max-w-md mx-auto">
+          <p className="text-xs sm:text-sm text-gray-600 max-w-md mx-auto">
             Have an enquiry regarding editions, order dispatch, or bulk collector orders? Our UK team is at your service.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
           {/* Direct Details */}
           <div className="md:col-span-5 space-y-6">
             <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 space-y-4 text-xs">
@@ -61,6 +61,26 @@ export const ContactPage: React.FC = () => {
                     {settings.store_name}<br />
                     {settings.warehouse_location}
                   </span>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <Building2 className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-dark block font-semibold mb-0.5">Registered Office</strong>
+                  <span className="text-gray-600 leading-relaxed">
+                    {settings.registered_company_name}<br />
+                    Company no. {settings.company_number}<br />
+                    {settings.registered_office_address}
+                  </span>
+                  <a
+                    href={settings.companies_house_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 block text-brand-blue hover:underline"
+                  >
+                    Companies House record
+                  </a>
                 </div>
               </div>
 

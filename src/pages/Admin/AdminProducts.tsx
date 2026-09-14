@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Edit2, Trash2, Check, X, Film, Eye, Filter } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Check, X, Film, Eye, Filter, AlertTriangle } from 'lucide-react';
 import { adminApi } from '../../lib/adminApi';
 import { Product, DvdFormat, AgeRating, ProductStatus } from '../../types';
 import { formatGBP, formatDateUK } from '../../lib/formatters';
@@ -30,6 +30,8 @@ export const AdminProducts: React.FC = () => {
   // Modal State for Create / Edit
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isDeletingProd, setIsDeletingProd] = useState(false);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -133,7 +135,8 @@ export const AdminProducts: React.FC = () => {
       || !Number.isFinite(parsedPrice) || parsedPrice < 0
       || !Number.isInteger(parsedStock) || parsedStock < 0
       || !Number.isInteger(parsedYear) || parsedYear < 1888
-      || !Number.isInteger(parsedRuntime) || parsedRuntime < 1) {
+      || !Number.isInteger(parsedRuntime) || parsedRuntime < 1
+      || (parsedImdb != null && (!Number.isFinite(parsedImdb) || parsedImdb < 0 || parsedImdb > 10))) {
       addToast('Complete all required product, price, stock, release, language, and media fields with valid values.', 'error');
       return;
     }
@@ -218,15 +221,37 @@ export const AdminProducts: React.FC = () => {
     }
   };
 
-  const handleDeleteProduct = async (id: string, productTitle: string) => {
-    if (confirm(`Archive "${productTitle}"? It will be removed from the public catalogue but retained for audit history.`)) {
-      try {
-        await adminApi.archiveProduct(id);
-        await queryClient.invalidateQueries({ queryKey: ['admin'] });
-        addToast(`Archived "${productTitle}"`, 'info');
-      } catch (archiveError) {
-        addToast(archiveError instanceof Error ? archiveError.message : 'Product could not be archived', 'error');
-      }
+  const handleDeleteProduct = (product: Product) => {
+    setProductToDelete(product);
+  };
+
+  const confirmArchiveProduct = async () => {
+    if (!productToDelete) return;
+    setIsDeletingProd(true);
+    try {
+      await adminApi.archiveProduct(productToDelete.id);
+      await queryClient.invalidateQueries({ queryKey: ['admin'] });
+      addToast(`Archived "${productToDelete.title}"`, 'info');
+      setProductToDelete(null);
+    } catch (archiveError) {
+      addToast(archiveError instanceof Error ? archiveError.message : 'Product could not be archived', 'error');
+    } finally {
+      setIsDeletingProd(false);
+    }
+  };
+
+  const confirmPermanentDeleteProduct = async () => {
+    if (!productToDelete) return;
+    setIsDeletingProd(true);
+    try {
+      await adminApi.deleteProduct(productToDelete.id);
+      await queryClient.invalidateQueries({ queryKey: ['admin'] });
+      addToast(`Permanently deleted "${productToDelete.title}"`, 'success');
+      setProductToDelete(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Product could not be deleted', 'error');
+    } finally {
+      setIsDeletingProd(false);
     }
   };
 
@@ -365,9 +390,9 @@ export const AdminProducts: React.FC = () => {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteProduct(p.id, p.title)}
+                      onClick={() => handleDeleteProduct(p)}
                       className="p-1.5 text-gray-500 hover:text-brand-red hover:bg-gray-100 rounded transition-colors"
-                      title="Archive Product"
+                      title="Remove / Archive Product"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -516,7 +541,7 @@ export const AdminProducts: React.FC = () => {
               max="10"
               value={imdbRating}
               onChange={(e) => setImdbRating(e.target.value)}
-              placeholder="e.g. 8.7 (Auto-detected if blank)"
+              placeholder="e.g. 8.7 (hidden if blank)"
             />
           </div>
 
@@ -653,6 +678,52 @@ export const AdminProducts: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal: Delete or Archive Product */}
+      <Modal
+        isOpen={Boolean(productToDelete)}
+        onClose={() => setProductToDelete(null)}
+        title="Manage Title Removal"
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 rounded-lg bg-amber-50 p-3 text-amber-800">
+            <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+            <div className="text-xs">
+              <p className="font-semibold">Manage removal for &ldquo;{productToDelete?.title}&rdquo;</p>
+              <p className="mt-1 text-amber-700 font-mono">SKU: {productToDelete?.sku}</p>
+              <p className="mt-2 text-gray-600">
+                You can either <strong>Archive</strong> (hides from customer storefront while preserving sales and audit history) or <strong>Delete Permanently</strong>.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={confirmArchiveProduct}
+              isLoading={isDeletingProd}
+            >
+              Archive Title (Recommended)
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmPermanentDeleteProduct}
+              isLoading={isDeletingProd}
+              className="bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
+            >
+              Delete Permanently
+            </Button>
+            <button
+              type="button"
+              onClick={() => setProductToDelete(null)}
+              className="mt-1 text-xs text-gray-400 hover:text-gray-600 text-center"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

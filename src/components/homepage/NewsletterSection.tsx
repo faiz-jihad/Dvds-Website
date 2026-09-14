@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Check, Sparkles } from 'lucide-react';
+import { Mail, Check, ShieldCheck, ArrowRight } from 'lucide-react';
 import { NewsletterSectionConfig } from '../../types/homepage';
 import { publicApi } from '../../lib/publicApi';
 import { useUiStore } from '../../stores/useUiStore';
@@ -10,23 +10,19 @@ interface NewsletterSectionProps {
 
 export const NewsletterSection: React.FC<NewsletterSectionProps> = ({ data }) => {
   const [email, setEmail] = useState('');
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const addToast = useUiStore((state) => state.addToast);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) {
-      addToast('Please enter a valid UK email address.', 'error');
-      return;
-    }
+    if (!email.trim()) return;
 
-    setIsSubmitting(true);
     try {
-      await publicApi.subscribeNewsletter(email);
+      setIsSubmitting(true);
+      await publicApi.subscribeNewsletter(email.trim());
       setIsSubscribed(true);
-      setEmail('');
-      addToast('Thank you! You have joined the collector dispatch list.', 'success');
+      addToast('Thank you for joining our physical media archive list.', 'success');
     } catch {
       addToast('Subscription could not be processed right now.', 'error');
     } finally {
@@ -35,60 +31,60 @@ export const NewsletterSection: React.FC<NewsletterSectionProps> = ({ data }) =>
   };
 
   return (
-    <section className="bg-white border-t border-gray-200 py-16 sm:py-20">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
-        {data.eyebrow && (
-          <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.22em] uppercase text-brand-blue bg-blue-50 px-3 py-1 rounded-full mb-3">
-            <Sparkles className="w-3 h-3" />
-            {data.eyebrow}
-          </span>
-        )}
+    <section className="bg-[#06080b] text-white border-t border-white/[0.08] py-20 sm:py-28 relative overflow-hidden">
+      {/* Subtle radial ambient gradient */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-25"
+        style={{
+          background:
+            'radial-gradient(circle 600px at 50% 50%, rgba(20, 35, 60, 0.4) 0%, transparent 100%)',
+        }}
+      />
 
-        <h2 className="font-display font-black text-2xl sm:text-4xl text-gray-950 tracking-tight leading-tight mb-3">
-          {data.title}
+      <div className="relative max-w-2xl mx-auto px-4 sm:px-6 text-center">
+        <div className="inline-flex items-center gap-2 font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.3em] uppercase text-white/50 mb-3">
+          <Mail className="w-3.5 h-3.5" />
+          <span>{data.eyebrow || "THE COLLECTOR'S DISPATCH"}</span>
+        </div>
+
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white mb-4 leading-[0.95]">
+          {data.title || 'STAY INFORMED ON RARE PRESSINGS.'}
         </h2>
 
-        {data.description && (
-          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed font-light mb-8 max-w-md mx-auto">
-            {data.description}
-          </p>
-        )}
+        <p className="text-xs sm:text-sm text-white/60 leading-relaxed font-light mb-8 max-w-lg mx-auto">
+          {data.description ||
+            'Occasional notices when out-of-print box sets, director restorations, and rare catalogue acquisitions enter our London facility. Never spam.'}
+        </p>
 
         {isSubscribed ? (
-          <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-5 py-3 rounded-full text-xs font-semibold border border-emerald-200">
-            <Check className="w-4 h-4 text-emerald-600" />
-            <span>You are on the list. We will notify you of upcoming catalog drops.</span>
+          <div className="inline-flex items-center gap-2 bg-white/10 text-white px-6 py-3.5 rounded-full text-xs font-mono font-medium border border-white/20 backdrop-blur-md">
+            <Check className="w-4 h-4 text-emerald-400" />
+            <span>You are on the list. We will notify you of upcoming catalog arrivals.</span>
           </div>
         ) : (
-          <form onSubmit={handleSubscribe} className="max-w-md mx-auto space-y-2.5">
-            <div className="flex flex-col sm:flex-row items-center gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-200 focus-within:border-brand-blue transition-colors">
-              <div className="flex items-center pl-3 flex-1 w-full text-gray-400">
-                <Mail className="w-4 h-4 shrink-0" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={data.placeholder || 'Enter your email address...'}
-                  required
-                  disabled={isSubmitting}
-                  className="w-full bg-transparent px-3 py-2.5 text-xs text-dark placeholder:text-gray-400 focus:outline-none"
-                />
-              </div>
-
+          <form onSubmit={handleSubscribe} className="max-w-md mx-auto space-y-3">
+            <div className="flex flex-col sm:flex-row items-center gap-2 bg-white/[0.04] p-1.5 rounded-full border border-white/15 focus-within:border-white/40 transition-colors">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={data.placeholder || 'Enter your email address...'}
+                className="w-full bg-transparent px-4 py-2.5 text-xs text-white placeholder:text-white/40 focus:outline-hidden font-mono"
+                aria-label="Email address for newsletter dispatch"
+              />
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:w-auto bg-dark hover:bg-neutral-800 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shrink-0"
+                className="w-full sm:w-auto px-6 py-3 bg-white hover:bg-neutral-200 text-black font-mono font-bold text-xs tracking-widest uppercase rounded-full transition-all shrink-0 active:scale-95 disabled:opacity-50"
               >
-                {isSubmitting ? 'Saving...' : data.buttonText || 'Subscribe'}
+                {isSubmitting ? 'JOINING...' : data.buttonText ? data.buttonText.toUpperCase() : 'JOIN DISPATCH'}
               </button>
             </div>
 
-            {data.disclaimer && (
-              <p className="text-[10px] text-gray-400 font-mono">
-                {data.disclaimer}
-              </p>
-            )}
+            <p className="text-[11px] font-mono text-white/40 tracking-wider">
+              {data.disclaimer || '✓ UK GDPR Compliant. Dispatched infrequently. Unsubscribe in one click.'}
+            </p>
           </form>
         )}
       </div>

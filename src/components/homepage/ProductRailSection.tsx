@@ -1,9 +1,11 @@
 import React, { useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ProductRailSectionConfig } from '../../types/homepage';
 import { Product } from '../../types';
 import { ProductCard } from '../product/ProductCard';
+import { LatestReleasesSection } from './LatestReleasesSection';
 
 interface ProductRailSectionProps {
   data: ProductRailSectionConfig;
@@ -12,6 +14,7 @@ interface ProductRailSectionProps {
 
 export const ProductRailSection: React.FC<ProductRailSectionProps> = ({ data, allProducts }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
 
   // Filter products dynamically according to Admin configuration
   const railProducts = useMemo(() => {
@@ -36,20 +39,19 @@ export const ProductRailSection: React.FC<ProductRailSectionProps> = ({ data, al
         }
         break;
       case 'manual':
-        if (data.manualProductIds && data.manualProductIds.length > 0) {
-          const idSet = new Set(data.manualProductIds);
-          list = list.filter((p) => idSet.has(p.id));
-        }
+        const idSet = new Set(data.manualProductIds || []);
+        list = list.filter((p) => idSet.has(p.id));
         break;
       default:
         break;
     }
 
-    // Fallback to general list if filter yields zero items
-    if (list.length === 0) list = allProducts;
-
     return list.slice(0, data.limit || 8);
   }, [allProducts, data.sourceType, data.categorySlug, data.manualProductIds, data.limit]);
+
+  if (data.sourceType === 'newest') {
+    return <LatestReleasesSection data={data} allProducts={allProducts} />;
+  }
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
@@ -63,31 +65,31 @@ export const ProductRailSection: React.FC<ProductRailSectionProps> = ({ data, al
   if (!railProducts.length) return null;
 
   return (
-    <section className="py-12 sm:py-16 bg-white border-y border-gray-100 overflow-hidden">
-      <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
+    <section className="py-16 sm:py-24 bg-[#06080b] border-y border-white/[0.08] overflow-hidden text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header with Title and Scroll Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
           <div>
             {data.eyebrow && (
-              <span className="text-[11px] font-mono font-bold tracking-[0.2em] uppercase text-brand-blue block mb-1.5">
+              <span className="text-[11px] font-mono tracking-[0.3em] uppercase text-white/50 block mb-2">
                 {data.eyebrow}
               </span>
             )}
-            <h2 className="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-gray-950 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-white leading-tight">
               {data.title}
             </h2>
             {data.subtitle && (
-              <p className="text-xs sm:text-sm text-gray-500 mt-1.5 font-light">
+              <p className="text-xs sm:text-sm text-white/60 mt-2 font-light max-w-xl">
                 {data.subtitle}
               </p>
             )}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             {data.ctaLabel && data.ctaHref && (
               <Link
                 to={data.ctaHref}
-                className="text-xs font-bold text-brand-blue hover:text-brand-blue-hover mr-3 hidden sm:inline-flex items-center gap-1"
+                className="text-xs font-mono tracking-widest uppercase text-white/70 hover:text-white mr-4 hidden sm:inline-flex items-center gap-1.5 transition-colors"
               >
                 {data.ctaLabel} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -97,7 +99,7 @@ export const ProductRailSection: React.FC<ProductRailSectionProps> = ({ data, al
               type="button"
               onClick={() => scroll('left')}
               aria-label="Previous items"
-              className="w-9 h-9 rounded-full border border-gray-200 bg-white hover:bg-gray-100 flex items-center justify-center text-gray-700 transition-colors shadow-xs active:scale-95"
+              className="w-10 h-10 rounded-full border border-white/15 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white transition-colors active:scale-95"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -106,7 +108,7 @@ export const ProductRailSection: React.FC<ProductRailSectionProps> = ({ data, al
               type="button"
               onClick={() => scroll('right')}
               aria-label="Next items"
-              className="w-9 h-9 rounded-full border border-gray-200 bg-white hover:bg-gray-100 flex items-center justify-center text-gray-700 transition-colors shadow-xs active:scale-95"
+              className="w-10 h-10 rounded-full border border-white/15 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white transition-colors active:scale-95"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -119,13 +121,17 @@ export const ProductRailSection: React.FC<ProductRailSectionProps> = ({ data, al
           className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 scrollbar-none snap-x snap-mandatory"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {railProducts.map((product) => (
-            <div
+          {railProducts.map((product, index) => (
+            <motion.div
               key={product.id}
               className="w-[200px] sm:w-[240px] shrink-0 snap-start"
+              initial={reduceMotion ? false : { opacity: 0, y: 24, scale: 0.97 }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5, delay: Math.min(index * 0.055, 0.32), ease: [0.22, 1, 0.36, 1] }}
             >
               <ProductCard product={product} />
-            </div>
+            </motion.div>
           ))}
         </div>
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Database, RefreshCw } from 'lucide-react';
 import { Button } from '../common/Button';
+import { AdminBackendError } from '../../lib/adminApi';
 
 interface AdminDataStateProps {
   loading?: boolean;
@@ -16,33 +17,46 @@ export const AdminDataState: React.FC<AdminDataStateProps> = ({
   error,
   onRetry,
   empty,
-  emptyTitle = 'Belum ada data operasional',
-  emptyDescription = 'Tambahkan data pertama untuk mulai menjalankan operasional.',
+  emptyTitle = 'No operational data found',
+  emptyDescription = 'Add your first record to begin managing operations.',
 }) => {
   if (loading) {
     return (
       <div className="flex min-h-[320px] items-center justify-center rounded-lg border border-gray-200 bg-white" role="status">
         <div className="flex flex-col items-center gap-3 text-gray-500">
           <RefreshCw className="h-6 w-6 animate-spin text-brand-blue" />
-          <span className="text-xs font-semibold">Memuat data operasional langsung...</span>
+          <span className="text-xs font-semibold">Loading live store data...</span>
         </div>
       </div>
     );
   }
 
   if (error) {
-    const message = error instanceof Error ? error.message : 'Terjadi kesalahan saat membaca data operasional.';
+    const isSchemaInit = error instanceof AdminBackendError && error.code === 'SCHEMA_NOT_READY';
     return (
-      <div className="rounded-lg border border-red-200 bg-white p-6 sm:p-8" role="alert">
+      <div className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-xs" role="alert">
         <div className="flex max-w-2xl items-start gap-4">
-          <div className="rounded-md bg-red-50 p-2.5 text-red-600"><AlertTriangle className="h-5 w-5" /></div>
-          <div>
-            <h2 className="font-display text-lg font-bold text-dark">Data operasional tidak tersedia</h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600">{message}</p>
-            <p className="mt-2 text-xs text-gray-400">Tidak ada data contoh yang ditampilkan sebagai pengganti.</p>
+          <div className="rounded-lg bg-blue-50 p-3 text-brand-blue">
+            <Database className="h-6 w-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-display text-lg font-bold text-dark">
+              {isSchemaInit ? 'Database Schema Initialisation Required' : 'Unable to Load Operational Data'}
+            </h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-gray-600">
+              {isSchemaInit
+                ? 'Store services require initial database schema migration in Supabase before catalog and order transactions can be managed.'
+                : error instanceof Error ? error.message : 'A connection error occurred while reaching store services. Please try again shortly.'}
+            </p>
+            {isSchemaInit && (
+              <div className="mt-3 rounded-md bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600">
+                <span className="font-semibold text-dark block mb-1">Quick Setup Guide:</span>
+                <span>Execute the complete database setup script (<code className="font-mono text-brand-blue bg-white px-1 py-0.5 rounded border border-gray-200">setup_complete.sql</code>) in your Supabase SQL Editor to enable all store features.</span>
+              </div>
+            )}
             {onRetry && (
-              <Button variant="secondary" size="sm" className="mt-5" onClick={onRetry}>
-                <RefreshCw className="h-3.5 w-3.5" /> Coba lagi
+              <Button variant="secondary" size="sm" className="mt-4" onClick={onRetry}>
+                <RefreshCw className="h-3.5 w-3.5" /> Check Connection
               </Button>
             )}
           </div>

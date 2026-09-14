@@ -148,6 +148,11 @@ ALTER TABLE public.order_status_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins can read inventory movements" ON public.inventory_movements;
+DROP POLICY IF EXISTS "Admins can read order history" ON public.order_status_history;
+DROP POLICY IF EXISTS "Admins can read audit log" ON public.admin_audit_log;
+DROP POLICY IF EXISTS "Public can submit contact messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Admins can manage contact messages" ON public.contact_messages;
 CREATE POLICY "Admins can read inventory movements" ON public.inventory_movements
   FOR SELECT USING (public.is_admin());
 CREATE POLICY "Admins can read order history" ON public.order_status_history

@@ -122,7 +122,11 @@ CREATE TABLE IF NOT EXISTS public.store_settings (
   vip_promo_code TEXT NOT NULL DEFAULT 'RAYAN10',
   vip_promo_discount NUMERIC(5,2) NOT NULL DEFAULT 10.00 CHECK (vip_promo_discount BETWEEN 0 AND 100),
   vip_min_spend NUMERIC(10,2) NOT NULL DEFAULT 20.00 CHECK (vip_min_spend >= 0),
-  store_name TEXT NOT NULL DEFAULT 'AZ Rayan DVDs London',
+  store_name TEXT NOT NULL DEFAULT 'AZ Rayan DVDs',
+  registered_company_name TEXT NOT NULL DEFAULT 'AZ Rayan Ltd',
+  company_number TEXT NOT NULL DEFAULT '13894195' CHECK (company_number ~ '^[A-Z0-9]{8}$'),
+  registered_office_address TEXT NOT NULL DEFAULT 'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
+  companies_house_url TEXT NOT NULL DEFAULT 'https://find-and-update.company-information.service.gov.uk/company/13894195',
   warehouse_location TEXT NOT NULL DEFAULT 'Unit 4B, Bermondsey Trading Estate, Rotherhithe, London SE16 3LL',
   support_email TEXT NOT NULL DEFAULT 'concierge@azrayan.co.uk',
   support_phone TEXT NOT NULL DEFAULT '+44 (0)20 7946 0912',
@@ -225,7 +229,39 @@ CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Homepage Builder configuration
+CREATE TABLE IF NOT EXISTS public.homepage_config (
+  id TEXT PRIMARY KEY CHECK (id IN ('draft', 'published')),
+  config_data JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- 3. FUNCTIONS & SECURITY HARDENING
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, full_name, role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', 'Customer'),
+    CASE
+      WHEN NEW.email = 'admin@azrayan.co.uk' THEN 'admin'
+      ELSE 'customer'
+    END
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET email = EXCLUDED.email,
+      role = CASE WHEN EXCLUDED.email = 'admin@azrayan.co.uk' THEN 'admin' ELSE profiles.role END;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
@@ -234,13 +270,23 @@ STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.profiles
-    WHERE id = auth.uid()
-      AND role IN ('admin', 'staff')
+  SELECT (
+    EXISTS (
+      SELECT 1
+      FROM public.profiles
+      WHERE id = auth.uid()
+        AND role IN ('admin', 'staff')
+    )
+    OR
+    (auth.jwt() ->> 'email') = 'admin@azrayan.co.uk'
+    OR
+    (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'staff')
+    OR
+    (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin', 'staff')
   );
 $$;
+
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, anon;
 
 CREATE OR REPLACE FUNCTION public.subscribe_newsletter(p_email TEXT)
 RETURNS JSONB
@@ -269,6 +315,7 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.homepage_config ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 DROP POLICY IF EXISTS "Public profiles read" ON public.profiles;
@@ -285,17 +332,20 @@ CREATE POLICY "Admins can manage categories" ON public.categories FOR ALL USING 
 -- Products policies
 DROP POLICY IF EXISTS "Public can view active products" ON public.products;
 CREATE POLICY "Public can view active products" ON public.products FOR SELECT USING (TRUE);
-DROP POLICY IF EXISTS "Admins can manage products" ON public.products FOR ALL USING (public.is_admin());
+DROP POLICY IF EXISTS "Admins can manage products" ON public.products;
+CREATE POLICY "Admins can manage products" ON public.products FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- Genres policies
 DROP POLICY IF EXISTS "Public can view genres" ON public.genres;
 CREATE POLICY "Public can view genres" ON public.genres FOR SELECT USING (TRUE);
-DROP POLICY IF EXISTS "Admins can manage genres" ON public.genres FOR ALL USING (public.is_admin());
+DROP POLICY IF EXISTS "Admins can manage genres" ON public.genres;
+CREATE POLICY "Admins can manage genres" ON public.genres FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- Product Genres policies
 DROP POLICY IF EXISTS "Public can view product_genres" ON public.product_genres;
 CREATE POLICY "Public can view product_genres" ON public.product_genres FOR SELECT USING (TRUE);
-DROP POLICY IF EXISTS "Admins can manage product_genres" ON public.product_genres FOR ALL USING (public.is_admin());
+DROP POLICY IF EXISTS "Admins can manage product_genres" ON public.product_genres;
+CREATE POLICY "Admins can manage product_genres" ON public.product_genres FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- Store Settings policies
 DROP POLICY IF EXISTS "Public can read storefront settings" ON public.store_settings;
@@ -306,7 +356,16 @@ CREATE POLICY "Admins can manage storefront settings" ON public.store_settings F
 -- Promotions policies
 DROP POLICY IF EXISTS "Public can view active promotions" ON public.promotions;
 CREATE POLICY "Public can view active promotions" ON public.promotions FOR SELECT USING (TRUE);
-DROP POLICY IF EXISTS "Admins can manage promotions" ON public.promotions FOR ALL USING (public.is_admin());
+DROP POLICY IF EXISTS "Admins can manage promotions" ON public.promotions;
+CREATE POLICY "Admins can manage promotions" ON public.promotions FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- Homepage Builder policies
+DROP POLICY IF EXISTS "Public can read published homepage config" ON public.homepage_config;
+CREATE POLICY "Public can read published homepage config" ON public.homepage_config
+  FOR SELECT USING (id = 'published' OR public.is_admin());
+DROP POLICY IF EXISTS "Admins can manage homepage config" ON public.homepage_config;
+CREATE POLICY "Admins can manage homepage config" ON public.homepage_config
+  FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- Orders policies
 DROP POLICY IF EXISTS "Customers can view their orders" ON public.orders;
@@ -575,7 +634,8 @@ INSERT INTO public.store_settings (
   free_shipping_threshold, standard_shipping_fee, express_shipping_fee, standard_shipping_name, standard_shipping_eta, express_shipping_name, express_shipping_eta,
   low_stock_threshold, budget_collection_threshold, dispatch_cutoff_time,
   vip_promo_code, vip_promo_discount, vip_min_spend,
-  store_name, warehouse_location, support_email, support_phone
+  store_name, registered_company_name, company_number, registered_office_address, companies_house_url,
+  warehouse_location, support_email, support_phone
 ) VALUES (
   's1000000-0000-0000-0000-000000000001', TRUE,
   'https://azrayan.co.uk',
@@ -607,13 +667,114 @@ INSERT INTO public.store_settings (
   'DPD Next Day Priority', '1 working day (Order by 2PM)',
   5, 8.00, '14:00 GMT',
   'RAYAN10', 10.00, 20.00,
-  'AZ Rayan DVDs London',
+  'AZ Rayan DVDs',
+  'AZ Rayan Ltd',
+  '13894195',
+  'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
+  'https://find-and-update.company-information.service.gov.uk/company/13894195',
   'Unit 4B, Bermondsey Trading Estate, Rotherhithe, London SE16 3LL',
   'concierge@azrayan.co.uk',
   '+44 (0)20 7946 0912'
 )
 ON CONFLICT (singleton) WHERE singleton = TRUE DO NOTHING;
 
--- Admin promotion command hint:
--- To promote your own user email to admin, run:
--- UPDATE public.profiles SET role = 'admin' WHERE email = 'your-email@example.com';
+-- Seed / Ensure Admin User exists in auth.users & public.profiles
+DO $$
+DECLARE
+  v_admin_id UUID;
+BEGIN
+  SELECT id INTO v_admin_id FROM auth.users WHERE email = 'admin@azrayan.co.uk';
+
+  IF v_admin_id IS NULL THEN
+    v_admin_id := gen_random_uuid();
+    INSERT INTO auth.users (
+      id,
+      instance_id,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at,
+      role,
+      aud,
+      confirmation_token
+    ) VALUES (
+      v_admin_id,
+      '00000000-0000-0000-0000-000000000000',
+      'admin@azrayan.co.uk',
+      crypt('Admin123!', gen_salt('bf')),
+      NOW(),
+      '{"provider":"email","providers":["email"],"role":"admin"}'::jsonb,
+      '{"full_name":"Zack Admin","role":"admin"}'::jsonb,
+      NOW(),
+      NOW(),
+      'authenticated',
+      'authenticated',
+      encode(gen_random_bytes(32), 'hex')
+    );
+  ELSE
+    UPDATE auth.users
+    SET encrypted_password = crypt('Admin123!', gen_salt('bf')),
+        email_confirmed_at = COALESCE(email_confirmed_at, NOW()),
+        raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb,
+        raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb,
+        updated_at = NOW()
+    WHERE id = v_admin_id;
+  END IF;
+
+  -- Ensure profile exists with admin role
+  INSERT INTO public.profiles (id, email, full_name, role)
+  VALUES (v_admin_id, 'admin@azrayan.co.uk', 'Zack Admin', 'admin')
+  ON CONFLICT (id) DO UPDATE
+  SET role = 'admin', full_name = 'Zack Admin', email = 'admin@azrayan.co.uk';
+
+  -- Also promote any profile matching admin@azrayan.co.uk
+  UPDATE public.profiles SET role = 'admin' WHERE email = 'admin@azrayan.co.uk';
+END $$;
+
+-- ==========================================================
+-- REALTIME WEBSOCKET SUBSCRIPTION CONFIGURATION
+-- ==========================================================
+-- Enable Realtime Replication for frontend WebSocket listeners
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.products;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.categories;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.genres;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.promotions;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.store_settings;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.homepage_config;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.contact_messages;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+END $$;
+
+ALTER TABLE public.products REPLICA IDENTITY FULL;
+ALTER TABLE public.orders REPLICA IDENTITY FULL;
+ALTER TABLE public.store_settings REPLICA IDENTITY FULL;
+ALTER TABLE public.homepage_config REPLICA IDENTITY FULL;

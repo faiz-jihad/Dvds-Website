@@ -22,7 +22,9 @@ export const ReturnsPage: React.FC = () => {
         <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg space-y-3 text-xs leading-relaxed text-gray-700">
           <h3 className="font-display font-bold text-sm text-dark">Eligibility for Returns</h3>
           <ul className="list-disc pl-4 space-y-2">
-            <li>Unopened and sealed discs can be returned within 30 days of receipt for a 100% refund.</li>
+            <li>For eligible distance purchases, tell us within 14 days after delivery if you wish to cancel, then return the goods within the following 14 days.</li>
+            <li>The cancellation right does not normally apply to sealed audio or video recordings once they have been unsealed.</li>
+            <li>Faulty or misdescribed goods remain covered by your statutory rights.</li>
             <li>If a disc arrives damaged in transit or displays playback errors, contact support so the appropriate replacement or return route can be recorded.</li>
             <li>Refunds are credited directly to your original payment method within 3 business days of return receipt.</li>
           </ul>

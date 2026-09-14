@@ -35,6 +35,9 @@ const AdminTaxonomy = React.lazy(() => import('../pages/Admin/AdminTaxonomy').th
 const AdminSupport = React.lazy(() => import('../pages/Admin/AdminSupport').then((module) => ({ default: module.AdminSupport })));
 const AdminHomepage = React.lazy(() => import('../pages/Admin/AdminHomepage').then((module) => ({ default: module.AdminHomepage })));
 const AdminLogin = React.lazy(() => import('../pages/Admin/AdminLogin').then((module) => ({ default: module.AdminLogin })));
+const AdminUsers = React.lazy(() => import('../pages/Admin/AdminUsers').then((module) => ({ default: module.AdminUsers })));
+const LoginPage = React.lazy(() => import('../pages/Auth/LoginPage').then((module) => ({ default: module.LoginPage })));
+const RegisterPage = React.lazy(() => import('../pages/Auth/RegisterPage').then((module) => ({ default: module.RegisterPage })));
 
 import { RouteErrorBoundary } from '../components/common/RouteErrorBoundary';
 
@@ -65,6 +68,10 @@ export const router = createBrowserRouter([
       { path: 'terms', element: <TermsPage /> },
       { path: 'refund-policy', element: <RefundPolicyPage /> },
 
+      // Customer Authentication
+      { path: 'login', element: <LoginPage /> },
+      { path: 'register', element: <RegisterPage /> },
+
       // Customer Account
       {
         path: 'account',
@@ -86,6 +93,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/admin',
+    errorElement: <RouteErrorBoundary />,
     element: (
       <ProtectedAdminRoute>
         <AdminLayout />
@@ -98,6 +106,7 @@ export const router = createBrowserRouter([
       { path: 'orders', element: <AdminOrders /> },
       { path: 'inventory', element: <AdminInventory /> },
       { path: 'promotions', element: <AdminPromotions /> },
+      { path: 'users', element: <AdminUsers /> },
       { path: 'settings', element: <AdminStoreSettings /> },
       { path: 'activity', element: <AdminActivity /> },
       { path: 'taxonomy', element: <AdminTaxonomy /> },

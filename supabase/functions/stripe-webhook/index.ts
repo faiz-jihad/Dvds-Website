@@ -1,8 +1,7 @@
-import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.48.1';
 import Stripe from 'https://esm.sh/stripe@14.14.0?target=deno';
 
-serve(async (request) => {
+Deno.serve(async (request) => {
   const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
   const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
   const signature = request.headers.get('stripe-signature');

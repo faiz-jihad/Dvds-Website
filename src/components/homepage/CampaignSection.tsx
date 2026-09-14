@@ -30,10 +30,24 @@ export const CampaignSection: React.FC<CampaignSectionProps> = ({
 
   // Sale/Clearance products
   const campaignProducts = React.useMemo(() => {
-    let prods = allProducts.filter((p) => p.compare_at_price != null && p.compare_at_price > p.price);
-    if (!prods.length) prods = allProducts;
+    let prods = [...allProducts];
+    switch (data.productSource || 'sale') {
+      case 'bestsellers':
+        prods = prods.filter((p) => p.is_best_seller);
+        break;
+      case 'newest':
+        prods = prods.filter((p) => p.is_new_release);
+        break;
+      case 'featured':
+        prods = prods.filter((p) => p.is_featured);
+        break;
+      case 'sale':
+      default:
+        prods = prods.filter((p) => p.compare_at_price != null && p.compare_at_price > p.price);
+        break;
+    }
     return prods.slice(0, data.productLimit || 4);
-  }, [allProducts, data.productLimit]);
+  }, [allProducts, data.productLimit, data.productSource]);
 
   return (
     <section
