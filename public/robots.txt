@@ -1,0 +1,9 @@
+# AZ Rayan DVDs Production Robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /account
+Disallow: /account/*
+
+Sitemap: https://azrayan-dvds.co.uk/sitemap.xml

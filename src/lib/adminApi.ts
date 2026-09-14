@@ -1,5 +1,5 @@
 import { isSupabaseConfigured, supabase } from './supabase';
-import { Category, FinancialStats, FulfilmentStatus, Genre, Order, OrderStatus, Product, Promotion, StoreSettings } from '../types';
+import { Category, FinancialStats, FulfilmentStatus, Genre, Order, OrderStatus, Product, Promotion, StoreSettings, Profile, UserRole } from '../types';
 import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
 import { DEFAULT_PRODUCTS } from '../data/defaultProducts';
 
@@ -427,7 +427,7 @@ function client() {
   return supabase;
 }
 
-function fail(error: { message: string; code?: string } | null, fallback: string): never {
+function fail(error: any, fallback: string): never {
   if (error?.code && SCHEMA_ERROR_CODES.has(error.code)) {
     throw new AdminBackendError(
       'Database schema is incomplete. Execute the complete database setup script (setup_complete.sql) in your Supabase SQL Editor and refresh this page.',

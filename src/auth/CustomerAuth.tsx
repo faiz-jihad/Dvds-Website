@@ -8,7 +8,7 @@ export interface CustomerAuthContextValue {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   register: (email: string, password: string, fullName: string) => Promise<{ success: boolean; message?: string }>;
-  loginWithGoogle: () => Promise<{ success: boolean; message?: string }>;
+  loginWithGoogle: (customRedirectPath?: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   updateProfileState: (updated: Partial<Profile>) => void;
 }

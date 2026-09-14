@@ -328,9 +328,9 @@ export const publicApi = {
     let discount = 0;
     if (input.promoCode) {
       try {
-        const promos = await this.getPromotions();
+        const promos = await this.getActivePromotions();
         const promo = promos.find(
-          (p) => p.code.toUpperCase() === input.promoCode?.toUpperCase() && p.is_active
+          (p: Promotion) => p.code.toUpperCase() === input.promoCode?.toUpperCase() && p.is_active
         );
         if (promo && subtotal >= promo.minimum_order) {
           discount = promo.type === 'percentage' ? (subtotal * promo.value) / 100 : promo.value;
@@ -342,7 +342,7 @@ export const publicApi = {
     }
 
     const totalAmount = Math.max(0, subtotal - discount + shipping);
-    const orderNumber = `AZ-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Math.random()
+    const orderNumber = `AZ-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random()
       .toString(36)
       .substring(2, 7)
       .toUpperCase()}`;
