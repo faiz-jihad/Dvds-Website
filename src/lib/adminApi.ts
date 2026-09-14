@@ -100,6 +100,23 @@ const REQUIRED_ADMIN_FUNCTIONS = [
 
 const SCHEMA_ERROR_CODES = new Set(['PGRST202', 'PGRST204', 'PGRST205', '42P01', '42883']);
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUUID(value: string | null | undefined): boolean {
+  return typeof value === 'string' && UUID_REGEX.test(value.trim());
+}
+
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 const DEMO_SESSION_KEY = 'az_rayan_admin_session';
 const DEMO_PROMOTIONS_KEY = 'az_rayan_demo_promotions_v1';
 
@@ -440,6 +457,12 @@ function fail(error: any, fallback: string): never {
       'RLS_PERMISSION_DENIED'
     );
   }
+  if (error?.code === '22P02' || error?.message?.includes('invalid input syntax for type uuid')) {
+    throw new AdminBackendError(
+      'Invalid UUID identifier for database record.',
+      'INVALID_UUID'
+    );
+  }
   throw new AdminBackendError(error?.message || fallback, error?.code || 'QUERY_FAILED');
 }
 
@@ -568,28 +591,45 @@ export const adminApi = {
   },
 
   async createCategory(input: Omit<Category, 'id'>): Promise<Category> {
+    const newId = generateUUID();
+    const payload = { ...input, id: newId };
     try {
-      const { data, error } = await client().from('categories').insert(input).select('*').single();
+      const { data, error } = await client().from('categories').insert(payload).select('*').single();
       if (!error && data) return data as Category;
 
       if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const newCat: Category = { ...input, id: `cat-${Date.now()}` } as Category;
+        const newCat: Category = { ...input, id: newId } as Category;
         saveDemoCategory(newCat);
         return newCat;
       }
       fail(error, 'Category could not be created.');
     } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
-        const newCat: Category = { ...input, id: `cat-${Date.now()}` } as Category;
+      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
+        const newCat: Category = { ...input, id: newId } as Category;
         saveDemoCategory(newCat);
         return newCat;
       }
       throw err;
     }
-    return input as any;
+    return payload as any;
   },
 
   async updateCategory(id: string, input: Partial<Category>): Promise<Category> {
+    const updateLocal = async () => {
+      const categories = await this.getCategories();
+      const target = categories.find((c) => c.id === id);
+      if (target) {
+        const updated = { ...target, ...input };
+        saveDemoCategory(updated);
+        return updated;
+      }
+      return { ...input, id } as Category;
+    };
+
+    if (!isUUID(id)) {
+      return updateLocal();
+    }
+
     try {
       const { data, error } = await client().from('categories').update(input).eq('id', id).select('*').single();
       if (!error && data) {
@@ -597,44 +637,34 @@ export const adminApi = {
         return data as Category;
       }
 
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const categories = await this.getCategories();
-        const target = categories.find((c) => c.id === id);
-        if (target) {
-          const updated = { ...target, ...input };
-          saveDemoCategory(updated);
-          return updated;
-        }
+      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
+        return updateLocal();
       }
       fail(error, 'Category could not be updated.');
     } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
-        const categories = await this.getCategories();
-        const target = categories.find((c) => c.id === id);
-        if (target) {
-          const updated = { ...target, ...input };
-          saveDemoCategory(updated);
-          return updated;
-        }
+      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
+        return updateLocal();
       }
       throw err;
     }
-    return input as any;
+    return updateLocal();
   },
 
   async deleteCategory(id: string): Promise<void> {
+    deleteDemoCategory(id);
+    if (!isUUID(id)) return;
+
     try {
       const { error } = await client().from('categories').delete().eq('id', id);
-      deleteDemoCategory(id);
       if (!error) return;
 
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
+      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
         return;
       }
       fail(error, 'Category could not be deleted.');
     } catch (err) {
       deleteDemoCategory(id);
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
+      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
         return;
       }
       throw err;
@@ -739,14 +769,16 @@ export const adminApi = {
   },
 
   async createProduct(input: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'category' | 'genres'>): Promise<Product> {
+    const newId = generateUUID();
+    const payload = { ...input, id: newId };
     try {
-      const { data, error } = await client().from('products').insert(input).select('*').single();
+      const { data, error } = await client().from('products').insert(payload).select('*').single();
       if (!error && data) return data as Product;
 
       if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
         const newProduct: Product = {
           ...input,
-          id: `prod-${Date.now()}`,
+          id: newId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           genres: [],
@@ -756,10 +788,10 @@ export const adminApi = {
       }
       fail(error, 'Product could not be created.');
     } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
+      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
         const newProduct: Product = {
           ...input,
-          id: `prod-${Date.now()}`,
+          id: newId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           genres: [],
@@ -769,11 +801,27 @@ export const adminApi = {
       }
       throw err;
     }
-    return input as any;
+    return payload as any;
   },
 
   async updateProduct(id: string, input: Partial<Product>): Promise<Product> {
     const { category: _category, genres: _genres, ...safeInput } = input;
+
+    const updateLocal = async () => {
+      const products = await this.getProducts();
+      const existing = products.find((p) => p.id === id) || DEFAULT_PRODUCTS.find((p) => p.id === id);
+      if (existing) {
+        const updated = { ...existing, ...safeInput, updated_at: new Date().toISOString() } as Product;
+        saveDemoProduct(updated);
+        return updated;
+      }
+      return input as Product;
+    };
+
+    if (!isUUID(id)) {
+      return updateLocal();
+    }
+
     try {
       const { data, error } = await client()
         .from('products')
@@ -783,36 +831,25 @@ export const adminApi = {
         .single();
       if (!error && data) return data as Product;
 
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const products = await this.getProducts();
-        const existing = products.find((p) => p.id === id) || DEFAULT_PRODUCTS.find((p) => p.id === id);
-        if (existing) {
-          const updated = { ...existing, ...safeInput, updated_at: new Date().toISOString() } as Product;
-          saveDemoProduct(updated);
-          return updated;
-        }
+      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
+        return updateLocal();
       }
       fail(error, 'Product could not be updated.');
     } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
-        const products = await this.getProducts();
-        const existing = products.find((p) => p.id === id) || DEFAULT_PRODUCTS.find((p) => p.id === id);
-        if (existing) {
-          const updated = { ...existing, ...safeInput, updated_at: new Date().toISOString() } as Product;
-          saveDemoProduct(updated);
-          return updated;
-        }
+      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
+        return updateLocal();
       }
       throw err;
     }
-    return input as Product;
+    return updateLocal();
   },
 
   async setProductGenres(productId: string, genreIds: string[]): Promise<void> {
+    if (!isUUID(productId)) return;
     try {
       const { error } = await client().rpc('set_product_genres', { p_product_id: productId, p_genre_ids: genreIds });
       if (!error) return;
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
+      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
         return;
       }
       fail(error, 'Product genres could not be updated.');
@@ -823,6 +860,18 @@ export const adminApi = {
   },
 
   async archiveProduct(id: string): Promise<void> {
+    const archiveLocal = async () => {
+      const products = await this.getProducts();
+      const existing = products.find((p) => p.id === id);
+      if (existing) {
+        saveDemoProduct({ ...existing, status: 'archived', updated_at: new Date().toISOString() });
+      }
+    };
+
+    if (!isUUID(id)) {
+      return archiveLocal();
+    }
+
     try {
       const { error } = await client()
         .from('products')
@@ -830,41 +879,33 @@ export const adminApi = {
         .eq('id', id);
       if (!error) return;
 
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const products = await this.getProducts();
-        const existing = products.find((p) => p.id === id);
-        if (existing) {
-          saveDemoProduct({ ...existing, status: 'archived', updated_at: new Date().toISOString() });
-          return;
-        }
+      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
+        return archiveLocal();
       }
       fail(error, 'Product could not be archived.');
     } catch (err) {
-      if (isDemoSession()) {
-        const products = await this.getProducts();
-        const existing = products.find((p) => p.id === id);
-        if (existing) {
-          saveDemoProduct({ ...existing, status: 'archived', updated_at: new Date().toISOString() });
-          return;
-        }
+      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
+        return archiveLocal();
       }
       throw err;
     }
   },
 
   async deleteProduct(id: string): Promise<void> {
+    deleteDemoProduct(id);
+    if (!isUUID(id)) return;
+
     try {
       const { error } = await client().from('products').delete().eq('id', id);
-      deleteDemoProduct(id);
       if (!error) return;
 
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
+      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
         return;
       }
       fail(error, 'Product could not be deleted.');
     } catch (err) {
       deleteDemoProduct(id);
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
+      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
         return;
       }
       throw err;
@@ -1108,51 +1149,66 @@ export const adminApi = {
   },
 
   async createPromotion(input: Omit<Promotion, 'id'>): Promise<Promotion> {
+    const newId = generateUUID();
+    const payload = {
+      ...input,
+      id: newId,
+      code: input.code.toUpperCase().trim(),
+      value: Number(input.value),
+      minimum_order: Number(input.minimum_order),
+    };
+
+    const makeDemoItem = (): Promotion => ({
+      id: newId,
+      code: input.code.toUpperCase().trim(),
+      type: input.type,
+      value: Number(input.value),
+      minimum_order: Number(input.minimum_order),
+      is_active: input.is_active,
+      starts_at: input.starts_at || new Date().toISOString(),
+      ends_at: input.ends_at,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
     try {
-      const { data, error } = await client().from('promotions').insert(input).select('*').single();
+      const { data, error } = await client().from('promotions').insert(payload).select('*').single();
       if (!error && data) return data as Promotion;
 
-      if (error && (error.code === '42501' || error.message?.includes('row-level security'))) {
-        if (isDemoSession()) {
-          const demoItem: Promotion = {
-            id: `promo-demo-${Date.now()}`,
-            code: input.code.toUpperCase().trim(),
-            type: input.type,
-            value: Number(input.value),
-            minimum_order: Number(input.minimum_order),
-            is_active: input.is_active,
-            starts_at: input.starts_at || new Date().toISOString(),
-            ends_at: input.ends_at,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          saveDemoPromotion(demoItem);
-          return demoItem;
-        }
+      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
+        const demoItem = makeDemoItem();
+        saveDemoPromotion(demoItem);
+        return demoItem;
       }
       fail(error, 'Promotion could not be created.');
     } catch (err) {
-      if (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED' && isDemoSession()) {
-        const demoItem: Promotion = {
-          id: `promo-demo-${Date.now()}`,
-          code: input.code.toUpperCase().trim(),
-          type: input.type,
-          value: Number(input.value),
-          minimum_order: Number(input.minimum_order),
-          is_active: input.is_active,
-          starts_at: input.starts_at || new Date().toISOString(),
-          ends_at: input.ends_at,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
+      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
+        const demoItem = makeDemoItem();
         saveDemoPromotion(demoItem);
         return demoItem;
       }
       throw err;
     }
+    return makeDemoItem();
   },
 
   async updatePromotion(id: string, input: Partial<Promotion>): Promise<Promotion> {
+    const updateLocal = () => {
+      const demoItems = getDemoPromotions();
+      const target = demoItems.find((p) => p.id === id);
+      if (target) {
+        const updated = { ...target, ...input, updated_at: new Date().toISOString() };
+        saveDemoPromotion(updated);
+        return updated;
+      }
+      return { ...input, id } as Promotion;
+    };
+
+    // If ID is not a valid UUID (e.g. promo-demo-1789391509190), handle directly in local demo storage
+    if (!isUUID(id)) {
+      return updateLocal();
+    }
+
     try {
       const { data, error } = await client()
         .from('promotions')
@@ -1162,44 +1218,36 @@ export const adminApi = {
         .single();
       if (!error && data) return data as Promotion;
 
-      if (error && (error.code === '42501' || error.message?.includes('row-level security'))) {
-        if (isDemoSession()) {
-          const demoItems = getDemoPromotions();
-          const target = demoItems.find((p) => p.id === id);
-          if (target) {
-            const updated = { ...target, ...input, updated_at: new Date().toISOString() };
-            saveDemoPromotion(updated);
-            return updated;
-          }
-        }
+      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
+        return updateLocal();
       }
       fail(error, 'Promotion could not be updated.');
     } catch (err) {
-      if (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED' && isDemoSession()) {
-        const demoItems = getDemoPromotions();
-        const target = demoItems.find((p) => p.id === id);
-        if (target) {
-          const updated = { ...target, ...input, updated_at: new Date().toISOString() };
-          saveDemoPromotion(updated);
-          return updated;
-        }
+      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
+        return updateLocal();
       }
       throw err;
     }
+    return updateLocal();
   },
 
   async deletePromotion(id: string): Promise<void> {
+    deleteDemoPromotion(id);
+    if (!isUUID(id)) {
+      return;
+    }
+
     try {
       const { error } = await client().from('promotions').delete().eq('id', id);
-      deleteDemoPromotion(id);
       if (!error) return;
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
+
+      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
         return;
       }
       fail(error, 'Promotion could not be deleted.');
     } catch (err) {
       deleteDemoPromotion(id);
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
+      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
         return;
       }
       throw err;
