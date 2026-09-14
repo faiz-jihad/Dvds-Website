@@ -57,11 +57,11 @@
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/:match*",
+      "destination": "/api/:match*"
     },
     {
-      "source": "/((?!api/|assets/|brand/|catalog/|favicon\\.ico|sitemap\\.xml|robots\\.txt).*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]

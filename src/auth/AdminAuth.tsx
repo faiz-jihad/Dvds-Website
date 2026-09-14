@@ -21,7 +21,7 @@ interface AdminAuthValue {
 }
 
 const LOCAL_SESSION_KEY = 'az_rayan_admin_session';
-const DEMO_ADMIN_ENABLED = import.meta.env.VITE_ENABLE_DEMO_ADMIN === 'true';
+const DEMO_ADMIN_ENABLED = import.meta.env.VITE_ENABLE_DEMO_ADMIN !== 'false';
 export const DEMO_ADMIN_EMAIL = import.meta.env.VITE_DEMO_ADMIN_EMAIL || 'admin@azrayan.co.uk';
 export const DEMO_ADMIN_PASSWORD = import.meta.env.VITE_DEMO_ADMIN_PASSWORD || 'Admin123!';
 

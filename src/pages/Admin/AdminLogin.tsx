@@ -88,13 +88,30 @@ export const AdminLogin: React.FC = () => {
 
           {/* Clean Login Card */}
           <div className="bg-white border border-gray-200 rounded-xl p-5 sm:p-8 md:p-10 shadow-xs">
-            <div className="mb-8">
+            <div className="mb-6">
               <h2 className="font-display text-2xl font-bold text-dark tracking-tight">
                 Admin Sign In
               </h2>
               <p className="mt-1 text-sm text-gray-500">
                 Enter your credentials to access the management backoffice.
               </p>
+
+              <div className="mt-4 p-3 rounded-lg bg-blue-50/80 border border-blue-200/70 flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-semibold text-blue-950 block text-[11px]">Default Admin Credentials:</span>
+                  <span className="font-mono text-[11px] text-blue-800">admin@azrayan.co.uk • Admin123!</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('admin@azrayan.co.uk');
+                    setPassword('Admin123!');
+                  }}
+                  className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium text-[11px] transition-colors cursor-pointer"
+                >
+                  Auto-fill
+                </button>
+              </div>
             </div>
 
             {/* Error message */}
