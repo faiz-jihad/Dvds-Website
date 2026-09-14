@@ -99,9 +99,11 @@ export const router = createBrowserRouter([
       { path: 'terms', element: <TermsPage /> },
       { path: 'refund-policy', element: <RefundPolicyPage /> },
 
-      // Customer Authentication
+      // Customer Authentication & OAuth Callbacks
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
+      { path: 'auth/callback', element: <Navigate to="/account" replace /> },
+      { path: 'auth/v1/callback', element: <Navigate to="/account" replace /> },
 
       // Customer Account
       {
