@@ -5,11 +5,11 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   seo_site_url: 'https://azrayan.co.uk',
   seo_site_title: 'AZ Rayan DVDs — Films Worth Owning | UK Physical Media Store',
   seo_site_description:
-    'Curated boutique DVD editions, rare British cinema, collector box sets, and modern sci-fi classics dispatched from London.',
+    'Curated boutique DVD editions, rare British cinema, collector box sets, and modern sci-fi classics dispatched directly from our UK vault.',
   seo_social_image_url:
     'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&auto=format&fit=crop&q=80',
   seo_organization_description:
-    'Independent physical media retailer operated by AZ Rayan Ltd, a company registered in England and Wales.',
+    'Independent physical media retailer operated by AZ Rayan Ltd, a company registered in England and Wales (Company No. 13894195).',
   hero_badge_text: 'SPRING ARCHIVE RELEASE — MARCH 2026',
   hero_headline_line1: 'Films worth',
   hero_headline_highlight: 'owning.',
@@ -20,7 +20,7 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   hero_bg_image:
     'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1600&auto=format&fit=crop&q=80',
   announcement_left: 'Free UK delivery on orders over £25',
-  announcement_center: 'Same-day London dispatch before 2PM GMT',
+  announcement_center: 'Same-day UK dispatch before 2PM GMT',
   announcement_link: '/delivery',
   deal_product_id: null,
   deal_discount_price: 6.99,
@@ -53,8 +53,8 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   companies_house_url:
     'https://find-and-update.company-information.service.gov.uk/company/13894195',
   warehouse_location:
-    'Unit 4B, Bermondsey Trading Estate, Rotherhithe, London SE16 3LL',
+    'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
   support_email: 'concierge@azrayan.co.uk',
-  support_phone: '+44 (0)20 7946 0912',
+  support_phone: '+44 (0)121 496 0833',
   updated_at: new Date().toISOString(),
 };

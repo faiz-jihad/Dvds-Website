@@ -105,10 +105,10 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
       data: {
         eyebrow: "THE COLLECTOR'S ARCHIVE",
         title: 'Films Worth Owning.',
-        description: 'Discover essential cinema, cult favourites, and timeless British classics pressed to pristine physical media. Dispatched directly from London.',
+        description: 'Discover essential cinema, cult favourites, and timeless British classics pressed to pristine physical media. Dispatched directly from our UK vault.',
         desktopImage: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1920&auto=format&fit=crop&q=85',
         mobileImage: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=1080&auto=format&fit=crop&q=85',
-        imageAlt: 'Atmospheric London cinema theatre',
+        imageAlt: 'Atmospheric classic cinema theatre',
         primaryCta: {
           label: 'Shop the Collection',
           href: '/shop',
@@ -136,7 +136,7 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
           {
             id: 'col-1',
             eyebrow: 'BRITISH CINEMA',
-            title: 'Underworld & Cult London',
+            title: 'Underworld & Cult Cinema',
             description: 'Gritty crime masterworks and independent British auteurs.',
             image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1200&auto=format&fit=crop&q=85',
             href: '/shop?category=british-cinema',

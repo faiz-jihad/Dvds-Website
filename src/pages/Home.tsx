@@ -77,8 +77,8 @@ export const Home: React.FC = () => {
   return (
     <main className="min-h-screen bg-[#06080b] text-white antialiased selection:bg-white selection:text-black">
       <Seo
-        title="AZ Rayan DVDs — Buy Physical DVDs & TV Box Sets UK | London Media Vault"
-        description="Discover definitive DVD box sets, restored British cinema, and rare collector editions preserved in uncompressed physical permanence. Dispatched worldwide with Royal Mail Tracked 24 from London. Free UK delivery over £25."
+        title="AZ Rayan DVDs — Buy Physical DVDs & TV Box Sets UK | Official Physical Media Store"
+        description="Discover definitive DVD box sets, restored British cinema, and rare collector editions preserved in uncompressed physical permanence. Dispatched worldwide with Royal Mail Tracked 24. Free UK delivery over £25."
         canonicalPath="/"
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
         siteName="AZ Rayan DVDs"

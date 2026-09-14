@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Filter, SlidersHorizontal, X, RotateCcw } from 'lucide-react';
+import { Filter, SlidersHorizontal, X, RotateCcw, Tag } from 'lucide-react';
 import { ProductCard } from '../components/product/ProductCard';
 import { Button } from '../components/common/Button';
 import { publicApi } from '../lib/publicApi';
@@ -53,6 +53,56 @@ export const Shop: React.FC = () => {
     setMaxPrice(catalogueMaxPrice);
   };
 
+  // Active Filter Details for Clear Heading
+  const activeGenre = genres.find((g) => g.slug === selectedGenre || g.id === selectedGenre);
+  const activeCategory = categories.find((c) => c.slug === selectedCategory || c.id === selectedCategory);
+  const isSpecialOffers = filterType === 'sale';
+  const isNewReleases = filterType === 'new';
+  const isBestSellers = filterType === 'bestseller';
+
+  let pageEyebrow = 'AZ Rayan Catalogue';
+  let pageTitle = 'Physical Media Vault';
+  let pageDescription = 'Showing certified UK editions. Verified discs and collector editions.';
+
+  if (isSpecialOffers) {
+    pageEyebrow = 'Promotions & Price Drops';
+    pageTitle = 'Special Offers & Deals';
+    pageDescription = 'Limited-time discounts, collector box set markdowns, and special offers with Royal Mail tracked UK dispatch.';
+  } else if (activeGenre) {
+    pageEyebrow = 'Genre Collection';
+    pageTitle = `${activeGenre.name} Archive`;
+    pageDescription = `Explore our certified UK physical editions in the ${activeGenre.name} genre.`;
+  } else if (activeCategory) {
+    pageEyebrow = 'Category Archive';
+    pageTitle = activeCategory.name;
+    pageDescription = activeCategory.description || `Browse complete ${activeCategory.name} editions.`;
+  } else if (isNewReleases) {
+    pageEyebrow = 'Fresh Arrivals';
+    pageTitle = 'New Releases & Pressings';
+    pageDescription = 'Recently added physical optical editions and remastered restorations.';
+  } else if (isBestSellers) {
+    pageEyebrow = 'Collector Favorites';
+    pageTitle = 'Best Selling Titles';
+    pageDescription = 'Most popular collector box sets and films across the UK.';
+  }
+
+  // Derived counts for genres & deals
+  const saleCount = useMemo(() => {
+    return allProducts.filter((p) => p.status === 'active' && p.compare_at_price && p.compare_at_price > p.price).length;
+  }, [allProducts]);
+
+  const genreCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    allProducts.forEach((p) => {
+      if (p.status === 'active' && p.genres) {
+        p.genres.forEach((g) => {
+          if (g.slug) counts[g.slug] = (counts[g.slug] || 0) + 1;
+        });
+      }
+    });
+    return counts;
+  }, [allProducts]);
+
   // Filter & Sort Logic
   const filteredProducts = useMemo(() => {
     return allProducts
@@ -68,7 +118,7 @@ export const Shop: React.FC = () => {
 
         // Genre filter
         if (selectedGenre !== 'all') {
-          const hasGenre = product.genres?.some((g) => g.slug === selectedGenre);
+          const hasGenre = product.genres?.some((g) => g.slug === selectedGenre || g.id === selectedGenre);
           if (!hasGenre) return false;
         }
 
@@ -109,16 +159,16 @@ export const Shop: React.FC = () => {
     <div className="bg-white min-h-screen py-6 sm:py-10">
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Editorial Page Header */}
-        <div className="pb-8 mb-8 border-b border-gray-100 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="pb-8 mb-6 border-b border-gray-100 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
-              AZ Rayan Catalogue
+            <span className="text-xs font-mono uppercase tracking-widest text-brand-blue font-semibold">
+              {pageEyebrow}
             </span>
-            <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-dark tracking-tight mt-1">
-              Physical Media Vault
+            <h1 className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-dark tracking-tight mt-1">
+              {pageTitle}
             </h1>
             <p className="text-sm text-gray-500 mt-1 max-w-lg">
-              Showing {filteredProducts.length} certified UK editions. Verified discs and collector editions.
+              {pageDescription} ({filteredProducts.length} editions found)
             </p>
           </div>
 
@@ -149,6 +199,75 @@ export const Shop: React.FC = () => {
           </div>
         </div>
 
+        {/* Active Filter Badges */}
+        {(isSpecialOffers || activeGenre || activeCategory || selectedFormat !== 'all' || selectedRating !== 'all') && (
+          <div className="mb-6 flex flex-wrap items-center gap-2 text-xs">
+            {isSpecialOffers && (
+              <button
+                type="button"
+                onClick={() => updateFilter('filter', 'all')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-brand-red border border-red-200 font-semibold transition cursor-pointer"
+                title="Remove special offers filter"
+              >
+                <Tag className="w-3 h-3" />
+                <span>Special Offers</span>
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {activeGenre && (
+              <button
+                type="button"
+                onClick={() => updateFilter('genre', 'all')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-dark border border-gray-200 font-medium transition cursor-pointer"
+                title="Remove genre filter"
+              >
+                <span>Genre: {activeGenre.name}</span>
+                <X className="w-3.5 h-3.5 text-gray-500" />
+              </button>
+            )}
+            {activeCategory && (
+              <button
+                type="button"
+                onClick={() => updateFilter('category', 'all')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-dark border border-gray-200 font-medium transition cursor-pointer"
+                title="Remove category filter"
+              >
+                <span>Category: {activeCategory.name}</span>
+                <X className="w-3.5 h-3.5 text-gray-500" />
+              </button>
+            )}
+            {selectedFormat !== 'all' && (
+              <button
+                type="button"
+                onClick={() => updateFilter('format', 'all')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-dark border border-gray-200 font-medium transition cursor-pointer"
+                title="Remove format filter"
+              >
+                <span>Format: {selectedFormat}</span>
+                <X className="w-3.5 h-3.5 text-gray-500" />
+              </button>
+            )}
+            {selectedRating !== 'all' && (
+              <button
+                type="button"
+                onClick={() => updateFilter('rating', 'all')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-dark border border-gray-200 font-medium transition cursor-pointer"
+                title="Remove rating filter"
+              >
+                <span>BBFC: {selectedRating}</span>
+                <X className="w-3.5 h-3.5 text-gray-500" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="text-xs text-gray-500 hover:text-dark underline cursor-pointer ml-1 font-medium transition-colors"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+
         {showMobileFilters && (
           <aside className="mb-7 rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-xs md:hidden">
             <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
@@ -156,19 +275,33 @@ export const Shop: React.FC = () => {
                 <Filter className="h-4 w-4 text-brand-blue" />
                 <span className="font-display text-sm font-bold text-dark">Catalogue filters</span>
               </div>
-              <button type="button" onClick={() => setShowMobileFilters(false)} className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-gray-500 hover:bg-white" aria-label="Close filters">
+              <button type="button" onClick={() => setShowMobileFilters(false)} className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-gray-500 hover:bg-white cursor-pointer" aria-label="Close filters">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="space-y-5">
-              <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-600">Category</span>
-                <select value={selectedCategory} onChange={(event) => updateFilter('category', event.target.value)} className="min-h-11 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-dark focus:border-brand-blue focus:outline-none">
-                  <option value="all">All categories</option>
-                  {categories.map((category) => <option key={category.id} value={category.slug}>{category.name}</option>)}
-                </select>
-              </label>
+              {/* Mobile Special Offers button */}
+              <div>
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-600">Promotions</span>
+                <button
+                  type="button"
+                  onClick={() => updateFilter('filter', isSpecialOffers ? 'all' : 'sale')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-xs font-semibold transition cursor-pointer ${
+                    isSpecialOffers
+                      ? 'bg-red-50 text-brand-red border-red-200 font-bold shadow-2xs'
+                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Tag className="w-3.5 h-3.5 text-brand-red" />
+                    <span>Special Offers & Price Drops</span>
+                  </span>
+                  <span className="text-[10px] bg-brand-red text-white px-2 py-0.5 rounded-full font-bold uppercase">
+                    {saleCount} Deals
+                  </span>
+                </button>
+              </div>
 
               <label className="block">
                 <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-600">Genre</span>
@@ -178,17 +311,25 @@ export const Shop: React.FC = () => {
                 </select>
               </label>
 
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-600">Category</span>
+                <select value={selectedCategory} onChange={(event) => updateFilter('category', event.target.value)} className="min-h-11 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-dark focus:border-brand-blue focus:outline-none">
+                  <option value="all">All categories</option>
+                  {categories.map((category) => <option key={category.id} value={category.slug}>{category.name}</option>)}
+                </select>
+              </label>
+
               <div>
                 <span className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-600">Media format</span>
                 <div className="flex flex-wrap gap-2">
-                  {['all', ...availableFormats].map((format) => <button type="button" key={format} onClick={() => updateFilter('format', format)} className={`min-h-11 rounded-md border px-3 text-xs font-semibold ${selectedFormat === format ? 'border-brand-blue bg-brand-blue text-white' : 'border-gray-200 bg-white text-dark'}`}>{format === 'all' ? 'All formats' : format}</button>)}
+                  {['all', ...availableFormats].map((format) => <button type="button" key={format} onClick={() => updateFilter('format', format)} className={`min-h-11 rounded-md border px-3 text-xs font-semibold cursor-pointer ${selectedFormat === format ? 'border-brand-blue bg-brand-blue text-white' : 'border-gray-200 bg-white text-dark'}`}>{format === 'all' ? 'All formats' : format}</button>)}
                 </div>
               </div>
 
               <div>
                 <span className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-600">BBFC rating</span>
                 <div className="flex flex-wrap gap-2">
-                  {['all', ...availableRatings].map((rating) => <button type="button" key={rating} onClick={() => updateFilter('rating', rating)} className={`min-h-11 min-w-11 rounded-md border px-3 text-xs font-mono font-semibold ${selectedRating === rating ? 'border-dark bg-dark text-white' : 'border-gray-200 bg-white text-dark'}`}>{rating === 'all' ? 'Any' : rating}</button>)}
+                  {['all', ...availableRatings].map((rating) => <button type="button" key={rating} onClick={() => updateFilter('rating', rating)} className={`min-h-11 min-w-11 rounded-md border px-3 text-xs font-mono font-semibold cursor-pointer ${selectedRating === rating ? 'border-dark bg-dark text-white' : 'border-gray-200 bg-white text-dark'}`}>{rating === 'all' ? 'Any' : rating}</button>)}
                 </div>
               </div>
 
@@ -216,7 +357,7 @@ export const Shop: React.FC = () => {
               {(selectedCategory !== 'all' || selectedGenre !== 'all' || selectedFormat !== 'all' || selectedRating !== 'all' || filterType !== 'all') && (
                 <button
                   onClick={resetFilters}
-                  className="text-xs text-brand-red hover:underline flex items-center gap-1 font-medium"
+                  className="text-xs text-brand-red hover:underline flex items-center gap-1 font-medium cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
                   Reset
@@ -224,16 +365,105 @@ export const Shop: React.FC = () => {
               )}
             </div>
 
+            {/* Special Offers & Promotions Card */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700 mb-2.5">
+                Special Offers & Deals
+              </h4>
+              <button
+                type="button"
+                onClick={() => updateFilter('filter', isSpecialOffers ? 'all' : 'sale')}
+                className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all cursor-pointer ${
+                  isSpecialOffers
+                    ? 'bg-red-50 text-brand-red border-red-200 shadow-xs font-bold'
+                    : 'bg-white hover:bg-red-50/50 text-gray-700 hover:text-brand-red border-gray-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Tag className="w-3.5 h-3.5 text-brand-red shrink-0" />
+                  <span>On Sale Editions</span>
+                </div>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                  isSpecialOffers
+                    ? 'bg-brand-red text-white'
+                    : 'bg-red-50 text-brand-red border border-red-200'
+                }`}>
+                  {saleCount} Deals
+                </span>
+              </button>
+            </div>
+
+            {/* Curated Film Genres Filter */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+                  Film Genres
+                </h4>
+                {selectedGenre !== 'all' && (
+                  <button
+                    type="button"
+                    onClick={() => updateFilter('genre', 'all')}
+                    className="text-[11px] text-brand-blue hover:underline cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="space-y-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => updateFilter('genre', 'all')}
+                  className={`flex items-center justify-between w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
+                    selectedGenre === 'all'
+                      ? 'bg-gray-100 text-dark font-bold'
+                      : 'text-gray-600 hover:text-dark hover:bg-gray-50'
+                  }`}
+                >
+                  <span>All Film Genres</span>
+                  <span className={`text-[10px] font-mono shrink-0 px-1.5 py-0.2 rounded ${
+                    selectedGenre === 'all' ? 'bg-dark text-white' : 'text-gray-400'
+                  }`}>
+                    {allProducts.filter((p) => p.status === 'active').length}
+                  </span>
+                </button>
+                {genres.map((g) => {
+                  const count = genreCounts[g.slug] || 0;
+                  const isSelected = selectedGenre === g.slug || selectedGenre === g.id;
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => updateFilter('genre', isSelected ? 'all' : g.slug)}
+                      className={`flex items-center justify-between w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'bg-gray-100 text-dark font-bold'
+                          : 'text-gray-600 hover:text-dark hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="truncate pr-2">{g.name}</span>
+                      {count > 0 && (
+                        <span className={`text-[10px] font-mono shrink-0 px-1.5 py-0.2 rounded ${
+                          isSelected ? 'bg-dark text-white' : 'text-gray-400'
+                        }`}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Category Filter */}
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700 mb-3">
                 Category
               </h4>
-              <div className="space-y-1.5 text-xs">
+              <div className="space-y-1 text-xs">
                 <button
                   onClick={() => updateFilter('category', 'all')}
-                  className={`block w-full text-left py-1 transition-colors ${
-                    selectedCategory === 'all' ? 'font-bold text-brand-blue' : 'text-gray-600 hover:text-dark'
+                  className={`block w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
+                    selectedCategory === 'all' ? 'font-bold text-dark bg-gray-100' : 'text-gray-600 hover:text-dark hover:bg-gray-50'
                   }`}
                 >
                   All Categories
@@ -242,8 +472,8 @@ export const Shop: React.FC = () => {
                   <button
                     key={c.id}
                     onClick={() => updateFilter('category', c.slug)}
-                    className={`block w-full text-left py-1 transition-colors ${
-                      selectedCategory === c.slug ? 'font-bold text-brand-blue' : 'text-gray-600 hover:text-dark'
+                    className={`block w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
+                      selectedCategory === c.slug ? 'font-bold text-dark bg-gray-100' : 'text-gray-600 hover:text-dark hover:bg-gray-50'
                     }`}
                   >
                     {c.name}
@@ -262,9 +492,9 @@ export const Shop: React.FC = () => {
                   <button
                     key={fmt}
                     onClick={() => updateFilter('format', fmt)}
-                    className={`text-xs px-2.5 py-1.5 rounded-sm border font-medium transition-colors ${
+                    className={`text-xs px-2.5 py-1.5 rounded-sm border font-medium transition-colors cursor-pointer ${
                       selectedFormat === fmt
-                        ? 'bg-brand-blue text-white border-brand-blue'
+                        ? 'bg-dark text-white border-dark font-bold'
                         : 'bg-white text-dark border-gray-200 hover:border-dark'
                     }`}
                   >

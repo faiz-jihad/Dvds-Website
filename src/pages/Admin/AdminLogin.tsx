@@ -68,7 +68,7 @@ export const AdminLogin: React.FC = () => {
 
         {/* Footer */}
         <div className="relative z-10 text-xs text-gray-400">
-          <span>AZ Rayan DVDs Ltd • London, UK</span>
+          <span>AZ Rayan Ltd (No. 13894195) • Birmingham, UK</span>
         </div>
       </section>
 

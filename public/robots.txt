@@ -6,4 +6,4 @@ Disallow: /admin/*
 Disallow: /account
 Disallow: /account/*
 
-Sitemap: https://azrayan-dvds.co.uk/sitemap.xml
+Sitemap: https://dvds-website.vercel.app/sitemap.xml

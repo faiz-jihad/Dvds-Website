@@ -53,7 +53,7 @@ export const NewsletterSection: React.FC<NewsletterSectionProps> = ({ data }) =>
 
         <p className="text-xs sm:text-sm text-white/60 leading-relaxed font-light mb-8 max-w-lg mx-auto">
           {data.description ||
-            'Occasional notices when out-of-print box sets, director restorations, and rare catalogue acquisitions enter our London facility. Never spam.'}
+            'Occasional notices when out-of-print box sets, director restorations, and rare catalogue acquisitions enter our UK vault. Never spam.'}
         </p>
 
         {isSubscribed ? (

@@ -15,6 +15,9 @@ import {
   LogIn,
   LogOut,
   Shield,
+  Tag,
+  Film,
+  ArrowRight,
 } from 'lucide-react';
 import { useCartStore } from '../../stores/useCartStore';
 import { useUiStore } from '../../stores/useUiStore';
@@ -30,12 +33,24 @@ interface NavLinkItem {
   badgeStyle?: string;
 }
 
+const GENRE_NAV_ITEMS = [
+  { name: 'Action & Military', slug: 'action', desc: 'War epics & adrenaline blockbusters' },
+  { name: 'Science Fiction', slug: 'science-fiction', desc: 'Space sagas & restored sci-fi' },
+  { name: 'Drama & Crime', slug: 'drama', desc: 'Prestige cinema & award-winning stories' },
+  { name: 'TV Series Box Sets', href: '/shop?category=tv-box-sets', desc: 'Complete television seasons & anthologies' },
+  { name: 'Documentary & Music', slug: 'documentary', desc: 'Historical archives & live concert pressings' },
+  { name: 'Classic & Cult Cinema', slug: 'historical', desc: 'Restored British & world cinema classics' },
+  { name: 'Western & Frontier', slug: 'western', desc: 'Montana frontier epics & classic westerns' },
+];
+
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+  const [genresDropdownOpen, setGenresDropdownOpen] = useState(false);
 
   const location = useLocation();
   const accountMenuRef = useRef<HTMLDivElement>(null);
+  const genresMenuRef = useRef<HTMLDivElement>(null);
 
   const openCartDrawer = useUiStore((state) => state.openCartDrawer);
   const openSearch = useUiStore((state) => state.openSearch);
@@ -55,12 +70,13 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close account dropdown on route change
+  // Close dropdowns on route change
   useEffect(() => {
     setAccountDropdownOpen(false);
+    setGenresDropdownOpen(false);
   }, [location.pathname, location.search]);
 
-  // Click outside detection for account dropdown
+  // Click outside detection for dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -68,6 +84,12 @@ export const Navbar: React.FC = () => {
         !accountMenuRef.current.contains(event.target as HTMLElement)
       ) {
         setAccountDropdownOpen(false);
+      }
+      if (
+        genresMenuRef.current &&
+        !genresMenuRef.current.contains(event.target as HTMLElement)
+      ) {
+        setGenresDropdownOpen(false);
       }
     };
 
@@ -80,6 +102,7 @@ export const Navbar: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setAccountDropdownOpen(false);
+        setGenresDropdownOpen(false);
       }
       const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(
         (e.target as HTMLElement)?.tagName
@@ -93,45 +116,11 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [openSearch]);
 
-  const navLinks: NavLinkItem[] = [
-    { label: 'Shop', href: '/shop' },
-    { label: 'New Releases', href: '/shop?filter=new' },
-    { label: 'Best Sellers', href: '/shop?filter=bestseller' },
-    { label: 'Genres', href: '/#genres' },
-    {
-      label: 'Special Offers',
-      href: '/shop?filter=sale',
-      badge: 'Sale',
-      badgeStyle: 'bg-brand-red text-white',
-    },
-  ];
-
-  const getIsActive = (href: string) => {
-    if (href === '/shop') {
-      return location.pathname === '/shop' && (!location.search || location.search === '');
-    }
-    if (href.startsWith('/shop?')) {
-      const queryParam = href.split('?')[1];
-      return location.pathname === '/shop' && location.search.includes(queryParam);
-    }
-    if (href === '/#genres') {
-      return location.pathname === '/' && location.hash === '#genres';
-    }
-    return location.pathname === href;
-  };
-
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (href === '/#genres') {
-      if (location.pathname === '/') {
-        e.preventDefault();
-        const el = document.getElementById('genres');
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth' });
-          window.history.pushState(null, '', '/#genres');
-        }
-      }
-    }
-  };
+  const isShopActive = location.pathname === '/shop' && (!location.search || location.search === '');
+  const isNewActive = location.pathname === '/shop' && location.search.includes('filter=new');
+  const isBestsellerActive = location.pathname === '/shop' && location.search.includes('filter=bestseller');
+  const isGenresActive = location.pathname === '/shop' && (location.search.includes('genre=') || location.search.includes('category='));
+  const isSaleActive = location.pathname === '/shop' && location.search.includes('filter=sale');
 
   return (
     <header
@@ -148,7 +137,7 @@ export const Navbar: React.FC = () => {
           {/* Mobile menu trigger */}
           <button
             onClick={openMobileNav}
-            className="lg:hidden p-1.5 sm:p-2 text-gray-700 hover:text-brand-blue hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className="lg:hidden p-1.5 sm:p-2 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
@@ -165,7 +154,7 @@ export const Navbar: React.FC = () => {
               alt="AZ Rayan LTD"
               className="h-8 sm:h-11 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
             />
-            <span className="hidden min-[480px]:inline-flex items-center px-2 py-0.5 rounded-full bg-brand-blue-soft text-brand-blue text-[11px] font-bold tracking-wide uppercase border border-brand-blue/15">
+            <span className="hidden min-[480px]:inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-[10px] font-mono font-bold tracking-widest uppercase border border-gray-200/80">
               DVDs
             </span>
           </Link>
@@ -173,34 +162,142 @@ export const Navbar: React.FC = () => {
 
         {/* CENTER: Primary Navigation Links (Desktop) */}
         <nav className="hidden lg:flex items-center gap-1 xl:gap-2 text-[13.5px] font-medium text-gray-700">
-          {navLinks.map((link) => {
-            const isActive = getIsActive(link.href);
-            return (
-              <Link
-                key={link.label}
-                to={link.href}
-                onClick={(e) => handleNavClick(e, link.href)}
+          <Link
+            to="/shop"
+            className={cn(
+              'px-3 py-1.5 rounded-lg transition-all whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-dark/10',
+              isShopActive
+                ? 'text-dark font-bold bg-gray-100 shadow-2xs'
+                : 'text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium'
+            )}
+          >
+            Shop
+          </Link>
+
+          <Link
+            to="/shop?filter=new"
+            className={cn(
+              'px-3 py-1.5 rounded-lg transition-all whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-dark/10',
+              isNewActive
+                ? 'text-dark font-bold bg-gray-100 shadow-2xs'
+                : 'text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium'
+            )}
+          >
+            New Releases
+          </Link>
+
+          <Link
+            to="/shop?filter=bestseller"
+            className={cn(
+              'px-3 py-1.5 rounded-lg transition-all whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-dark/10',
+              isBestsellerActive
+                ? 'text-dark font-bold bg-gray-100 shadow-2xs'
+                : 'text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium'
+            )}
+          >
+            Best Sellers
+          </Link>
+
+          {/* Interactive Genres Dropdown Menu */}
+          <div ref={genresMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setGenresDropdownOpen(!genresDropdownOpen)}
+              className={cn(
+                'px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-dark/10',
+                genresDropdownOpen || isGenresActive
+                  ? 'text-dark font-bold bg-gray-100 shadow-2xs'
+                  : 'text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium'
+              )}
+            >
+              <span>Genres</span>
+              <ChevronDown
                 className={cn(
-                  'px-3 py-1.5 rounded-lg transition-colors relative flex items-center gap-1.5 whitespace-nowrap',
-                  isActive
-                    ? 'text-brand-blue font-semibold bg-brand-blue-soft/70'
-                    : 'text-gray-700 hover:text-brand-blue hover:bg-gray-100/80'
+                  'w-3.5 h-3.5 text-gray-400 transition-transform duration-200',
+                  genresDropdownOpen && 'rotate-180 text-dark'
                 )}
-              >
-                <span>{link.label}</span>
-                {link.badge && (
-                  <span
-                    className={cn(
-                      'text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider',
-                      link.badgeStyle
-                    )}
-                  >
-                    {link.badge}
+              />
+            </button>
+
+            {genresDropdownOpen && (
+              <div className="absolute left-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl p-2.5 text-dark z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-3 py-2 border-b border-gray-100 mb-1">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400">
+                    Curated Archive Genres
                   </span>
-                )}
-              </Link>
-            );
-          })}
+                </div>
+                <div className="space-y-0.5">
+                  {GENRE_NAV_ITEMS.map((item) => {
+                    const isActive = item.slug
+                      ? location.pathname === '/shop' && location.search.includes(`genre=${item.slug}`)
+                      : location.pathname === '/shop' && location.search.includes('category=tv-box-sets');
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href || `/shop?genre=${item.slug}`}
+                        onClick={() => setGenresDropdownOpen(false)}
+                        className={cn(
+                          'flex flex-col px-3 py-2 rounded-xl transition group outline-none',
+                          isActive
+                            ? 'bg-gray-100 text-dark font-bold'
+                            : 'hover:bg-gray-50'
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={cn(
+                              'text-xs',
+                              isActive ? 'font-bold text-dark' : 'font-medium text-gray-700 group-hover:text-dark'
+                            )}
+                          >
+                            {item.name}
+                          </span>
+                          <ArrowRight
+                            className={cn(
+                              'w-3.5 h-3.5 transition-all',
+                              isActive
+                                ? 'text-dark translate-x-0.5'
+                                : 'text-gray-300 group-hover:text-dark group-hover:translate-x-0.5'
+                            )}
+                          />
+                        </div>
+                        <span className="text-[11px] text-gray-400 mt-0.5 font-normal">
+                          {item.desc}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+                <div className="mt-1 pt-2 border-t border-gray-100 px-3 py-1 text-center">
+                  <Link
+                    to="/shop"
+                    onClick={() => setGenresDropdownOpen(false)}
+                    className="text-xs font-bold text-dark hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>Browse Complete Catalogue</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Prominent Special Offers Link */}
+          <Link
+            to="/shop?filter=sale"
+            className={cn(
+              'px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-red-200',
+              isSaleActive
+                ? 'text-brand-red font-bold bg-red-50/90 border border-red-200/80 shadow-2xs'
+                : 'text-gray-700 hover:text-brand-red hover:bg-red-50/50 font-medium'
+            )}
+          >
+            <Tag className="w-3.5 h-3.5 text-brand-red shrink-0" />
+            <span>Special Offers</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider bg-brand-red text-white shadow-2xs">
+              Sale
+            </span>
+          </Link>
         </nav>
 
         {/* SEARCH AFFORDANCE: Clean, interactive retail search bar */}
@@ -208,11 +305,11 @@ export const Navbar: React.FC = () => {
           <button
             type="button"
             onClick={openSearch}
-            className="w-full flex items-center justify-between px-3.5 py-2 bg-gray-50 hover:bg-gray-100/90 border border-gray-200 rounded-full text-xs text-gray-400 hover:text-gray-700 transition-all duration-150 group shadow-2xs cursor-pointer"
+            className="w-full flex items-center justify-between px-3.5 py-2 bg-gray-50 hover:bg-gray-100/90 border border-gray-200 rounded-full text-xs text-gray-400 hover:text-gray-700 transition-all duration-150 group shadow-2xs cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-dark/10"
             aria-label="Search catalogue"
           >
             <span className="flex items-center gap-2.5 text-gray-400 group-hover:text-gray-600 truncate">
-              <Search className="w-4 h-4 text-gray-400 group-hover:text-brand-blue transition-colors shrink-0" />
+              <Search className="w-4 h-4 text-gray-400 group-hover:text-dark transition-colors shrink-0" />
               <span className="font-normal text-[13px] text-gray-500 truncate">
                 Search films, actors, genres...
               </span>
@@ -229,7 +326,7 @@ export const Navbar: React.FC = () => {
           <button
             type="button"
             onClick={openSearch}
-            className="p-2 text-gray-700 hover:text-brand-blue hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+            className="p-2 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
             aria-label="Search catalogue"
             title="Search films"
           >
@@ -239,7 +336,7 @@ export const Navbar: React.FC = () => {
           {/* Saved Wishlist (Desktop md+ only, mobile accessible in drawer) */}
           <Link
             to="/favourites"
-            className="hidden md:flex relative p-2 text-gray-700 hover:text-brand-blue hover:bg-gray-100 rounded-full transition-colors items-center justify-center"
+            className="hidden md:flex relative p-2 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-full transition-colors items-center justify-center"
             aria-label="Wishlist"
             title="Saved Wishlist"
           >
@@ -264,8 +361,8 @@ export const Navbar: React.FC = () => {
               className={cn(
                 'p-2 rounded-full transition-colors cursor-pointer flex items-center gap-1',
                 accountDropdownOpen
-                  ? 'bg-gray-100 text-brand-blue'
-                  : 'text-gray-700 hover:text-brand-blue hover:bg-gray-100'
+                  ? 'bg-gray-100 text-dark'
+                  : 'text-gray-700 hover:text-dark hover:bg-gray-100'
               )}
               aria-label="Account options"
               title="Customer Account"

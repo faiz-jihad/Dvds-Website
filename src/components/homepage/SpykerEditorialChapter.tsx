@@ -133,7 +133,7 @@ export const SpykerEditorialChapter: React.FC = () => {
                 or wiped from your shelves.
               </p>
               <p className="will-change-transform">
-                The AZ Rayan collection is hand-curated by physical media purists in Central London.
+                The AZ Rayan collection is hand-curated by physical media purists in the United Kingdom.
                 From complete prestige television sagas to historic musical archives, every title is
                 verified for optical disc integrity, uncompressed Dolby multi-channel fidelity, and
                 tactile slipcase presentation.

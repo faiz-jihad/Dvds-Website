@@ -56,6 +56,7 @@ export const router = createBrowserRouter([
       { path: 'cart', element: <CartPage /> },
       { path: 'checkout', element: <CheckoutPage /> },
       { path: 'order-success/:orderId', element: <OrderSuccessPage /> },
+      { path: 'order-confirmation/:orderId', element: <OrderSuccessPage /> },
       { path: 'favourites', element: <FavouritesPage /> },
 
       // Information & Legal

@@ -234,7 +234,7 @@ export const AdminStoreSettings: React.FC = () => {
                   label="Center Shipping Guarantee Banner"
                   value={settings.announcement_center}
                   onChange={(e) => handleChange('announcement_center', e.target.value)}
-                  placeholder="e.g. Free UK delivery on orders over £25 • Dispatched from London"
+                  placeholder="e.g. Free UK delivery on orders over £25 • Same-day dispatch before 2PM"
                 />
 
                 <div className="md:col-span-2">

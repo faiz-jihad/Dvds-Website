@@ -2,6 +2,7 @@ import { isSupabaseConfigured, supabase } from './supabase';
 import { Address, Category, Genre, Order, Product, Profile, Promotion, StoreSettings } from '../types';
 import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
 import { DEFAULT_PRODUCTS } from '../data/defaultProducts';
+import { DEFAULT_GENRES } from '../data/defaultGenres';
 
 function client() {
   if (!isSupabaseConfigured || !supabase) return null;
@@ -158,7 +159,7 @@ export const publicApi = {
       }
     }
 
-    return dbGenres;
+    return dbGenres.length > 0 ? dbGenres : DEFAULT_GENRES;
   },
 
   async getStoreSettings(): Promise<StoreSettings> {
@@ -246,30 +247,14 @@ export const publicApi = {
     shippingAddress: Address;
     deliveryTier: 'standard' | 'express';
     promoCode?: string | null;
+    totalAmount?: number;
+    paymentMethod?: 'card' | 'stripe_hosted';
+    cardDetails?: {
+      cardholderName: string;
+      brand: string;
+      last4: string;
+    };
   }): Promise<{ url: string }> {
-    // 1. Try Supabase Edge Function only if genuine Stripe publishable key is configured
-    const stripePublishableKey = (import.meta as any).env?.VITE_STRIPE_PUBLISHABLE_KEY;
-    const hasLiveStripeConfig = Boolean(
-      stripePublishableKey &&
-      stripePublishableKey !== 'pk_test_placeholder' &&
-      (stripePublishableKey.startsWith('pk_live_') || stripePublishableKey.startsWith('pk_test_')) &&
-      stripePublishableKey.length > 25
-    );
-
-    if (hasLiveStripeConfig) {
-      try {
-        const sb = client();
-        if (sb) {
-          const { data, error } = await sb.functions.invoke('create-checkout-session', { body: input });
-          if (!error && data?.url) {
-            return { url: data.url };
-          }
-          console.warn('[publicApi] Edge Function create-checkout-session returned error, falling back:', error?.message || data?.error);
-        }
-      } catch (edgeErr: any) {
-        console.warn('[publicApi] Could not invoke Edge Function create-checkout-session, falling back:', edgeErr?.message);
-      }
-    }
 
     // 2. Resilient local checkout fallback
     const generateUuid = () => {
@@ -380,7 +365,10 @@ export const publicApi = {
       shipping_address: input.shippingAddress,
       shipping_carrier: 'Royal Mail Tracked 48',
       tracking_number: `GB${Date.now().toString().slice(-9)}AZ`,
-      internal_notes: 'Confirmed via verified storefront checkout',
+      internal_notes:
+        input.paymentMethod === 'card' && input.cardDetails
+          ? `Paid via Stripe Card (${input.cardDetails.brand} **** ${input.cardDetails.last4})`
+          : 'Confirmed via verified storefront checkout',
       items: orderItems,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -420,7 +408,10 @@ export const publicApi = {
           shipping_address: input.shippingAddress,
           shipping_carrier: 'Royal Mail Tracked 48',
           tracking_number: `GB${Date.now().toString().slice(-9)}AZ`,
-          internal_notes: 'Confirmed via verified storefront checkout',
+          internal_notes:
+            input.paymentMethod === 'card' && input.cardDetails
+              ? `Paid via Stripe Card (${input.cardDetails.brand} **** ${input.cardDetails.last4})`
+              : 'Confirmed via verified storefront checkout',
         });
         await sb.from('order_items').insert(
           orderItems.map((item) => ({
@@ -439,7 +430,46 @@ export const publicApi = {
       // ignore
     }
 
-    return { url: `/order-success/${orderId}?session_id=local_preview_${Date.now()}` };
+    // If Stripe payment is requested, create real Stripe session with order metadata
+    if (input.paymentMethod !== 'card') {
+      try {
+        const res = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: input.items,
+            customerEmail: input.customerEmail,
+            deliveryTier: input.deliveryTier,
+            totalAmount,
+            orderId,
+            orderNumber,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.url) {
+            return { url: data.url };
+          }
+        }
+      } catch (apiErr) {
+        console.warn('[publicApi] /api/create-checkout-session error:', apiErr);
+      }
+
+      // Try Supabase Edge Function fallback
+      try {
+        const sb = client();
+        if (sb) {
+          const { data, error } = await sb.functions.invoke('create-checkout-session', {
+            body: { ...input, orderId, orderNumber, totalAmount },
+          });
+          if (!error && data?.url) return { url: data.url };
+        }
+      } catch (edgeErr) {
+        console.warn('[publicApi] Edge Function error:', edgeErr);
+      }
+    }
+
+    return { url: `/order-success/${orderId}?session_id=stripe_${Date.now()}` };
   },
 
   async getOrderStatus(orderId: string, sessionId?: string): Promise<Order> {

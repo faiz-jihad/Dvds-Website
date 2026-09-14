@@ -112,7 +112,7 @@ export const SpykerManifestoVideo: React.FC = () => {
     {
       id: '03',
       title: 'CURATED ARCHIVES',
-      desc: 'Every edition in our catalogue is inspected for disc integrity, packaged in collector-grade slipcases with original sleeve art, and dispatched directly from our central London vault via Royal Mail Tracked 24.',
+      desc: 'Every edition in our catalogue is inspected for disc integrity, packaged in collector-grade slipcases with original sleeve art, and dispatched directly from our UK archival vault via Royal Mail Tracked 24.',
     },
   ];
 
@@ -204,7 +204,7 @@ export const SpykerManifestoVideo: React.FC = () => {
               </span>
             </div>
             <div className="hidden sm:block tracking-widest text-[10px] sm:text-xs text-white/50">
-              LONDON VAULT MASTER REEL
+              AZ RAYAN VAULT MASTER REEL
             </div>
           </div>
 

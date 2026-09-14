@@ -1,17 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowRight, Search, Disc, Sparkles, Heart, User, Truck, Shield, LogIn, LogOut, Bell } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import {
+  X,
+  ArrowRight,
+  Search,
+  Disc,
+  Sparkles,
+  Heart,
+  User,
+  Truck,
+  Shield,
+  LogIn,
+  LogOut,
+  Bell,
+  Tag,
+  Film,
+  ChevronDown,
+} from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useUiStore } from '../../stores/useUiStore';
 import { useCustomerAuth } from '../../auth/CustomerAuth';
 import { useFavouritesStore } from '../../stores/useFavouritesStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { publicApi } from '../../lib/publicApi';
+import { cn } from '../../lib/formatters';
+
+const GENRE_NAV_ITEMS = [
+  { name: 'Action & Military', slug: 'action' },
+  { name: 'Science Fiction', slug: 'science-fiction' },
+  { name: 'Drama & Crime', slug: 'drama' },
+  { name: 'TV Series Box Sets', href: '/shop?category=tv-box-sets' },
+  { name: 'Documentary & Music', slug: 'documentary' },
+  { name: 'Classic & Cult Cinema', slug: 'historical' },
+  { name: 'Western & Frontier', slug: 'western' },
+];
 
 export const MobileNavDrawer: React.FC = () => {
   const { isMobileNavOpen, closeMobileNav, openSearch } = useUiStore();
   const { customer, isAuthenticated, logout: customerLogout } = useCustomerAuth();
+  const location = useLocation();
+  const [genresOpen, setGenresOpen] = useState(true);
   const favourites = useFavouritesStore((state) => state.favourites);
   const allNotifications = useNotificationStore((state) => state.notifications);
   const unreadCount = allNotifications.filter((n) => n.target === 'customer' && !n.read).length;
@@ -147,73 +176,139 @@ export const MobileNavDrawer: React.FC = () => {
                 <Link
                   to="/shop"
                   onClick={closeMobileNav}
-                  className="flex items-center justify-between py-2.5 px-3 font-semibold text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
+                  className={cn(
+                    'flex items-center justify-between py-2.5 px-3 font-semibold rounded-lg transition-colors',
+                    location.pathname === '/shop' && !location.search
+                      ? 'bg-gray-100 text-dark font-bold'
+                      : 'text-gray-700 hover:text-dark hover:bg-gray-100'
+                  )}
                 >
                   <span>Complete Catalogue</span>
                   <ArrowRight className="w-4 h-4 text-gray-400" />
                 </Link>
+
                 <Link
                   to="/shop?filter=new"
                   onClick={closeMobileNav}
-                  className="flex items-center justify-between py-2.5 px-3 font-semibold text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
+                  className={cn(
+                    'flex items-center justify-between py-2.5 px-3 font-semibold rounded-lg transition-colors',
+                    location.pathname === '/shop' && location.search.includes('filter=new')
+                      ? 'bg-gray-100 text-dark font-bold'
+                      : 'text-gray-700 hover:text-dark hover:bg-gray-100'
+                  )}
                 >
                   <span>New Pressings</span>
                   <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-bold">
                     FRESH
                   </span>
                 </Link>
+
                 <Link
                   to="/shop?filter=bestseller"
                   onClick={closeMobileNav}
-                  className="flex items-center justify-between py-2.5 px-3 font-semibold text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
+                  className={cn(
+                    'flex items-center justify-between py-2.5 px-3 font-semibold rounded-lg transition-colors',
+                    location.pathname === '/shop' && location.search.includes('filter=bestseller')
+                      ? 'bg-gray-100 text-dark font-bold'
+                      : 'text-gray-700 hover:text-dark hover:bg-gray-100'
+                  )}
                 >
                   <span>Best Sellers</span>
                 </Link>
+
+                {/* Prominent Special Offers */}
                 <Link
                   to="/shop?filter=sale"
                   onClick={closeMobileNav}
-                  className="flex items-center justify-between py-2.5 px-3 font-semibold text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
+                  className={cn(
+                    'flex items-center justify-between py-2.5 px-3 font-bold rounded-xl transition-all border',
+                    location.pathname === '/shop' && location.search.includes('filter=sale')
+                      ? 'bg-red-50 text-brand-red border-red-200 shadow-xs'
+                      : 'bg-red-50/40 text-brand-red border-red-100 hover:bg-red-50 hover:border-red-200'
+                  )}
                 >
-                  <span>Special Offers</span>
-                  <span className="text-[10px] bg-red-50 text-brand-red border border-red-200 px-1.5 py-0.5 rounded font-bold">
-                    SAVE
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-brand-red shrink-0" />
+                    <span>Special Offers & Deals</span>
+                  </div>
+                  <span className="text-[10px] bg-brand-red text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-2xs">
+                    Sale
                   </span>
                 </Link>
 
+                {/* Curated Film Genres Section */}
                 <div className="pt-4 pb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-3">
-                    Archive Categories
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setGenresOpen(!genresOpen)}
+                    className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500 hover:text-dark transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Film className="w-3.5 h-3.5 text-gray-600" />
+                      <span>Curated Film Genres</span>
+                    </div>
+                    <ChevronDown
+                      className={cn(
+                        'w-3.5 h-3.5 text-gray-400 transition-transform duration-200',
+                        genresOpen ? 'rotate-180' : ''
+                      )}
+                    />
+                  </button>
+
+                  {genresOpen && (
+                    <div className="mt-1 space-y-0.5 pl-1.5 pr-1">
+                      {GENRE_NAV_ITEMS.map((item) => {
+                        const isActive = item.slug
+                          ? location.pathname === '/shop' && location.search.includes(`genre=${item.slug}`)
+                          : location.pathname === '/shop' && location.search.includes('category=tv-box-sets');
+                        return (
+                          <Link
+                            key={item.name}
+                            to={item.href || `/shop?genre=${item.slug}`}
+                            onClick={closeMobileNav}
+                            className={cn(
+                              'flex items-center justify-between py-2 px-3 text-xs rounded-lg transition-colors',
+                              isActive
+                                ? 'bg-gray-100 text-dark font-bold'
+                                : 'text-gray-600 hover:text-dark hover:bg-gray-100'
+                            )}
+                          >
+                            <span>{item.name}</span>
+                            <ArrowRight
+                              className={cn(
+                                'w-3.5 h-3.5 transition-all',
+                                isActive ? 'text-dark translate-x-0.5' : 'text-gray-300'
+                              )}
+                            />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
-                <Link
-                  to="/shop?category=tv-box-sets"
-                  onClick={closeMobileNav}
-                  className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <span>TV Box Sets</span>
-                </Link>
-                <Link
-                  to="/shop?search=Star+Wars"
-                  onClick={closeMobileNav}
-                  className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <span>Star Wars Anthology</span>
-                </Link>
-                <Link
-                  to="/shop?genre=action"
-                  onClick={closeMobileNav}
-                  className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <span>Action & Military</span>
-                </Link>
-                <Link
-                  to="/shop?genre=documentary"
-                  onClick={closeMobileNav}
-                  className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <span>Music & Documentary</span>
-                </Link>
+                {/* Archive Collections */}
+                <div className="pt-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-3 block mb-1">
+                    Special Anthologies
+                  </span>
+                  <Link
+                    to="/shop?category=tv-box-sets"
+                    onClick={closeMobileNav}
+                    className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <span>Complete TV Box Sets</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-300" />
+                  </Link>
+                  <Link
+                    to="/shop?search=Star+Wars"
+                    onClick={closeMobileNav}
+                    className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <span>Star Wars Anthology Vault</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-300" />
+                  </Link>
+                </div>
               </nav>
             </div>
 
