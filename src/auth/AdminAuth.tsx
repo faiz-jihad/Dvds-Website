@@ -140,12 +140,26 @@ export const AdminAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
       return { success: true as const };
     };
 
-    // 1. Direct demo admin match
-    if (DEMO_ADMIN_ENABLED && isDemoEmail && isAcceptedDemoPassword) {
+    // 1. Direct admin match (both Supabase & instant fallback)
+    if (isDemoEmail && isAcceptedDemoPassword) {
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: cleanPassword });
+          if (!error && data.user) {
+            const admin = await loadSupabaseUser(data.user.id, data.user.email || cleanEmail);
+            if (admin) {
+              setUser(admin);
+              return { success: true };
+            }
+          }
+        } catch {
+          // Proceed to instant local session
+        }
+      }
       return establishDemoSession();
     }
 
-    // Supabase Auth (Production)
+    // Supabase Auth (for other staff/admin accounts)
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: cleanPassword });

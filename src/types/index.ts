@@ -117,6 +117,8 @@ export interface Order {
   bank_transfer_reference?: string | null;
   paypal_order_id?: string | null;
   paypal_capture_id?: string | null;
+  stripe_payment_intent_id?: string | null;
+  stripe_checkout_session_id?: string | null;
   shipping_carrier?: string | null;
   tracking_number?: string | null;
   dispatched_at?: string | null;
