@@ -962,6 +962,76 @@ export const adminApi = {
     return { id: orderId, status, fulfilment_status: fulfilmentStatus } as Order;
   },
 
+  async confirmBankTransferPayment(orderId: string, adminNote?: string): Promise<Order> {
+    const paidAt = new Date().toISOString();
+    try {
+      const { error } = await client().rpc('confirm_bank_transfer_payment', { p_order_id: orderId });
+      if (!error) {
+        const { data: orderData, error: readError } = await client()
+          .from('orders')
+          .select('*, items:order_items(*)')
+          .eq('id', orderId)
+          .single();
+        if (!readError && orderData) {
+          const norm = normalizeOrder(orderData);
+          saveDemoOrder(norm);
+          return norm;
+        }
+      }
+
+      const { data: updatedData, error: updateError } = await client()
+        .from('orders')
+        .update({
+          payment_status: 'paid',
+          status: 'processing',
+          paid_at: paidAt,
+          updated_at: paidAt,
+        })
+        .eq('id', orderId)
+        .select('*, items:order_items(*)')
+        .single();
+
+      if (!updateError && updatedData) {
+        const norm = normalizeOrder(updatedData);
+        saveDemoOrder(norm);
+        return norm;
+      }
+
+      const allOrders = await this.getOrders();
+      const existing = allOrders.find((o) => o.id === orderId);
+      if (existing) {
+        const updated: Order = {
+          ...existing,
+          payment_status: 'paid',
+          status: 'processing',
+          paid_at: paidAt,
+          updated_at: paidAt,
+          internal_notes: adminNote
+            ? `${existing.internal_notes ? existing.internal_notes + ' | ' : ''}Manual bank payment confirmed: ${adminNote}`
+            : existing.internal_notes,
+        };
+        saveDemoOrder(updated);
+        return updated;
+      }
+    } catch (err) {
+      const allOrders = await this.getOrders();
+      const existing = allOrders.find((o) => o.id === orderId);
+      if (existing) {
+        const updated: Order = {
+          ...existing,
+          payment_status: 'paid',
+          status: 'processing',
+          paid_at: paidAt,
+          updated_at: paidAt,
+        };
+        saveDemoOrder(updated);
+        return updated;
+      }
+      throw err;
+    }
+    return { id: orderId, payment_status: 'paid', status: 'processing', paid_at: paidAt } as Order;
+  },
+
   async adjustStock(productId: string, delta: number, reason: string): Promise<Product> {
     try {
       const { data, error } = await client().rpc('adjust_product_stock', {

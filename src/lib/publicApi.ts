@@ -475,8 +475,132 @@ export const publicApi = {
     return { url: `/order-success/${orderId}?session_id=stripe_${Date.now()}` };
   },
 
-  async getOrderStatus(orderId: string, sessionId?: string): Promise<Order> {
-    // 1. Check local demo orders first
+  async createPayPalOrder(input: {
+    items: { product_id: string; quantity: number }[];
+    customerEmail: string;
+    shippingAddress: Address;
+    deliveryTier: 'standard' | 'express';
+    promoCode?: string | null;
+    totalAmount?: number;
+  }): Promise<{ url: string; orderId: string; orderNumber: string; paypalOrderId?: string }> {
+    const res = await fetch('/api/create-paypal-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to initialize PayPal payment');
+    }
+    return res.json();
+  },
+
+  async capturePayPalOrder(orderId: string, paypalOrderId: string): Promise<any> {
+    const res = await fetch('/api/capture-paypal-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, paypalOrderId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to capture PayPal payment');
+    }
+    return res.json();
+  },
+
+  async createBankTransferOrder(input: {
+    items: { product_id: string; quantity: number }[];
+    customerEmail: string;
+    shippingAddress: Address;
+    deliveryTier: 'standard' | 'express';
+    promoCode?: string | null;
+    totalAmount?: number;
+  }): Promise<{ success: boolean; orderId: string; orderNumber: string; total: number }> {
+    const res = await fetch('/api/create-bank-transfer-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to place bank transfer order');
+    }
+    const data = await res.json();
+
+    // Also persist to local demo storage for instant retrieval in preview
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('az_rayan_demo_orders_v1');
+        const list: Order[] = raw ? JSON.parse(raw) : [];
+        const newDemoOrder: Order = {
+          id: data.orderId,
+          order_number: data.orderNumber,
+          email: input.customerEmail,
+          status: 'pending',
+          payment_status: 'awaiting_payment',
+          payment_method: 'bank_transfer',
+          payment_provider: 'manual_bank',
+          fulfilment_status: 'unfulfilled',
+          subtotal: data.total || input.totalAmount || 0,
+          shipping_amount: 0,
+          discount_amount: 0,
+          total_amount: data.total || input.totalAmount || 0,
+          currency: 'GBP',
+          shipping_address: input.shippingAddress,
+          payment_reference: data.orderNumber,
+          bank_transfer_reference: data.orderNumber,
+          items: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        localStorage.setItem('az_rayan_demo_orders_v1', JSON.stringify([newDemoOrder, ...list.filter(o => o.id !== data.orderId)]));
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    return data;
+  },
+
+  async getOrderStatus(orderId: string, sessionId?: string, paypalOrderId?: string): Promise<Order> {
+    // 1. If Stripe session ID is present, verify via server endpoint
+    if (sessionId && !sessionId.startsWith('stripe_') && !sessionId.startsWith('local_preview_')) {
+      try {
+        await fetch('/api/verify-stripe-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId, sessionId }),
+        });
+      } catch (err) {
+        console.warn('[publicApi] verify-stripe-payment notice:', err);
+      }
+    }
+
+    // 2. If returning from PayPal, capture order
+    if (paypalOrderId) {
+      try {
+        await this.capturePayPalOrder(orderId, paypalOrderId);
+      } catch (err) {
+        console.warn('[publicApi] capturePayPalOrder notice:', err);
+      }
+    }
+
+    // 3. Check Supabase orders table
+    try {
+      const sb = client();
+      if (sb) {
+        const { data, error } = await sb
+          .from('orders')
+          .select('*, items:order_items(*)')
+          .eq('id', orderId)
+          .maybeSingle();
+        if (!error && data) return data as Order;
+      }
+    } catch {
+      // ignore
+    }
+
+    // 4. Check local demo orders
     if (typeof window !== 'undefined') {
       try {
         const raw = localStorage.getItem('az_rayan_demo_orders_v1');
@@ -488,42 +612,6 @@ export const publicApi = {
       } catch {
         // ignore
       }
-    }
-
-    // 2. If valid Stripe session, check Edge Function
-    if (sessionId && !sessionId.startsWith('local_preview_')) {
-      try {
-        const sb = client();
-        if (sb) {
-          const { data, error } = await sb.functions.invoke('get-order-status', { body: { orderId, sessionId } });
-          if (!error && data?.order) return data.order as Order;
-        }
-      } catch (edgeErr) {
-        console.warn('[publicApi] get-order-status Edge Function error:', edgeErr);
-      }
-    }
-
-    // 3. Check Supabase orders table
-    try {
-      const sb = client();
-      if (sb) {
-        const { data, error } = await sb.from('orders').select('*, items:order_items(*)').eq('id', orderId).single();
-        if (!error && data) return data as Order;
-      }
-    } catch {
-      // ignore
-    }
-
-    // 4. Check localStorage again as fallback
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = localStorage.getItem('az_rayan_demo_orders_v1');
-        if (raw) {
-          const list: Order[] = JSON.parse(raw);
-          const found = list.find((o) => o.id === orderId || o.order_number === orderId);
-          if (found) return found;
-        }
-      } catch {}
     }
 
     throw new Error('Order details could not be found.');

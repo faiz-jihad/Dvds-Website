@@ -56,5 +56,12 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
     'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
   support_email: 'concierge@azrayan.co.uk',
   support_phone: '+44 (0)121 496 0833',
+  bank_name: 'Barclays Bank UK',
+  bank_account_name: 'AZ Rayan Ltd',
+  bank_sort_code: '20-00-00',
+  bank_account_number: '13894195',
+  bank_iban: 'GB29 BARC 2000 0013 8941 95',
+  bank_payment_instructions:
+    'Please transfer the exact total to our Barclays account using your Order Reference as the payment description. Your items are held in reserve and dispatched immediately upon receipt confirmation.',
   updated_at: new Date().toISOString(),
 };

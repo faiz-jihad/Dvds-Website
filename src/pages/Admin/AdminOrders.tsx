@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search, Eye, PackageCheck, Truck, Check, Disc, Filter } from 'lucide-react';
+import { Search, Eye, PackageCheck, Truck, Check, Disc, Filter, Building2, CreditCard, AlertCircle } from 'lucide-react';
 import { adminApi } from '../../lib/adminApi';
 import { Order, OrderStatus, FulfilmentStatus } from '../../types';
 import { formatGBP, formatDateUK } from '../../lib/formatters';
@@ -24,6 +24,12 @@ export const AdminOrders: React.FC = () => {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [internalNote, setInternalNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Bank Transfer manual confirmation states
+  const [confirmingBankOrder, setConfirmingBankOrder] = useState<Order | null>(null);
+  const [bankConfirmNote, setBankConfirmNote] = useState('');
+  const [isConfirmingBank, setIsConfirmingBank] = useState(false);
+
   const addToast = useUiStore((state) => state.addToast);
 
   const openOrder = (order: Order) => {
@@ -31,6 +37,25 @@ export const AdminOrders: React.FC = () => {
     setCarrier(order.shipping_carrier || '');
     setTrackingNumber(order.tracking_number || '');
     setInternalNote(order.internal_notes || '');
+  };
+
+  const handleConfirmBankPayment = async () => {
+    if (!confirmingBankOrder) return;
+    setIsConfirmingBank(true);
+    try {
+      const updated = await adminApi.confirmBankTransferPayment(confirmingBankOrder.id, bankConfirmNote);
+      await queryClient.invalidateQueries({ queryKey: ['admin'] });
+      if (selectedOrder?.id === updated.id) {
+        setSelectedOrder(updated);
+      }
+      setConfirmingBankOrder(null);
+      setBankConfirmNote('');
+      addToast(`Payment confirmed for order ${updated.order_number}! Status updated to Processing.`, 'success');
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Failed to confirm bank transfer payment', 'error');
+    } finally {
+      setIsConfirmingBank(false);
+    }
   };
 
   const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus, fulfilment: FulfilmentStatus) => {
@@ -144,9 +169,48 @@ export const AdminOrders: React.FC = () => {
                     {o.items.reduce((s, i) => s + i.quantity, 0)} discs
                   </td>
                   <td className="p-3.5">
-                    <span className="px-2 py-0.5 rounded-sm bg-emerald-100 text-emerald-800 font-semibold text-[10px] uppercase">
-                      {o.payment_status}
-                    </span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`px-2 py-0.5 rounded-sm font-semibold text-[10px] uppercase ${
+                            o.payment_status === 'paid'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : o.payment_status === 'awaiting_payment'
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {o.payment_status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-gray-500 flex items-center gap-1">
+                        <span className="capitalize text-gray-700 font-medium">
+                          {o.payment_method === 'bank_transfer'
+                            ? 'Bank Transfer'
+                            : o.payment_method === 'paypal'
+                            ? 'PayPal'
+                            : 'Card (Stripe)'}
+                        </span>
+                        {o.paid_at && (
+                          <span className="text-gray-400 font-mono text-[10px]">
+                            • {formatDateUK(o.paid_at)}
+                          </span>
+                        )}
+                      </div>
+                      {o.payment_method === 'bank_transfer' && o.payment_status === 'awaiting_payment' && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmingBankOrder(o);
+                          }}
+                          className="mt-1 px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[10px] flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <Check className="w-3 h-3" />
+                          Confirm Payment
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td className="p-3.5">
                     <span
@@ -192,6 +256,32 @@ export const AdminOrders: React.FC = () => {
           maxWidth="xl"
         >
           <div className="space-y-6 text-xs">
+            {/* Awaiting Bank Transfer Notice */}
+            {selectedOrder.payment_method === 'bank_transfer' && selectedOrder.payment_status === 'awaiting_payment' && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <Building2 className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-amber-950 text-xs block">
+                      Awaiting Barclays Bank Transfer Confirmation
+                    </span>
+                    <p className="text-[11px] text-amber-800 mt-0.5">
+                      Customer reference: <strong className="font-mono">{selectedOrder.order_number}</strong> • Amount: <strong>{formatGBP(selectedOrder.total_amount)}</strong>
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setConfirmingBankOrder(selectedOrder)}
+                  className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 font-bold shadow-xs shrink-0"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  Confirm Payment Received
+                </Button>
+              </div>
+            )}
+
             {/* Fulfilment Status Controls */}
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-md flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -225,9 +315,68 @@ export const AdminOrders: React.FC = () => {
                     Mark Delivered
                   </Button>
                 )}
-                {selectedOrder.payment_status !== 'paid' && <span className="rounded bg-amber-100 px-3 py-2 text-[10px] font-bold uppercase text-amber-800">Awaiting verified payment</span>}
+                {selectedOrder.payment_status !== 'paid' && (
+                  <span className="rounded bg-amber-100 px-3 py-2 text-[10px] font-bold uppercase text-amber-800">
+                    Awaiting verified payment
+                  </span>
+                )}
                 {selectedOrder.payment_status !== 'paid' && !['cancelled', 'delivered'].includes(selectedOrder.status) && (
-                  <Button variant="destructive" size="sm" onClick={() => handleUpdateStatus(selectedOrder.id, 'cancelled', 'unfulfilled')} isLoading={isUpdating}>Cancel order</Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleUpdateStatus(selectedOrder.id, 'cancelled', 'unfulfilled')}
+                    isLoading={isUpdating}
+                  >
+                    Cancel order
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Payment & Provider Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-gray-50 rounded-md border border-gray-200">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-500 block">Payment Method</span>
+                <span className="font-semibold text-gray-900 capitalize">
+                  {selectedOrder.payment_method === 'bank_transfer'
+                    ? 'Company Bank Transfer'
+                    : selectedOrder.payment_method === 'paypal'
+                    ? 'PayPal'
+                    : 'Credit / Debit Card'}
+                </span>
+                <span className="text-[10px] text-gray-400 block font-mono">
+                  Provider: {selectedOrder.payment_provider || 'standard'}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-500 block">Payment Status</span>
+                <span
+                  className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                    selectedOrder.payment_status === 'paid'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-amber-100 text-amber-900 border border-amber-300'
+                  }`}
+                >
+                  {selectedOrder.payment_status.replace('_', ' ')}
+                </span>
+                {selectedOrder.paid_at && (
+                  <span className="text-[10px] text-gray-500 block mt-0.5">
+                    Paid: {formatDateUK(selectedOrder.paid_at)}
+                  </span>
+                )}
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-500 block">Transaction Reference</span>
+                <span className="font-mono text-[11px] text-gray-800 break-all font-medium">
+                  {selectedOrder.payment_reference ||
+                    selectedOrder.paypal_capture_id ||
+                    selectedOrder.stripe_payment_intent_id ||
+                    selectedOrder.order_number}
+                </span>
+                {selectedOrder.payment_confirmed_by && (
+                  <span className="text-[10px] text-gray-400 block">
+                    Confirmed by: {selectedOrder.payment_confirmed_by}
+                  </span>
                 )}
               </div>
             </div>
@@ -324,6 +473,58 @@ export const AdminOrders: React.FC = () => {
               <div className="text-dark font-bold text-sm pt-1 border-t border-gray-200">
                 Total Paid: {formatGBP(selectedOrder.total_amount)}
               </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Confirm Bank Transfer Modal */}
+      {confirmingBankOrder && (
+        <Modal
+          isOpen={Boolean(confirmingBankOrder)}
+          onClose={() => setConfirmingBankOrder(null)}
+          title="Confirm Bank Transfer Payment"
+          description={`Order ${confirmingBankOrder.order_number} (${formatGBP(confirmingBankOrder.total_amount)})`}
+          maxWidth="md"
+        >
+          <div className="space-y-4 text-xs">
+            <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-1">
+              <p className="font-semibold text-emerald-950">Confirm Funds Received in Barclays Bank UK</p>
+              <p className="text-[11px] text-emerald-800">
+                Please confirm that the customer has transferred <strong>{formatGBP(confirmingBankOrder.total_amount)}</strong> to Sort Code <strong>20-00-00</strong>, Account Number <strong>13894195</strong> with payment reference <strong>{confirmingBankOrder.order_number}</strong>.
+              </p>
+            </div>
+
+            <label className="block space-y-1">
+              <span className="font-bold text-gray-700 uppercase text-[10px]">Optional Admin Verification Note</span>
+              <input
+                type="text"
+                value={bankConfirmNote}
+                onChange={(e) => setBankConfirmNote(e.target.value)}
+                placeholder="e.g. Verified on Barclays Business statement ref #9482"
+                className="w-full h-10 px-3 text-xs bg-gray-50 border border-gray-300 rounded-md outline-none focus:border-brand-blue"
+              />
+            </label>
+
+            <div className="pt-3 border-t border-gray-200 flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmingBankOrder(null)}
+                disabled={isConfirmingBank}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleConfirmBankPayment}
+                isLoading={isConfirmingBank}
+                className="bg-emerald-600 hover:bg-emerald-700 font-bold gap-1.5"
+              >
+                <Check className="w-3.5 h-3.5" />
+                Confirm Payment & Move to Processing
+              </Button>
             </div>
           </div>
         </Modal>

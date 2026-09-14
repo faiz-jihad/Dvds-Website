@@ -1,8 +1,10 @@
 export type AgeRating = 'U' | 'PG' | '12' | '15' | '18';
 export type DvdFormat = 'DVD' | 'Blu-ray' | '4K UHD' | 'Box Set';
 export type ProductStatus = 'draft' | 'active' | 'archived';
-export type OrderStatus = 'pending' | 'processing' | 'dispatched' | 'delivered' | 'cancelled';
-export type PaymentStatus = 'unpaid' | 'paid' | 'refunded' | 'failed';
+export type OrderStatus = 'pending' | 'processing' | 'dispatched' | 'delivered' | 'cancelled' | 'refunded';
+export type PaymentStatus = 'pending' | 'awaiting_payment' | 'paid' | 'failed' | 'refunded' | 'partially_refunded' | 'unpaid';
+export type PaymentMethodType = 'card' | 'paypal' | 'bank_transfer';
+export type PaymentProviderType = 'stripe' | 'paypal' | 'manual_bank';
 export type FulfilmentStatus = 'unfulfilled' | 'fulfilled' | 'returned';
 export type UserRole = 'customer' | 'admin' | 'staff';
 
@@ -107,7 +109,14 @@ export interface Order {
   total_amount: number;
   currency: string;
   shipping_address: Address;
+  payment_method?: PaymentMethodType;
+  payment_provider?: PaymentProviderType;
   payment_reference?: string;
+  paid_at?: string | null;
+  payment_confirmed_by?: string | null;
+  bank_transfer_reference?: string | null;
+  paypal_order_id?: string | null;
+  paypal_capture_id?: string | null;
   shipping_carrier?: string | null;
   tracking_number?: string | null;
   dispatched_at?: string | null;
@@ -215,6 +224,13 @@ export interface StoreSettings {
   warehouse_location: string;
   support_email: string;
   support_phone: string;
+  // Company Bank Account (for manual bank transfer flow)
+  bank_name?: string;
+  bank_account_name?: string;
+  bank_sort_code?: string;
+  bank_account_number?: string;
+  bank_iban?: string;
+  bank_payment_instructions?: string;
   updated_at: string;
 }
 
