@@ -4,6 +4,7 @@ import { RootLayout } from '../components/layout/RootLayout';
 import { AccountLayout } from '../components/layout/AccountLayout';
 import { AdminLayout } from '../components/layout/AdminLayout';
 import { ProtectedAdminRoute } from '../auth/AdminAuth';
+import { OAuthCallback } from '../pages/Auth/OAuthCallback';
 
 function lazyWithRetry<T extends React.ComponentType<any>>(
   factory: () => Promise<{ [key: string]: any }>,
@@ -102,8 +103,8 @@ export const router = createBrowserRouter([
       // Customer Authentication & OAuth Callbacks
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
-      { path: 'auth/callback', element: <Navigate to="/account" replace /> },
-      { path: 'auth/v1/callback', element: <Navigate to="/account" replace /> },
+      { path: 'auth/callback', element: <OAuthCallback /> },
+      { path: 'auth/v1/callback', element: <OAuthCallback /> },
 
       // Customer Account
       {

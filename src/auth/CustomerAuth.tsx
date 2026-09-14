@@ -244,7 +244,10 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
 
       try {
         const targetPath = customRedirectPath || '/account';
-        const redirectUrl = `${window.location.origin}${targetPath}`;
+        // Store intended destination so the callback page can redirect there
+        sessionStorage.setItem('oauth_redirect_path', targetPath);
+        // Always redirect to /auth/callback - this must be registered in Supabase Dashboard
+        const redirectUrl = `${window.location.origin}/auth/callback`;
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
