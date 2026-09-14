@@ -46,13 +46,18 @@ export const publicApi = {
 
     try {
       const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_demo_products_v1') : null;
-      if (raw) {
-        const demo = JSON.parse(raw) as Product[];
-        const map = new Map<string, Product>();
-        list.forEach((p) => map.set(p.id, p));
-        demo.forEach((p) => map.set(p.id, p));
-        return Array.from(map.values()).filter((p) => p.status === 'active');
-      }
+      const deletedRaw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_deleted_products_v1') : null;
+      const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
+      const demo = raw ? (JSON.parse(raw) as Product[]) : [];
+
+      const map = new Map<string, Product>();
+      list.forEach((p) => {
+        if (!deletedIds.has(p.id)) map.set(p.id, p);
+      });
+      demo.forEach((p) => {
+        if (!deletedIds.has(p.id)) map.set(p.id, p);
+      });
+      return Array.from(map.values()).filter((p) => p.status === 'active');
     } catch {
       // ignore
     }
@@ -62,6 +67,19 @@ export const publicApi = {
 
   async getProductBySlug(slug: string): Promise<Product | null> {
     try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_demo_products_v1') : null;
+      const deletedRaw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_deleted_products_v1') : null;
+      const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
+
+      if (raw) {
+        const demo = JSON.parse(raw) as Product[];
+        const matched = demo.find((p) => p.slug === slug);
+        if (matched) {
+          if (deletedIds.has(matched.id) || matched.status !== 'active') return null;
+          return matched;
+        }
+      }
+
       const sb = client();
       if (sb) {
         const { data, error } = await sb
@@ -71,6 +89,7 @@ export const publicApi = {
           .eq('status', 'active')
           .maybeSingle();
         if (!error && data) {
+          if (deletedIds.has(data.id)) return null;
           return normalizeProduct(data);
         }
       }

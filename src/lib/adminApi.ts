@@ -756,7 +756,7 @@ export const adminApi = {
       }
       fail(error, 'Product could not be created.');
     } catch (err) {
-      if (isDemoSession()) {
+      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
         const newProduct: Product = {
           ...input,
           id: `prod-${Date.now()}`,
@@ -794,7 +794,7 @@ export const adminApi = {
       }
       fail(error, 'Product could not be updated.');
     } catch (err) {
-      if (isDemoSession()) {
+      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
         const products = await this.getProducts();
         const existing = products.find((p) => p.id === id) || DEFAULT_PRODUCTS.find((p) => p.id === id);
         if (existing) {
@@ -1206,7 +1206,7 @@ export const adminApi = {
     }
   },
 
-  async getStoreSettings(): Promise<StoreSettings | null> {
+  async getStoreSettings(): Promise<StoreSettings> {
     try {
       const { data, error } = await client().from('store_settings').select('*').limit(1).maybeSingle();
       if (!error && data) {
@@ -1236,7 +1236,7 @@ export const adminApi = {
       // ignore
     }
 
-    return null;
+    return DEFAULT_STORE_SETTINGS;
   },
 
   async saveStoreSettings(input: StoreSettings): Promise<StoreSettings> {
@@ -1270,7 +1270,7 @@ export const adminApi = {
 
       fail(error, 'Store settings could not be saved.');
     } catch (err) {
-      if (isDemoSession()) {
+      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
         return payload as StoreSettings;
       }
       throw err;

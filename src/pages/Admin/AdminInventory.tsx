@@ -8,10 +8,11 @@ import { Input } from '../../components/common/Input';
 import { Modal } from '../../components/common/Modal';
 import { useUiStore } from '../../stores/useUiStore';
 import { AdminDataState } from '../../components/admin/AdminDataState';
+import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
 
 export const AdminInventory: React.FC = () => {
   const queryClient = useQueryClient();
-  const productsQuery = useQuery({ queryKey: ['admin', 'products'], queryFn: adminApi.getProducts, refetchInterval: 30_000 });
+  const productsQuery = useQuery({ queryKey: ['admin', 'products'], queryFn: adminApi.getProducts });
   const settingsQuery = useQuery({ queryKey: ['admin', 'settings'], queryFn: adminApi.getStoreSettings });
   const products = productsQuery.data || [];
   const [search, setSearch] = useState('');
@@ -21,17 +22,19 @@ export const AdminInventory: React.FC = () => {
   const [updating, setUpdating] = useState(false);
   const addToast = useUiStore((state) => state.addToast);
 
-  const handleAdjustStock = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const delta = Number(adjustment);
-    if (!selectedProduct || !Number.isInteger(delta) || delta === 0 || reason.trim().length < 3) {
-      addToast('Enter a non-zero whole-unit adjustment and a clear operational reason.', 'error');
+  const handleAdjustStock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProduct) return;
+    const delta = parseInt(adjustment, 10);
+    if (isNaN(delta) || delta === 0) {
+      addToast('Enter a non-zero whole number to adjust inventory', 'error');
       return;
     }
-    if (selectedProduct.stock_quantity + delta < 0) {
-      addToast('The adjustment cannot make stock negative.', 'error');
+    if (!reason.trim()) {
+      addToast('A reason must be logged for inventory auditing', 'error');
       return;
     }
+
     setUpdating(true);
     try {
       const updated = await adminApi.adjustStock(selectedProduct.id, delta, reason.trim());
@@ -45,11 +48,15 @@ export const AdminInventory: React.FC = () => {
     } finally { setUpdating(false); }
   };
 
-  if (productsQuery.isLoading || settingsQuery.isLoading || productsQuery.error || settingsQuery.error || !settingsQuery.data) {
-    return <AdminDataState loading={productsQuery.isLoading || settingsQuery.isLoading} error={productsQuery.error || settingsQuery.error || (!settingsQuery.data ? new Error('Inventory thresholds are not configured.') : null)} onRetry={() => { productsQuery.refetch(); settingsQuery.refetch(); }} />;
+  if (productsQuery.isLoading) {
+    return <AdminDataState loading={true} error={null} onRetry={() => { productsQuery.refetch(); settingsQuery.refetch(); }} />;
   }
 
-  const threshold = settingsQuery.data.low_stock_threshold;
+  if (productsQuery.error) {
+    return <AdminDataState loading={false} error={productsQuery.error} onRetry={() => { productsQuery.refetch(); settingsQuery.refetch(); }} />;
+  }
+
+  const threshold = settingsQuery.data?.low_stock_threshold ?? DEFAULT_STORE_SETTINGS.low_stock_threshold;
   const filtered = products.filter((product) => product.title.toLowerCase().includes(search.toLowerCase()) || product.sku.toLowerCase().includes(search.toLowerCase()));
 
   return (

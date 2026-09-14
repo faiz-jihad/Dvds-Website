@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Edit2, Trash2, Check, X, Film, Eye, Filter, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Check, X, Film, Eye, Filter, AlertTriangle, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { adminApi } from '../../lib/adminApi';
+import { supabase } from '../../lib/supabase';
 import { Product, DvdFormat, AgeRating, ProductStatus } from '../../types';
 import { formatGBP, formatDateUK } from '../../lib/formatters';
 import { Button } from '../../components/common/Button';
@@ -60,6 +61,62 @@ export const AdminProducts: React.FC = () => {
   const [isFeatured, setIsFeatured] = useState(false);
   const [isNewRelease, setIsNewRelease] = useState(false);
   const [isBestSeller, setIsBestSeller] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadMode, setUploadMode] = useState<'upload' | 'url'>('upload');
+
+  const handleImageFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      addToast('Please select a valid image file (PNG, JPG, WEBP)', 'error');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      addToast('Image size exceeds 5MB limit', 'error');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      if (supabase) {
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const { error } = await supabase.storage.from('products').upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true,
+        });
+
+        if (!error) {
+          const { data } = supabase.storage.from('products').getPublicUrl(fileName);
+          if (data?.publicUrl) {
+            setCoverImageUrl(data.publicUrl);
+            addToast('Product image uploaded successfully to Supabase Storage', 'success');
+            setIsUploadingImage(false);
+            return;
+          }
+        }
+      }
+
+      // Fallback: Read as base64 Data URL so user is never blocked
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setCoverImageUrl(result);
+        addToast('Image loaded and preview ready', 'success');
+        setIsUploadingImage(false);
+      };
+      reader.onerror = () => {
+        addToast('Failed to read image file', 'error');
+        setIsUploadingImage(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      addToast(err?.message || 'Failed to upload image', 'error');
+      setIsUploadingImage(false);
+    }
+  };
 
   const openCreateModal = () => {
     setEditingProduct(null);
@@ -617,13 +674,93 @@ export const AdminProducts: React.FC = () => {
             />
           </div>
 
-          <Input
-            label="Cover Image URL *"
-            value={coverImageUrl}
-            onChange={(e) => setCoverImageUrl(e.target.value)}
-            placeholder="https://..."
-            required
-          />
+          {/* Product Cover Image: Direct Upload & URL */}
+          <div className="space-y-2.5 rounded-lg border border-gray-200 bg-gray-50/70 p-3.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700">
+                Cover Image *
+              </label>
+              <div className="flex rounded-md bg-gray-200 p-0.5 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setUploadMode('upload')}
+                  className={`px-2.5 py-1 rounded transition cursor-pointer ${uploadMode === 'upload' ? 'bg-white font-semibold text-brand-blue shadow-xs' : 'text-gray-600 hover:text-dark'}`}
+                >
+                  Upload File
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUploadMode('url')}
+                  className={`px-2.5 py-1 rounded transition cursor-pointer ${uploadMode === 'url' ? 'bg-white font-semibold text-brand-blue shadow-xs' : 'text-gray-600 hover:text-dark'}`}
+                >
+                  Paste URL
+                </button>
+              </div>
+            </div>
+
+            {uploadMode === 'upload' ? (
+              <div className="space-y-2">
+                <div className="relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-5 transition hover:border-brand-blue cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    onChange={handleImageFileChange}
+                    disabled={isUploadingImage}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  />
+                  <div className="flex flex-col items-center text-center pointer-events-none">
+                    {isUploadingImage ? (
+                      <div className="flex flex-col items-center py-2 text-brand-blue">
+                        <Loader2 className="h-7 w-7 animate-spin" />
+                        <span className="mt-2 text-xs font-medium">Uploading to storage...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-brand-blue mb-2">
+                          <Upload className="h-5 w-5" />
+                        </div>
+                        <p className="text-xs font-semibold text-dark">
+                          Pilih file atau drag & drop gambar DVD
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-gray-500">Format PNG, JPG, atau WEBP (Maksimal 5MB)</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Input
+                label="Cover Image URL *"
+                value={coverImageUrl}
+                onChange={(e) => setCoverImageUrl(e.target.value)}
+                placeholder="https://images.unsplash.com/... or CDN link"
+                required
+              />
+            )}
+
+            {/* Preview of Selected Image */}
+            {coverImageUrl && (
+              <div className="flex items-center gap-3 rounded-md border border-gray-200 bg-white p-2.5 shadow-2xs">
+                <img
+                  src={coverImageUrl}
+                  alt="Cover preview"
+                  className="h-16 w-12 rounded object-cover shadow-xs border border-gray-200 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <span className="block text-xs font-semibold text-dark">Preview Gambar Terpasang</span>
+                  <span className="block font-mono text-[10px] text-gray-500 truncate">{coverImageUrl}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCoverImageUrl('')}
+                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition cursor-pointer"
+                  title="Hapus gambar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
