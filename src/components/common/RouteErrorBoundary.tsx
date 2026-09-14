@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouteError, Link } from 'react-router-dom';
 import { Button } from './Button';
 import { RefreshCw, Home } from 'lucide-react';
 
 export const RouteErrorBoundary: React.FC = () => {
   const error = useRouteError() as Error | undefined;
+
+  useEffect(() => {
+    const isChunkError =
+      error?.message &&
+      (error.message.includes('dynamically imported module') ||
+        error.message.includes('Loading chunk') ||
+        error.message.includes('Failed to fetch'));
+
+    if (isChunkError && typeof window !== 'undefined') {
+      const lastReload = sessionStorage.getItem('last_chunk_reload');
+      const now = Date.now();
+      // Guard against infinite reload loops: only auto-reload once every 10 seconds
+      if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+        sessionStorage.setItem('last_chunk_reload', now.toString());
+        window.location.reload();
+      }
+    }
+  }, [error]);
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-6 py-16 bg-white text-dark">

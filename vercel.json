@@ -61,7 +61,7 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/|assets/|brand/|catalog/|favicon\\.ico|sitemap\\.xml|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ]

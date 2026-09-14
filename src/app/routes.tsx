@@ -5,39 +5,69 @@ import { AccountLayout } from '../components/layout/AccountLayout';
 import { AdminLayout } from '../components/layout/AdminLayout';
 import { ProtectedAdminRoute } from '../auth/AdminAuth';
 
-const Home = React.lazy(() => import('../pages/Home').then((module) => ({ default: module.Home })));
-const Shop = React.lazy(() => import('../pages/Shop').then((module) => ({ default: module.Shop })));
-const ProductDetail = React.lazy(() => import('../pages/ProductDetail').then((module) => ({ default: module.ProductDetail })));
-const CartPage = React.lazy(() => import('../pages/CartPage').then((module) => ({ default: module.CartPage })));
-const CheckoutPage = React.lazy(() => import('../pages/CheckoutPage').then((module) => ({ default: module.CheckoutPage })));
-const OrderSuccessPage = React.lazy(() => import('../pages/OrderSuccessPage').then((module) => ({ default: module.OrderSuccessPage })));
-const SearchPage = React.lazy(() => import('../pages/SearchPage').then((module) => ({ default: module.SearchPage })));
-const FavouritesPage = React.lazy(() => import('../pages/FavouritesPage').then((module) => ({ default: module.FavouritesPage })));
-const AboutPage = React.lazy(() => import('../pages/Content/AboutPage').then((module) => ({ default: module.AboutPage })));
-const ContactPage = React.lazy(() => import('../pages/Content/ContactPage').then((module) => ({ default: module.ContactPage })));
-const DeliveryPage = React.lazy(() => import('../pages/Content/DeliveryPage').then((module) => ({ default: module.DeliveryPage })));
-const ReturnsPage = React.lazy(() => import('../pages/Content/ReturnsPage').then((module) => ({ default: module.ReturnsPage })));
-const FaqPage = React.lazy(() => import('../pages/Content/FaqPage').then((module) => ({ default: module.FaqPage })));
-const PrivacyPage = React.lazy(() => import('../pages/Content/LegalPages').then((module) => ({ default: module.PrivacyPage })));
-const TermsPage = React.lazy(() => import('../pages/Content/LegalPages').then((module) => ({ default: module.TermsPage })));
-const RefundPolicyPage = React.lazy(() => import('../pages/Content/LegalPages').then((module) => ({ default: module.RefundPolicyPage })));
-const ProfilePage = React.lazy(() => import('../pages/Account/ProfilePage').then((module) => ({ default: module.ProfilePage })));
-const OrdersPage = React.lazy(() => import('../pages/Account/OrdersPage').then((module) => ({ default: module.OrdersPage })));
-const AddressesPage = React.lazy(() => import('../pages/Account/AddressesPage').then((module) => ({ default: module.AddressesPage })));
-const AdminDashboard = React.lazy(() => import('../pages/Admin/AdminDashboard').then((module) => ({ default: module.AdminDashboard })));
-const AdminProducts = React.lazy(() => import('../pages/Admin/AdminProducts').then((module) => ({ default: module.AdminProducts })));
-const AdminOrders = React.lazy(() => import('../pages/Admin/AdminOrders').then((module) => ({ default: module.AdminOrders })));
-const AdminInventory = React.lazy(() => import('../pages/Admin/AdminInventory').then((module) => ({ default: module.AdminInventory })));
-const AdminPromotions = React.lazy(() => import('../pages/Admin/AdminPromotions').then((module) => ({ default: module.AdminPromotions })));
-const AdminStoreSettings = React.lazy(() => import('../pages/Admin/AdminStoreSettings').then((module) => ({ default: module.AdminStoreSettings })));
-const AdminActivity = React.lazy(() => import('../pages/Admin/AdminActivity').then((module) => ({ default: module.AdminActivity })));
-const AdminTaxonomy = React.lazy(() => import('../pages/Admin/AdminTaxonomy').then((module) => ({ default: module.AdminTaxonomy })));
-const AdminSupport = React.lazy(() => import('../pages/Admin/AdminSupport').then((module) => ({ default: module.AdminSupport })));
-const AdminHomepage = React.lazy(() => import('../pages/Admin/AdminHomepage').then((module) => ({ default: module.AdminHomepage })));
-const AdminLogin = React.lazy(() => import('../pages/Admin/AdminLogin').then((module) => ({ default: module.AdminLogin })));
-const AdminUsers = React.lazy(() => import('../pages/Admin/AdminUsers').then((module) => ({ default: module.AdminUsers })));
-const LoginPage = React.lazy(() => import('../pages/Auth/LoginPage').then((module) => ({ default: module.LoginPage })));
-const RegisterPage = React.lazy(() => import('../pages/Auth/RegisterPage').then((module) => ({ default: module.RegisterPage })));
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ [key: string]: any }>,
+  exportName = 'default'
+) {
+  return React.lazy(async () => {
+    try {
+      const module = await factory();
+      return { default: module[exportName] || module.default || module };
+    } catch (error: any) {
+      const isDynamicImportError =
+        error?.message &&
+        (error.message.includes('dynamically imported module') ||
+          error.message.includes('Failed to fetch') ||
+          error.message.includes('Loading chunk') ||
+          error.message.includes('Importing a module script failed'));
+
+      if (isDynamicImportError && typeof window !== 'undefined') {
+        const lastReload = sessionStorage.getItem('last_chunk_reload');
+        const now = Date.now();
+        if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+          sessionStorage.setItem('last_chunk_reload', now.toString());
+          window.location.reload();
+          return new Promise(() => {});
+        }
+      }
+      throw error;
+    }
+  });
+}
+
+const Home = lazyWithRetry(() => import('../pages/Home'), 'Home');
+const Shop = lazyWithRetry(() => import('../pages/Shop'), 'Shop');
+const ProductDetail = lazyWithRetry(() => import('../pages/ProductDetail'), 'ProductDetail');
+const CartPage = lazyWithRetry(() => import('../pages/CartPage'), 'CartPage');
+const CheckoutPage = lazyWithRetry(() => import('../pages/CheckoutPage'), 'CheckoutPage');
+const OrderSuccessPage = lazyWithRetry(() => import('../pages/OrderSuccessPage'), 'OrderSuccessPage');
+const SearchPage = lazyWithRetry(() => import('../pages/SearchPage'), 'SearchPage');
+const FavouritesPage = lazyWithRetry(() => import('../pages/FavouritesPage'), 'FavouritesPage');
+const AboutPage = lazyWithRetry(() => import('../pages/Content/AboutPage'), 'AboutPage');
+const ContactPage = lazyWithRetry(() => import('../pages/Content/ContactPage'), 'ContactPage');
+const DeliveryPage = lazyWithRetry(() => import('../pages/Content/DeliveryPage'), 'DeliveryPage');
+const ReturnsPage = lazyWithRetry(() => import('../pages/Content/ReturnsPage'), 'ReturnsPage');
+const FaqPage = lazyWithRetry(() => import('../pages/Content/FaqPage'), 'FaqPage');
+const PrivacyPage = lazyWithRetry(() => import('../pages/Content/LegalPages'), 'PrivacyPage');
+const TermsPage = lazyWithRetry(() => import('../pages/Content/LegalPages'), 'TermsPage');
+const RefundPolicyPage = lazyWithRetry(() => import('../pages/Content/LegalPages'), 'RefundPolicyPage');
+const ProfilePage = lazyWithRetry(() => import('../pages/Account/ProfilePage'), 'ProfilePage');
+const OrdersPage = lazyWithRetry(() => import('../pages/Account/OrdersPage'), 'OrdersPage');
+const AddressesPage = lazyWithRetry(() => import('../pages/Account/AddressesPage'), 'AddressesPage');
+const AdminDashboard = lazyWithRetry(() => import('../pages/Admin/AdminDashboard'), 'AdminDashboard');
+const AdminProducts = lazyWithRetry(() => import('../pages/Admin/AdminProducts'), 'AdminProducts');
+const AdminOrders = lazyWithRetry(() => import('../pages/Admin/AdminOrders'), 'AdminOrders');
+const AdminInventory = lazyWithRetry(() => import('../pages/Admin/AdminInventory'), 'AdminInventory');
+const AdminPromotions = lazyWithRetry(() => import('../pages/Admin/AdminPromotions'), 'AdminPromotions');
+const AdminStoreSettings = lazyWithRetry(() => import('../pages/Admin/AdminStoreSettings'), 'AdminStoreSettings');
+const AdminActivity = lazyWithRetry(() => import('../pages/Admin/AdminActivity'), 'AdminActivity');
+const AdminTaxonomy = lazyWithRetry(() => import('../pages/Admin/AdminTaxonomy'), 'AdminTaxonomy');
+const AdminSupport = lazyWithRetry(() => import('../pages/Admin/AdminSupport'), 'AdminSupport');
+const AdminHomepage = lazyWithRetry(() => import('../pages/Admin/AdminHomepage'), 'AdminHomepage');
+const AdminLogin = lazyWithRetry(() => import('../pages/Admin/AdminLogin'), 'AdminLogin');
+const AdminUsers = lazyWithRetry(() => import('../pages/Admin/AdminUsers'), 'AdminUsers');
+const LoginPage = lazyWithRetry(() => import('../pages/Auth/LoginPage'), 'LoginPage');
+const RegisterPage = lazyWithRetry(() => import('../pages/Auth/RegisterPage'), 'RegisterPage');
 
 import { RouteErrorBoundary } from '../components/common/RouteErrorBoundary';
 
