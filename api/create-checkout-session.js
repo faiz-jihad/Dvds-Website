@@ -14,7 +14,7 @@ export default async function handler(req, res) {
 
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) {
-    return res.status(500).json({ error: 'Stripe secret key is not configured.' });
+    return res.status(500).json({ error: 'Stripe secret key is not configured in environment variables.' });
   }
 
   try {

@@ -93,7 +93,10 @@ export const useCartStore = create<CartState>()(
       getShippingFee: () => {
         const subtotal = get().getSubtotal();
         const { freeShippingThreshold, standardShippingRate } = get();
-        if (subtotal === 0 || freeShippingThreshold == null || standardShippingRate == null) return 0;
+        if (subtotal === 0) return 0;
+        if (freeShippingThreshold != null && freeShippingThreshold <= 0) return 0;
+        if (standardShippingRate != null && standardShippingRate <= 0) return 0;
+        if (freeShippingThreshold == null || standardShippingRate == null) return 0;
         return subtotal >= freeShippingThreshold ? 0 : standardShippingRate;
       },
       getDiscountAmount: () => {
@@ -105,8 +108,15 @@ export const useCartStore = create<CartState>()(
       getItemCount: () => get().items.reduce((count, item) => count + item.quantity, 0),
       getFreeShippingProgress: () => {
         const subtotal = get().getSubtotal();
-        const threshold = get().freeShippingThreshold || 0;
-        return { threshold, remaining: Math.round(Math.max(0, threshold - subtotal) * 100) / 100, percentage: threshold > 0 ? Math.min(100, Math.round(subtotal / threshold * 100)) : 0 };
+        const threshold = get().freeShippingThreshold ?? 0;
+        if (threshold <= 0) {
+          return { threshold: 0, remaining: 0, percentage: 100 };
+        }
+        return {
+          threshold,
+          remaining: Math.round(Math.max(0, threshold - subtotal) * 100) / 100,
+          percentage: Math.min(100, Math.round((subtotal / threshold) * 100)),
+        };
       },
     }),
     {

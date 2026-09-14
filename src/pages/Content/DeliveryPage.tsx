@@ -21,7 +21,7 @@ export const DeliveryPage: React.FC = () => {
             UK Delivery & Rates
           </h1>
           <p className="text-sm text-gray-600 leading-relaxed">
-            All orders are carefully wrapped in custom bubble-lined media envelopes and dispatched from {settings.warehouse_location}.
+            All orders qualify for 100% Free Standard Delivery across the whole United Kingdom. Dispatched safely in custom bubble-lined media envelopes from {settings.warehouse_location}.
           </p>
         </div>
 
@@ -42,7 +42,16 @@ export const DeliveryPage: React.FC = () => {
                 </td>
                 <td className="p-4 text-gray-600">{settings.standard_shipping_eta}</td>
                 <td className="p-4 text-right font-mono font-bold text-dark">
-                  {formatGBP(settings.standard_shipping_fee)} <span className="text-emerald-600 text-[11px] block">(FREE over {formatGBP(settings.free_shipping_threshold)})</span>
+                  {settings.standard_shipping_fee === 0 || settings.free_shipping_threshold <= 0 ? (
+                    <span className="text-emerald-700 font-extrabold text-sm uppercase">FREE (All Orders)</span>
+                  ) : (
+                    <>
+                      {formatGBP(settings.standard_shipping_fee)}{' '}
+                      <span className="text-emerald-600 text-[11px] block">
+                        (FREE over {formatGBP(settings.free_shipping_threshold)})
+                      </span>
+                    </>
+                  )}
                 </td>
               </tr>
               <tr>

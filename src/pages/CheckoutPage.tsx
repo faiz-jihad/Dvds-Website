@@ -9,7 +9,8 @@ import {
   ExternalLink,
   Tag,
   X,
-  CheckCircle2,
+  Wifi,
+  Sparkles,
 } from 'lucide-react';
 import { useCartStore } from '../stores/useCartStore';
 import { publicApi } from '../lib/publicApi';
@@ -17,9 +18,21 @@ import { formatGBP } from '../lib/formatters';
 import { useUiStore } from '../stores/useUiStore';
 import { StoreDataState } from '../components/common/StoreDataState';
 
-// Crisp, authentic card brand SVGs
+// Official Stripe Wordmark SVG
+const StripeWordmark = () => (
+  <svg viewBox="0 0 60 25" className="h-5 w-auto" fill="none">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M59.64 14.28c0-4.49-2.22-7.85-6.52-7.85-4.32 0-6.9 3.36-6.9 7.82 0 5.28 3.12 7.78 7.49 7.78 2.14 0 3.75-.48 4.97-1.16v-3.41c-1.22.61-2.58.96-4.22.96-1.74 0-3.29-.65-3.52-2.65h8.65c.03-.43.05-.98.05-1.49zm-8.68-1.57c.1-1.83 1.25-2.6 2.37-2.6 1.1 0 2.21.77 2.21 2.6h-4.58zM41.38 6.43h-4.59v15.22h4.59V6.43zm-2.31-5.61a2.66 2.66 0 00-2.66 2.66c0 1.47 1.19 2.66 2.66 2.66 1.47 0 2.66-1.19 2.66-2.66 0-1.47-1.19-2.66-2.66-2.66zm-5.77 8.75c-.88-.5-2.12-.86-3.41-.86-2.45 0-4.04 1.29-4.04 3.44 0 3.74 5.14 3.14 5.14 4.76 0 .58-.5.78-1.23.78-1.6 0-3.63-.67-4.71-1.32v3.74c1.23.53 2.92.83 4.47.83 2.58 0 4.25-1.27 4.25-3.48-.01-4.03-5.17-3.29-5.17-4.83 0-.5.44-.73 1.11-.73 1.34 0 2.97.47 3.59.85V9.57zm-14.88-3.14h-4.3v2.85h-.06c-.73-1.89-2.48-3.22-4.5-3.22-3.64 0-6.15 3.08-6.15 7.79 0 5.12 2.76 7.78 6.37 7.78 1.95 0 3.45-1.07 4.27-2.73h.06v2.36h4.31V6.43zm-7.61 11.53c-1.85 0-3.15-1.55-3.15-4.14 0-2.54 1.28-4.12 3.15-4.12 1.83 0 3.15 1.58 3.15 4.12 0 2.59-1.32 4.14-3.15 4.14zM3.48 10.36C2.26 9.87 1.47 9.53 1.47 8.9c0-.52.53-.88 1.43-.88 1.45 0 3.3.49 4.39 1.13V5.55C6.08 5.04 4.54 4.8 2.87 4.8.44 4.8-1.4 6.13-1.4 8.7c0 4.19 5.38 3.48 5.38 5.27 0 .67-.6 1.01-1.57 1.01-1.74 0-3.95-.73-5.28-1.5v3.83c1.47.64 3.32 1.01 5.02 1.01 2.54 0 4.54-1.27 4.54-3.91 0-4.32-5.21-3.56-5.21-5.05z"
+      fill="#635BFF"
+    />
+  </svg>
+);
+
+// High-fidelity card brand badges
 const VisaBadge = () => (
-  <svg viewBox="0 0 36 24" className="h-5 w-8 rounded shadow-2xs" fill="none">
+  <svg viewBox="0 0 36 24" className="h-5 w-8 rounded shadow-2xs shrink-0" fill="none">
     <rect width="36" height="24" rx="3" fill="#1434CB" />
     <path
       d="M14.6 15.6l1.6-9.2h2.5l-1.6 9.2h-2.5zm7.3-9c-.5-.2-1.3-.4-2.3-.4-2.5 0-4.3 1.3-4.3 3.1 0 1.4 1.3 2.1 2.3 2.6 1 .5 1.4.8 1.4 1.2 0 .7-.8 1-1.6 1-.9 0-1.5-.1-2.2-.4l-.3-.1-.3 1.9c.5.2 1.5.4 2.5.4 2.7 0 4.4-1.3 4.4-3.2 0-1.1-.7-2-2.2-2.7-.9-.4-1.4-.7-1.4-1.1 0-.4.4-.8 1.4-.8.8 0 1.4.2 1.8.3l.2.1.3-1.9zm5.3 5.9c.2-.5 1-2.5 1-2.5.0-.1.2-.4.3-.7l.2.8s.4 2 .5 2.4h-2zm3.1-6.1h-2c-.6 0-1.1.2-1.3.8l-3.8 8.4h2.6l.5-1.4h3.2l.3 1.4h2.3l-1.8-9.2zm-17.6 0l-2.4 6.3-.3-1.3c-.5-1.6-2-3.4-3.7-4.3l2.4 8.2h2.7l4-9.2h-2.7z"
@@ -29,7 +42,7 @@ const VisaBadge = () => (
 );
 
 const MastercardBadge = () => (
-  <svg viewBox="0 0 36 24" className="h-5 w-8 rounded shadow-2xs" fill="none">
+  <svg viewBox="0 0 36 24" className="h-5 w-8 rounded shadow-2xs shrink-0" fill="none">
     <rect width="36" height="24" rx="3" fill="#0A0A0A" />
     <circle cx="14" cy="12" r="6.5" fill="#EB001B" />
     <circle cx="22" cy="12" r="6.5" fill="#F79E1B" />
@@ -41,7 +54,7 @@ const MastercardBadge = () => (
 );
 
 const AmexBadge = () => (
-  <svg viewBox="0 0 36 24" className="h-5 w-8 rounded shadow-2xs" fill="none">
+  <svg viewBox="0 0 36 24" className="h-5 w-8 rounded shadow-2xs shrink-0" fill="none">
     <rect width="36" height="24" rx="3" fill="#006FCF" />
     <path
       d="M6 15l2.5-6h2.5l-2.5 6H6zm4.5-6l1.2 3.2 1.2-3.2h2l-2.2 5.8 2.2 5.8h-2l-1.2-3.2-1.2 3.2H8l2.5-6zm7.5 0h5.5v2h-3.5v1.8h3.5v2h-3.5v1.8h3.5v2H18V9z"
@@ -70,7 +83,9 @@ export const CheckoutPage: React.FC = () => {
   // Delivery tier state
   const [deliveryTier, setDeliveryTier] = useState<'standard' | 'express'>('standard');
   const settings = settingsQuery.data;
-  const isFreeDeliveryQualified = settings ? subtotal >= settings.free_shipping_threshold : false;
+  const isFreeDeliveryQualified = settings
+    ? settings.free_shipping_threshold <= 0 || settings.standard_shipping_fee === 0 || subtotal >= settings.free_shipping_threshold
+    : true;
   const shippingCost = settings
     ? deliveryTier === 'express'
       ? settings.express_shipping_fee
@@ -162,7 +177,6 @@ export const CheckoutPage: React.FC = () => {
       });
 
       if (session?.url && (session.url.startsWith('http://') || session.url.startsWith('https://'))) {
-        // Direct redirect to real official Stripe Checkout page
         window.location.assign(session.url);
       } else if (session?.url) {
         clearCart();
@@ -232,7 +246,7 @@ export const CheckoutPage: React.FC = () => {
               <div>
                 <input
                   type="email"
-                  placeholder="Email address for order confirmation"
+                  placeholder="Email address for order tracking & receipt"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -365,7 +379,7 @@ export const CheckoutPage: React.FC = () => {
                 <div>
                   <input
                     type="tel"
-                    placeholder="Phone number for parcel tracking updates"
+                    placeholder="Phone number for Royal Mail dispatch alerts"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full rounded-md border border-gray-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 transition-all"
@@ -396,18 +410,17 @@ export const CheckoutPage: React.FC = () => {
                       className="h-4 w-4 text-gray-900 border-gray-300 focus:ring-gray-900"
                     />
                     <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {settings.standard_shipping_name}
+                      <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                        <span>{settings.standard_shipping_name}</span>
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                          Free across UK
+                        </span>
                       </div>
                       <div className="text-xs text-gray-500">{settings.standard_shipping_eta}</div>
                     </div>
                   </div>
-                  <span className="text-sm font-medium text-gray-900 font-mono">
-                    {isFreeDeliveryQualified ? (
-                      <span className="text-emerald-700 font-semibold">FREE</span>
-                    ) : (
-                      formatGBP(settings.standard_shipping_fee)
-                    )}
+                  <span className="text-sm font-semibold text-emerald-700 font-mono">
+                    {isFreeDeliveryQualified ? 'FREE' : formatGBP(settings.standard_shipping_fee)}
                   </span>
                 </label>
 
@@ -439,54 +452,108 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </section>
 
-            {/* Section 4: Payment (Real Official Stripe Gateway) */}
+            {/* Section 4: Luxury Stripe Payment Card Component */}
             <section className="space-y-4 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-gray-900 tracking-tight flex items-center gap-2">
-                    <span>Payment Gateway</span>
-                    <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-gray-900 text-white tracking-wider">
-                      STRIPE OFFICIAL
-                    </span>
+                    <span>Payment Method</span>
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Payments are processed directly on Stripe&apos;s PCI-DSS certified servers.
+                    Encrypted and authorized directly via Stripe UK infrastructure.
                   </p>
                 </div>
                 <span className="text-xs text-gray-500">Step 3 of 3</span>
               </div>
 
-              {/* Official Stripe Gateway Card */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              {/* Luxury Virtual Collector Card & Gateway Panel */}
+              <div className="rounded-2xl border border-gray-200/90 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                {/* Header Strip with Stripe Wordmark and Accepted Badges */}
+                <div className="px-6 py-4 bg-gray-50/80 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#635BFF] flex items-center justify-center text-white font-black text-sm shadow-xs">
-                      S
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-gray-900">Stripe Checkout</div>
-                      <div className="text-[11px] text-gray-500">Credit / Debit Card, Apple Pay, Google Pay</div>
-                    </div>
+                    <StripeWordmark />
+                    <span className="h-3.5 w-px bg-gray-300" />
+                    <span className="text-xs font-semibold text-gray-700">Official Checkout</span>
                   </div>
+
                   <div className="flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded bg-black text-white text-[10px] font-bold tracking-tight font-sans">
+                      Pay
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-white text-gray-800 border border-gray-200 text-[10px] font-bold tracking-tight font-sans">
+                      GPay
+                    </span>
                     <VisaBadge />
                     <MastercardBadge />
                     <AmexBadge />
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  When you click the button below, you will be redirected to the official Stripe payment page (<strong>checkout.stripe.com</strong>) to complete your transaction with 256-bit encryption. All test payments made with card <code className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-800 font-mono">4242</code> will be logged directly into your Stripe Dashboard.
-                </p>
+                {/* Tactile Virtual Card Visual Graphic */}
+                <div className="p-6 sm:p-8 bg-gradient-to-b from-white to-gray-50/50">
+                  <div className="relative mx-auto max-w-sm rounded-xl bg-gradient-to-br from-[#1A1D24] via-[#12141A] to-[#0A0C10] p-6 text-white shadow-xl border border-white/10 overflow-hidden">
+                    {/* Radial Disc Watermark Effect */}
+                    <div className="absolute -right-12 -top-12 w-40 h-40 rounded-full border border-white/10 bg-radial from-white/[0.08] to-transparent pointer-events-none" />
+                    <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full border border-white/5 pointer-events-none" />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-[11px] text-gray-500 border-t border-gray-100">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Real Stripe API & Dashboard logging</span>
+                    {/* Card Top Row: Brand & Wireless Wave */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-2">
+                        <span className="font-display font-black text-xs tracking-wider uppercase text-white">
+                          AZ RAYAN
+                        </span>
+                        <span className="text-[9px] font-mono tracking-widest text-white/40 uppercase">
+                          ARCHIVE
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-white/50">
+                        <Wifi className="w-4 h-4 rotate-90" />
+                      </div>
+                    </div>
+
+                    {/* EMV Chip Visual */}
+                    <div className="w-10 h-7 rounded-sm bg-gradient-to-br from-amber-200 via-amber-400 to-amber-500 border border-amber-300/40 mb-5 relative overflow-hidden shadow-xs">
+                      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-amber-600/40" />
+                      <div className="absolute inset-y-0 left-1/3 w-px bg-amber-600/40" />
+                      <div className="absolute inset-y-0 right-1/3 w-px bg-amber-600/40" />
+                    </div>
+
+                    {/* Card Number Mask */}
+                    <div className="font-mono text-sm sm:text-base tracking-[0.25em] text-white/90 mb-4 select-none">
+                      ••••  ••••  ••••  4242
+                    </div>
+
+                    {/* Cardholder & Expiry Row */}
+                    <div className="flex items-end justify-between pt-1 border-t border-white/10 text-[10px]">
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-white/40 font-medium">
+                          Cardholder
+                        </div>
+                        <div className="font-semibold text-white tracking-wide truncate max-w-[170px] uppercase mt-0.5">
+                          {fullName.trim() ? fullName : 'VALUED COLLECTOR'}
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-[9px] uppercase tracking-wider text-white/40 font-medium">
+                          Expires
+                        </div>
+                        <div className="font-mono font-medium text-white tracking-wider mt-0.5">
+                          12 / 28
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>PCI Service Provider Level 1 Certified</span>
+                </div>
+
+                {/* Footer Assurance Strip */}
+                <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+                  <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                    <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>256-Bit Bank-Grade Direct Encryption</span>
+                  </div>
+                  <div className="text-[11px] text-gray-500">
+                    Test Mode Active • Card 4242 Accepted
                   </div>
                 </div>
               </div>
@@ -614,7 +681,7 @@ export const CheckoutPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 px-4 rounded-lg bg-[#635BFF] hover:bg-[#5349e0] text-white text-sm font-semibold tracking-wide transition-all shadow-sm hover:shadow active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-lg bg-[#635BFF] hover:bg-[#5349e0] active:scale-[0.99] text-white text-sm font-semibold tracking-wide transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer group"
               >
                 {isSubmitting ? (
                   <>
@@ -625,7 +692,7 @@ export const CheckoutPage: React.FC = () => {
                   <>
                     <Lock className="w-4 h-4" />
                     <span>Proceed to Stripe ({formatGBP(totalAmount)})</span>
-                    <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                    <ExternalLink className="w-3.5 h-3.5 opacity-80 group-hover:translate-x-0.5 transition-transform" />
                   </>
                 )}
               </button>

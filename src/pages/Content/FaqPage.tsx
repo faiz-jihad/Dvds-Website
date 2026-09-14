@@ -16,7 +16,10 @@ const createFaqs = (freeShippingThreshold: number, dispatchCutoff: string, stand
   },
   {
     q: 'How do I qualify for Free UK Delivery?',
-    a: `Any eligible basket total of ${formatGBP(freeShippingThreshold)} or higher automatically qualifies for ${standardService} at no charge.`,
+    a:
+      freeShippingThreshold <= 0
+        ? `All orders shipped to any UK address qualify for 100% Free Tracked UK Delivery via ${standardService} — with no minimum spend required.`
+        : `Any eligible basket total of ${formatGBP(freeShippingThreshold)} or higher automatically qualifies for ${standardService} at no charge.`,
   },
   {
     q: 'Are the DVD covers original studio artwork?',

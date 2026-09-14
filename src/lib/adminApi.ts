@@ -1158,7 +1158,7 @@ export const adminApi = {
     }
 
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_store_settings_v1') : null;
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_store_settings_v2') : null;
       if (raw) {
         return { ...DEFAULT_STORE_SETTINGS, ...JSON.parse(raw) };
       }
@@ -1172,7 +1172,7 @@ export const adminApi = {
   async saveStoreSettings(input: StoreSettings): Promise<StoreSettings> {
     const payload = { ...input, singleton: true, updated_at: new Date().toISOString() };
     try {
-      localStorage.setItem('az_rayan_store_settings_v1', JSON.stringify(payload));
+      localStorage.setItem('az_rayan_store_settings_v2', JSON.stringify(payload));
     } catch {
       // ignore
     }

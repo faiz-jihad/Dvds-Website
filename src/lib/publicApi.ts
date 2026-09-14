@@ -187,7 +187,7 @@ export const publicApi = {
     }
 
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_store_settings_v1') : null;
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_store_settings_v2') : null;
       if (raw) {
         const parsed = JSON.parse(raw) as StoreSettings;
         return { ...DEFAULT_STORE_SETTINGS, ...parsed };
@@ -302,13 +302,16 @@ export const publicApi = {
       };
     });
 
-    const isFreeDelivery = subtotal >= (settings?.free_shipping_threshold ?? 25);
+    const isFreeDelivery =
+      (settings?.free_shipping_threshold ?? 0) <= 0 ||
+      (settings?.standard_shipping_fee ?? 0) === 0 ||
+      subtotal >= (settings?.free_shipping_threshold ?? 0);
     const shipping =
       input.deliveryTier === 'express'
-        ? (settings?.express_shipping_fee ?? 6.95)
+        ? (settings?.express_shipping_fee ?? 5.99)
         : isFreeDelivery
         ? 0
-        : (settings?.standard_shipping_fee ?? 2.95);
+        : (settings?.standard_shipping_fee ?? 0);
 
     let discount = 0;
     if (input.promoCode) {

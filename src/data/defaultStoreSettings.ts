@@ -19,8 +19,8 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   hero_cta_secondary: 'Curator Picks',
   hero_bg_image:
     'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1600&auto=format&fit=crop&q=80',
-  announcement_left: 'Free UK delivery on orders over £25',
-  announcement_center: 'Same-day UK dispatch before 2PM GMT',
+  announcement_left: 'Free UK delivery on all orders',
+  announcement_center: 'Free UK Tracked Delivery • Same-day dispatch before 2PM GMT',
   announcement_link: '/delivery',
   deal_product_id: null,
   deal_discount_price: 6.99,
@@ -32,8 +32,8 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   director_bio:
     'From non-linear psychological thrillers to sweeping cosmic expeditions, Christopher Nolan has redefined modern large-format filmmaking with tactile, practical devotion.',
   director_product_ids: [],
-  free_shipping_threshold: 25.0,
-  standard_shipping_fee: 3.49,
+  free_shipping_threshold: 0.0,
+  standard_shipping_fee: 0.0,
   express_shipping_fee: 5.99,
   standard_shipping_name: 'Royal Mail Tracked 48',
   standard_shipping_eta: '2-3 working days',

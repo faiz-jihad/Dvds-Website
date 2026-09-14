@@ -90,7 +90,7 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
   updatedAt: new Date().toISOString(),
   announcement: {
     enabled: true,
-    text: 'Royal Mail Tracked 24/48 UK Dispatch • Free UK Delivery on Orders Over £25 • 30-Day Returns',
+    text: 'Royal Mail Tracked 24/48 UK Dispatch • Free UK Delivery on All Orders • 30-Day Returns',
     linkText: 'Delivery Policy',
     linkUrl: '/delivery',
     backgroundColor: '#0F1115',

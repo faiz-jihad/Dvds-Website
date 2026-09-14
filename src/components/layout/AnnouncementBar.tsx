@@ -25,7 +25,7 @@ export const AnnouncementBar: React.FC = () => {
   // If announcement explicitly disabled in dynamic config
   if (announcement && !announcement.enabled) return null;
 
-  const text = announcement?.text || settings?.announcement_center || 'Royal Mail Tracked 24/48 UK Dispatch • Free UK Delivery on Orders Over £25';
+  const text = announcement?.text || settings?.announcement_center || 'Free UK Delivery on All Orders • Royal Mail Tracked 24/48 UK Dispatch';
   const linkText = announcement?.linkText || 'Delivery Info';
   const linkUrl = announcement?.linkUrl || settings?.announcement_link || '/delivery';
   const bg = announcement?.backgroundColor || '#0F1115';

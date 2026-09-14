@@ -248,7 +248,15 @@ export const ProductDetail: React.FC = () => {
                   <Truck className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-dark font-semibold">UK Delivery: </strong>
-                    {settingsQuery.data!.standard_shipping_name}. Free on orders over {formatGBP(settingsQuery.data!.free_shipping_threshold)}; otherwise {formatGBP(settingsQuery.data!.standard_shipping_fee)}. Estimated {settingsQuery.data!.standard_shipping_eta}.
+                    {settingsQuery.data!.free_shipping_threshold <= 0 || settingsQuery.data!.standard_shipping_fee === 0 ? (
+                      <>
+                        <span className="text-emerald-700 font-bold">100% Free UK Delivery</span> on all orders via {settingsQuery.data!.standard_shipping_name} ({settingsQuery.data!.standard_shipping_eta}).
+                      </>
+                    ) : (
+                      <>
+                        {settingsQuery.data!.standard_shipping_name}. Free on orders over {formatGBP(settingsQuery.data!.free_shipping_threshold)}; otherwise {formatGBP(settingsQuery.data!.standard_shipping_fee)}. Estimated {settingsQuery.data!.standard_shipping_eta}.
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

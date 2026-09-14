@@ -77,17 +77,17 @@ export const CartDrawer: React.FC = () => {
                 <div className="flex items-start justify-between gap-2 text-xs mb-1.5">
                   <span className="flex min-w-0 items-start gap-1.5 font-medium text-dark">
                     <Truck className="w-3.5 h-3.5 text-brand-blue" />
-                    {progress.remaining > 0 ? (
+                    {progress.threshold <= 0 || progress.remaining <= 0 ? (
+                      <span className="text-emerald-700 font-semibold">
+                        Free Tracked UK Delivery Applied!
+                      </span>
+                    ) : (
                       <>
                         Add <strong className="text-brand-blue font-semibold">{formatGBP(progress.remaining)}</strong> for Free UK Delivery
                       </>
-                    ) : (
-                      <span className="text-emerald-700 font-semibold">
-                        You've unlocked Free UK Delivery!
-                      </span>
                     )}
                   </span>
-                  <span className="text-gray-400 font-mono text-[11px]">{progress.percentage}%</span>
+                  <span className="text-emerald-700 font-mono text-[11px] font-semibold">{progress.threshold <= 0 ? 'FREE' : `${progress.percentage}%`}</span>
                 </div>
                 <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
                   <div

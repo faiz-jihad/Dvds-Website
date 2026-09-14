@@ -234,7 +234,7 @@ export const AdminStoreSettings: React.FC = () => {
                   label="Center Shipping Guarantee Banner"
                   value={settings.announcement_center}
                   onChange={(e) => handleChange('announcement_center', e.target.value)}
-                  placeholder="e.g. Free UK delivery on orders over £25 • Same-day dispatch before 2PM"
+                  placeholder="e.g. Free UK delivery on all orders • Same-day dispatch before 2PM"
                 />
 
                 <div className="md:col-span-2">
@@ -557,7 +557,8 @@ export const AdminStoreSettings: React.FC = () => {
                 step="0.01"
                 value={settings.free_shipping_threshold}
                 onChange={(e) => handleChange('free_shipping_threshold', parseFloat(e.target.value) || 0)}
-                placeholder="25.00"
+                placeholder="0.00"
+                helperText="Set to 0.00 for 100% Free UK Delivery on all orders."
               />
 
               <Input
@@ -566,7 +567,8 @@ export const AdminStoreSettings: React.FC = () => {
                 step="0.01"
                 value={settings.standard_shipping_fee}
                 onChange={(e) => handleChange('standard_shipping_fee', parseFloat(e.target.value) || 0)}
-                placeholder="2.99"
+                placeholder="0.00"
+                helperText="Set to 0.00 for complimentary delivery across the UK."
               />
 
               <Input

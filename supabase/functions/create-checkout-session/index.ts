@@ -55,7 +55,11 @@ Deno.serve(async (request) => {
       subtotal += effectivePrice * item.quantity;
     }
 
-    const shipping = deliveryTier === 'express' ? Number(settings.express_shipping_fee) : subtotal >= Number(settings.free_shipping_threshold) ? 0 : Number(settings.standard_shipping_fee);
+    const shipping = deliveryTier === 'express'
+      ? Number(settings.express_shipping_fee)
+      : (Number(settings.free_shipping_threshold) <= 0 || Number(settings.standard_shipping_fee) === 0 || subtotal >= Number(settings.free_shipping_threshold))
+      ? 0
+      : Number(settings.standard_shipping_fee);
 
     let discount = 0;
     if (promoCode) {

@@ -71,17 +71,17 @@ export const CartPage: React.FC = () => {
           <div className="flex items-start justify-between gap-3 text-xs mb-2">
             <span className="flex min-w-0 items-start gap-2 font-medium text-dark">
               <Truck className="w-4 h-4 text-brand-blue" />
-              {progress.remaining > 0 ? (
+              {progress.threshold <= 0 || progress.remaining <= 0 ? (
+                <span className="text-emerald-700 font-bold">
+                  Free Tracked UK Delivery applied — 100% complimentary shipping on all UK orders.
+                </span>
+              ) : (
                 <>
                   Add <strong className="text-brand-blue font-bold">{formatGBP(progress.remaining)}</strong> more to qualify for Free UK Delivery
                 </>
-              ) : (
-                <span className="text-emerald-700 font-bold">
-                  Congratulations! Your order qualifies for Free UK Standard Delivery.
-                </span>
               )}
             </span>
-            <span className="font-mono text-gray-500 font-medium">{progress.percentage}%</span>
+            <span className="font-mono text-emerald-700 font-semibold">{progress.threshold <= 0 ? 'FREE' : `${progress.percentage}%`}</span>
           </div>
           <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
