@@ -112,13 +112,19 @@ export const Shop: React.FC = () => {
 
         // Category filter
         if (selectedCategory !== 'all') {
-          const cat = categories.find((c) => c.slug === selectedCategory);
-          if (cat && product.category_id !== cat.id) return false;
+          const cat = categories.find((c) => c.slug === selectedCategory || c.id === selectedCategory);
+          if (cat) {
+            const matchesId = product.category_id === cat.id || product.category?.id === cat.id;
+            const matchesSlug = product.category?.slug === cat.slug || product.category?.slug === selectedCategory;
+            if (!matchesId && !matchesSlug) return false;
+          }
         }
 
         // Genre filter
         if (selectedGenre !== 'all') {
-          const hasGenre = product.genres?.some((g) => g.slug === selectedGenre || g.id === selectedGenre);
+          const hasGenre = product.genres?.some(
+            (g) => g.slug === selectedGenre || g.id === selectedGenre || g.name.toLowerCase() === selectedGenre.toLowerCase()
+          );
           if (!hasGenre) return false;
         }
 

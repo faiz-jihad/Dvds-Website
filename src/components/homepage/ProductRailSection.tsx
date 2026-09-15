@@ -46,7 +46,11 @@ export const ProductRailSection: React.FC<ProductRailSectionProps> = ({ data, al
         break;
     }
 
-    return list.slice(0, data.limit || 8);
+    const sliced = list.slice(0, data.limit || 8);
+    if (sliced.length === 0 && allProducts.length > 0) {
+      return allProducts.slice(0, data.limit || 8);
+    }
+    return sliced;
   }, [allProducts, data.sourceType, data.categorySlug, data.manualProductIds, data.limit]);
 
   if (data.sourceType === 'newest') {

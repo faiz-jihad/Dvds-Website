@@ -12,13 +12,16 @@ interface LatestReleasesSectionProps {
 }
 
 export const LatestReleasesSection: React.FC<LatestReleasesSectionProps> = ({ data, allProducts }) => {
-  const products = useMemo(() => allProducts
-    .filter((product) => product.is_new_release)
-    .sort((a, b) => {
-      const dateDifference = Date.parse(b.created_at) - Date.parse(a.created_at);
-      return Number.isNaN(dateDifference) ? b.release_year - a.release_year : dateDifference;
-    })
-    .slice(0, Math.min(data.limit || 5, 7)), [allProducts, data.limit]);
+  const products = useMemo(() => {
+    const filtered = allProducts
+      .filter((product) => product.is_new_release)
+      .sort((a, b) => {
+        const dateDifference = Date.parse(b.created_at) - Date.parse(a.created_at);
+        return Number.isNaN(dateDifference) ? b.release_year - a.release_year : dateDifference;
+      });
+    const list = filtered.length > 0 ? filtered : allProducts;
+    return list.slice(0, Math.min(data.limit || 5, 7));
+  }, [allProducts, data.limit]);
 
   const items = useMemo<AccordionGalleryItem[]>(() => products.map((product) => ({
     image: product.cover_image_url,

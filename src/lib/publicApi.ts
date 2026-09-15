@@ -2,6 +2,8 @@ import { isSupabaseConfigured, supabase } from './supabase';
 import { Address, Category, Genre, Order, Product, Profile, Promotion, StoreSettings } from '../types';
 import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
 import { DEFAULT_PRODUCTS } from '../data/defaultProducts';
+import { DEFAULT_CATEGORIES } from '../data/defaultCategories';
+import { DEFAULT_GENRES } from '../data/defaultGenres';
 
 function client() {
   if (!isSupabaseConfigured || !supabase) return null;
@@ -25,31 +27,159 @@ function normalizeProduct(row: any): Product {
 
 export const publicApi = {
   async getProducts(): Promise<Product[]> {
-    const { data, error } = await requireClient().from('products')
-      .select('*, category:categories(*), product_genres(genre:genres(*))')
-      .eq('status', 'active').order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
-    return (data || []).map(normalizeProduct);
+    let list: Product[] = [];
+    try {
+      const sb = client();
+      if (sb) {
+        const { data, error } = await sb
+          .from('products')
+          .select('*, category:categories(*), product_genres(genre:genres(*))')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+          list = data.map(normalizeProduct);
+        }
+      }
+    } catch (err) {
+      console.warn('[publicApi] Could not load products from Supabase, using catalog defaults:', err);
+    }
+    if (!list.length) list = DEFAULT_PRODUCTS;
+
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_demo_products_v1') : null;
+      const deletedRaw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_deleted_products_v1') : null;
+      const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
+      const demo = raw ? (JSON.parse(raw) as Product[]) : [];
+
+      const map = new Map<string, Product>();
+      list.forEach((p) => {
+        if (!deletedIds.has(p.id)) map.set(p.id, p);
+      });
+      demo.forEach((p) => {
+        if (!deletedIds.has(p.id)) map.set(p.id, p);
+      });
+      return Array.from(map.values()).filter((p) => p.status === 'active');
+    } catch {
+      // ignore
+    }
+
+    return list;
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
-    const { data, error } = await requireClient().from('products')
-      .select('*, category:categories(*), product_genres(genre:genres(*))')
-      .eq('slug', slug).eq('status', 'active').maybeSingle();
-    if (error) throw new Error(error.message);
-    return data ? normalizeProduct(data) : null;
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_demo_products_v1') : null;
+      const deletedRaw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_deleted_products_v1') : null;
+      const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
+
+      if (raw) {
+        const demo = JSON.parse(raw) as Product[];
+        const matched = demo.find((p) => p.slug === slug);
+        if (matched) {
+          if (deletedIds.has(matched.id) || matched.status !== 'active') return null;
+          return matched;
+        }
+      }
+
+      const sb = client();
+      if (sb) {
+        const { data, error } = await sb
+          .from('products')
+          .select('*, category:categories(*), product_genres(genre:genres(*))')
+          .eq('slug', slug)
+          .eq('status', 'active')
+          .maybeSingle();
+        if (!error && data) {
+          if (deletedIds.has(data.id)) return null;
+          return normalizeProduct(data);
+        }
+      }
+    } catch (err) {
+      console.warn('[publicApi] getProductBySlug error:', err);
+    }
+    return DEFAULT_PRODUCTS.find((p) => p.slug === slug) || null;
   },
 
   async getCategories(): Promise<Category[]> {
-    const { data, error } = await requireClient().from('categories').select('*').eq('is_active', true).order('sort_order');
-    if (error) throw new Error(error.message);
-    return (data || []) as Category[];
+    let dbCategories: Category[] = [];
+    try {
+      const sb = client();
+      if (sb) {
+        const { data, error } = await sb
+          .from('categories')
+          .select('*')
+          .eq('is_active', true)
+          .order('sort_order');
+        if (!error && data && data.length > 0) {
+          dbCategories = data as Category[];
+        }
+      }
+    } catch (err) {
+      console.warn('[publicApi] getCategories error:', err);
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const demoRaw = localStorage.getItem('az_rayan_demo_categories_v1');
+        const demoCats: Category[] = demoRaw ? JSON.parse(demoRaw) : [];
+        const deletedRaw = localStorage.getItem('az_rayan_deleted_categories_v1');
+        const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
+
+        const map = new Map<string, Category>();
+        dbCategories.forEach((c) => {
+          if (!deletedIds.has(c.id) && c.is_active) map.set(c.id, c);
+        });
+        demoCats.forEach((c) => {
+          if (!deletedIds.has(c.id) && c.is_active) map.set(c.id, c);
+        });
+        if (map.size > 0) {
+          return Array.from(map.values()).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    return dbCategories.length > 0 ? dbCategories : DEFAULT_CATEGORIES;
   },
 
   async getGenres(): Promise<Genre[]> {
-    const { data, error } = await requireClient().from('genres').select('*').order('name');
-    if (error) throw new Error(error.message);
-    return (data || []) as Genre[];
+    let dbGenres: Genre[] = [];
+    try {
+      const sb = client();
+      if (sb) {
+        const { data, error } = await sb.from('genres').select('*').order('name');
+        if (!error && data && data.length > 0) {
+          dbGenres = data as Genre[];
+        }
+      }
+    } catch (err) {
+      console.warn('[publicApi] getGenres error:', err);
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const demoRaw = localStorage.getItem('az_rayan_demo_genres_v1');
+        const demoGenres: Genre[] = demoRaw ? JSON.parse(demoRaw) : [];
+        const deletedRaw = localStorage.getItem('az_rayan_deleted_genres_v1');
+        const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
+
+        const map = new Map<string, Genre>();
+        dbGenres.forEach((g) => {
+          if (!deletedIds.has(g.id)) map.set(g.id, g);
+        });
+        demoGenres.forEach((g) => {
+          if (!deletedIds.has(g.id)) map.set(g.id, g);
+        });
+        if (map.size > 0) {
+          return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    return dbGenres.length > 0 ? dbGenres : DEFAULT_GENRES;
   },
 
   async getStoreSettings(): Promise<StoreSettings> {
