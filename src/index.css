@@ -97,29 +97,45 @@
 }
 
 /* Dedicated Print Styles for Premium Receipt & Invoices */
+#print-only-container {
+  display: none !important;
+}
+
 @media print {
   @page {
-    margin: 10mm 12mm;
+    margin: 8mm 12mm;
     size: A4 portrait;
   }
 
-  body {
+  html, body {
     background: #FFFFFF !important;
     color: #000000 !important;
-    font-size: 12pt;
-    line-height: 1.4;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    font-size: 11pt;
+    line-height: 1.35;
   }
 
-  /* Hide all interactive and standard page elements during print */
-  nav,
-  header,
-  footer,
-  aside,
-  button,
+  /* Completely hide all interactive root app DOM elements, modals & backdrops */
+  #root,
   .no-print,
-  [role="dialog"] > div:first-child:not(.printable-receipt-modal-backdrop),
-  .store-data-state {
+  .fixed,
+  [role="dialog"] {
     display: none !important;
+  }
+
+  /* Render only the dedicated print container attached to body */
+  #print-only-container {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
   }
 
   /* Ensure background colors and borders render with fidelity */
@@ -138,6 +154,7 @@
     padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
+    background: #FFFFFF !important;
   }
 
   .page-break-avoid {
@@ -145,4 +162,5 @@
     break-inside: avoid;
   }
 }
+
 

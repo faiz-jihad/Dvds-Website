@@ -23,6 +23,7 @@ import { formatGBP, formatDateUK } from '../../lib/formatters';
 import { StoreDataState } from '../../components/common/StoreDataState';
 import { Button } from '../../components/common/Button';
 import { OrderReceiptModal } from '../../components/orders/OrderReceiptModal';
+import { OrderStatusStepper } from '../../components/orders/OrderStatusStepper';
 import { useCartStore } from '../../stores/useCartStore';
 import { useUiStore } from '../../stores/useUiStore';
 import { Order } from '../../types';
@@ -43,6 +44,7 @@ export const OrdersPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedReceiptOrder, setSelectedReceiptOrder] = useState<Order | null>(null);
+  const [expandedStepperOrderId, setExpandedStepperOrderId] = useState<string | null>(null);
 
   const orders = ordersQuery.data || [];
 
@@ -437,6 +439,22 @@ export const OrdersPage: React.FC = () => {
 
                     {/* Action buttons */}
                     <div className="space-y-2 pt-2 border-t border-gray-100">
+                      {/* Track Status Stepper Button */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedStepperOrderId((prev) => (prev === order.id ? null : order.id))
+                        }
+                        className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg border border-blue-200 bg-blue-50/60 hover:bg-blue-50 text-xs font-semibold text-brand-blue transition-colors cursor-pointer"
+                      >
+                        <Package className="w-3.5 h-3.5" />
+                        <span>
+                          {expandedStepperOrderId === order.id
+                            ? 'Hide Progress'
+                            : 'Track Status Progress'}
+                        </span>
+                      </button>
+
                       {/* Print Receipt Action */}
                       <Button
                         type="button"
@@ -470,6 +488,13 @@ export const OrdersPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Expandable Order Status Stepper */}
+                {expandedStepperOrderId === order.id && (
+                  <div className="px-5 pb-5 pt-3 border-t border-gray-100 bg-gray-50/50">
+                    <OrderStatusStepper order={order} />
+                  </div>
+                )}
               </div>
             );
           })}

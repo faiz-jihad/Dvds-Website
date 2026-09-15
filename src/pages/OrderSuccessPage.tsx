@@ -22,7 +22,7 @@ import { StoreDataState } from '../components/common/StoreDataState';
 import { useCartStore } from '../stores/useCartStore';
 import { useUiStore } from '../stores/useUiStore';
 import { OrderReceiptModal } from '../components/orders/OrderReceiptModal';
-import { PrintableReceipt } from '../components/orders/PrintableReceipt';
+import { OrderStatusStepper } from '../components/orders/OrderStatusStepper';
 
 export const OrderSuccessPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -280,21 +280,8 @@ export const OrderSuccessPage: React.FC = () => {
 
         {/* Order Details & Summary Card */}
         <div className="bg-white rounded-2xl border border-gray-200/90 p-6 sm:p-8 shadow-xs space-y-8">
-          {/* Status Bar */}
-          <div className="bg-gray-50 rounded-xl p-4 sm:p-5 border border-gray-200 flex flex-col items-start gap-3 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
-            <div className="flex items-center gap-3">
-              <PackageCheck className="w-5 h-5 text-brand-blue" />
-              <div>
-                <div className="text-xs font-bold text-dark uppercase tracking-wider">
-                  Order Status: {order.status}
-                </div>
-                <div className="text-[11px] text-gray-500">
-                  Payment: <strong className="capitalize text-gray-700">{order.payment_status.replace('_', ' ')}</strong> • Fulfilment: {order.fulfilment_status}
-                </div>
-              </div>
-            </div>
-            <span className="text-xs font-mono text-gray-500">{formatDateUK(order.created_at)}</span>
-          </div>
+          {/* Visual Order Lifecycle Stepper */}
+          <OrderStatusStepper order={order} />
 
           {/* Purchased DVD Titles */}
           <div>
@@ -417,11 +404,6 @@ export const OrderSuccessPage: React.FC = () => {
             </Link>
           </div>
         </div>
-      </div>
-
-      {/* Dedicated print element (rendered only during browser print) */}
-      <div className="hidden print:block">
-        <PrintableReceipt order={order} />
       </div>
 
       {/* Interactive Receipt Preview & Print Modal */}
