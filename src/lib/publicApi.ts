@@ -16,6 +16,23 @@ function requireClient() {
   return sb;
 }
 
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  try {
+    const sb = client();
+    if (sb) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return headers;
+}
+
+
 function normalizeProduct(row: any): Product {
   return {
     ...row,
@@ -429,9 +446,10 @@ export const publicApi = {
     // If Stripe payment is requested, create real Stripe session with order metadata
     if (input.paymentMethod !== 'card') {
       try {
+        const authHeaders = await getAuthHeaders();
         const res = await fetch('/api/create-checkout-session', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders,
           body: JSON.stringify({
             items: input.items,
             customerEmail: input.customerEmail,
@@ -476,9 +494,10 @@ export const publicApi = {
     promoCode?: string | null;
     totalAmount?: number;
   }): Promise<{ url: string; orderId: string; orderNumber: string; paypalOrderId?: string }> {
+    const authHeaders = await getAuthHeaders();
     const res = await fetch('/api/create-paypal-order', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify(input),
     });
     if (!res.ok) {
@@ -489,9 +508,10 @@ export const publicApi = {
   },
 
   async capturePayPalOrder(orderId: string, paypalOrderId: string): Promise<any> {
+    const authHeaders = await getAuthHeaders();
     const res = await fetch('/api/capture-paypal-order', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({ orderId, paypalOrderId }),
     });
     if (!res.ok) {
@@ -509,9 +529,10 @@ export const publicApi = {
     promoCode?: string | null;
     totalAmount?: number;
   }): Promise<{ success: boolean; orderId: string; orderNumber: string; total: number }> {
+    const authHeaders = await getAuthHeaders();
     const res = await fetch('/api/create-bank-transfer-order', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify(input),
     });
     if (!res.ok) {
@@ -611,11 +632,85 @@ export const publicApi = {
   },
 
   async getMyOrders(): Promise<Order[]> {
-    const { data: auth } = await requireClient().auth.getUser();
-    if (!auth.user) throw new Error('Sign in to view your order history.');
-    const { data, error } = await requireClient().from('orders').select('*, items:order_items(*)').eq('user_id', auth.user.id).order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
-    return (data || []) as Order[];
+    const sb = client();
+    let authUser: { id: string; email?: string } | null = null;
+    try {
+      if (sb) {
+        const { data: auth } = await sb.auth.getUser();
+        if (auth?.user) authUser = auth.user;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!authUser && typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('az_rayan_customer_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.id) authUser = { id: parsed.id, email: parsed.email };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!authUser) throw new Error('Sign in to view your order history.');
+
+    let dbOrders: Order[] = [];
+    try {
+      if (sb) {
+        const { data, error } = await sb
+          .from('orders')
+          .select('*, items:order_items(*)')
+          .eq('user_id', authUser.id)
+          .order('created_at', { ascending: false });
+        if (!error && data) {
+          dbOrders = data as Order[];
+        }
+      }
+    } catch (err) {
+      console.warn('[publicApi] Could not fetch DB orders:', err);
+    }
+
+    // Merge with local demo orders matching user id or email
+    let localOrders: Order[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('az_rayan_demo_orders_v1');
+        if (raw) {
+          const list: Order[] = JSON.parse(raw);
+          localOrders = list.filter(
+            (o) =>
+              (authUser?.id && o.user_id === authUser.id) ||
+              (authUser?.email && o.email && o.email.toLowerCase() === authUser.email.toLowerCase())
+          );
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const seenIds = new Set<string>();
+    const seenNumbers = new Set<string>();
+    const merged: Order[] = [];
+
+    for (const order of dbOrders) {
+      seenIds.add(order.id);
+      if (order.order_number) seenNumbers.add(order.order_number);
+      merged.push(order);
+    }
+
+    for (const order of localOrders) {
+      if (!seenIds.has(order.id) && !seenNumbers.has(order.order_number)) {
+        seenIds.add(order.id);
+        if (order.order_number) seenNumbers.add(order.order_number);
+        merged.push(order);
+      }
+    }
+
+    merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return merged;
   },
 
   async getMyProfile(): Promise<Profile> {
@@ -674,26 +769,335 @@ export const publicApi = {
   },
 
   async getMyAddresses(): Promise<Address[]> {
-    const { data: auth } = await requireClient().auth.getUser();
-    if (!auth.user) throw new Error('Sign in to view saved addresses.');
-    const { data, error } = await requireClient().from('addresses').select('*').eq('user_id', auth.user.id).order('is_default', { ascending: false });
-    if (error) throw new Error(error.message);
-    return (data || []) as Address[];
+    const sb = client();
+    let authUser: { id: string } | null = null;
+    try {
+      if (sb) {
+        const { data: auth } = await sb.auth.getUser();
+        if (auth?.user) authUser = auth.user;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!authUser && typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('az_rayan_customer_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.id) authUser = { id: parsed.id };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!authUser) throw new Error('Sign in to view saved addresses.');
+    const userId = authUser.id;
+    const localKey = `az_rayan_saved_addresses_${userId}`;
+
+    const getLocalAddresses = (): Address[] => {
+      if (typeof window === 'undefined') return [];
+      try {
+        const raw = localStorage.getItem(localKey);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    };
+
+    try {
+      if (sb) {
+        const { data, error } = await sb
+          .from('addresses')
+          .select('*')
+          .eq('user_id', userId)
+          .order('is_default', { ascending: false })
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(localKey, JSON.stringify(data));
+          }
+          return data as Address[];
+        }
+      }
+    } catch (err) {
+      console.warn('[publicApi] Could not load DB addresses, using local cache:', err);
+    }
+
+    return getLocalAddresses();
   },
 
   async createMyAddress(input: Omit<Address, 'id' | 'user_id'>): Promise<Address> {
-    const { data: auth } = await requireClient().auth.getUser();
-    if (!auth.user) throw new Error('Sign in to save an address.');
-    const { data, error } = await requireClient().from('addresses').insert({ ...input, user_id: auth.user.id }).select('*').single();
-    if (error || !data) throw new Error(error?.message || 'Address could not be saved.');
-    return data as Address;
+    const sb = client();
+    let authUser: { id: string } | null = null;
+    try {
+      if (sb) {
+        const { data: auth } = await sb.auth.getUser();
+        if (auth?.user) authUser = auth.user;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!authUser && typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('az_rayan_customer_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.id) authUser = { id: parsed.id };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!authUser) throw new Error('Sign in to save an address.');
+    const userId = authUser.id;
+    const localKey = `az_rayan_saved_addresses_${userId}`;
+
+    const generateId = () => {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      return 'addr_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    };
+
+    // If marked default, unset default on other addresses in DB and local
+    if (input.is_default && sb) {
+      try {
+        await sb.from('addresses').update({ is_default: false }).eq('user_id', userId);
+      } catch {
+        // ignore
+      }
+    }
+
+    let created: Address = {
+      id: generateId(),
+      user_id: userId,
+      ...input,
+    };
+
+    if (sb) {
+      try {
+        const { data, error } = await sb
+          .from('addresses')
+          .insert({ ...input, user_id: userId })
+          .select('*')
+          .single();
+        if (!error && data) {
+          created = data as Address;
+        }
+      } catch (err) {
+        console.warn('[publicApi] DB insert address failed, saving locally:', err);
+      }
+    }
+
+    // Update local cache
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(localKey);
+        let list: Address[] = raw ? JSON.parse(raw) : [];
+        if (created.is_default) {
+          list = list.map((a) => ({ ...a, is_default: false }));
+        }
+        localStorage.setItem(localKey, JSON.stringify([created, ...list.filter((a) => a.id !== created.id)]));
+      } catch {
+        // ignore
+      }
+    }
+
+    return created;
+  },
+
+  async updateMyAddress(id: string, input: Partial<Omit<Address, 'id' | 'user_id'>>): Promise<Address> {
+    const sb = client();
+    let authUser: { id: string } | null = null;
+    try {
+      if (sb) {
+        const { data: auth } = await sb.auth.getUser();
+        if (auth?.user) authUser = auth.user;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!authUser && typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('az_rayan_customer_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.id) authUser = { id: parsed.id };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!authUser) throw new Error('Sign in to update an address.');
+    const userId = authUser.id;
+    const localKey = `az_rayan_saved_addresses_${userId}`;
+
+    // If marked default, unset default on other addresses
+    if (input.is_default && sb) {
+      try {
+        await sb.from('addresses').update({ is_default: false }).eq('user_id', userId);
+      } catch {
+        // ignore
+      }
+    }
+
+    let updated: Address | null = null;
+
+    if (sb) {
+      try {
+        const { data, error } = await sb
+          .from('addresses')
+          .update(input)
+          .eq('id', id)
+          .eq('user_id', userId)
+          .select('*')
+          .maybeSingle();
+        if (!error && data) {
+          updated = data as Address;
+        }
+      } catch (err) {
+        console.warn('[publicApi] DB update address failed, updating locally:', err);
+      }
+    }
+
+    // Update local cache
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(localKey);
+        let list: Address[] = raw ? JSON.parse(raw) : [];
+        if (input.is_default) {
+          list = list.map((a) => ({ ...a, is_default: false }));
+        }
+        const existingIdx = list.findIndex((a) => a.id === id);
+        if (existingIdx >= 0) {
+          list[existingIdx] = { ...list[existingIdx], ...input };
+          updated = updated || list[existingIdx];
+        } else if (updated) {
+          list.push(updated);
+        }
+        localStorage.setItem(localKey, JSON.stringify(list));
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!updated) {
+      throw new Error('Address not found to update.');
+    }
+    return updated;
+  },
+
+  async setDefaultAddress(id: string): Promise<void> {
+    const sb = client();
+    let authUser: { id: string } | null = null;
+    try {
+      if (sb) {
+        const { data: auth } = await sb.auth.getUser();
+        if (auth?.user) authUser = auth.user;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!authUser && typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('az_rayan_customer_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.id) authUser = { id: parsed.id };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!authUser) throw new Error('Sign in to set default address.');
+    const userId = authUser.id;
+    const localKey = `az_rayan_saved_addresses_${userId}`;
+
+    if (sb) {
+      try {
+        await sb.from('addresses').update({ is_default: false }).eq('user_id', userId);
+        await sb.from('addresses').update({ is_default: true }).eq('id', id).eq('user_id', userId);
+      } catch (err) {
+        console.warn('[publicApi] DB set default failed:', err);
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(localKey);
+        if (raw) {
+          const list: Address[] = JSON.parse(raw);
+          const updated = list.map((a) => ({ ...a, is_default: a.id === id }));
+          localStorage.setItem(localKey, JSON.stringify(updated));
+        }
+      } catch {
+        // ignore
+      }
+    }
   },
 
   async deleteMyAddress(id: string): Promise<void> {
-    const { data: auth } = await requireClient().auth.getUser();
-    if (!auth.user) throw new Error('Sign in to remove an address.');
-    const { error } = await requireClient().from('addresses').delete().eq('id', id).eq('user_id', auth.user.id);
-    if (error) throw new Error(error.message);
+    const sb = client();
+    let authUser: { id: string } | null = null;
+    try {
+      if (sb) {
+        const { data: auth } = await sb.auth.getUser();
+        if (auth?.user) authUser = auth.user;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!authUser && typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('az_rayan_customer_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.id) authUser = { id: parsed.id };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!authUser) throw new Error('Sign in to remove an address.');
+    const userId = authUser.id;
+    const localKey = `az_rayan_saved_addresses_${userId}`;
+
+    if (sb) {
+      try {
+        await sb.from('addresses').delete().eq('id', id).eq('user_id', userId);
+      } catch (err) {
+        console.warn('[publicApi] DB delete address failed:', err);
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(localKey);
+        if (raw) {
+          const list: Address[] = JSON.parse(raw);
+          const filtered = list.filter((a) => a.id !== id);
+          // If deleted address was default, set next available as default
+          const wasDefault = list.find((a) => a.id === id)?.is_default;
+          if (wasDefault && filtered.length > 0) {
+            filtered[0].is_default = true;
+          }
+          localStorage.setItem(localKey, JSON.stringify(filtered));
+        }
+      } catch {
+        // ignore
+      }
+    }
   },
 
   async submitContactMessage(input: { name: string; email: string; order_reference?: string | null; message: string }): Promise<void> {

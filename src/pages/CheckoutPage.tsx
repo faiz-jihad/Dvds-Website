@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -14,13 +14,16 @@ import {
   Building2,
   Truck,
   CreditCard,
+  MapPin,
+  Check,
 } from 'lucide-react';
 import { useCartStore } from '../stores/useCartStore';
 import { publicApi } from '../lib/publicApi';
 import { formatGBP } from '../lib/formatters';
 import { useUiStore } from '../stores/useUiStore';
 import { StoreDataState } from '../components/common/StoreDataState';
-import { PaymentMethodType } from '../types';
+import { PaymentMethodType, Address } from '../types';
+import { useCustomerAuth } from '../auth/CustomerAuth';
 
 // Official Stripe Wordmark SVG
 const StripeWordmark = () => (
@@ -137,6 +140,65 @@ export const CheckoutPage: React.FC = () => {
   const [county, setCounty] = useState('');
   const [postcode, setPostcode] = useState('');
 
+  // Customer Authentication and Saved Addresses
+  const { customer, isAuthenticated } = useCustomerAuth();
+  const addressesQuery = useQuery({
+    queryKey: ['account', 'addresses'],
+    queryFn: publicApi.getMyAddresses,
+    enabled: isAuthenticated,
+    retry: false,
+  });
+  const savedAddresses = addressesQuery.data || [];
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [saveAddressToAccount, setSaveAddressToAccount] = useState<boolean>(true);
+
+  // Auto-fill from authenticated customer profile
+  useEffect(() => {
+    if (customer) {
+      setEmail((prev) => prev || customer.email || '');
+      setFullName((prev) => prev || customer.full_name || '');
+      setPhone((prev) => prev || customer.phone || '');
+    }
+  }, [customer]);
+
+  // Auto-fill from default saved address if available
+  useEffect(() => {
+    if (savedAddresses.length > 0 && !selectedAddressId) {
+      const defaultAddr = savedAddresses.find((a) => a.is_default) || savedAddresses[0];
+      if (defaultAddr) {
+        setSelectedAddressId(defaultAddr.id);
+        setFullName(defaultAddr.full_name);
+        if (defaultAddr.phone) setPhone(defaultAddr.phone);
+        setAddressLine1(defaultAddr.address_line_1);
+        setAddressLine2(defaultAddr.address_line_2 || '');
+        setCity(defaultAddr.city);
+        setCounty(defaultAddr.county || '');
+        setPostcode(defaultAddr.postcode);
+      }
+    }
+  }, [savedAddresses, selectedAddressId]);
+
+  const handleSelectAddress = (addr: Address) => {
+    setSelectedAddressId(addr.id);
+    setFullName(addr.full_name);
+    setPhone(addr.phone || '');
+    setAddressLine1(addr.address_line_1);
+    setAddressLine2(addr.address_line_2 || '');
+    setCity(addr.city);
+    setCounty(addr.county || '');
+    setPostcode(addr.postcode);
+    setErrors({});
+  };
+
+  const handleSelectCustomAddress = () => {
+    setSelectedAddressId('custom');
+    setAddressLine1('');
+    setAddressLine2('');
+    setCity('');
+    setCounty('');
+    setPostcode('');
+  };
+
   // Promo Code input state
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState('');
@@ -187,6 +249,25 @@ export const CheckoutPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Auto-save new address to account if opted in
+      if (isAuthenticated && saveAddressToAccount && selectedAddressId === 'custom') {
+        try {
+          await publicApi.createMyAddress({
+            full_name: fullName.trim(),
+            phone: phone.trim(),
+            address_line_1: addressLine1.trim(),
+            address_line_2: addressLine2.trim() || undefined,
+            city: city.trim(),
+            county: county.trim() || undefined,
+            postcode: postcode.trim().toUpperCase(),
+            country: 'United Kingdom',
+            is_default: savedAddresses.length === 0,
+          });
+        } catch {
+          // ignore address save error
+        }
+      }
+
       const shippingAddress = {
         id: crypto.randomUUID(),
         full_name: fullName,
@@ -198,6 +279,7 @@ export const CheckoutPage: React.FC = () => {
         postcode: postcode.toUpperCase(),
         country: 'United Kingdom',
       };
+
 
       if (paymentMethod === 'card') {
         const session = await publicApi.createCheckoutSession({
@@ -350,6 +432,66 @@ export const CheckoutPage: React.FC = () => {
                 <span className="text-xs text-gray-500">Step 2 of 3</span>
               </div>
 
+              {/* Saved Addresses Selector for Authenticated Customers */}
+              {isAuthenticated && savedAddresses.length > 0 && (
+                <div className="space-y-2.5 pb-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-brand-blue" />
+                      Choose from saved addresses
+                    </label>
+                    <Link
+                      to="/account/addresses"
+                      target="_blank"
+                      className="text-[11px] font-semibold text-brand-blue hover:underline"
+                    >
+                      Manage addresses
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {savedAddresses.map((addr) => (
+                      <button
+                        key={addr.id}
+                        type="button"
+                        onClick={() => handleSelectAddress(addr)}
+                        className={`text-left p-3 rounded-lg border transition-all cursor-pointer ${
+                          selectedAddressId === addr.id
+                            ? 'border-brand-blue bg-blue-50/40 ring-1 ring-brand-blue shadow-2xs'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <span className="font-bold text-xs text-gray-900 truncate">
+                            {addr.full_name}
+                          </span>
+                          {addr.is_default && (
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-brand-blue text-white shrink-0">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-gray-600 truncate">{addr.address_line_1}</p>
+                        <p className="text-[11px] font-mono text-gray-500">{addr.city}, {addr.postcode}</p>
+                      </button>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={handleSelectCustomAddress}
+                      className={`text-left p-3 rounded-lg border transition-all cursor-pointer flex flex-col justify-center ${
+                        selectedAddressId === 'custom'
+                          ? 'border-brand-blue bg-blue-50/40 ring-1 ring-brand-blue shadow-2xs'
+                          : 'border-dashed border-gray-300 bg-gray-50/50 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="font-bold text-xs text-gray-900">+ Enter a different address</span>
+                      <span className="text-[11px] text-gray-500">Provide a new delivery location</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3">
                 <div>
                   <input
@@ -454,6 +596,19 @@ export const CheckoutPage: React.FC = () => {
                     className="w-full rounded-md border border-gray-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 transition-all"
                   />
                 </div>
+
+                {/* Save address to account checkbox */}
+                {isAuthenticated && (
+                  <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none pt-1">
+                    <input
+                      type="checkbox"
+                      checked={saveAddressToAccount}
+                      onChange={(e) => setSaveAddressToAccount(e.target.checked)}
+                      className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue h-4 w-4"
+                    />
+                    <span>Save this address to my account for future orders</span>
+                  </label>
+                )}
               </div>
             </section>
 

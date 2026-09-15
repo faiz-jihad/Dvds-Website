@@ -1,0 +1,148 @@
+-- One persistent order per checkout attempt, shared by customers and admin.
+ALTER TABLE public.orders
+  ADD COLUMN IF NOT EXISTS checkout_request_id UUID UNIQUE,
+  ADD COLUMN IF NOT EXISTS checkout_request_hash TEXT,
+  ADD COLUMN IF NOT EXISTS checkout_access_hash TEXT,
+  ADD COLUMN IF NOT EXISTS checkout_session_id TEXT,
+  ADD COLUMN IF NOT EXISTS checkout_url TEXT,
+  ADD COLUMN IF NOT EXISTS delivery_tier TEXT,
+  ADD COLUMN IF NOT EXISTS delivery_name TEXT,
+  ADD COLUMN IF NOT EXISTS bank_details JSONB,
+  ADD COLUMN IF NOT EXISTS payment_review_required BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS refunded_amount NUMERIC(10,2) NOT NULL DEFAULT 0;
+CREATE UNIQUE INDEX IF NOT EXISTS orders_checkout_session_unique ON public.orders(checkout_session_id) WHERE checkout_session_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS orders_paypal_order_unique ON public.orders(paypal_order_id) WHERE paypal_order_id IS NOT NULL;
+ALTER TABLE public.store_settings
+  ADD COLUMN IF NOT EXISTS payment_card_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  ADD COLUMN IF NOT EXISTS payment_paypal_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  ADD COLUMN IF NOT EXISTS payment_bank_transfer_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+
+CREATE TABLE IF NOT EXISTS public.payment_events (
+  id TEXT PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES public.orders(id),
+  provider TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  amount NUMERIC(10,2),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.payment_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Staff can read payment events" ON public.payment_events FOR SELECT USING (public.is_admin());
+
+CREATE OR REPLACE FUNCTION public.create_checkout_order(
+  p_request_id UUID, p_request_hash TEXT, p_access_hash TEXT, p_order JSONB, p_items JSONB
+) RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_order public.orders%ROWTYPE;
+  v_product public.products%ROWTYPE;
+  v_item JSONB;
+  v_order_id UUID := gen_random_uuid();
+  v_number TEXT := 'AZ-' || to_char(NOW(), 'YYYYMMDD') || '-' || upper(substr(replace(v_order_id::TEXT, '-', ''), 1, 10));
+BEGIN
+  IF p_request_id IS NULL OR length(p_request_hash) <> 64 OR length(p_access_hash) <> 64 THEN RAISE EXCEPTION 'Invalid checkout attempt'; END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::TEXT, 0));
+  SELECT * INTO v_order FROM public.orders WHERE checkout_request_id = p_request_id;
+  IF FOUND THEN
+    IF v_order.checkout_request_hash IS DISTINCT FROM p_request_hash OR v_order.checkout_access_hash IS DISTINCT FROM p_access_hash THEN RAISE EXCEPTION 'Checkout attempt does not match'; END IF;
+    RETURN jsonb_build_object('id', v_order.id);
+  END IF;
+  IF jsonb_typeof(p_items) <> 'array' OR jsonb_array_length(p_items) NOT BETWEEN 1 AND 50 THEN RAISE EXCEPTION 'Invalid checkout items'; END IF;
+  IF (SELECT count(*) FROM jsonb_array_elements(p_items)) <> (SELECT count(DISTINCT item->>'product_id') FROM jsonb_array_elements(p_items) item) THEN RAISE EXCEPTION 'Duplicate product lines'; END IF;
+  -- Deterministic lock order avoids deadlocks between baskets containing the same titles.
+  FOR v_item IN SELECT value FROM jsonb_array_elements(p_items) ORDER BY value->>'product_id' LOOP
+    SELECT * INTO v_product FROM public.products WHERE id = (v_item->>'product_id')::UUID FOR UPDATE;
+    IF NOT FOUND OR v_product.status <> 'active' THEN RAISE EXCEPTION 'A selected title is unavailable'; END IF;
+    IF (v_item->>'quantity')::INT NOT BETWEEN 1 AND 20 OR v_product.stock_quantity < (v_item->>'quantity')::INT THEN RAISE EXCEPTION 'Stock changed. Please review your basket'; END IF;
+    IF v_product.price <> (v_item->>'base_price')::NUMERIC THEN RAISE EXCEPTION 'Product price changed. Please review your basket'; END IF;
+  END LOOP;
+  INSERT INTO public.orders(id, order_number, user_id, email, status, payment_status, payment_method, payment_provider,
+    fulfilment_status, subtotal, shipping_amount, discount_amount, total_amount, currency, shipping_address,
+    checkout_request_id, checkout_request_hash, checkout_access_hash, delivery_tier, delivery_name, bank_details, bank_transfer_reference)
+  VALUES (v_order_id, v_number, NULLIF(p_order->>'user_id','')::UUID, p_order->>'email', 'pending',
+    CASE WHEN p_order->>'payment_method' = 'bank_transfer' THEN 'awaiting_payment' ELSE 'pending' END,
+    p_order->>'payment_method', p_order->>'payment_provider', 'unfulfilled', (p_order->>'subtotal')::NUMERIC,
+    (p_order->>'shipping_amount')::NUMERIC, (p_order->>'discount_amount')::NUMERIC, (p_order->>'total_amount')::NUMERIC,
+    'GBP', p_order->'shipping_address', p_request_id, p_request_hash, p_access_hash, p_order->>'delivery_tier', p_order->>'delivery_name', p_order->'bank_details',
+    CASE WHEN p_order->>'payment_method' = 'bank_transfer' THEN v_number ELSE NULL END);
+  FOR v_item IN SELECT value FROM jsonb_array_elements(p_items) LOOP
+    INSERT INTO public.order_items(order_id, product_id, product_title, product_sku, quantity, unit_price, total_price, product_snapshot)
+    VALUES (v_order_id, (v_item->>'product_id')::UUID, v_item->>'product_title', v_item->>'product_sku',
+      (v_item->>'quantity')::INT, (v_item->>'unit_price')::NUMERIC, (v_item->>'total_price')::NUMERIC,
+      jsonb_build_object('cover_image_url', v_item->>'cover_image_url'));
+  END LOOP;
+  PERFORM public.reserve_order_inventory(v_order_id);
+  INSERT INTO public.order_status_history(order_id, new_status, new_fulfilment_status, note)
+  VALUES (v_order_id, 'pending', 'unfulfilled', 'Checkout created; awaiting payment');
+  RETURN jsonb_build_object('id', v_order_id);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.record_checkout_payment(
+  p_order_id UUID, p_provider TEXT, p_provider_order_id TEXT, p_reference TEXT, p_amount NUMERIC, p_currency TEXT
+) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_order public.orders%ROWTYPE; v_review BOOLEAN;
+BEGIN
+  SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Order not found'; END IF;
+  IF p_provider NOT IN ('stripe','paypal') OR v_order.payment_provider <> p_provider OR v_order.total_amount <> p_amount OR upper(p_currency) <> v_order.currency THEN RAISE EXCEPTION 'Payment does not match the order'; END IF;
+  IF p_provider = 'stripe' AND v_order.checkout_session_id IS NOT NULL AND v_order.checkout_session_id <> p_provider_order_id THEN RAISE EXCEPTION 'Stripe session mismatch'; END IF;
+  IF p_provider = 'paypal' AND v_order.paypal_order_id IS DISTINCT FROM p_provider_order_id THEN RAISE EXCEPTION 'PayPal order mismatch'; END IF;
+  IF v_order.payment_status IN ('paid','refunded','partially_refunded') THEN RETURN; END IF;
+  v_review := v_order.status = 'cancelled' OR v_order.inventory_released_at IS NOT NULL;
+  UPDATE public.orders SET payment_status = 'paid', status = CASE WHEN v_review THEN 'pending' ELSE 'processing' END,
+    paid_at = COALESCE(paid_at, NOW()), payment_reference = p_reference,
+    checkout_session_id = CASE WHEN p_provider = 'stripe' THEN p_provider_order_id ELSE checkout_session_id END,
+    paypal_capture_id = CASE WHEN p_provider = 'paypal' THEN p_reference ELSE paypal_capture_id END,
+    payment_review_required = v_review,
+    internal_notes = CASE WHEN v_review THEN concat_ws(E'\n', internal_notes, 'Payment received after cancellation. Review stock or refund before fulfilment.') ELSE internal_notes END,
+    updated_at = NOW() WHERE id = p_order_id;
+  INSERT INTO public.payment_events(id, order_id, provider, event_type, amount)
+  VALUES (p_provider || ':paid:' || p_reference, p_order_id, p_provider, 'paid', p_amount) ON CONFLICT DO NOTHING;
+  INSERT INTO public.admin_audit_log(table_name, record_id, action, before_data, after_data)
+  VALUES ('orders', p_order_id::TEXT, 'UPDATE', jsonb_build_object('payment_status', v_order.payment_status), jsonb_build_object('payment_status','paid','provider',p_provider,'reference',p_reference,'review_required',v_review));
+  INSERT INTO public.order_status_history(order_id, previous_status, new_status, previous_fulfilment_status, new_fulfilment_status, note)
+  VALUES (p_order_id, v_order.status, CASE WHEN v_review THEN 'pending' ELSE 'processing' END, v_order.fulfilment_status, v_order.fulfilment_status, 'Payment verified by ' || p_provider);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.expire_checkout_order(p_order_id UUID, p_provider_order_id TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_order public.orders%ROWTYPE;
+BEGIN
+  SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
+  IF NOT FOUND OR v_order.payment_status IN ('paid','refunded','partially_refunded') OR v_order.status = 'cancelled' THEN RETURN; END IF;
+  IF v_order.checkout_session_id IS DISTINCT FROM p_provider_order_id THEN RAISE EXCEPTION 'Session mismatch'; END IF;
+  PERFORM public.release_order_inventory(p_order_id);
+  UPDATE public.orders SET payment_status='failed', updated_at=NOW() WHERE id=p_order_id;
+  INSERT INTO public.order_status_history(order_id, previous_status, new_status, previous_fulfilment_status, new_fulfilment_status, note)
+  VALUES (p_order_id, v_order.status, 'cancelled', v_order.fulfilment_status, v_order.fulfilment_status, 'Payment session expired; stock released');
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.record_checkout_refund(p_order_id UUID, p_event_id TEXT, p_amount NUMERIC, p_cumulative BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_order public.orders%ROWTYPE; v_amount NUMERIC; v_status TEXT;
+BEGIN
+  SELECT * INTO v_order FROM public.orders WHERE id=p_order_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Order not found'; END IF;
+  IF p_amount <= 0 OR p_amount > v_order.total_amount THEN RAISE EXCEPTION 'Invalid refund amount'; END IF;
+  INSERT INTO public.payment_events(id,order_id,provider,event_type,amount)
+  VALUES (v_order.payment_provider || ':refund:' || p_event_id,p_order_id,v_order.payment_provider,'refund',p_amount) ON CONFLICT DO NOTHING;
+  IF NOT FOUND THEN RETURN; END IF;
+  v_amount := CASE WHEN p_cumulative THEN greatest(v_order.refunded_amount,p_amount) ELSE v_order.refunded_amount+p_amount END;
+  IF v_amount > v_order.total_amount THEN RAISE EXCEPTION 'Refund exceeds order total'; END IF;
+  v_status := CASE WHEN v_amount=v_order.total_amount THEN 'refunded' ELSE 'partially_refunded' END;
+  UPDATE public.orders SET refunded_amount=v_amount,payment_status=v_status,status=CASE WHEN v_status='refunded' THEN 'refunded' ELSE status END,updated_at=NOW() WHERE id=p_order_id;
+  INSERT INTO public.admin_audit_log(table_name,record_id,action,before_data,after_data)
+  VALUES ('orders',p_order_id::TEXT,'UPDATE',jsonb_build_object('refunded_amount',v_order.refunded_amount),jsonb_build_object('refunded_amount',v_amount,'payment_status',v_status));
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.create_checkout_order(UUID,TEXT,TEXT,JSONB,JSONB) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.record_checkout_payment(UUID,TEXT,TEXT,TEXT,NUMERIC,TEXT) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.expire_checkout_order(UUID,TEXT) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.record_checkout_refund(UUID,TEXT,NUMERIC,BOOLEAN) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.create_checkout_order(UUID,TEXT,TEXT,JSONB,JSONB) TO service_role;
+GRANT EXECUTE ON FUNCTION public.record_checkout_payment(UUID,TEXT,TEXT,TEXT,NUMERIC,TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.expire_checkout_order(UUID,TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.record_checkout_refund(UUID,TEXT,NUMERIC,BOOLEAN) TO service_role;
+NOTIFY pgrst, 'reload schema';

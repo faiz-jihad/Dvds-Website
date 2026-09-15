@@ -21,6 +21,8 @@ import { Button } from '../components/common/Button';
 import { StoreDataState } from '../components/common/StoreDataState';
 import { useCartStore } from '../stores/useCartStore';
 import { useUiStore } from '../stores/useUiStore';
+import { OrderReceiptModal } from '../components/orders/OrderReceiptModal';
+import { PrintableReceipt } from '../components/orders/PrintableReceipt';
 
 export const OrderSuccessPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -31,6 +33,7 @@ export const OrderSuccessPage: React.FC = () => {
   const addToast = useUiStore((state) => state.addToast);
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
 
   const orderQuery = useQuery({
     queryKey: ['order', orderId, sessionId, paypalToken],
@@ -396,15 +399,15 @@ export const OrderSuccessPage: React.FC = () => {
           </div>
 
           {/* Actions */}
-          <div className="pt-6 grid grid-cols-1 gap-3 border-t border-gray-100 min-[420px]:flex min-[420px]:flex-wrap min-[420px]:items-center min-[420px]:justify-between">
+          <div className="pt-6 grid grid-cols-1 gap-3 border-t border-gray-100 min-[420px]:flex min-[420px]:flex-wrap min-[420px]:items-center min-[420px]:justify-between no-print">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.print()}
-              className="w-full gap-1.5 min-[420px]:w-auto"
+              onClick={() => setReceiptModalOpen(true)}
+              className="w-full gap-1.5 min-[420px]:w-auto cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
-              Print Receipt
+              <span>Print Premium Receipt</span>
             </Button>
 
             <Link to="/shop" className="w-full min-[420px]:w-auto">
@@ -415,7 +418,20 @@ export const OrderSuccessPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Dedicated print element (rendered only during browser print) */}
+      <div className="hidden print:block">
+        <PrintableReceipt order={order} />
+      </div>
+
+      {/* Interactive Receipt Preview & Print Modal */}
+      <OrderReceiptModal
+        isOpen={receiptModalOpen}
+        onClose={() => setReceiptModalOpen(false)}
+        order={order}
+      />
     </div>
   );
 };
+
 

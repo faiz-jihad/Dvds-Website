@@ -95,3 +95,54 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #1769E0;
 }
+
+/* Dedicated Print Styles for Premium Receipt & Invoices */
+@media print {
+  @page {
+    margin: 10mm 12mm;
+    size: A4 portrait;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+
+  /* Hide all interactive and standard page elements during print */
+  nav,
+  header,
+  footer,
+  aside,
+  button,
+  .no-print,
+  [role="dialog"] > div:first-child:not(.printable-receipt-modal-backdrop),
+  .store-data-state {
+    display: none !important;
+  }
+
+  /* Ensure background colors and borders render with fidelity */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure the receipt takes full printable width and doesn't get clipped */
+  .printable-receipt-content {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .page-break-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+

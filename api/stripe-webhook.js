@@ -1,77 +1,25 @@
-import Stripe from 'stripe';
-import { getSupabaseServerClient } from './_supabase.js';
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-async function getRawBody(req) {
-  return new Promise((resolve, reject) => {
-    let chunks = [];
-    req.on('data', (chunk) => chunks.push(chunk));
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
-  });
-}
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!stripeKey) {
-    return res.status(500).json({ error: 'Stripe is not configured.' });
-  }
-
-  const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
-  const rawBody = await getRawBody(req);
-  const sig = req.headers['stripe-signature'];
-
+import { check, CheckoutError, dbClient, endpoint, loadOrder, recordPayment, stripeClient } from './_checkout.js';
+export const config = { api: { bodyParser: false } };
+export default endpoint(async (req) => {
+  if (!process.env.STRIPE_WEBHOOK_SECRET) throw new CheckoutError('Webhook is not configured.', 503);
+  if (!req.headers['stripe-signature']) throw new CheckoutError('Missing webhook signature.', 400);
+  const chunks = []; let size = 0;
+  for await (const chunk of req) { size += chunk.length; if (size > 1024 * 1024) throw new CheckoutError('Request too large.', 413); chunks.push(Buffer.from(chunk)); }
   let event;
-  try {
-    if (webhookSecret && sig) {
-      event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
-    } else {
-      event = JSON.parse(rawBody.toString('utf8'));
-    }
-  } catch (err) {
-    console.error('[Stripe Webhook Signature Error]:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+  try { event = stripeClient().webhooks.constructEvent(Buffer.concat(chunks), req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET); }
+  catch { throw new CheckoutError('Invalid webhook signature.', 400); }
+  const session = event.data.object;
+  const db = dbClient();
+  if (['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(event.type) && session.metadata?.order_id) {
+    const order = await loadOrder(db, session.metadata.order_id);
+    if (order.payment_provider !== 'stripe') throw new CheckoutError('Provider mismatch.', 409);
+    if (session.payment_status === 'paid') await recordPayment(db, order, session.id, typeof session.payment_intent === 'string' ? session.payment_intent : session.id, session.amount_total / 100, session.currency);
+  } else if (event.type === 'checkout.session.expired' && session.metadata?.order_id) {
+    check(await db.rpc('expire_checkout_order', { p_order_id: session.metadata.order_id, p_provider_order_id: session.id }));
+  } else if (event.type === 'charge.refunded' && session.metadata?.order_id) {
+    const order = await loadOrder(db, session.metadata.order_id);
+    if (order.payment_provider !== 'stripe' || order.payment_reference !== session.payment_intent || session.currency?.toUpperCase() !== order.currency) throw new CheckoutError('Refund does not match order.', 409);
+    check(await db.rpc('record_checkout_refund', { p_order_id: order.id, p_event_id: event.id, p_amount: session.amount_refunded / 100, p_cumulative: true }));
   }
-
-  try {
-    const supabase = getSupabaseServerClient();
-
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
-      const orderId = session.metadata?.order_id;
-      const paymentRef = session.payment_intent || session.id;
-      const paidAt = new Date().toISOString();
-
-      if (supabase && orderId) {
-        await supabase
-          .from('orders')
-          .update({
-            payment_status: 'paid',
-            status: 'processing',
-            paid_at: paidAt,
-            payment_reference: paymentRef,
-            payment_provider: 'stripe',
-            payment_method: 'card',
-            updated_at: paidAt,
-          })
-          .eq('id', orderId);
-      }
-    }
-
-    return res.status(200).json({ received: true });
-  } catch (err) {
-    console.error('[Stripe Webhook Processing Error]:', err);
-    return res.status(500).json({ error: 'Webhook processing error' });
-  }
-}
+  return { received: true };
+});
