@@ -1,7 +1,6 @@
 import { isSupabaseConfigured, supabase } from './supabase';
 import { Category, FinancialStats, FulfilmentStatus, Genre, Order, OrderStatus, Product, Promotion, StoreSettings, Profile, UserRole } from '../types';
 import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
-import { DEFAULT_PRODUCTS } from '../data/defaultProducts';
 
 export interface InventoryMovement {
   id: string;
@@ -77,6 +76,9 @@ const REQUIRED_ADMIN_TABLES = [
 ] as const;
 
 const REQUIRED_ADMIN_FUNCTIONS = [
+  { name: 'confirm_bank_transfer_payment', args: { p_order_id: '00000000-0000-0000-0000-000000000000', p_note: null } },
+  { name: 'admin_set_user_role', args: { p_user_id: '00000000-0000-0000-0000-000000000000', p_role: 'customer' } },
+  { name: 'admin_delete_user', args: { p_user_id: '00000000-0000-0000-0000-000000000000' } },
   {
     name: 'set_product_genres',
     args: { p_product_id: '00000000-0000-0000-0000-000000000000', p_genre_ids: [] },
@@ -98,341 +100,7 @@ const REQUIRED_ADMIN_FUNCTIONS = [
   },
 ] as const;
 
-const SCHEMA_ERROR_CODES = new Set(['PGRST202', 'PGRST204', 'PGRST205', '42P01', '42883']);
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function isUUID(value: string | null | undefined): boolean {
-  return typeof value === 'string' && UUID_REGEX.test(value.trim());
-}
-
-function generateUUID(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-const DEMO_SESSION_KEY = 'az_rayan_admin_session';
-const DEMO_PROMOTIONS_KEY = 'az_rayan_demo_promotions_v1';
-
-function isDemoSession(): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    const stored = localStorage.getItem(DEMO_SESSION_KEY) || sessionStorage.getItem(DEMO_SESSION_KEY);
-    if (!stored) return false;
-    const parsed = JSON.parse(stored);
-    return parsed?.id === 'local-admin';
-  } catch {
-    return false;
-  }
-}
-
-function getDemoPromotions(): Promotion[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(DEMO_PROMOTIONS_KEY);
-    return raw ? (JSON.parse(raw) as Promotion[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveDemoPromotion(item: Promotion): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDemoPromotions().filter((p) => p.id !== item.id);
-    localStorage.setItem(DEMO_PROMOTIONS_KEY, JSON.stringify([item, ...list]));
-  } catch (err) {
-    console.warn('Failed to save demo promotion:', err);
-  }
-}
-
-function deleteDemoPromotion(id: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDemoPromotions().filter((p) => p.id !== id);
-    localStorage.setItem(DEMO_PROMOTIONS_KEY, JSON.stringify(list));
-  } catch (err) {
-    console.warn('Failed to delete demo promotion:', err);
-  }
-}
-
-const DEMO_PRODUCTS_KEY = 'az_rayan_demo_products_v1';
-const DELETED_PRODUCTS_KEY = 'az_rayan_deleted_products_v1';
-const DEMO_CATEGORIES_KEY = 'az_rayan_demo_categories_v1';
-const DELETED_CATEGORIES_KEY = 'az_rayan_deleted_categories_v1';
-const DEMO_GENRES_KEY = 'az_rayan_demo_genres_v1';
-const DELETED_GENRES_KEY = 'az_rayan_deleted_genres_v1';
-const DEMO_ORDERS_KEY = 'az_rayan_demo_orders_v1';
-const DEMO_MESSAGES_KEY = 'az_rayan_demo_messages_v1';
-
-function getDeletedProductIds(): string[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(DELETED_PRODUCTS_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function markProductDeleted(id: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const set = new Set(getDeletedProductIds());
-    set.add(id);
-    localStorage.setItem(DELETED_PRODUCTS_KEY, JSON.stringify(Array.from(set)));
-  } catch (err) {
-    console.warn('Failed to mark product deleted:', err);
-  }
-}
-
-function getDemoProducts(): Product[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(DEMO_PRODUCTS_KEY);
-    return raw ? (JSON.parse(raw) as Product[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveDemoProduct(item: Product): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDemoProducts().filter((p) => p.id !== item.id);
-    localStorage.setItem(DEMO_PRODUCTS_KEY, JSON.stringify([item, ...list]));
-  } catch (err) {
-    console.warn('Failed to save demo product:', err);
-  }
-}
-
-function deleteDemoProduct(id: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDemoProducts().filter((p) => p.id !== id);
-    localStorage.setItem(DEMO_PRODUCTS_KEY, JSON.stringify(list));
-    markProductDeleted(id);
-  } catch (err) {
-    console.warn('Failed to delete demo product:', err);
-  }
-}
-
-function getDemoOrders(): Order[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(DEMO_ORDERS_KEY);
-    return raw ? (JSON.parse(raw) as Order[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveDemoOrder(item: Order): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDemoOrders().filter((o) => o.id !== item.id);
-    localStorage.setItem(DEMO_ORDERS_KEY, JSON.stringify([item, ...list]));
-  } catch (err) {
-    console.warn('Failed to save demo order:', err);
-  }
-}
-
-function getDemoMessages(): ContactMessage[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(DEMO_MESSAGES_KEY);
-    return raw ? (JSON.parse(raw) as ContactMessage[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveDemoMessage(item: ContactMessage): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDemoMessages().filter((m) => m.id !== item.id);
-    localStorage.setItem(DEMO_MESSAGES_KEY, JSON.stringify([item, ...list]));
-  } catch (err) {
-    console.warn('Failed to save demo message:', err);
-  }
-}
-
-function getDeletedCategoryIds(): string[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(DELETED_CATEGORIES_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function markCategoryDeleted(id: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const set = new Set(getDeletedCategoryIds());
-    set.add(id);
-    localStorage.setItem(DELETED_CATEGORIES_KEY, JSON.stringify(Array.from(set)));
-  } catch (err) {
-    console.warn('Failed to mark category deleted:', err);
-  }
-}
-
-function unmarkCategoryDeleted(id: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDeletedCategoryIds().filter((dId) => dId !== id);
-    localStorage.setItem(DELETED_CATEGORIES_KEY, JSON.stringify(list));
-  } catch (err) {
-    console.warn('Failed to unmark category deleted:', err);
-  }
-}
-
-function getDemoCategories(): Category[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(DEMO_CATEGORIES_KEY);
-    return raw ? (JSON.parse(raw) as Category[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveDemoCategory(item: Category): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDemoCategories().filter((c) => c.id !== item.id);
-    localStorage.setItem(DEMO_CATEGORIES_KEY, JSON.stringify([...list, item]));
-    unmarkCategoryDeleted(item.id);
-  } catch (err) {
-    console.warn('Failed to save demo category:', err);
-  }
-}
-
-function deleteDemoCategory(id: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDemoCategories().filter((c) => c.id !== id);
-    localStorage.setItem(DEMO_CATEGORIES_KEY, JSON.stringify(list));
-    markCategoryDeleted(id);
-  } catch (err) {
-    console.warn('Failed to delete demo category:', err);
-  }
-}
-
-function getDeletedGenreIds(): string[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(DELETED_GENRES_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function markGenreDeleted(id: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const set = new Set(getDeletedGenreIds());
-    set.add(id);
-    localStorage.setItem(DELETED_GENRES_KEY, JSON.stringify(Array.from(set)));
-  } catch (err) {
-    console.warn('Failed to mark genre deleted:', err);
-  }
-}
-
-function unmarkGenreDeleted(id: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDeletedGenreIds().filter((dId) => dId !== id);
-    localStorage.setItem(DELETED_GENRES_KEY, JSON.stringify(list));
-  } catch (err) {
-    console.warn('Failed to unmark genre deleted:', err);
-  }
-}
-
-function getDemoGenres(): Genre[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(DEMO_GENRES_KEY);
-    return raw ? (JSON.parse(raw) as Genre[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveDemoGenre(item: Genre): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDemoGenres().filter((g) => g.id !== item.id);
-    localStorage.setItem(DEMO_GENRES_KEY, JSON.stringify([...list, item]));
-    unmarkGenreDeleted(item.id);
-  } catch (err) {
-    console.warn('Failed to save demo genre:', err);
-  }
-}
-
-function deleteDemoGenre(id: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const list = getDemoGenres().filter((g) => g.id !== id);
-    localStorage.setItem(DEMO_GENRES_KEY, JSON.stringify(list));
-    markGenreDeleted(id);
-  } catch (err) {
-    console.warn('Failed to delete demo genre:', err);
-  }
-}
-
-export const DEFAULT_CATEGORIES: Category[] = [
-  {
-    id: 'c-film',
-    name: 'Film',
-    slug: 'film',
-    description: 'Feature films on physical media.',
-    image_url: null,
-    is_active: true,
-    sort_order: 10,
-  },
-  {
-    id: 'c-tv-box-sets',
-    name: 'TV Box Sets',
-    slug: 'tv-box-sets',
-    description: 'Complete television seasons and multi-season collections.',
-    image_url: null,
-    is_active: true,
-    sort_order: 20,
-  },
-  {
-    id: 'c-documentary-music',
-    name: 'Documentary & Music',
-    slug: 'documentary-music',
-    description: 'Documentaries, concerts, music and reunion specials.',
-    image_url: null,
-    is_active: true,
-    sort_order: 30,
-  },
-];
-
-export const DEFAULT_GENRES: Genre[] = [
-  { id: 'g-action', name: 'Action', slug: 'action' },
-  { id: 'g-adventure', name: 'Adventure', slug: 'adventure' },
-  { id: 'g-comedy', name: 'Comedy', slug: 'comedy' },
-  { id: 'g-crime', name: 'Crime', slug: 'crime' },
-  { id: 'g-documentary', name: 'Documentary', slug: 'documentary' },
-  { id: 'g-drama', name: 'Drama', slug: 'drama' },
-  { id: 'g-faith', name: 'Faith', slug: 'faith' },
-  { id: 'g-historical', name: 'Historical', slug: 'historical' },
-  { id: 'g-music', name: 'Music', slug: 'music' },
-  { id: 'g-scifi', name: 'Science Fiction', slug: 'science-fiction' },
-  { id: 'g-war', name: 'War', slug: 'war' },
-  { id: 'g-western', name: 'Western', slug: 'western' },
-];
+const SCHEMA_ERROR_CODES = new Set(['PGRST202', 'PGRST204', 'PGRST205', '42P01', '42883', '42703']);
 
 function client() {
   if (!isSupabaseConfigured || !supabase) {
@@ -447,13 +115,13 @@ function client() {
 function fail(error: any, fallback: string): never {
   if (error?.code && SCHEMA_ERROR_CODES.has(error.code)) {
     throw new AdminBackendError(
-      'Database schema is incomplete. Execute the complete database setup script (setup_complete.sql) in your Supabase SQL Editor and refresh this page.',
+      'Database schema is incomplete. Apply all pending migrations from supabase/migrations in order and refresh this page.',
       'SCHEMA_NOT_READY'
     );
   }
   if (error?.code === '42501' || error?.message?.includes('row-level security')) {
     throw new AdminBackendError(
-      'Admin access required: Row-level security prevented this modification. Ensure your Supabase account has the admin role, or execute supabase/fix_admin_rls.sql in your Supabase SQL Editor.',
+      'Admin access required: Row-level security prevented this modification. Sign in with a Supabase account that has permission for this action.',
       'RLS_PERMISSION_DENIED'
     );
   }
@@ -489,15 +157,24 @@ export const adminApi = {
   async checkSchema(): Promise<{ tables: readonly string[]; functions: string[] }> {
     const tableChecks = await Promise.all(
       REQUIRED_ADMIN_TABLES.map(async (table) => {
-        const { error } = await client().from(table).select('*', { head: true, count: 'exact' }).limit(1);
+        const { error } = await client().from(table).select('*').limit(0);
         return { table, error };
       })
     );
 
     const { error: productMetadataError } = await client()
       .from('products')
-      .select('id,imdb_rating,imdb_id', { head: true })
-      .limit(1);
+      .select('id,imdb_rating,imdb_id')
+      .limit(0);
+
+    const { error: settingsColumnsError } = await client().from('store_settings')
+      .select('registered_company_name,company_number,registered_office_address,companies_house_url,bank_name,bank_account_name,bank_sort_code,bank_account_number,bank_iban,bank_payment_instructions')
+      .limit(0);
+    if (settingsColumnsError) fail(settingsColumnsError, 'Store settings schema could not be verified.');
+    const { error: paymentColumnsError } = await client().from('orders')
+      .select('payment_method,payment_provider,paid_at,payment_confirmed_by,bank_transfer_reference,paypal_order_id,paypal_capture_id')
+      .limit(0);
+    if (paymentColumnsError) fail(paymentColumnsError, 'Order payment schema could not be verified.');
 
     const missingTables = tableChecks
       .filter(({ error }) => error?.code && SCHEMA_ERROR_CODES.has(error.code))
@@ -513,825 +190,198 @@ export const adminApi = {
       .filter(({ error }) => error?.code && SCHEMA_ERROR_CODES.has(error.code))
       .map(({ name }) => name);
 
-    if (missingTables.length || missingFunctions.length || productMetadataError?.code === 'PGRST204') {
+    if (missingTables.length || missingFunctions.length || Boolean(productMetadataError?.code && SCHEMA_ERROR_CODES.has(productMetadataError.code))) {
       const details = [
         missingTables.length ? `tables: ${missingTables.join(', ')}` : '',
         missingFunctions.length ? `functions: ${missingFunctions.join(', ')}` : '',
-        productMetadataError?.code === 'PGRST204' ? 'product columns: imdb_rating, imdb_id' : '',
+        Boolean(productMetadataError?.code && SCHEMA_ERROR_CODES.has(productMetadataError.code)) ? 'product columns: imdb_rating, imdb_id' : '',
       ].filter(Boolean).join('; ');
       throw new AdminBackendError(
-        `Database schema is incomplete (${details}). Execute the complete database setup script (setup_complete.sql) in your Supabase SQL Editor and refresh this page.`,
+        `Database schema is incomplete (${details}). Apply all pending migrations from supabase/migrations in order and refresh this page.`,
         'SCHEMA_NOT_READY'
       );
     }
 
+    if (productMetadataError) fail(productMetadataError, 'Product metadata could not be verified.');
     const unexpectedError = tableChecks.find(({ error }) => error)?.error;
     if (unexpectedError) fail(unexpectedError, 'Admin database connection could not be verified.');
+    const unexpectedFunctionError = functionChecks.find(({ error }) => error && !['P0001', '42501'].includes(error.code))?.error;
+    if (unexpectedFunctionError) fail(unexpectedFunctionError, 'Admin functions could not be verified.');
 
     return { tables: REQUIRED_ADMIN_TABLES, functions: REQUIRED_ADMIN_FUNCTIONS.map(({ name }) => name) };
   },
 
   async getProducts(): Promise<Product[]> {
-    let baseList: Product[] = [];
-    try {
-      const { data, error } = await client()
-        .from('products')
-        .select('*, category:categories(*), product_genres(genre:genres(*))')
-        .order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) {
-        baseList = (data || []).map((row: any) => ({
-          ...row,
-          price: Number(row.price),
-          compare_at_price: row.compare_at_price == null ? null : Number(row.compare_at_price),
-          genres: (row.product_genres || []).map((link: any) => link.genre).filter(Boolean),
-        })) as Product[];
-      }
-    } catch (err) {
-      console.warn('[adminApi] getProducts fallback to DEFAULT_PRODUCTS:', err);
-    }
-    if (!baseList.length) baseList = DEFAULT_PRODUCTS;
-
-    const demoProducts = getDemoProducts();
-    const deletedIds = new Set(getDeletedProductIds());
-
-    const map = new Map<string, Product>();
-    baseList.forEach((p) => {
-      if (!deletedIds.has(p.id)) map.set(p.id, p);
-    });
-    demoProducts.forEach((p) => {
-      if (!deletedIds.has(p.id)) map.set(p.id, p);
-    });
-    return Array.from(map.values());
+    const { data, error } = await client().from('products')
+      .select('*, category:categories(*), product_genres(genre:genres(*))')
+      .order('created_at', { ascending: false });
+    if (error) fail(error, 'Products could not be loaded.');
+    return (data || []).map((row: any) => ({ ...row, price: Number(row.price),
+      compare_at_price: row.compare_at_price == null ? null : Number(row.compare_at_price),
+      genres: (row.product_genres || []).map((link: any) => link.genre).filter(Boolean) }));
   },
 
   async getCategories(): Promise<Category[]> {
-    let dbCategories: Category[] = [];
-    try {
-      const { data, error } = await client()
-        .from('categories')
-        .select('*')
-        .order('sort_order', { ascending: true });
-      if (!error && data && data.length > 0) dbCategories = data as Category[];
-    } catch {
-      // fallback
-    }
-
-    const baseList = dbCategories.length > 0 ? dbCategories : DEFAULT_CATEGORIES;
-    const demoCategories = getDemoCategories();
-    const deletedIds = new Set(getDeletedCategoryIds());
-
-    const map = new Map<string, Category>();
-    baseList.forEach((c) => {
-      if (!deletedIds.has(c.id)) map.set(c.id, c);
-    });
-    demoCategories.forEach((c) => {
-      if (!deletedIds.has(c.id)) map.set(c.id, c);
-    });
-    return Array.from(map.values()).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const { data, error } = await client().from('categories').select('*').order('sort_order');
+    if (error) fail(error, 'Categories could not be loaded.');
+    return (data || []) as Category[];
   },
 
   async createCategory(input: Omit<Category, 'id'>): Promise<Category> {
-    const newId = generateUUID();
-    const payload = { ...input, id: newId };
-    try {
-      const { data, error } = await client().from('categories').insert(payload).select('*').single();
-      if (!error && data) return data as Category;
-
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const newCat: Category = { ...input, id: newId } as Category;
-        saveDemoCategory(newCat);
-        return newCat;
-      }
-      fail(error, 'Category could not be created.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
-        const newCat: Category = { ...input, id: newId } as Category;
-        saveDemoCategory(newCat);
-        return newCat;
-      }
-      throw err;
-    }
-    return payload as any;
+    const { data, error } = await client().from('categories').insert(input).select('*').single();
+    if (error || !data) fail(error, 'Category could not be saved.');
+    return data as Category;
   },
 
   async updateCategory(id: string, input: Partial<Category>): Promise<Category> {
-    const updateLocal = async () => {
-      const categories = await this.getCategories();
-      const target = categories.find((c) => c.id === id);
-      if (target) {
-        const updated = { ...target, ...input };
-        saveDemoCategory(updated);
-        return updated;
-      }
-      return { ...input, id } as Category;
-    };
-
-    if (!isUUID(id)) {
-      return updateLocal();
-    }
-
-    try {
-      const { data, error } = await client().from('categories').update(input).eq('id', id).select('*').single();
-      if (!error && data) {
-        saveDemoCategory(data as Category);
-        return data as Category;
-      }
-
-      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
-        return updateLocal();
-      }
-      fail(error, 'Category could not be updated.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
-        return updateLocal();
-      }
-      throw err;
-    }
-    return updateLocal();
+    const { data, error } = await client().from('categories').update(input).eq('id', id).select('*').single();
+    if (error || !data) fail(error, 'Category could not be saved.');
+    return data as Category;
   },
 
   async deleteCategory(id: string): Promise<void> {
-    deleteDemoCategory(id);
-    if (!isUUID(id)) return;
-
-    try {
-      const { error } = await client().from('categories').delete().eq('id', id);
-      if (!error) return;
-
-      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
-        return;
-      }
-      fail(error, 'Category could not be deleted.');
-    } catch (err) {
-      deleteDemoCategory(id);
-      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
-        return;
-      }
-      throw err;
-    }
+    const { data, error } = await client().from('categories').delete().eq('id', id).select('id').single();
+    if (error || !data) fail(error, 'Category was not deleted. It may no longer exist or access was denied.');
   },
 
   async getGenres(): Promise<Genre[]> {
-    let dbGenres: Genre[] = [];
-    try {
-      const { data, error } = await client().from('genres').select('*').order('name');
-      if (!error && data && data.length > 0) dbGenres = data as Genre[];
-    } catch (err) {
-      console.warn('[adminApi] getGenres fallback:', err);
-    }
-
-    const baseList = dbGenres.length > 0 ? dbGenres : DEFAULT_GENRES;
-    const demoGenres = getDemoGenres();
-    const deletedIds = new Set(getDeletedGenreIds());
-
-    const map = new Map<string, Genre>();
-    baseList.forEach((g) => {
-      if (!deletedIds.has(g.id)) map.set(g.id, g);
-    });
-    demoGenres.forEach((g) => {
-      if (!deletedIds.has(g.id)) map.set(g.id, g);
-    });
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    const { data, error } = await client().from('genres').select('*').order('name');
+    if (error) fail(error, 'Genres could not be loaded.');
+    return (data || []) as Genre[];
   },
 
   async createGenre(input: Omit<Genre, 'id'>): Promise<Genre> {
-    try {
-      const { data, error } = await client().from('genres').insert(input).select('*').single();
-      if (!error && data) return data as Genre;
-
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const newGenre: Genre = { ...input, id: `genre-${Date.now()}` };
-        saveDemoGenre(newGenre);
-        return newGenre;
-      }
-      fail(error, 'Genre could not be created.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
-        const newGenre: Genre = { ...input, id: `genre-${Date.now()}` };
-        saveDemoGenre(newGenre);
-        return newGenre;
-      }
-      throw err;
-    }
-    return input as any;
+    const { data, error } = await client().from('genres').insert(input).select('*').single();
+    if (error || !data) fail(error, 'Genre could not be saved.');
+    return data as Genre;
   },
 
   async updateGenre(id: string, input: Partial<Genre>): Promise<Genre> {
-    try {
-      const { data, error } = await client().from('genres').update(input).eq('id', id).select('*').single();
-      if (!error && data) {
-        saveDemoGenre(data as Genre);
-        return data as Genre;
-      }
-
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const genres = await this.getGenres();
-        const target = genres.find((g) => g.id === id);
-        if (target) {
-          const updated = { ...target, ...input };
-          saveDemoGenre(updated);
-          return updated;
-        }
-      }
-      fail(error, 'Genre could not be updated.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
-        const genres = await this.getGenres();
-        const target = genres.find((g) => g.id === id);
-        if (target) {
-          const updated = { ...target, ...input };
-          saveDemoGenre(updated);
-          return updated;
-        }
-      }
-      throw err;
-    }
-    return input as any;
+    const { data, error } = await client().from('genres').update(input).eq('id', id).select('*').single();
+    if (error || !data) fail(error, 'Genre could not be saved.');
+    return data as Genre;
   },
 
   async deleteGenre(id: string): Promise<void> {
-    try {
-      const { error } = await client().from('genres').delete().eq('id', id);
-      deleteDemoGenre(id);
-      if (!error) return;
-
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        return;
-      }
-      fail(error, 'Genre could not be deleted.');
-    } catch (err) {
-      deleteDemoGenre(id);
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
-        return;
-      }
-      throw err;
-    }
+    const { data, error } = await client().from('genres').delete().eq('id', id).select('id').single();
+    if (error || !data) fail(error, 'Genre was not deleted. It may no longer exist or access was denied.');
   },
 
   async createProduct(input: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'category' | 'genres'>): Promise<Product> {
-    const newId = generateUUID();
-    const payload = { ...input, id: newId };
-    try {
-      const { data, error } = await client().from('products').insert(payload).select('*').single();
-      if (!error && data) return data as Product;
-
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const newProduct: Product = {
-          ...input,
-          id: newId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          genres: [],
-        } as Product;
-        saveDemoProduct(newProduct);
-        return newProduct;
-      }
-      fail(error, 'Product could not be created.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
-        const newProduct: Product = {
-          ...input,
-          id: newId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          genres: [],
-        } as Product;
-        saveDemoProduct(newProduct);
-        return newProduct;
-      }
-      throw err;
-    }
-    return payload as any;
+    const { data, error } = await client().from('products').insert(input).select('*').single();
+    if (error || !data) fail(error, 'Product could not be created.');
+    return data as Product;
   },
 
   async updateProduct(id: string, input: Partial<Product>): Promise<Product> {
-    const { category: _category, genres: _genres, ...safeInput } = input;
-
-    const updateLocal = async () => {
-      const products = await this.getProducts();
-      const existing = products.find((p) => p.id === id) || DEFAULT_PRODUCTS.find((p) => p.id === id);
-      if (existing) {
-        const updated = { ...existing, ...safeInput, updated_at: new Date().toISOString() } as Product;
-        saveDemoProduct(updated);
-        return updated;
-      }
-      return input as Product;
-    };
-
-    if (!isUUID(id)) {
-      return updateLocal();
-    }
-
-    try {
-      const { data, error } = await client()
-        .from('products')
-        .update({ ...safeInput, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select('*')
-        .single();
-      if (!error && data) return data as Product;
-
-      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
-        return updateLocal();
-      }
-      fail(error, 'Product could not be updated.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
-        return updateLocal();
-      }
-      throw err;
-    }
-    return updateLocal();
+    const { id: ignoredId, category, genres, created_at, ...payload } = input;
+    const { data, error } = await client().from('products').update(payload).eq('id', id).select('*').single();
+    if (error || !data) fail(error, 'Product could not be updated.');
+    return data as Product;
   },
 
   async setProductGenres(productId: string, genreIds: string[]): Promise<void> {
-    if (!isUUID(productId)) return;
-    try {
-      const { error } = await client().rpc('set_product_genres', { p_product_id: productId, p_genre_ids: genreIds });
-      if (!error) return;
-      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
-        return;
-      }
-      fail(error, 'Product genres could not be updated.');
-    } catch (err) {
-      if (isDemoSession()) return;
-      throw err;
-    }
+    const { error } = await client().rpc('set_product_genres', { p_product_id: productId, p_genre_ids: genreIds });
+    if (error) fail(error, 'Product genres could not be updated.');
   },
 
   async archiveProduct(id: string): Promise<void> {
-    const archiveLocal = async () => {
-      const products = await this.getProducts();
-      const existing = products.find((p) => p.id === id);
-      if (existing) {
-        saveDemoProduct({ ...existing, status: 'archived', updated_at: new Date().toISOString() });
-      }
-    };
-
-    if (!isUUID(id)) {
-      return archiveLocal();
-    }
-
-    try {
-      const { error } = await client()
-        .from('products')
-        .update({ status: 'archived', updated_at: new Date().toISOString() })
-        .eq('id', id);
-      if (!error) return;
-
-      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
-        return archiveLocal();
-      }
-      fail(error, 'Product could not be archived.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
-        return archiveLocal();
-      }
-      throw err;
-    }
+    await adminApi.updateProduct(id, { status: 'archived' });
   },
 
   async deleteProduct(id: string): Promise<void> {
-    deleteDemoProduct(id);
-    if (!isUUID(id)) return;
-
-    try {
-      const { error } = await client().from('products').delete().eq('id', id);
-      if (!error) return;
-
-      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
-        return;
-      }
-      fail(error, 'Product could not be deleted.');
-    } catch (err) {
-      deleteDemoProduct(id);
-      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
-        return;
-      }
-      throw err;
-    }
+    const { data, error } = await client().from('products').delete().eq('id', id).select('id').single();
+    if (error?.code === '23503') throw new AdminBackendError('This product has transaction or inventory history. Archive it to preserve those records.');
+    if (error || !data) fail(error, 'Product could not be deleted.');
   },
 
   async getOrders(): Promise<Order[]> {
-    let dbOrders: Order[] = [];
-    try {
-      const { data, error } = await client()
-        .from('orders')
-        .select('*, items:order_items(*)')
-        .order('created_at', { ascending: false });
-      if (!error && data) dbOrders = (data || []).map(normalizeOrder);
-    } catch (err) {
-      console.warn('[adminApi] getOrders error, falling back to demo orders:', err);
-    }
-
-    const demoOrders = getDemoOrders();
-    if (!demoOrders.length) return dbOrders;
-
-    const map = new Map<string, Order>();
-    dbOrders.forEach((o) => map.set(o.id, o));
-    demoOrders.forEach((o) => map.set(o.id, o));
-    return Array.from(map.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const { data, error } = await client().from('orders').select('*, items:order_items(*)').order('created_at', { ascending: false });
+    if (error) fail(error, 'Orders could not be loaded.');
+    return (data || []).map(normalizeOrder);
   },
 
-  async updateOrderStatus(
-    orderId: string,
-    status: OrderStatus,
-    fulfilmentStatus: FulfilmentStatus,
-    details?: { carrier?: string; trackingNumber?: string; note?: string }
-  ): Promise<Order> {
-    try {
-      const { error } = await client().rpc('transition_order_status', {
-        p_order_id: orderId,
-        p_status: status,
-        p_fulfilment_status: fulfilmentStatus,
-        p_carrier: details?.carrier || null,
-        p_tracking_number: details?.trackingNumber || null,
-        p_note: details?.note || null,
-      });
-
-      if (!error) {
-        const { data, error: readError } = await client()
-          .from('orders')
-          .select('*, items:order_items(*)')
-          .eq('id', orderId)
-          .single();
-        if (!readError && data) {
-          const norm = normalizeOrder(data);
-          saveDemoOrder(norm);
-          return norm;
-        }
-      }
-
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const allOrders = await this.getOrders();
-        const existing = allOrders.find((o) => o.id === orderId);
-        if (existing) {
-          const updated: Order = {
-            ...existing,
-            status,
-            fulfilment_status: fulfilmentStatus,
-            shipping_carrier: details?.carrier || existing.shipping_carrier,
-            tracking_number: details?.trackingNumber || existing.tracking_number,
-            internal_notes: details?.note || existing.internal_notes,
-            updated_at: new Date().toISOString(),
-          };
-          saveDemoOrder(updated);
-          return updated;
-        }
-      }
-      fail(error, 'Order status could not be updated.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
-        const allOrders = await this.getOrders();
-        const existing = allOrders.find((o) => o.id === orderId);
-        if (existing) {
-          const updated: Order = {
-            ...existing,
-            status,
-            fulfilment_status: fulfilmentStatus,
-            shipping_carrier: details?.carrier || existing.shipping_carrier,
-            tracking_number: details?.trackingNumber || existing.tracking_number,
-            internal_notes: details?.note || existing.internal_notes,
-            updated_at: new Date().toISOString(),
-          };
-          saveDemoOrder(updated);
-          return updated;
-        }
-      }
-      throw err;
-    }
-    return { id: orderId, status, fulfilment_status: fulfilmentStatus } as Order;
+  async updateOrderStatus(orderId: string, status: OrderStatus, fulfilmentStatus: FulfilmentStatus,
+    details?: { carrier?: string; trackingNumber?: string; note?: string }): Promise<Order> {
+    const { error } = await client().rpc('transition_order_status', {
+      p_order_id: orderId, p_status: status, p_fulfilment_status: fulfilmentStatus,
+      p_carrier: details?.carrier?.trim() || null, p_tracking_number: details?.trackingNumber?.trim() || null,
+      p_note: details?.note?.trim() || null,
+    });
+    if (error) fail(error, 'Order status could not be updated.');
+    const { data, error: readError } = await client().from('orders').select('*, items:order_items(*)').eq('id', orderId).single();
+    if (readError || !data) fail(readError, 'Order was updated but could not be reloaded. Refresh the orders list.');
+    return normalizeOrder(data);
   },
 
   async confirmBankTransferPayment(orderId: string, adminNote?: string): Promise<Order> {
-    const paidAt = new Date().toISOString();
-    try {
-      const { error } = await client().rpc('confirm_bank_transfer_payment', { p_order_id: orderId });
-      if (!error) {
-        const { data: orderData, error: readError } = await client()
-          .from('orders')
-          .select('*, items:order_items(*)')
-          .eq('id', orderId)
-          .single();
-        if (!readError && orderData) {
-          const norm = normalizeOrder(orderData);
-          saveDemoOrder(norm);
-          return norm;
-        }
-      }
-
-      const { data: updatedData, error: updateError } = await client()
-        .from('orders')
-        .update({
-          payment_status: 'paid',
-          status: 'processing',
-          paid_at: paidAt,
-          updated_at: paidAt,
-        })
-        .eq('id', orderId)
-        .select('*, items:order_items(*)')
-        .single();
-
-      if (!updateError && updatedData) {
-        const norm = normalizeOrder(updatedData);
-        saveDemoOrder(norm);
-        return norm;
-      }
-
-      const allOrders = await this.getOrders();
-      const existing = allOrders.find((o) => o.id === orderId);
-      if (existing) {
-        const updated: Order = {
-          ...existing,
-          payment_status: 'paid',
-          status: 'processing',
-          paid_at: paidAt,
-          updated_at: paidAt,
-          internal_notes: adminNote
-            ? `${existing.internal_notes ? existing.internal_notes + ' | ' : ''}Manual bank payment confirmed: ${adminNote}`
-            : existing.internal_notes,
-        };
-        saveDemoOrder(updated);
-        return updated;
-      }
-    } catch (err) {
-      const allOrders = await this.getOrders();
-      const existing = allOrders.find((o) => o.id === orderId);
-      if (existing) {
-        const updated: Order = {
-          ...existing,
-          payment_status: 'paid',
-          status: 'processing',
-          paid_at: paidAt,
-          updated_at: paidAt,
-        };
-        saveDemoOrder(updated);
-        return updated;
-      }
-      throw err;
-    }
-    return { id: orderId, payment_status: 'paid', status: 'processing', paid_at: paidAt } as Order;
+    const { error } = await client().rpc('confirm_bank_transfer_payment', { p_order_id: orderId, p_note: adminNote?.trim() || null });
+    if (error) fail(error, 'Bank transfer payment could not be confirmed.');
+    const { data, error: readError } = await client().from('orders').select('*, items:order_items(*)').eq('id', orderId).single();
+    if (readError || !data) fail(readError, 'Payment was confirmed but the order could not be reloaded. Refresh the orders list.');
+    return normalizeOrder(data);
   },
 
   async adjustStock(productId: string, delta: number, reason: string): Promise<Product> {
-    try {
-      const { data, error } = await client().rpc('adjust_product_stock', {
-        p_product_id: productId,
-        p_delta: delta,
-        p_reason: reason,
-      });
-      if (!error && data) {
-        const row = Array.isArray(data) ? data[0] : data;
-        return row as Product;
-      }
-
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const products = await this.getProducts();
-        const existing = products.find((p) => p.id === productId);
-        if (existing) {
-          const updated = {
-            ...existing,
-            stock_quantity: Math.max(0, existing.stock_quantity + delta),
-            updated_at: new Date().toISOString(),
-          };
-          saveDemoProduct(updated);
-          return updated;
-        }
-      }
-      fail(error, 'Inventory could not be adjusted.');
-    } catch (err) {
-      if (isDemoSession()) {
-        const products = await this.getProducts();
-        const existing = products.find((p) => p.id === productId);
-        if (existing) {
-          const updated = {
-            ...existing,
-            stock_quantity: Math.max(0, existing.stock_quantity + delta),
-            updated_at: new Date().toISOString(),
-          };
-          saveDemoProduct(updated);
-          return updated;
-        }
-      }
-      throw err;
+    if (!Number.isInteger(delta) || delta === 0 || reason.trim().length < 3) {
+      throw new AdminBackendError('Enter a non-zero whole-number adjustment and a reason of at least 3 characters.');
     }
-    return { id: productId } as Product;
+    const { data, error } = await client().rpc('adjust_product_stock', { p_product_id: productId, p_delta: delta, p_reason: reason.trim() });
+    if (error) fail(error, 'Inventory could not be adjusted.');
+    const product = Array.isArray(data) ? data[0] : data;
+    if (!product) fail(null, 'Inventory adjustment returned no product.');
+    return product as Product;
   },
 
   async getPromotions(): Promise<Promotion[]> {
-    let dbPromotions: Promotion[] = [];
-    try {
-      const { data, error } = await client()
-        .from('promotions')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error && data) {
-        dbPromotions = (data || []).map((row) => ({
-          ...row,
-          value: Number(row.value),
-          minimum_order: Number(row.minimum_order),
-        })) as Promotion[];
-      }
-    } catch {
-      // In demo mode or if table query fails, continue to merge with demo items
-    }
-
-    const demoItems = getDemoPromotions();
-    if (!demoItems.length) return dbPromotions;
-
-    const merged = [...demoItems];
-    for (const item of dbPromotions) {
-      if (!merged.some((p) => p.id === item.id || p.code === item.code)) {
-        merged.push(item);
-      }
-    }
-    return merged;
+    const { data, error } = await client().from('promotions').select('*').order('created_at', { ascending: false });
+    if (error) fail(error, 'Promotions could not be loaded.');
+    return (data || []).map((row: any) => ({ ...row, value: Number(row.value), minimum_order: Number(row.minimum_order) }));
   },
 
   async createPromotion(input: Omit<Promotion, 'id'>): Promise<Promotion> {
-    const newId = generateUUID();
-    const payload = {
-      ...input,
-      id: newId,
-      code: input.code.toUpperCase().trim(),
-      value: Number(input.value),
-      minimum_order: Number(input.minimum_order),
-    };
-
-    const makeDemoItem = (): Promotion => ({
-      id: newId,
-      code: input.code.toUpperCase().trim(),
-      type: input.type,
-      value: Number(input.value),
-      minimum_order: Number(input.minimum_order),
-      is_active: input.is_active,
-      starts_at: input.starts_at || new Date().toISOString(),
-      ends_at: input.ends_at,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-
-    try {
-      const { data, error } = await client().from('promotions').insert(payload).select('*').single();
-      if (!error && data) return data as Promotion;
-
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const demoItem = makeDemoItem();
-        saveDemoPromotion(demoItem);
-        return demoItem;
-      }
-      fail(error, 'Promotion could not be created.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
-        const demoItem = makeDemoItem();
-        saveDemoPromotion(demoItem);
-        return demoItem;
-      }
-      throw err;
-    }
-    return makeDemoItem();
+    const { data, error } = await client().from('promotions').insert({ ...input, code: input.code.trim().toUpperCase() }).select('*').single();
+    if (error || !data) fail(error, 'Promotion could not be created.');
+    return data as Promotion;
   },
 
   async updatePromotion(id: string, input: Partial<Promotion>): Promise<Promotion> {
-    const updateLocal = () => {
-      const demoItems = getDemoPromotions();
-      const target = demoItems.find((p) => p.id === id);
-      if (target) {
-        const updated = { ...target, ...input, updated_at: new Date().toISOString() };
-        saveDemoPromotion(updated);
-        return updated;
-      }
-      return { ...input, id } as Promotion;
-    };
-
-    // If ID is not a valid UUID (e.g. promo-demo-1789391509190), handle directly in local demo storage
-    if (!isUUID(id)) {
-      return updateLocal();
-    }
-
-    try {
-      const { data, error } = await client()
-        .from('promotions')
-        .update({ ...input, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select('*')
-        .single();
-      if (!error && data) return data as Promotion;
-
-      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
-        return updateLocal();
-      }
-      fail(error, 'Promotion could not be updated.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
-        return updateLocal();
-      }
-      throw err;
-    }
-    return updateLocal();
+    const payload = { ...input, ...(input.code == null ? {} : { code: input.code.trim().toUpperCase() }) };
+    const { data, error } = await client().from('promotions').update(payload).eq('id', id).select('*').single();
+    if (error || !data) fail(error, 'Promotion could not be updated.');
+    return data as Promotion;
   },
 
   async deletePromotion(id: string): Promise<void> {
-    deleteDemoPromotion(id);
-    if (!isUUID(id)) {
-      return;
-    }
-
-    try {
-      const { error } = await client().from('promotions').delete().eq('id', id);
-      if (!error) return;
-
-      if (error && (error.code === '42501' || error.code === '22P02' || error.message?.includes('row-level security') || isDemoSession())) {
-        return;
-      }
-      fail(error, 'Promotion could not be deleted.');
-    } catch (err) {
-      deleteDemoPromotion(id);
-      if (isDemoSession() || (err instanceof AdminBackendError && (err.code === 'RLS_PERMISSION_DENIED' || err.code === 'INVALID_UUID'))) {
-        return;
-      }
-      throw err;
-    }
+    const { data, error } = await client().from('promotions').delete().eq('id', id).select('id').single();
+    if (error || !data) fail(error, 'Promotion could not be deleted.');
   },
 
   async getStoreSettings(): Promise<StoreSettings> {
-    try {
-      const { data, error } = await client().from('store_settings').select('*').limit(1).maybeSingle();
-      if (!error && data) {
-        return {
-          ...DEFAULT_STORE_SETTINGS,
-          ...data,
-          deal_discount_price: Number(data.deal_discount_price),
-          free_shipping_threshold: Number(data.free_shipping_threshold),
-          standard_shipping_fee: Number(data.standard_shipping_fee),
-          express_shipping_fee: Number(data.express_shipping_fee),
-          low_stock_threshold: Number(data.low_stock_threshold),
-          budget_collection_threshold: Number(data.budget_collection_threshold),
-          vip_promo_discount: Number(data.vip_promo_discount),
-          vip_min_spend: Number(data.vip_min_spend),
-        } as StoreSettings;
-      }
-    } catch {
-      // ignore
-    }
-
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_store_settings_v2') : null;
-      if (raw) {
-        return { ...DEFAULT_STORE_SETTINGS, ...JSON.parse(raw) };
-      }
-    } catch {
-      // ignore
-    }
-
-    return DEFAULT_STORE_SETTINGS;
+    const { data, error } = await client().from('store_settings').select('*').eq('singleton', true).maybeSingle();
+    if (error) fail(error, 'Store settings could not be loaded.');
+    return { ...DEFAULT_STORE_SETTINGS, ...data } as StoreSettings;
   },
 
   async saveStoreSettings(input: StoreSettings): Promise<StoreSettings> {
-    const payload = { ...input, singleton: true, updated_at: new Date().toISOString() };
-    try {
-      localStorage.setItem('az_rayan_store_settings_v2', JSON.stringify(payload));
-    } catch {
-      // ignore
-    }
-
-    try {
-      const { data, error } = await client().from('store_settings').upsert(payload).select('*').single();
-      if (!error && data) {
-        return {
-          ...DEFAULT_STORE_SETTINGS,
-          ...data,
-          deal_discount_price: Number(data.deal_discount_price),
-          free_shipping_threshold: Number(data.free_shipping_threshold),
-          standard_shipping_fee: Number(data.standard_shipping_fee),
-          express_shipping_fee: Number(data.express_shipping_fee),
-          low_stock_threshold: Number(data.low_stock_threshold),
-          budget_collection_threshold: Number(data.budget_collection_threshold),
-          vip_promo_discount: Number(data.vip_promo_discount),
-          vip_min_spend: Number(data.vip_min_spend),
-        } as StoreSettings;
-      }
-
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        return payload as StoreSettings;
-      }
-
-      fail(error, 'Store settings could not be saved.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
-        return payload as StoreSettings;
-      }
-      throw err;
-    }
-    return payload as StoreSettings;
+    const { data: existing, error: readError } = await client().from('store_settings').select('id').eq('singleton', true).maybeSingle();
+    if (readError) fail(readError, 'Store settings could not be loaded before saving.');
+    const { id, ...values } = input;
+    const payload = { ...values, singleton: true, updated_at: new Date().toISOString() };
+    const query = existing
+      ? client().from('store_settings').update(payload).eq('id', existing.id)
+      : client().from('store_settings').insert(payload);
+    const { data, error } = await query.select('*').single();
+    if (error || !data) fail(error, 'Store settings could not be saved.');
+    return { ...DEFAULT_STORE_SETTINGS, ...data } as StoreSettings;
   },
 
   async getFinancialStats(): Promise<FinancialStats> {
-    const [orders, products, settings] = await Promise.all([this.getOrders(), this.getProducts(), this.getStoreSettings()]);
+    const [orders, products, settings] = await Promise.all([adminApi.getOrders(), adminApi.getProducts(), adminApi.getStoreSettings()]);
     const today = new Date().toISOString().slice(0, 10);
     const paidOrders = orders.filter((order) => order.payment_status === 'paid');
     const totalRevenue = paidOrders.reduce((sum, order) => sum + order.total_amount, 0);
-    const todayPaid = paidOrders.filter((order) => order.created_at.slice(0, 10) === today);
+    const todayPaid = paidOrders.filter((order) => (order.paid_at || order.created_at).slice(0, 10) === today);
     const buckets = new Map<string, { amount: number; orders: number }>();
 
     for (let offset = 6; offset >= 0; offset -= 1) {
@@ -1340,7 +390,7 @@ export const adminApi = {
       buckets.set(date.toISOString().slice(0, 10), { amount: 0, orders: 0 });
     }
     paidOrders.forEach((order) => {
-      const key = order.created_at.slice(0, 10);
+      const key = (order.paid_at || order.created_at).slice(0, 10);
       const bucket = buckets.get(key);
       if (bucket) buckets.set(key, { amount: bucket.amount + order.total_amount, orders: bucket.orders + 1 });
     });
@@ -1396,131 +446,37 @@ export const adminApi = {
   },
 
   async getContactMessages(): Promise<ContactMessage[]> {
-    let dbMessages: ContactMessage[] = [];
-    try {
-      const { data, error } = await client().from('contact_messages').select('*').order('created_at', { ascending: false }).limit(250);
-      if (!error && data) dbMessages = data as ContactMessage[];
-    } catch (err) {
-      console.warn('[adminApi] getContactMessages error, falling back:', err);
-    }
-
-    const demoMessages = getDemoMessages();
-    if (!demoMessages.length) return dbMessages;
-
-    const map = new Map<string, ContactMessage>();
-    dbMessages.forEach((m) => map.set(m.id, m));
-    demoMessages.forEach((m) => map.set(m.id, m));
-    return Array.from(map.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const { data, error } = await client().from('contact_messages').select('*').order('created_at', { ascending: false });
+    if (error) fail(error, 'Customer messages could not be loaded.');
+    return (data || []) as ContactMessage[];
   },
 
   async updateContactMessage(id: string, status: ContactMessage['status'], internalNote: string): Promise<ContactMessage> {
-    try {
-      const { data: auth } = await client().auth.getUser();
-      const { data, error } = await client().from('contact_messages').update({
-        status,
-        internal_note: internalNote.trim() || null,
-        assigned_to: status === 'new' ? null : auth.user?.id || null,
-        updated_at: new Date().toISOString(),
-      }).eq('id', id).select('*').single();
-      if (!error && data) {
-        saveDemoMessage(data as ContactMessage);
-        return data as ContactMessage;
-      }
-
-      if (error && (error.code === '42501' || error.message?.includes('row-level security') || isDemoSession())) {
-        const msgs = await this.getContactMessages();
-        const existing = msgs.find((m) => m.id === id);
-        if (existing) {
-          const updated: ContactMessage = {
-            ...existing,
-            status,
-            internal_note: internalNote.trim() || null,
-            updated_at: new Date().toISOString(),
-          };
-          saveDemoMessage(updated);
-          return updated;
-        }
-      }
-      fail(error, 'Customer message could not be updated.');
-    } catch (err) {
-      if (isDemoSession() || (err instanceof AdminBackendError && err.code === 'RLS_PERMISSION_DENIED')) {
-        const msgs = await this.getContactMessages();
-        const existing = msgs.find((m) => m.id === id);
-        if (existing) {
-          const updated: ContactMessage = {
-            ...existing,
-            status,
-            internal_note: internalNote.trim() || null,
-            updated_at: new Date().toISOString(),
-          };
-          saveDemoMessage(updated);
-          return updated;
-        }
-      }
-      throw err;
-    }
-    return { id, status, internal_note: internalNote } as ContactMessage;
+    const { data: auth, error: authError } = await client().auth.getUser();
+    if (authError || !auth.user) fail(authError, 'Sign in again to update customer messages.');
+    const { data, error } = await client().from('contact_messages').update({
+      status, internal_note: internalNote.trim() || null,
+      assigned_to: status === 'new' ? null : auth.user!.id, updated_at: new Date().toISOString(),
+    }).eq('id', id).select('*').single();
+    if (error || !data) fail(error, 'Customer message could not be updated.');
+    return data as ContactMessage;
   },
 
   async getUsers(): Promise<Profile[]> {
-    try {
-      const { data, error } = await client()
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error && data) {
-        return data as Profile[];
-      }
-      if (error) {
-        console.warn('[adminApi] Error loading users from profiles table:', error.message);
-      }
-    } catch (err) {
-      console.warn('[adminApi] Exception fetching users:', err);
-    }
-    return [];
+    const { data, error } = await client().from('profiles').select('*').order('created_at', { ascending: false });
+    if (error) fail(error, 'Users could not be loaded.');
+    return (data || []) as Profile[];
   },
 
   async updateUserRole(userId: string, newRole: UserRole): Promise<Profile> {
-    try {
-      // 1. Try secure RPC admin_set_user_role first
-      const { data: rpcData, error: rpcError } = await client().rpc('admin_set_user_role', {
-        p_user_id: userId,
-        p_role: newRole,
-      });
-
-      if (!rpcError && rpcData) {
-        return rpcData as Profile;
-      }
-
-      // 2. Direct table update
-      const { data, error } = await client()
-        .from('profiles')
-        .update({ role: newRole, updated_at: new Date().toISOString() })
-        .eq('id', userId)
-        .select('*')
-        .single();
-
-      if (!error && data) {
-        return data as Profile;
-      }
-
-      if (error) {
-        fail(error, 'User role could not be updated.');
-      }
-    } catch (err) {
-      fail(err, 'Failed to update user role.');
-    }
-    throw new Error('User role could not be updated.');
+    const { data, error } = await client().rpc('admin_set_user_role', { p_user_id: userId, p_role: newRole });
+    if (error || !data) fail(error, 'User role could not be updated.');
+    return data as Profile;
   },
 
   async deleteUser(userId: string): Promise<void> {
-    try {
-      const { error } = await client().from('profiles').delete().eq('id', userId);
-      if (error) {
-        fail(error, 'User could not be deleted.');
-      }
-    } catch (err) {
-      fail(err, 'User could not be deleted.');
-    }
+    const { error } = await client().rpc('admin_delete_user', { p_user_id: userId });
+    if (error) fail(error, 'User could not be deleted.');
   },
+
 };

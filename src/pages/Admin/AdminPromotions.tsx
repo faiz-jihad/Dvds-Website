@@ -54,8 +54,13 @@ export const AdminPromotions: React.FC = () => {
     setType(promo.type);
     setValue(String(promo.value));
     setMinimumOrder(String(promo.minimum_order));
-    setStartsAt(promo.starts_at ? new Date(promo.starts_at).toISOString().slice(0, 16) : '');
-    setEndsAt(promo.ends_at ? new Date(promo.ends_at).toISOString().slice(0, 16) : '');
+    const localDateTime = (value?: string | null) => {
+      if (!value) return '';
+      const date = new Date(value);
+      return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+    };
+    setStartsAt(localDateTime(promo.starts_at));
+    setEndsAt(localDateTime(promo.ends_at));
     setActivateNow(promo.is_active);
     setModalOpen(true);
   };
@@ -86,7 +91,7 @@ export const AdminPromotions: React.FC = () => {
           minimum_order: numericMinimum,
           is_active: activateNow,
           starts_at: startsAt ? new Date(startsAt).toISOString() : undefined,
-          ends_at: endsAt ? new Date(endsAt).toISOString() : undefined,
+          ends_at: endsAt ? new Date(endsAt).toISOString() : null,
         });
         addToast(`Promotion "${code.toUpperCase()}" updated successfully`, 'success');
       } else {
@@ -97,11 +102,13 @@ export const AdminPromotions: React.FC = () => {
           minimum_order: numericMinimum,
           is_active: activateNow,
           starts_at: startsAt ? new Date(startsAt).toISOString() : undefined,
-          ends_at: endsAt ? new Date(endsAt).toISOString() : undefined,
+          ends_at: endsAt ? new Date(endsAt).toISOString() : null,
         });
         addToast(`Promotion "${code.toUpperCase()}" created successfully`, 'success');
       }
       await queryClient.invalidateQueries({ queryKey: ['admin', 'promotions'] });
+      await queryClient.invalidateQueries({ queryKey: ['store'] });
+      await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       setModalOpen(false);
       resetForm();
     } catch (promotionError) {
@@ -115,6 +122,8 @@ export const AdminPromotions: React.FC = () => {
     try {
       await adminApi.updatePromotion(promotion.id, { is_active: !promotion.is_active });
       await queryClient.invalidateQueries({ queryKey: ['admin', 'promotions'] });
+      await queryClient.invalidateQueries({ queryKey: ['store'] });
+      await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       addToast(`${promotion.code} is now ${promotion.is_active ? 'paused' : 'active'}`, 'success');
     } catch (promotionError) {
       addToast(promotionError instanceof Error ? promotionError.message : 'Promotion could not be updated', 'error');
@@ -128,6 +137,8 @@ export const AdminPromotions: React.FC = () => {
       await adminApi.deletePromotion(deletingPromotion.id);
       setDeletingPromotion(null);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'promotions'] });
+      await queryClient.invalidateQueries({ queryKey: ['store'] });
+      await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       addToast(`Promotion "${deletingPromotion.code}" deleted`, 'success');
     } catch (err) {
       addToast(err instanceof Error ? err.message : 'Promotion could not be deleted', 'error');

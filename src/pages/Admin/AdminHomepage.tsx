@@ -28,7 +28,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { homepageApi } from '../../lib/homepageApi';
-import { publicApi } from '../../lib/publicApi';
+import { adminApi } from '../../lib/adminApi';
 import {
   HomepageConfig,
   HomepageSection,
@@ -57,16 +57,18 @@ export const AdminHomepage: React.FC = () => {
   const draftQuery = useQuery({
     queryKey: ['admin', 'homepage', 'draft'],
     queryFn: () => homepageApi.getDraftHomepageConfig(),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const productsQuery = useQuery({
     queryKey: ['admin', 'products'],
-    queryFn: () => publicApi.getProducts(),
+    queryFn: () => adminApi.getProducts(),
   });
 
   const categoriesQuery = useQuery({
     queryKey: ['admin', 'categories'],
-    queryFn: () => publicApi.getCategories(),
+    queryFn: () => adminApi.getCategories(),
   });
 
   const [config, setConfig] = useState<HomepageConfig | null>(null);
@@ -192,8 +194,8 @@ export const AdminHomepage: React.FC = () => {
       await homepageApi.saveDraftHomepageConfig(config);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'homepage'] });
       addToast('Draft homepage saved successfully', 'success');
-    } catch {
-      addToast('Failed to save draft homepage', 'error');
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : 'Failed to save draft homepage', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -207,8 +209,8 @@ export const AdminHomepage: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['homepage'] });
       await queryClient.invalidateQueries({ queryKey: ['admin', 'homepage'] });
       addToast('🎉 Homepage published live to customer storefront!', 'success');
-    } catch {
-      addToast('Failed to publish homepage', 'error');
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : 'Failed to publish homepage', 'error');
     } finally {
       setIsPublishing(false);
     }
@@ -220,8 +222,8 @@ export const AdminHomepage: React.FC = () => {
       const reverted = await homepageApi.revertDraftToPublished();
       setConfig(reverted);
       addToast('Draft reverted to live version', 'info');
-    } catch {
-      addToast('Failed to revert draft', 'error');
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : 'Failed to revert draft', 'error');
     }
   };
 
@@ -496,7 +498,7 @@ export const AdminHomepage: React.FC = () => {
             variant="secondary"
             size="sm"
             onClick={handleSaveDraft}
-            disabled={isSaving}
+            disabled={isSaving || isPublishing}
             className="flex items-center gap-1.5 text-xs font-semibold"
           >
             <Save className="w-3.5 h-3.5" /> {isSaving ? 'Saving...' : 'Save Draft'}
@@ -506,7 +508,7 @@ export const AdminHomepage: React.FC = () => {
             type="button"
             size="sm"
             onClick={handlePublish}
-            disabled={isPublishing}
+            disabled={isSaving || isPublishing}
             className="rounded-full px-5 flex items-center gap-1.5 text-xs font-bold shadow-md shadow-brand-blue/20"
           >
             <Send className="w-3.5 h-3.5" /> {isPublishing ? 'Publishing...' : 'Publish Live'}

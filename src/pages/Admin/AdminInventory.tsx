@@ -39,6 +39,8 @@ export const AdminInventory: React.FC = () => {
     try {
       const updated = await adminApi.adjustStock(selectedProduct.id, delta, reason.trim());
       await queryClient.invalidateQueries({ queryKey: ['admin'] });
+      await queryClient.invalidateQueries({ queryKey: ['store'] });
+      await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       addToast(`Updated stock for "${selectedProduct.title}" to ${updated.stock_quantity}`, 'success');
       setSelectedProduct(null);
       setAdjustment('');

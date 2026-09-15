@@ -72,10 +72,23 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
           created_at: new Date().toISOString(),
         };
 
-        await supabase.from('profiles').upsert(newProfile);
+        try {
+          await supabase.from('profiles').upsert(newProfile);
+        } catch {
+          // Handled if DB trigger creates profile or RLS restricts upsert
+        }
         return newProfile;
-      } catch {
-        return null;
+      } catch (err) {
+        console.warn('[CustomerAuth] Exception in loadProfile, using auth metadata fallback:', err);
+        return {
+          id: userId,
+          email,
+          full_name: userMetadata?.full_name || userMetadata?.name || email.split('@')[0],
+          phone: null,
+          role: 'customer',
+          avatar_url: userMetadata?.avatar_url || userMetadata?.picture || null,
+          created_at: new Date().toISOString(),
+        };
       }
     },
     []
@@ -113,7 +126,8 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
     });
 
     // 2. Real-time auth listener (handles Google OAuth redirect and password changes)
-    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      setTimeout(async () => {
       if (!active) return;
       if (session?.user) {
         const userProfile = await loadProfile(
@@ -133,6 +147,7 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
           setIsLoading(false);
         }
       }
+      }, 0);
     });
 
     return () => {

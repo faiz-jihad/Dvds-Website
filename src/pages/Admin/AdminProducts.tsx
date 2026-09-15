@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Edit2, Trash2, Check, X, Film, Eye, Filter, AlertTriangle, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { adminApi } from '../../lib/adminApi';
-import { supabase } from '../../lib/supabase';
+import { uploadAdminImage } from '../../lib/adminMedia';
 import { Product, DvdFormat, AgeRating, ProductStatus } from '../../types';
 import { formatGBP, formatDateUK } from '../../lib/formatters';
 import { Button } from '../../components/common/Button';
@@ -80,38 +80,9 @@ export const AdminProducts: React.FC = () => {
 
     setIsUploadingImage(true);
     try {
-      if (supabase) {
-        const fileExt = file.name.split('.').pop() || 'jpg';
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-        const { error } = await supabase.storage.from('products').upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true,
-        });
-
-        if (!error) {
-          const { data } = supabase.storage.from('products').getPublicUrl(fileName);
-          if (data?.publicUrl) {
-            setCoverImageUrl(data.publicUrl);
-            addToast('Product image uploaded successfully to Supabase Storage', 'success');
-            setIsUploadingImage(false);
-            return;
-          }
-        }
-      }
-
-      // Fallback: Read as base64 Data URL so user is never blocked
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setCoverImageUrl(result);
-        addToast('Image loaded and preview ready', 'success');
-        setIsUploadingImage(false);
-      };
-      reader.onerror = () => {
-        addToast('Failed to read image file', 'error');
-        setIsUploadingImage(false);
-      };
-      reader.readAsDataURL(file);
+      setCoverImageUrl(await uploadAdminImage(file));
+      addToast('Product image uploaded successfully', 'success');
+      setIsUploadingImage(false);
     } catch (err: any) {
       addToast(err?.message || 'Failed to upload image', 'error');
       setIsUploadingImage(false);
@@ -203,6 +174,7 @@ export const AdminProducts: React.FC = () => {
       .replace(/[^\w ]+/g, '')
       .replace(/ +/g, '-');
 
+    if (isUploadingImage || isSaving) return;
     setIsSaving(true);
     try {
       if (editingProduct) {
@@ -212,14 +184,13 @@ export const AdminProducts: React.FC = () => {
         slug,
         category_id: categoryId || null,
         format: format as DvdFormat,
-        spine_number: spineNumber.trim() || undefined,
-        director: director.trim() || undefined,
-        aspect_ratio: aspectRatio.trim() || undefined,
-        audio_format: audioFormat.trim() || undefined,
+        spine_number: spineNumber.trim() || null,
+        director: director.trim() || null,
+        aspect_ratio: aspectRatio.trim() || null,
+        audio_format: audioFormat.trim() || null,
         imdb_rating: parsedImdb,
         price: parsedPrice,
         compare_at_price: comparePrice ? parseFloat(comparePrice) : null,
-        stock_quantity: parsedStock,
         release_year: parsedYear,
         runtime_minutes: parsedRuntime,
         age_rating: ageRating as AgeRating,
@@ -243,10 +214,10 @@ export const AdminProducts: React.FC = () => {
         slug,
         category_id: categoryId || null,
         format: format as DvdFormat,
-        spine_number: spineNumber.trim() || undefined,
-        director: director.trim() || undefined,
-        aspect_ratio: aspectRatio.trim() || undefined,
-        audio_format: audioFormat.trim() || undefined,
+        spine_number: spineNumber.trim() || null,
+        director: director.trim() || null,
+        aspect_ratio: aspectRatio.trim() || null,
+        audio_format: audioFormat.trim() || null,
         imdb_rating: parsedImdb,
         price: parsedPrice,
         compare_at_price: comparePrice ? parseFloat(comparePrice) : null,
@@ -266,10 +237,12 @@ export const AdminProducts: React.FC = () => {
         is_new_release: isNewRelease,
         is_best_seller: isBestSeller,
       });
+        setEditingProduct(created);
         await adminApi.setProductGenres(created.id, selectedGenreIds);
         addToast(`Added new title "${created.title}" to DVD catalogue`, 'success');
       }
       await queryClient.invalidateQueries({ queryKey: ['admin'] });
+      await queryClient.invalidateQueries({ queryKey: ['store'] });
       setIsModalOpen(false);
     } catch (saveError) {
       addToast(saveError instanceof Error ? saveError.message : 'Product could not be saved', 'error');
@@ -288,6 +261,7 @@ export const AdminProducts: React.FC = () => {
     try {
       await adminApi.archiveProduct(productToDelete.id);
       await queryClient.invalidateQueries({ queryKey: ['admin'] });
+      await queryClient.invalidateQueries({ queryKey: ['store'] });
       addToast(`Archived "${productToDelete.title}"`, 'info');
       setProductToDelete(null);
     } catch (archiveError) {
@@ -303,6 +277,7 @@ export const AdminProducts: React.FC = () => {
     try {
       await adminApi.deleteProduct(productToDelete.id);
       await queryClient.invalidateQueries({ queryKey: ['admin'] });
+      await queryClient.invalidateQueries({ queryKey: ['store'] });
       addToast(`Permanently deleted "${productToDelete.title}"`, 'success');
       setProductToDelete(null);
     } catch (err) {
@@ -621,9 +596,11 @@ export const AdminProducts: React.FC = () => {
               placeholder="e.g. 14.99 (Optional for Sale)"
             />
             <Input
-              label="Warehouse Stock Qty *"
+              label={editingProduct ? 'Stock (adjust in Inventory)' : 'Warehouse Stock Qty *'}
               type="number"
-              value={stockQuantity}
+              disabled={Boolean(editingProduct)}
+                title={editingProduct ? "Use Inventory to adjust stock with an audit reason" : undefined}
+                value={stockQuantity}
               onChange={(e) => setStockQuantity(e.target.value)}
               placeholder="30"
               required
@@ -810,7 +787,7 @@ export const AdminProducts: React.FC = () => {
             <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="primary" type="submit" isLoading={isSaving}>
+            <Button variant="primary" type="submit" isLoading={isSaving} disabled={isUploadingImage}>
               {editingProduct ? 'Save Changes' : 'Create Product'}
             </Button>
           </div>

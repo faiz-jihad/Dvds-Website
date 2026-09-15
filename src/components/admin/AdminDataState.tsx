@@ -45,13 +45,13 @@ export const AdminDataState: React.FC<AdminDataStateProps> = ({
             </h2>
             <p className="mt-1.5 text-sm leading-relaxed text-gray-600">
               {isSchemaInit
-                ? 'Store services require initial database schema migration in Supabase before catalog and order transactions can be managed.'
+                ? (error as Error).message
                 : error instanceof Error ? error.message : 'A connection error occurred while reaching store services. Please try again shortly.'}
             </p>
             {isSchemaInit && (
               <div className="mt-3 rounded-md bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600">
                 <span className="font-semibold text-dark block mb-1">Quick Setup Guide:</span>
-                <span>Execute the complete database setup script (<code className="font-mono text-brand-blue bg-white px-1 py-0.5 rounded border border-gray-200">setup_complete.sql</code>) in your Supabase SQL Editor to enable all store features.</span>
+                <span>Apply all pending migrations in order from (<code className="font-mono text-brand-blue bg-white px-1 py-0.5 rounded border border-gray-200">supabase/migrations</code>) in your Supabase SQL Editor to enable all store features.</span>
               </div>
             )}
             {onRetry && (

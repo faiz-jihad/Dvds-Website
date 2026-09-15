@@ -103,6 +103,9 @@ export const AdminTaxonomy: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'genres'] }),
       queryClient.invalidateQueries({ queryKey: ['store', 'categories'] }),
       queryClient.invalidateQueries({ queryKey: ['store', 'genres'] }),
+      queryClient.invalidateQueries({ queryKey: ['store', 'products'] }),
+      queryClient.invalidateQueries({ queryKey: ['store', 'product'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] }),
     ]);
   };
 

@@ -8,8 +8,10 @@ import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { useUiStore } from '../../stores/useUiStore';
 import { AdminDataState } from '../../components/admin/AdminDataState';
+import { useAdminAuth } from '../../auth/AdminAuth';
 
 export const AdminOrders: React.FC = () => {
+  const { user } = useAdminAuth();
   const queryClient = useQueryClient();
   const ordersQuery = useQuery({
     queryKey: ['admin', 'orders'],
@@ -197,7 +199,7 @@ export const AdminOrders: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      {o.payment_method === 'bank_transfer' && o.payment_status === 'awaiting_payment' && (
+                      {user?.role === 'admin' && !['cancelled', 'refunded'].includes(o.status) && o.payment_method === 'bank_transfer' && o.payment_status === 'awaiting_payment' && (
                         <button
                           type="button"
                           onClick={(e) => {
@@ -257,7 +259,7 @@ export const AdminOrders: React.FC = () => {
         >
           <div className="space-y-6 text-xs">
             {/* Awaiting Bank Transfer Notice */}
-            {selectedOrder.payment_method === 'bank_transfer' && selectedOrder.payment_status === 'awaiting_payment' && (
+            {user?.role === 'admin' && !['cancelled', 'refunded'].includes(selectedOrder.status) && selectedOrder.payment_method === 'bank_transfer' && selectedOrder.payment_status === 'awaiting_payment' && (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-2.5">
                   <Building2 className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
@@ -320,7 +322,7 @@ export const AdminOrders: React.FC = () => {
                     Awaiting verified payment
                   </span>
                 )}
-                {selectedOrder.payment_status !== 'paid' && !['cancelled', 'delivered'].includes(selectedOrder.status) && (
+                {selectedOrder.payment_status !== 'paid' && !['cancelled', 'delivered', 'refunded'].includes(selectedOrder.status) && (
                   <Button
                     variant="destructive"
                     size="sm"

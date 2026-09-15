@@ -2,7 +2,6 @@ import { isSupabaseConfigured, supabase } from './supabase';
 import { Address, Category, Genre, Order, Product, Profile, Promotion, StoreSettings } from '../types';
 import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
 import { DEFAULT_PRODUCTS } from '../data/defaultProducts';
-import { DEFAULT_GENRES } from '../data/defaultGenres';
 
 function client() {
   if (!isSupabaseConfigured || !supabase) return null;
@@ -26,159 +25,31 @@ function normalizeProduct(row: any): Product {
 
 export const publicApi = {
   async getProducts(): Promise<Product[]> {
-    let list: Product[] = [];
-    try {
-      const sb = client();
-      if (sb) {
-        const { data, error } = await sb
-          .from('products')
-          .select('*, category:categories(*), product_genres(genre:genres(*))')
-          .eq('status', 'active')
-          .order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) {
-          list = data.map(normalizeProduct);
-        }
-      }
-    } catch (err) {
-      console.warn('[publicApi] Could not load products from Supabase, using catalog defaults:', err);
-    }
-    if (!list.length) list = DEFAULT_PRODUCTS;
-
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_demo_products_v1') : null;
-      const deletedRaw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_deleted_products_v1') : null;
-      const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
-      const demo = raw ? (JSON.parse(raw) as Product[]) : [];
-
-      const map = new Map<string, Product>();
-      list.forEach((p) => {
-        if (!deletedIds.has(p.id)) map.set(p.id, p);
-      });
-      demo.forEach((p) => {
-        if (!deletedIds.has(p.id)) map.set(p.id, p);
-      });
-      return Array.from(map.values()).filter((p) => p.status === 'active');
-    } catch {
-      // ignore
-    }
-
-    return list;
+    const { data, error } = await requireClient().from('products')
+      .select('*, category:categories(*), product_genres(genre:genres(*))')
+      .eq('status', 'active').order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data || []).map(normalizeProduct);
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_demo_products_v1') : null;
-      const deletedRaw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_deleted_products_v1') : null;
-      const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
-
-      if (raw) {
-        const demo = JSON.parse(raw) as Product[];
-        const matched = demo.find((p) => p.slug === slug);
-        if (matched) {
-          if (deletedIds.has(matched.id) || matched.status !== 'active') return null;
-          return matched;
-        }
-      }
-
-      const sb = client();
-      if (sb) {
-        const { data, error } = await sb
-          .from('products')
-          .select('*, category:categories(*), product_genres(genre:genres(*))')
-          .eq('slug', slug)
-          .eq('status', 'active')
-          .maybeSingle();
-        if (!error && data) {
-          if (deletedIds.has(data.id)) return null;
-          return normalizeProduct(data);
-        }
-      }
-    } catch (err) {
-      console.warn('[publicApi] getProductBySlug error:', err);
-    }
-    return DEFAULT_PRODUCTS.find((p) => p.slug === slug) || null;
+    const { data, error } = await requireClient().from('products')
+      .select('*, category:categories(*), product_genres(genre:genres(*))')
+      .eq('slug', slug).eq('status', 'active').maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? normalizeProduct(data) : null;
   },
 
   async getCategories(): Promise<Category[]> {
-    let dbCategories: Category[] = [];
-    try {
-      const sb = client();
-      if (sb) {
-        const { data, error } = await sb
-          .from('categories')
-          .select('*')
-          .eq('is_active', true)
-          .order('sort_order');
-        if (!error && data && data.length > 0) {
-          dbCategories = data as Category[];
-        }
-      }
-    } catch (err) {
-      console.warn('[publicApi] getCategories error:', err);
-    }
-
-    if (typeof window !== 'undefined') {
-      try {
-        const demoRaw = localStorage.getItem('az_rayan_demo_categories_v1');
-        const demoCats: Category[] = demoRaw ? JSON.parse(demoRaw) : [];
-        const deletedRaw = localStorage.getItem('az_rayan_deleted_categories_v1');
-        const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
-
-        const map = new Map<string, Category>();
-        dbCategories.forEach((c) => {
-          if (!deletedIds.has(c.id) && c.is_active) map.set(c.id, c);
-        });
-        demoCats.forEach((c) => {
-          if (!deletedIds.has(c.id) && c.is_active) map.set(c.id, c);
-        });
-        if (map.size > 0) {
-          return Array.from(map.values()).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    return dbCategories;
+    const { data, error } = await requireClient().from('categories').select('*').eq('is_active', true).order('sort_order');
+    if (error) throw new Error(error.message);
+    return (data || []) as Category[];
   },
 
   async getGenres(): Promise<Genre[]> {
-    let dbGenres: Genre[] = [];
-    try {
-      const sb = client();
-      if (sb) {
-        const { data, error } = await sb.from('genres').select('*').order('name');
-        if (!error && data && data.length > 0) {
-          dbGenres = data as Genre[];
-        }
-      }
-    } catch (err) {
-      console.warn('[publicApi] getGenres error:', err);
-    }
-
-    if (typeof window !== 'undefined') {
-      try {
-        const demoRaw = localStorage.getItem('az_rayan_demo_genres_v1');
-        const demoGenres: Genre[] = demoRaw ? JSON.parse(demoRaw) : [];
-        const deletedRaw = localStorage.getItem('az_rayan_deleted_genres_v1');
-        const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
-
-        const map = new Map<string, Genre>();
-        dbGenres.forEach((g) => {
-          if (!deletedIds.has(g.id)) map.set(g.id, g);
-        });
-        demoGenres.forEach((g) => {
-          if (!deletedIds.has(g.id)) map.set(g.id, g);
-        });
-        if (map.size > 0) {
-          return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    return dbGenres.length > 0 ? dbGenres : DEFAULT_GENRES;
+    const { data, error } = await requireClient().from('genres').select('*').order('name');
+    if (error) throw new Error(error.message);
+    return (data || []) as Genre[];
   },
 
   async getStoreSettings(): Promise<StoreSettings> {
@@ -205,16 +76,6 @@ export const publicApi = {
       console.warn('[publicApi] Could not load store settings from database, using defaults:', err);
     }
 
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_store_settings_v2') : null;
-      if (raw) {
-        const parsed = JSON.parse(raw) as StoreSettings;
-        return { ...DEFAULT_STORE_SETTINGS, ...parsed };
-      }
-    } catch {
-      // ignore
-    }
-
     return DEFAULT_STORE_SETTINGS;
   },
 
@@ -238,23 +99,6 @@ export const publicApi = {
       }
     } catch (err) {
       console.warn('Could not load DB promotions:', err);
-    }
-
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('az_rayan_demo_promotions_v1') : null;
-      if (raw) {
-        const demoList = JSON.parse(raw) as Promotion[];
-        const activeDemo = demoList.filter((p) => p.is_active);
-        const merged = [...activeDemo];
-        for (const p of dbPromotions) {
-          if (!merged.some((m) => m.code === p.code || m.id === p.id)) {
-            merged.push(p);
-          }
-        }
-        return merged;
-      }
-    } catch {
-      // ignore
     }
 
     return dbPromotions;
@@ -645,19 +489,58 @@ export const publicApi = {
   },
 
   async getMyProfile(): Promise<Profile> {
-    const { data: auth } = await requireClient().auth.getUser();
-    if (!auth.user) throw new Error('Sign in to view your profile.');
-    const { data, error } = await requireClient().from('profiles').select('*').eq('id', auth.user.id).single();
-    if (error || !data) throw new Error(error?.message || 'Profile could not be loaded.');
-    return data as Profile;
+    const sb = requireClient();
+    const { data: auth, error: authErr } = await sb.auth.getUser();
+    if (authErr || !auth?.user) throw new Error('Sign in to view your profile.');
+
+    const { data, error } = await sb.from('profiles').select('*').eq('id', auth.user.id).maybeSingle();
+    if (!error && data) return data as Profile;
+
+    // Fallback: auto-create/sync profile from user metadata if missing
+    const meta = auth.user.user_metadata || {};
+    const fallback: Profile = {
+      id: auth.user.id,
+      email: auth.user.email || '',
+      full_name: meta.full_name || meta.name || auth.user.email?.split('@')[0] || 'Customer',
+      phone: null,
+      role: 'customer',
+      avatar_url: meta.avatar_url || meta.picture || null,
+      created_at: new Date().toISOString(),
+    };
+
+    try {
+      await sb.from('profiles').upsert(fallback);
+    } catch {
+      // ignore
+    }
+
+    return fallback;
   },
 
   async updateMyProfile(input: { full_name: string; phone: string | null }): Promise<Profile> {
-    const { data: auth } = await requireClient().auth.getUser();
+    const sb = requireClient();
+    const { data: auth } = await sb.auth.getUser();
     if (!auth.user) throw new Error('Sign in to update your profile.');
-    const { data, error } = await requireClient().from('profiles').update(input).eq('id', auth.user.id).select('*').single();
-    if (error || !data) throw new Error(error?.message || 'Profile could not be updated.');
-    return data as Profile;
+
+    const { data, error } = await sb.from('profiles').update(input).eq('id', auth.user.id).select('*').maybeSingle();
+    if (!error && data) return data as Profile;
+
+    const meta = auth.user.user_metadata || {};
+    const fullProfile: Profile = {
+      id: auth.user.id,
+      email: auth.user.email || '',
+      full_name: input.full_name,
+      phone: input.phone,
+      role: 'customer',
+      avatar_url: meta.avatar_url || meta.picture || null,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data: upserted, error: upsertErr } = await sb.from('profiles').upsert(fullProfile).select('*').maybeSingle();
+    if (upsertErr || !upserted) {
+      return fullProfile;
+    }
+    return upserted as Profile;
   },
 
   async getMyAddresses(): Promise<Address[]> {

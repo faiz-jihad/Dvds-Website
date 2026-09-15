@@ -26,6 +26,7 @@ import { useRealtimeStatus } from '../../lib/realtime';
 import { useQuery } from '@tanstack/react-query';
 import { AdminDataState } from '../admin/AdminDataState';
 import { AdminNotificationMenu } from '../admin/AdminNotificationMenu';
+import { useUiStore } from '../../stores/useUiStore';
 
 interface NavItem {
   label: string;
@@ -108,8 +109,12 @@ export const AdminLayout: React.FC = () => {
   });
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/admin/login', { replace: true });
+    try {
+      await logout();
+      navigate('/admin/login', { replace: true });
+    } catch (error) {
+      useUiStore.getState().addToast(error instanceof Error ? error.message : 'Sign out failed. Please retry.', 'error');
+    }
   };
 
   const avatarInitial = user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'A';
@@ -122,7 +127,7 @@ export const AdminLayout: React.FC = () => {
             {group.title}
           </p>
           <div className="space-y-0.5">
-            {group.items.map((item) => (
+            {group.items.filter((item) => item.href !== '/admin/users' || user?.role === 'admin').map((item) => (
               <NavLink
                 key={item.href}
                 to={item.href}

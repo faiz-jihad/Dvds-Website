@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Sparkles,
@@ -26,16 +26,18 @@ export const AdminStoreSettings: React.FC = () => {
   const settingsQuery = useQuery({ queryKey: ['admin', 'settings'], queryFn: () => adminApi.getStoreSettings() });
   const productsQuery = useQuery({ queryKey: ['admin', 'products'], queryFn: () => adminApi.getProducts() });
   const [settings, setSettings] = useState<StoreSettings | null>(null);
+  const dirty = useRef(false);
   const products = productsQuery.data || [];
   const [activeTab, setActiveTab] = useState<'hero' | 'deal' | 'curator' | 'logistics'>('hero');
   const [isSaving, setIsSaving] = useState(false);
   const addToast = useUiStore((state) => state.addToast);
 
   useEffect(() => {
-    if (settingsQuery.data) setSettings(settingsQuery.data);
+    if (settingsQuery.data && !dirty.current) setSettings(settingsQuery.data);
   }, [settingsQuery.data]);
 
   const handleChange = <K extends keyof StoreSettings>(field: K, value: StoreSettings[K]) => {
+    dirty.current = true;
     setSettings((prev) => prev ? ({
       ...prev,
       [field]: value,
@@ -75,8 +77,11 @@ export const AdminStoreSettings: React.FC = () => {
     setIsSaving(true);
     try {
       const updated = await adminApi.saveStoreSettings(settings);
+      dirty.current = false;
       setSettings(updated);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
+      await queryClient.invalidateQueries({ queryKey: ['store'] });
+      await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       addToast('Store settings and homepage content saved successfully!', 'success');
     } catch (err: any) {
       addToast(err?.message || 'Failed to update store settings', 'error');

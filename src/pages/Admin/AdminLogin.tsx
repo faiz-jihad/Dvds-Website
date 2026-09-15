@@ -96,22 +96,7 @@ export const AdminLogin: React.FC = () => {
                 Enter your credentials to access the management backoffice.
               </p>
 
-              <div className="mt-4 p-3 rounded-lg bg-blue-50/80 border border-blue-200/70 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-semibold text-blue-950 block text-[11px]">Default Admin Credentials:</span>
-                  <span className="font-mono text-[11px] text-blue-800">admin@azrayan.co.uk • Admin123!</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('admin@azrayan.co.uk');
-                    setPassword('Admin123!');
-                  }}
-                  className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium text-[11px] transition-colors cursor-pointer"
-                >
-                  Auto-fill
-                </button>
-              </div>
+
             </div>
 
             {/* Error message */}

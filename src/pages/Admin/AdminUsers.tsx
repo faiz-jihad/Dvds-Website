@@ -96,10 +96,8 @@ export const AdminUsers: React.FC = () => {
 
   const handleRoleChange = (targetUser: Profile, newRole: UserRole) => {
     if (targetUser.id === currentAdmin?.id && newRole !== 'admin') {
-      const confirmed = window.confirm(
-        'Warning: You are about to downgrade your own administrator privileges. Continue?'
-      );
-      if (!confirmed) return;
+      addToast('You cannot change your own administrator role.', 'error');
+      return;
     }
     roleMutation.mutate({ userId: targetUser.id, newRole });
   };

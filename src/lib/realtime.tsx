@@ -150,7 +150,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         break;
 
       case 'contact_messages':
-        queryClient.invalidateQueries({ queryKey: ['admin', 'support'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'contact-messages'] });
         if (eventType === 'INSERT') {
           useUiStore.getState().addToast('New customer enquiry received', 'info');
           // Admin duty: New customer support enquiry

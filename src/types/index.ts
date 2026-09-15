@@ -53,10 +53,10 @@ export interface Product {
   updated_at: string;
   genres?: Genre[];
   // Boutique physical media fields (Criterion / BFI / Arrow inspired)
-  spine_number?: string;
-  aspect_ratio?: string;
-  audio_format?: string;
-  director?: string;
+  spine_number?: string | null;
+  aspect_ratio?: string | null;
+  audio_format?: string | null;
+  director?: string | null;
   imdb_rating?: number | null;
   imdb_id?: string | null;
 }
@@ -147,7 +147,7 @@ export interface Promotion {
   minimum_order: number;
   is_active: boolean;
   starts_at?: string;
-  ends_at?: string;
+  ends_at?: string | null;
   created_at?: string;
   updated_at?: string;
 }

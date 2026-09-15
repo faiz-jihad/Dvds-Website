@@ -100,11 +100,9 @@ export const router = createBrowserRouter([
       { path: 'terms', element: <TermsPage /> },
       { path: 'refund-policy', element: <RefundPolicyPage /> },
 
-      // Customer Authentication & OAuth Callbacks
+      // Customer Authentication
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
-      { path: 'auth/callback', element: <OAuthCallback /> },
-      { path: 'auth/v1/callback', element: <OAuthCallback /> },
 
       // Customer Account
       {
@@ -118,6 +116,16 @@ export const router = createBrowserRouter([
         ],
       },
     ],
+  },
+
+  // Customer OAuth Callbacks (Standalone - mounts instantly without blocking on storefront catalogue queries)
+  {
+    path: '/auth/callback',
+    element: <OAuthCallback />,
+  },
+  {
+    path: '/auth/v1/callback',
+    element: <OAuthCallback />,
   },
 
   // Admin Suite Backoffice Routes
@@ -140,7 +148,7 @@ export const router = createBrowserRouter([
       { path: 'orders', element: <AdminOrders /> },
       { path: 'inventory', element: <AdminInventory /> },
       { path: 'promotions', element: <AdminPromotions /> },
-      { path: 'users', element: <AdminUsers /> },
+      { path: 'users', element: <ProtectedAdminRoute adminOnly><AdminUsers /></ProtectedAdminRoute> },
       { path: 'settings', element: <AdminStoreSettings /> },
       { path: 'activity', element: <AdminActivity /> },
       { path: 'taxonomy', element: <AdminTaxonomy /> },

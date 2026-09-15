@@ -6,6 +6,8 @@ import { Input } from '../common/Input';
 import { FocalPointPicker } from './FocalPointPicker';
 import { homepageApi } from '../../lib/homepageApi';
 import { MediaAsset } from '../../types/homepage';
+import { uploadAdminImage } from '../../lib/adminMedia';
+import { useUiStore } from '../../stores/useUiStore';
 
 interface MediaPickerResult {
   url: string;
@@ -24,13 +26,15 @@ interface MediaPickerModalProps {
   aspectRatioClass?: string;
 }
 
+const DEFAULT_FOCAL_POINT = { x: 50, y: 50 };
+
 export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   isOpen,
   onClose,
   onSelect,
   initialUrl = '',
   initialAlt = '',
-  initialFocalPoint = { x: 50, y: 50 },
+  initialFocalPoint = DEFAULT_FOCAL_POINT,
   title = 'Select or Configure Media Asset',
   aspectRatioClass = 'aspect-[16/9]',
 }) => {
@@ -41,10 +45,13 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   const [focalPoint, setFocalPoint] = useState(initialFocalPoint);
   const [searchQuery, setSearchQuery] = useState('');
   const [customUrlInput, setCustomUrlInput] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      homepageApi.getMediaLibrary().then(setMediaLibrary);
+      homepageApi.getMediaLibrary().then(setMediaLibrary).catch((error) => {
+        useUiStore.getState().addToast(error instanceof Error ? error.message : 'Media library could not be loaded.', 'error');
+      });
       setSelectedUrl(initialUrl);
       setAltText(initialAlt);
       setFocalPoint(initialFocalPoint);
@@ -56,13 +63,13 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
     }
   }, [isOpen, initialUrl, initialAlt, initialFocalPoint]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
+    setUploading(true);
+    try {
+      const dataUrl = await uploadAdminImage(file);
       const newAsset: MediaAsset = {
         id: `upload-${Date.now()}`,
         url: dataUrl,
@@ -74,13 +81,16 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
         createdAt: new Date().toISOString(),
       };
 
-      homepageApi.saveMediaAsset(newAsset);
+      await homepageApi.saveMediaAsset(newAsset);
       setMediaLibrary((prev) => [newAsset, ...prev]);
       setSelectedUrl(dataUrl);
       setAltText(newAsset.altText || '');
       setActiveTab('focal');
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      useUiStore.getState().addToast(error instanceof Error ? error.message : 'Image upload failed.', 'error');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleApplyCustomUrl = () => {
@@ -91,7 +101,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   };
 
   const handleConfirm = () => {
-    if (!selectedUrl) return;
+    if (!selectedUrl || uploading) return;
     onSelect({
       url: selectedUrl,
       altText: altText.trim(),
@@ -213,14 +223,15 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                 Upload image from computer
               </p>
               <p className="text-[11px] text-gray-500 mb-4 font-mono">
-                PNG, JPG, WebP up to 10MB
+                PNG, JPG, WebP, GIF, SVG up to 5MB
               </p>
               <label className="inline-flex">
-                <Button variant="secondary" size="sm" type="button" className="cursor-pointer">
-                  Browse Files
-                </Button>
+                <span className="cursor-pointer rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-semibold">
+                  {uploading ? 'Uploading...' : 'Browse Files'}
+                </span>
                 <input
                   type="file"
+                  disabled={uploading}
                   accept="image/*"
                   onChange={handleFileUpload}
                   className="hidden"
@@ -282,7 +293,8 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           <Button
             type="button"
             onClick={handleConfirm}
-            disabled={!selectedUrl}
+            disabled={!selectedUrl || uploading}
+            isLoading={uploading}
             size="sm"
             className="rounded-full px-6"
           >

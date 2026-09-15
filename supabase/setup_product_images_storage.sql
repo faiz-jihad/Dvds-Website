@@ -26,16 +26,17 @@ USING (bucket_id = 'products');
 -- 3. Policy: Admin & Store Manager dapat mengupload gambar
 DROP POLICY IF EXISTS "Admins can upload product images" ON storage.objects;
 CREATE POLICY "Admins can upload product images"
-ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'products');
+ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'products' AND public.is_admin());
 
 -- 4. Policy: Admin dapat update & hapus gambar
 DROP POLICY IF EXISTS "Admins can update product images" ON storage.objects;
 CREATE POLICY "Admins can update product images"
-ON storage.objects FOR UPDATE
-USING (bucket_id = 'products');
+ON storage.objects FOR UPDATE TO authenticated
+USING (bucket_id = 'products' AND public.is_admin())
+WITH CHECK (bucket_id = 'products' AND public.is_admin());
 
 DROP POLICY IF EXISTS "Admins can delete product images" ON storage.objects;
 CREATE POLICY "Admins can delete product images"
-ON storage.objects FOR DELETE
-USING (bucket_id = 'products');
+ON storage.objects FOR DELETE TO authenticated
+USING (bucket_id = 'products' AND public.is_admin());
