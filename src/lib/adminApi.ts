@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, supabase } from './supabase';
 import { Category, FinancialStats, FulfilmentStatus, Genre, Order, OrderStatus, Product, Promotion, StoreSettings, Profile, UserRole } from '../types';
+import { adminSchemaChecks, AdminSchemaScope } from './adminSchema';
 import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
 
 export interface InventoryMovement {
@@ -52,53 +53,11 @@ export interface ContactMessage {
 }
 
 export class AdminBackendError extends Error {
-  constructor(message: string, public readonly code = 'ADMIN_BACKEND_ERROR') {
+  constructor(message: string, public readonly code = 'ADMIN_BACKEND_ERROR', public readonly details: readonly string[] = []) {
     super(message);
     this.name = 'AdminBackendError';
   }
 }
-
-const REQUIRED_ADMIN_TABLES = [
-  'profiles',
-  'categories',
-  'products',
-  'genres',
-  'product_genres',
-  'orders',
-  'order_items',
-  'promotions',
-  'store_settings',
-  'inventory_movements',
-  'order_status_history',
-  'admin_audit_log',
-  'contact_messages',
-  'homepage_config',
-] as const;
-
-const REQUIRED_ADMIN_FUNCTIONS = [
-  { name: 'confirm_bank_transfer_payment', args: { p_order_id: '00000000-0000-0000-0000-000000000000', p_note: null } },
-  { name: 'admin_set_user_role', args: { p_user_id: '00000000-0000-0000-0000-000000000000', p_role: 'customer' } },
-  { name: 'admin_delete_user', args: { p_user_id: '00000000-0000-0000-0000-000000000000' } },
-  {
-    name: 'set_product_genres',
-    args: { p_product_id: '00000000-0000-0000-0000-000000000000', p_genre_ids: [] },
-  },
-  {
-    name: 'adjust_product_stock',
-    args: { p_product_id: '00000000-0000-0000-0000-000000000000', p_delta: 1, p_reason: 'schema check' },
-  },
-  {
-    name: 'transition_order_status',
-    args: {
-      p_order_id: '00000000-0000-0000-0000-000000000000',
-      p_status: 'pending',
-      p_fulfilment_status: 'unfulfilled',
-      p_carrier: null,
-      p_tracking_number: null,
-      p_note: null,
-    },
-  },
-] as const;
 
 const SCHEMA_ERROR_CODES = new Set(['PGRST202', 'PGRST204', 'PGRST205', '42P01', '42883', '42703']);
 
@@ -115,8 +74,9 @@ function client() {
 function fail(error: any, fallback: string): never {
   if (error?.code && SCHEMA_ERROR_CODES.has(error.code)) {
     throw new AdminBackendError(
-      'Database schema is incomplete. Apply all pending migrations from supabase/migrations in order and refresh this page.',
-      'SCHEMA_NOT_READY'
+      `${fallback} A required database table, column or function is missing.`,
+      'SCHEMA_NOT_READY',
+      [error.message || error.code]
     );
   }
   if (error?.code === '42501' || error?.message?.includes('row-level security')) {
@@ -141,6 +101,7 @@ function normalizeOrder(row: any): Order {
     shipping_amount: Number(row.shipping_amount),
     discount_amount: Number(row.discount_amount),
     total_amount: Number(row.total_amount),
+    refunded_amount: Number(row.refunded_amount || 0),
     shipping_address: row.shipping_address || {},
     items: (row.items || []).map((item: any) => ({
       ...item,
@@ -154,61 +115,23 @@ function normalizeOrder(row: any): Order {
 export const adminApi = {
   isConfigured: isSupabaseConfigured,
 
-  async checkSchema(): Promise<{ tables: readonly string[]; functions: string[] }> {
-    const tableChecks = await Promise.all(
-      REQUIRED_ADMIN_TABLES.map(async (table) => {
-        const { error } = await client().from(table).select('*').limit(0);
-        return { table, error };
-      })
-    );
-
-    const { error: productMetadataError } = await client()
-      .from('products')
-      .select('id,imdb_rating,imdb_id')
-      .limit(0);
-
-    const { error: settingsColumnsError } = await client().from('store_settings')
-      .select('registered_company_name,company_number,registered_office_address,companies_house_url,bank_name,bank_account_name,bank_sort_code,bank_account_number,bank_iban,bank_payment_instructions')
-      .limit(0);
-    if (settingsColumnsError) fail(settingsColumnsError, 'Store settings schema could not be verified.');
-    const { error: paymentColumnsError } = await client().from('orders')
-      .select('payment_method,payment_provider,paid_at,payment_confirmed_by,bank_transfer_reference,paypal_order_id,paypal_capture_id')
-      .limit(0);
-    if (paymentColumnsError) fail(paymentColumnsError, 'Order payment schema could not be verified.');
-
-    const missingTables = tableChecks
-      .filter(({ error }) => error?.code && SCHEMA_ERROR_CODES.has(error.code))
-      .map(({ table }) => table);
-
-    const functionChecks = await Promise.all(
-      REQUIRED_ADMIN_FUNCTIONS.map(async ({ name, args }) => {
-        const { error } = await client().rpc(name, args);
-        return { name, error };
-      })
-    );
-    const missingFunctions = functionChecks
-      .filter(({ error }) => error?.code && SCHEMA_ERROR_CODES.has(error.code))
-      .map(({ name }) => name);
-
-    if (missingTables.length || missingFunctions.length || Boolean(productMetadataError?.code && SCHEMA_ERROR_CODES.has(productMetadataError.code))) {
-      const details = [
-        missingTables.length ? `tables: ${missingTables.join(', ')}` : '',
-        missingFunctions.length ? `functions: ${missingFunctions.join(', ')}` : '',
-        Boolean(productMetadataError?.code && SCHEMA_ERROR_CODES.has(productMetadataError.code)) ? 'product columns: imdb_rating, imdb_id' : '',
-      ].filter(Boolean).join('; ');
+  async checkSchema(scope: AdminSchemaScope = 'all'): Promise<{ tables: readonly string[] }> {
+    // These are read-only checks. Opening a page must never invoke mutation RPCs.
+    const results = await Promise.all(adminSchemaChecks(scope).map(async ({ table, columns }) => {
+      const { error } = await client().from(table).select(columns).limit(0);
+      return { table, error };
+    }));
+    const connectionError = results.find(({ error }) => error && !SCHEMA_ERROR_CODES.has(error.code));
+    if (connectionError) fail(connectionError.error, `Could not check ${connectionError.table}.`);
+    const missing = results.filter(({ error }) => error);
+    if (missing.length) {
       throw new AdminBackendError(
-        `Database schema is incomplete (${details}). Apply all pending migrations from supabase/migrations in order and refresh this page.`,
-        'SCHEMA_NOT_READY'
+        'This page needs a database update. Other admin pages remain available.',
+        'SCHEMA_NOT_READY',
+        missing.map(({ table, error }) => `${table}: ${error?.message || 'Required schema is missing'}`),
       );
     }
-
-    if (productMetadataError) fail(productMetadataError, 'Product metadata could not be verified.');
-    const unexpectedError = tableChecks.find(({ error }) => error)?.error;
-    if (unexpectedError) fail(unexpectedError, 'Admin database connection could not be verified.');
-    const unexpectedFunctionError = functionChecks.find(({ error }) => error && !['P0001', '42501'].includes(error.code))?.error;
-    if (unexpectedFunctionError) fail(unexpectedFunctionError, 'Admin functions could not be verified.');
-
-    return { tables: REQUIRED_ADMIN_TABLES, functions: REQUIRED_ADMIN_FUNCTIONS.map(({ name }) => name) };
+    return { tables: results.map(({ table }) => table) };
   },
 
   async getProducts(): Promise<Product[]> {
@@ -379,8 +302,9 @@ export const adminApi = {
   async getFinancialStats(): Promise<FinancialStats> {
     const [orders, products, settings] = await Promise.all([adminApi.getOrders(), adminApi.getProducts(), adminApi.getStoreSettings()]);
     const today = new Date().toISOString().slice(0, 10);
-    const paidOrders = orders.filter((order) => order.payment_status === 'paid');
-    const totalRevenue = paidOrders.reduce((sum, order) => sum + order.total_amount, 0);
+    const paidOrders = orders.filter((order) => ['paid', 'partially_refunded', 'refunded'].includes(order.payment_status));
+    const netAmount = (order: Order) => order.payment_status === 'refunded' ? 0 : Math.max(0, order.total_amount - Number(order.refunded_amount || 0));
+    const totalRevenue = paidOrders.reduce((sum, order) => sum + netAmount(order), 0);
     const todayPaid = paidOrders.filter((order) => (order.paid_at || order.created_at).slice(0, 10) === today);
     const buckets = new Map<string, { amount: number; orders: number }>();
 
@@ -392,13 +316,13 @@ export const adminApi = {
     paidOrders.forEach((order) => {
       const key = (order.paid_at || order.created_at).slice(0, 10);
       const bucket = buckets.get(key);
-      if (bucket) buckets.set(key, { amount: bucket.amount + order.total_amount, orders: bucket.orders + 1 });
+      if (bucket) buckets.set(key, { amount: bucket.amount + netAmount(order), orders: bucket.orders + 1 });
     });
 
     return {
       settingsConfigured: Boolean(settings),
       totalRevenue,
-      todayRevenue: todayPaid.reduce((sum, order) => sum + order.total_amount, 0),
+      todayRevenue: todayPaid.reduce((sum, order) => sum + netAmount(order), 0),
       totalOrders: orders.length,
       todayOrders: orders.filter((order) => order.created_at.slice(0, 10) === today).length,
       averageOrderValue: paidOrders.length ? totalRevenue / paidOrders.length : 0,

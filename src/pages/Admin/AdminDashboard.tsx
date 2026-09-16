@@ -77,7 +77,7 @@ export const AdminDashboard: React.FC = () => {
         {/* Total Revenue */}
         <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-xs text-gray-500">
-            <span className="font-semibold uppercase tracking-wider">Total Revenue</span>
+            <span className="font-semibold uppercase tracking-wider">Revenue after refunds</span>
             <div className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <PoundSterling className="w-4 h-4" />
             </div>

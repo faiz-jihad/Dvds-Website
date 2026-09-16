@@ -28,7 +28,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title="Official Order Receipt & Tax Invoice"
+        title="Order Receipt"
         description="Format optimized for A4 paper and PDF archiving."
         maxWidth="2xl"
       >

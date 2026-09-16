@@ -14,6 +14,7 @@ import { StoreDataState } from '../common/StoreDataState';
 
 export const RootLayout: React.FC = () => {
   const { pathname } = useLocation();
+  const paymentRoute = /^\/(checkout|order-success|order-confirmation)(\/|$)/.test(pathname) || /^\/account\/orders\//.test(pathname);
   const setOperationalPricing = useCartStore((state) => state.setOperationalPricing);
   const syncCatalogue = useCartStore((state) => state.syncCatalogue);
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: publicApi.getStoreSettings, staleTime: 30_000, refetchInterval: 60_000 });
@@ -35,8 +36,8 @@ export const RootLayout: React.FC = () => {
   }, [promotionsQuery.data, promotionsQuery.isLoading, setOperationalPricing, settingsQuery.data]);
 
   useEffect(() => {
-    if (settingsQuery.data && productsQuery.data) syncCatalogue(productsQuery.data, settingsQuery.data);
-  }, [productsQuery.data, settingsQuery.data, syncCatalogue]);
+    if (!paymentRoute && settingsQuery.data && productsQuery.data) syncCatalogue(productsQuery.data, settingsQuery.data);
+  }, [productsQuery.data, settingsQuery.data, syncCatalogue, paymentRoute]);
 
   // Scroll to top on route change
   useEffect(() => {
@@ -53,7 +54,7 @@ export const RootLayout: React.FC = () => {
 
       {/* Primary Page Content */}
       <main className="flex-1">
-        {operationalLoading || operationalError ? (
+        {!paymentRoute && (operationalLoading || operationalError) ? (
           <StoreDataState
             loading={operationalLoading}
             error={operationalError || null}

@@ -7,6 +7,7 @@ export class CheckoutError extends Error {
 }
 export const hash = (value) => createHash('sha256').update(value).digest('hex');
 export const money = (value) => Math.round(Number(value) * 100);
+const entityId = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 export function dbClient() {
   const db = getSupabaseServerClient();
@@ -24,7 +25,7 @@ export function endpoint(action, method = 'POST') {
     try { return res.status(200).json(await action(req)); }
     catch (error) {
       if (!(error instanceof CheckoutError)) console.error('[checkout]', error.code || error.name, error.message);
-      return res.status(error.status || 502).json({ error: error instanceof CheckoutError ? error.message : 'The payment service could not complete this request. Please retry.', code: error.code || 'PAYMENT_SERVICE_ERROR' });
+      return res.status(error.status || 502).json({ error: error instanceof CheckoutError ? error.message : 'The payment service could not complete this request. Please retry.', code: error.code || 'PAYMENT_SERVICE_ERROR', ...(req.checkoutOrder ? { orderId: req.checkoutOrder.id, orderNumber: req.checkoutOrder.order_number } : {}) });
     }
   };
 }
@@ -32,7 +33,7 @@ export function normalizeItems(items) {
   if (!Array.isArray(items) || !items.length || items.length > 50) throw new CheckoutError('Your basket must contain between 1 and 50 titles.');
   const quantities = new Map();
   for (const item of items) {
-    if (!uuid.test(item.product_id || '') || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 20) throw new CheckoutError('Check the products and quantities in your basket.');
+    if (!entityId.test(item?.product_id || '') || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 20) throw new CheckoutError('Check the products and quantities in your basket.');
     const quantity = (quantities.get(item.product_id) || 0) + item.quantity;
     if (quantity > 20) throw new CheckoutError('A maximum of 20 copies per title can be ordered.');
     quantities.set(item.product_id, quantity);
@@ -44,7 +45,7 @@ export function paymentMethods(settings) {
   return {
     card: backend && settings.payment_card_enabled !== false && Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
     paypal: backend && settings.payment_paypal_enabled !== false && Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET && process.env.PAYPAL_WEBHOOK_ID),
-    bank_transfer: backend && settings.payment_bank_transfer_enabled !== false && Boolean(settings.bank_name?.trim() && settings.bank_account_name?.trim() && /^\d{6}$/.test(String(settings.bank_sort_code || '').replace(/\D/g, '')) && /^\d{8}$/.test(String(settings.bank_account_number || '').trim())),
+    bank_transfer: backend && settings.payment_bank_transfer_enabled === true && Boolean(settings.bank_name?.trim() && settings.bank_account_name?.trim() && /^\d{6}$/.test(String(settings.bank_sort_code || '').replace(/\D/g, '')) && /^\d{8}$/.test(String(settings.bank_account_number || '').trim())),
   };
 }
 export function calculateQuote(items, products, settings, promo, promoCode, deliveryTier, now = Date.now()) {
@@ -82,7 +83,7 @@ export async function quoteCheckout(db, input) {
   const items = normalizeItems(input.items);
   const products = check(await db.from('products').select('id,sku,title,price,status,stock_quantity,cover_image_url').in('id', items.map((item) => item.product_id)));
   const settings = check(await db.from('store_settings').select('*').eq('singleton', true).maybeSingle());
-  if (!settings) throw new CheckoutError('Checkout is temporarily unavailable while store settings are being updated.', 503);
+  if (!settings || typeof settings.payment_card_enabled !== 'boolean') throw new CheckoutError('Checkout is temporarily unavailable while store settings are being updated.', 503);
   const code = String(input.promoCode || '').trim().toUpperCase();
   const promo = code ? check(await db.from('promotions').select('*').eq('code', code).maybeSingle()) : null;
   return { quote: calculateQuote(items, products || [], settings, promo, code, input.deliveryTier), settings };
@@ -110,7 +111,7 @@ export function validAccess(order, token) {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 export async function loadOrder(db, id) {
-  if (!uuid.test(id || '')) throw new CheckoutError('Invalid order reference.', 400);
+  if (!entityId.test(id || '')) throw new CheckoutError('Invalid order reference.', 400);
   const order = check(await db.from('orders').select('*, items:order_items(*)').eq('id', id).maybeSingle());
   if (!order) throw new CheckoutError('Order not found.', 404);
   return order;
@@ -137,6 +138,8 @@ export async function initializeOrder(db, req, method) {
     if (address[field].length > 200 || (['full_name','address_line_1','city','postcode','country'].includes(field) && !address[field])) throw new CheckoutError(`Check your ${field.replaceAll('_', ' ')}.`);
   }
   if (!['United Kingdom', 'GB', 'UK'].includes(address.country)) throw new CheckoutError('Delivery is currently available within the United Kingdom.');
+  if (!/^(GIR 0AA|[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2})$/i.test(address.postcode)) throw new CheckoutError('Enter a valid UK postcode.');
+  address.postcode = address.postcode.toUpperCase();
   address.country = 'United Kingdom';
   const user = await requestUser(db, req);
   const normalized = { items: normalizeItems(input.items), email, address, deliveryTier: input.deliveryTier, promoCode: String(input.promoCode || '').trim().toUpperCase(), method, expectedTotal: input.expectedTotal, userId: user?.id || null };
@@ -145,6 +148,7 @@ export async function initializeOrder(db, req, method) {
   if (existing) {
     if (!validAccess(existing, input.accessToken) || existing.checkout_request_hash !== requestHash) throw new CheckoutError('This checkout attempt no longer matches your basket. Start a new checkout.', 409, 'ATTEMPT_MISMATCH');
     if (['cancelled', 'refunded'].includes(existing.status) || existing.payment_status === 'failed') throw new CheckoutError('This checkout has closed. Please try again to start a new payment.', 409, 'ATTEMPT_CLOSED');
+    req.checkoutOrder = existing;
     return existing;
   }
   const { quote, settings } = await quoteCheckout(db, input);
@@ -156,7 +160,9 @@ export async function initializeOrder(db, req, method) {
     p_order: { email, user_id: user?.id || null, shipping_address: address, payment_method: method, payment_provider: { card: 'stripe', paypal: 'paypal', bank_transfer: 'manual_bank' }[method],
       subtotal: quote.subtotal, shipping_amount: quote.shipping_amount, discount_amount: quote.discount_amount, total_amount: quote.total_amount, delivery_tier: input.deliveryTier, delivery_name: quote.delivery[input.deliveryTier].name, bank_details: bank }, p_items: quote.items });
   if (data.error) throw new CheckoutError(data.error.code === 'P0001' ? data.error.message : 'Your order could not be created. Please try again.', data.error.code === 'P0001' ? 409 : 503, data.error.code === 'P0001' ? 'STOCK_CHANGED' : 'DATABASE_ERROR');
-  return loadOrder(db, data.data.id);
+  const order = await loadOrder(db, data.data.id);
+  req.checkoutOrder = order;
+  return order;
 }
 export async function recordPayment(db, order, providerOrderId, reference, amount, currency) {
   if (money(amount) !== money(order.total_amount) || String(currency).toUpperCase() !== 'GBP') throw new CheckoutError('Payment amount or currency did not match this order.', 409, 'PAYMENT_MISMATCH');

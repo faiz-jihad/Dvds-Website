@@ -60,6 +60,46 @@ test('all admin list screens propagate database failures', async (t) => {
   }
 });
 
+test('Users schema check is independent of missing payment migrations and never invokes mutations', async () => {
+  const db = backend([{ data: [] }, { error: { code: '42703', message: 'column payment_card_enabled does not exist' } }]);
+  const { adminApi } = await load('src/lib/adminApi.ts', db);
+  const result = await adminApi.checkSchema('users');
+  assert.deepEqual(Array.from(result.tables), ['profiles']);
+  assert.equal(db.calls.length, 1);
+  assert.equal(db.calls[0].table, 'profiles');
+  assert.ok(db.calls[0].actions.some(([action, limit]) => action === 'limit' && limit === 0));
+  assert.ok(!db.calls.some((call) => call.rpc));
+});
+
+test('schema failures identify the actual missing component for the requested page', async () => {
+  const db = backend([{ error: { code: '42703', message: 'column orders.payment_method does not exist' } }, { data: [] }]);
+  const { adminApi } = await load('src/lib/adminApi.ts', db);
+  await assert.rejects(adminApi.checkSchema('orders'), (error) => {
+    assert.equal(error.code, 'SCHEMA_NOT_READY');
+    assert.match(error.details.join(' '), /orders.payment_method/);
+    return true;
+  });
+  assert.deepEqual(db.calls.map((call) => call.table), ['orders', 'order_items']);
+});
+
+test('read-only schema diagnostics keep permission and connection failures distinct from migrations', async () => {
+  const db = backend([denied]);
+  const { adminApi } = await load('src/lib/adminApi.ts', db);
+  await assert.rejects(adminApi.checkSchema('users'), (error) => error.code === 'RLS_PERMISSION_DENIED');
+  const clean = backend();
+  const full = await load('src/lib/adminApi.ts', clean);
+  await full.adminApi.checkSchema();
+  assert.ok(clean.calls.length > 10);
+  assert.ok(clean.calls.every((call) => !call.rpc && call.actions.some(([action, limit]) => action === 'limit' && limit === 0)));
+});
+
+test('admin routes select their own schema scope including nested and trailing slash URLs', async () => {
+  const { adminSchemaScope } = await load('src/lib/adminSchema.ts', backend());
+  for (const [path, expected] of [['/admin/users', 'users'], ['/admin/users/', 'users'], ['/admin/orders/123', 'orders'], ['/admin', 'dashboard'], ['/admin/settings', 'settings']]) {
+    assert.equal(adminSchemaScope(path), expected);
+  }
+});
+
 test('every admin mutation rejects denied writes instead of reporting local success', async (t) => {
   const cases = [
     ['createProduct', [{}]], ['updateProduct', ['id', {}]], ['archiveProduct', ['id']], ['deleteProduct', ['id']],
@@ -168,6 +208,21 @@ test('dashboard counts actual payments, including bank transfers paid today for 
   assert.equal(result.todayRevenue, 25);
   assert.equal(result.totalOrders, 2);
   assert.equal(result.lowStockCount, 1);
+});
+
+test('dashboard revenue subtracts partial refunds and excludes fully refunded amounts', async () => {
+  const now = new Date().toISOString();
+  const rows = [
+    { payment_status: 'paid', total_amount: 20 },
+    { payment_status: 'partially_refunded', total_amount: 25.99, refunded_amount: 5.99 },
+    { payment_status: 'refunded', total_amount: 30, refunded_amount: 30 },
+    { payment_status: 'pending', total_amount: 100 },
+  ].map((row, index) => ({ id: String(index), subtotal: row.total_amount, shipping_amount: 0, discount_amount: 0, created_at: now, paid_at: now, ...row }));
+  const { adminApi } = await load('src/lib/adminApi.ts', backend([{ data: rows }, { data: [] }, { data: { low_stock_threshold: 3 } }]));
+  const result = await adminApi.getFinancialStats();
+  assert.equal(result.totalRevenue, 40);
+  assert.equal(result.todayRevenue, 40);
+  assert.equal(result.dailyRevenue.reduce((sum, day) => sum + day.amount, 0), 40);
 });
 
 test('image validation and storage rejection prevent false upload success', async () => {

@@ -1,5 +1,5 @@
 import { check, CheckoutError, dbClient, endpoint, recordPayment } from './_checkout.js';
-import { paypalRequest } from './_paypal.js';
+import { capturePayPal, paypalRequest } from './_paypal.js';
 export default endpoint(async (req) => {
   if (!process.env.PAYPAL_WEBHOOK_ID) throw new CheckoutError('Webhook is not configured.', 503);
   const fields = { auth_algo: 'paypal-auth-algo', cert_url: 'paypal-cert-url', transmission_id: 'paypal-transmission-id', transmission_sig: 'paypal-transmission-sig', transmission_time: 'paypal-transmission-time' };
@@ -9,7 +9,11 @@ export default endpoint(async (req) => {
   if (verification.verification_status !== 'SUCCESS') throw new CheckoutError('Invalid webhook signature.', 400);
   const event = req.body; const resource = event.resource;
   const db = dbClient();
-  if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+  if (event.event_type === 'CHECKOUT.ORDER.APPROVED') {
+    const order = check(await db.from('orders').select('*').eq('paypal_order_id', resource.id).maybeSingle());
+    if (!order) throw new CheckoutError('Order is not synchronized yet. Retry event.', 503);
+    if (order.status !== 'cancelled') await capturePayPal(db, order, resource.id);
+  } else if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
     const paypalId = resource.supplementary_data?.related_ids?.order_id;
     if (!paypalId) throw new CheckoutError('PayPal order reference is missing.', 400);
     const order = check(await db.from('orders').select('*').eq('paypal_order_id', paypalId).maybeSingle());

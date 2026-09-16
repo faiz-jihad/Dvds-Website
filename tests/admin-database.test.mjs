@@ -6,6 +6,7 @@ import { uuid_ossp } from '@electric-sql/pglite/contrib/uuid_ossp';
 import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
 import { build } from 'esbuild';
 import vm from 'node:vm';
+import { randomUUID } from 'node:crypto';
 
 let db;
 const owner = '11111111-1111-4111-8111-111111111111';
@@ -175,4 +176,166 @@ test('complete settings form persists with generated UUID and can be updated', a
     await db.query("UPDATE store_settings SET support_email='support@example.test' WHERE id=$1", [savedId]);
     assert.equal((await db.query('SELECT support_email FROM store_settings WHERE id=$1', [savedId])).rows[0].support_email, 'support@example.test');
   });
+});
+
+async function checkoutFixture(method = 'card', quantity = 2) {
+  const productId = randomUUID();
+  await db.query("INSERT INTO products(id,sku,title,slug,price,stock_quantity,status,cover_image_url) VALUES ($1::UUID,$2,'Checkout title',$2,10,3,'active','/snapshot.jpg')", [productId, productId]);
+  const request = randomUUID();
+  const values = { email: 'checkout@example.test', user_id: customer, payment_method: method, payment_provider: { card: 'stripe', paypal: 'paypal', bank_transfer: 'manual_bank' }[method], subtotal: quantity * 10, shipping_amount: 5.99, discount_amount: 0, total_amount: quantity * 10 + 5.99, shipping_address: { full_name: 'Test buyer' }, delivery_tier: 'express', delivery_name: 'Test priority', bank_details: method === 'bank_transfer' ? { bank_name: 'Original Bank', bank_account_number: '12345678' } : null };
+  const lines = [{ product_id: productId, quantity, base_price: 10, unit_price: 10, total_price: quantity * 10, product_title: 'Checkout title', product_sku: productId, cover_image_url: '/snapshot.jpg' }];
+  const args = [request, 'a'.repeat(64), 'b'.repeat(64), values, lines];
+  const create = () => db.query('SELECT create_checkout_order($1,$2,$3,$4,$5) AS result', args);
+  const orderId = (await create()).rows[0].result.id;
+  return { orderId, productId, args, create };
+}
+const readOrder = async (id) => (await db.query('SELECT * FROM orders WHERE id=$1', [id])).rows[0];
+const stock = async (id) => (await db.query('SELECT stock_quantity FROM products WHERE id=$1', [id])).rows[0].stock_quantity;
+const pay = (id, provider = 'stripe', reference = 'cs-test', capture = `payment-${id}`) => db.query('SELECT record_checkout_payment($1,$2,$3,$4,25.99,\'GBP\')', [id, provider, reference, capture]);
+
+test('checkout stores order items, delivery, bank snapshot and reserves inventory exactly once', async () => {
+  const fixture = await checkoutFixture('bank_transfer');
+  const row = await readOrder(fixture.orderId);
+  assert.equal(row.payment_status, 'awaiting_payment');
+  assert.equal(row.status, 'pending');
+  assert.equal(Number(row.total_amount), 25.99);
+  assert.equal(row.delivery_name, 'Test priority');
+  assert.equal(row.bank_transfer_reference, row.order_number);
+  assert.equal(row.bank_details.bank_name, 'Original Bank');
+  const items = (await db.query('SELECT * FROM order_items WHERE order_id=$1', [row.id])).rows;
+  assert.equal(items.length, 1); assert.equal(items[0].quantity, 2);
+  assert.equal(items[0].product_snapshot.cover_image_url, '/snapshot.jpg');
+  assert.equal(await stock(fixture.productId), 1);
+  assert.equal((await fixture.create()).rows[0].result.id, row.id);
+  assert.equal(await stock(fixture.productId), 1);
+  await asUser(owner, () => db.query('SELECT confirm_bank_transfer_payment($1,$2)', [row.id, 'Bank receipt checked']));
+  assert.equal((await readOrder(row.id)).status, 'processing');
+  await asUser(staff, () => db.query("SELECT transition_order_status($1,'dispatched','fulfilled','Test carrier','TRACK-42')", [row.id]));
+  await asUser(customer, async () => {
+    const receipt = await readOrder(row.id);
+    assert.equal(receipt.tracking_number, 'TRACK-42');
+    assert.equal(receipt.payment_status, 'paid');
+  });
+});
+
+test('stock contention and price changes roll back all order creation', async () => {
+  const fixture = await checkoutFixture();
+  const args = [...fixture.args]; args[0] = randomUUID();
+  await assert.rejects(db.query('SELECT create_checkout_order($1,$2,$3,$4,$5)', args), /Stock changed/);
+  assert.equal((await db.query('SELECT id FROM orders WHERE checkout_request_id=$1', [args[0]])).rows.length, 0);
+  assert.equal(await stock(fixture.productId), 1);
+  args[4] = [{ ...args[4][0], quantity: 1, base_price: 1 }];
+  await assert.rejects(db.query('SELECT create_checkout_order($1,$2,$3,$4,$5)', args), /price changed/);
+  const wrongHash = [...fixture.args]; wrongHash[1] = 'c'.repeat(64);
+  await assert.rejects(db.query('SELECT create_checkout_order($1,$2,$3,$4,$5)', wrongHash), /does not match/);
+});
+
+test('browser roles cannot create paid orders, inject line items, or call server payment RPCs', async () => {
+  const fixture = await checkoutFixture();
+  for (const role of [customer, staff, owner]) await asUser(role, async () => {
+    await assert.rejects(db.query("INSERT INTO orders(order_number,user_id,email,subtotal,total_amount,shipping_address,payment_status) VALUES ('FORGED',$1,'x@test.test',1,1,'{}','paid')", [role]), /row-level security/);
+    await assert.rejects(db.query("INSERT INTO order_items(order_id,product_id,product_title,quantity,unit_price,total_price) VALUES ($1,$2,'Injected',1,0,0)", [fixture.orderId, fixture.productId]), /row-level security/);
+    await assert.rejects(pay(fixture.orderId), /permission denied/);
+    await assert.rejects(fixture.create(), /permission denied/);
+    assert.equal((await db.query("UPDATE orders SET payment_status='paid' WHERE id=$1 RETURNING id", [fixture.orderId])).rows.length, 0);
+  });
+  assert.equal((await readOrder(fixture.orderId)).payment_status, 'pending');
+});
+
+test('provider validation rejects amount/session mismatch; duplicate capture preserves dispatch', async () => {
+  const { orderId } = await checkoutFixture();
+  await db.query("UPDATE orders SET checkout_session_id='cs-test' WHERE id=$1", [orderId]);
+  await assert.rejects(db.query("SELECT record_checkout_payment($1,'stripe','cs-test','pi-invalid',0.01,'GBP')", [orderId]), /does not match/);
+  await assert.rejects(pay(orderId, 'stripe', 'cs-other'), /session mismatch/);
+  await pay(orderId);
+  assert.equal((await readOrder(orderId)).status, 'processing');
+  await asUser(staff, () => db.query("SELECT transition_order_status($1,'dispatched','fulfilled','Carrier','TRACK')", [orderId]));
+  const historyBefore = (await db.query('SELECT * FROM order_status_history WHERE order_id=$1', [orderId])).rows.length;
+  await pay(orderId);
+  assert.equal((await readOrder(orderId)).status, 'dispatched');
+  assert.equal((await db.query('SELECT * FROM order_status_history WHERE order_id=$1', [orderId])).rows.length, historyBefore);
+  await db.query("SELECT expire_checkout_order($1,'cs-test')", [orderId]);
+  assert.equal((await readOrder(orderId)).status, 'dispatched');
+});
+
+test('expired orders release stock once; late payments require review and cannot dispatch', async () => {
+  const { orderId, productId } = await checkoutFixture();
+  // A signed expiry event can arrive before the creation response saves the session ID.
+  await db.query("SELECT expire_checkout_order($1,'cs-expired')", [orderId]);
+  await db.query("SELECT expire_checkout_order($1,'cs-expired')", [orderId]);
+  assert.equal(await stock(productId), 3);
+  assert.equal((await readOrder(orderId)).status, 'cancelled');
+  await pay(orderId, 'stripe', 'cs-expired');
+  const row = await readOrder(orderId);
+  assert.equal(row.payment_status, 'paid'); assert.equal(row.payment_review_required, true);
+  assert.equal(row.status, 'pending'); assert.equal(await stock(productId), 3);
+  await assert.rejects(asUser(owner, () => db.query("SELECT transition_order_status($1,'processing','unfulfilled')", [orderId])), /review/);
+});
+
+test('PayPal capture matches its order; partial and full refunds deduplicate provider events', async () => {
+  const { orderId } = await checkoutFixture('paypal');
+  await db.query("UPDATE orders SET paypal_order_id='PP-ORDER' WHERE id=$1", [orderId]);
+  await assert.rejects(pay(orderId, 'paypal', 'OTHER'), /PayPal order mismatch/);
+  await pay(orderId, 'paypal', 'PP-ORDER', 'PP-CAPTURE');
+  await db.query("SELECT record_checkout_refund($1,'RF-1',5,false)", [orderId]);
+  await db.query("SELECT record_checkout_refund($1,'RF-1',5,false)", [orderId]);
+  assert.equal(Number((await readOrder(orderId)).refunded_amount), 5);
+  assert.equal((await readOrder(orderId)).payment_status, 'partially_refunded');
+  await assert.rejects(asUser(owner, () => db.query("SELECT transition_order_status($1,'cancelled','unfulfilled',NULL,NULL,'Cancelled')", [orderId])), /refund workflow/);
+  await pay(orderId, 'paypal', 'PP-ORDER', 'PP-CAPTURE');
+  assert.equal((await readOrder(orderId)).payment_status, 'partially_refunded');
+  await db.query("SELECT record_checkout_refund($1,'RF-2',20.99,false)", [orderId]);
+  assert.equal((await readOrder(orderId)).status, 'refunded');
+  assert.equal(Number((await readOrder(orderId)).refunded_amount), 25.99);
+});
+
+test('out-of-order Stripe cumulative refunds never reduce the refunded amount', async () => {
+  const { orderId } = await checkoutFixture();
+  await assert.rejects(db.query("SELECT record_checkout_refund($1,'early',5,true)", [orderId]), /not synchronized/);
+  await pay(orderId, 'stripe', 'cs-refund');
+  await db.query("SELECT record_checkout_refund($1,'newer',10,true)", [orderId]);
+  await db.query("SELECT record_checkout_refund($1,'older',5,true)", [orderId]);
+  assert.equal(Number((await readOrder(orderId)).refunded_amount), 10);
+});
+
+test('admin repair SQL can be repeated without removing orders, users, products or their stock', async () => {
+  const snapshot = () => db.query(`SELECT
+    (SELECT count(*) FROM orders) AS orders,
+    (SELECT count(*) FROM profiles) AS users,
+    (SELECT count(*) FROM products) AS products,
+    (SELECT sum(stock_quantity) FROM products) AS stock`);
+  const before = (await snapshot()).rows;
+  const repair = await readFile('supabase/repair_admin_schema.sql', 'utf8');
+  await db.exec(repair);
+  await db.exec(repair);
+  assert.deepEqual((await snapshot()).rows, before);
+  assert.equal((await db.query("SELECT support_email FROM store_settings WHERE singleton=true")).rows[0].support_email, 'support@example.test');
+  await asUser(staff, async () => {
+    await assert.rejects(db.query('SELECT admin_set_user_role($1,$2)', [customer, 'admin']), /Administrator access/);
+  });
+});
+
+test('repair upgrades the pre-payment schema without replaying catalogue seed data', async () => {
+  const legacy = new PGlite({ extensions: { uuid_ossp, pg_trgm } });
+  try {
+    await legacy.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
+      CREATE SCHEMA auth; CREATE SCHEMA storage;
+      CREATE TABLE auth.users(id UUID PRIMARY KEY, email TEXT, raw_user_meta_data JSONB DEFAULT '{}');
+      CREATE FUNCTION auth.uid() RETURNS UUID LANGUAGE sql STABLE AS
+        $$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::UUID $$;
+      CREATE TABLE storage.buckets(id TEXT PRIMARY KEY, name TEXT, public BOOLEAN, file_size_limit BIGINT, allowed_mime_types TEXT[]);
+      CREATE TABLE storage.objects(id UUID DEFAULT gen_random_uuid(), bucket_id TEXT, name TEXT);
+      ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+      GRANT USAGE ON SCHEMA public, auth, storage TO anon, authenticated;`);
+    const migrations = (await readdir('supabase/migrations')).filter((file) => file.endsWith('.sql') && file < '20260914000008').sort();
+    for (const file of migrations) await legacy.exec(await readFile(`supabase/migrations/${file}`, 'utf8'));
+    await assert.rejects(legacy.query('SELECT payment_method FROM orders LIMIT 0'), /does not exist/);
+    const productCount = (await legacy.query('SELECT count(*) FROM products')).rows[0].count;
+    await legacy.exec(await readFile('supabase/repair_admin_schema.sql', 'utf8'));
+    await legacy.query('SELECT payment_method,checkout_session_id,refunded_amount FROM orders LIMIT 0');
+    await legacy.query('SELECT payment_card_enabled,payment_bank_transfer_enabled,bank_account_number FROM store_settings LIMIT 0');
+    await legacy.query('SELECT id FROM payment_events LIMIT 0');
+    assert.equal((await legacy.query('SELECT count(*) FROM products')).rows[0].count, productCount);
+    assert.ok((await legacy.query("SELECT to_regprocedure('public.admin_delete_user(uuid)') AS fn")).rows[0].fn);
+  } finally { await legacy.close(); }
 });

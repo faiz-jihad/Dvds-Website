@@ -96,6 +96,12 @@ export interface OrderItem {
 }
 
 export interface Order {
+  checkout_session_id?: string | null;
+  delivery_tier?: 'standard' | 'express';
+  delivery_name?: string;
+  bank_details?: Pick<StoreSettings, 'bank_name' | 'bank_account_name' | 'bank_sort_code' | 'bank_account_number' | 'bank_iban' | 'bank_payment_instructions'> | null;
+  payment_review_required?: boolean;
+  refunded_amount?: number;
   id: string;
   order_number: string;
   user_id?: string | null;
@@ -165,6 +171,9 @@ export interface FinancialStats {
 }
 
 export interface StoreSettings {
+  payment_card_enabled?: boolean;
+  payment_paypal_enabled?: boolean;
+  payment_bank_transfer_enabled?: boolean;
   id: string;
   // Search & sharing identity
   seo_site_url: string;

@@ -15,6 +15,7 @@ import {
   Shield,
   KeyRound,
 } from 'lucide-react';
+import { AdminDataState } from '../../components/admin/AdminDataState';
 import { adminApi } from '../../lib/adminApi';
 import { Profile, UserRole } from '../../types';
 import { useAdminAuth } from '../../auth/AdminAuth';
@@ -63,7 +64,7 @@ export const AdminUsers: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
-      addToast('User profile deleted successfully', 'success');
+      addToast('User account deleted successfully', 'success');
     },
     onError: (err: any) => {
       addToast(err?.message || 'Failed to delete user', 'error');
@@ -112,6 +113,8 @@ export const AdminUsers: React.FC = () => {
     }
   };
 
+  if (error) return <AdminDataState error={error} onRetry={() => refetch()} />;
+
   return (
     <div className="space-y-8">
       {/* Top Header */}
@@ -140,6 +143,8 @@ export const AdminUsers: React.FC = () => {
           <span>Refresh Database</span>
         </button>
       </div>
+
+      {(roleMutation.error || deleteMutation.error) && <AdminDataState error={roleMutation.error || deleteMutation.error} />}
 
       {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -317,7 +322,7 @@ export const AdminUsers: React.FC = () => {
                           <div className="relative">
                             <select
                               value={u.role}
-                              disabled={isUpdating}
+                              disabled={isCurrent || isUpdating || deleteMutation.isPending}
                               onChange={(e) => handleRoleChange(u, e.target.value as UserRole)}
                               className="text-xs font-semibold py-1.5 px-3 rounded-xl border border-gray-200 bg-white hover:border-gray-300 text-dark outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 cursor-pointer disabled:opacity-50"
                             >
@@ -332,7 +337,8 @@ export const AdminUsers: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleDelete(u)}
-                              title="Delete user profile"
+                              title="Delete user account"
+                              disabled={deleteMutation.isPending || roleMutation.isPending}
                               className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />

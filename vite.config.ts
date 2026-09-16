@@ -8,7 +8,7 @@ dotenv.config();
 const devApiPlugin = () => ({
   name: 'dev-api-server',
   configureServer(server: any) {
-    const endpoints = new Set(['checkout-quote', 'create-checkout-session', 'create-paypal-order', 'create-bank-transfer-order', 'order-status', 'verify-stripe-payment', 'capture-paypal-order', 'stripe-webhook', 'paypal-webhook']);
+    const endpoints = new Set(['checkout-quote', 'cancel-checkout', 'create-checkout-session', 'create-paypal-order', 'create-bank-transfer-order', 'order-status', 'verify-stripe-payment', 'capture-paypal-order', 'stripe-webhook', 'paypal-webhook']);
     server.middlewares.use(async (req: any, res: any, next: any) => {
       const route = req.url?.split('?')[0]?.replace('/api/', '');
       if (!req.url?.startsWith('/api/') || !endpoints.has(route)) return next();

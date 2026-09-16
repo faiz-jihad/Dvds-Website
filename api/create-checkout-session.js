@@ -8,7 +8,7 @@ export default endpoint(async (req) => {
   const session = await stripeClient().checkout.sessions.create({
     mode: 'payment', payment_method_types: ['card'], customer_email: order.email,
     line_items: [{ price_data: { currency: 'gbp', unit_amount: Math.round(Number(order.total_amount) * 100),
-      product_data: { name: `AZ Rayan DVDs ? ${order.order_number}`, description: `${order.delivery_name} ? ${order.items.length} titles` } }, quantity: 1 }],
+      product_data: { name: `AZ Rayan DVDs - ${order.order_number}`, description: `${order.delivery_name} - ${order.items.length} titles` } }, quantity: 1 }],
     metadata: { order_id: order.id }, payment_intent_data: { metadata: { order_id: order.id } },
     success_url: `${origin}/order-success/${order.id}?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/checkout?cancelled=1`,

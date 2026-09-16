@@ -21,6 +21,7 @@ import {
 import { cn } from '../../lib/formatters';
 import { useAdminAuth } from '../../auth/AdminAuth';
 import { ToastContainer } from '../common/Toast';
+import { adminSchemaScope } from '../../lib/adminSchema';
 import { adminApi } from '../../lib/adminApi';
 import { useRealtimeStatus } from '../../lib/realtime';
 import { useQuery } from '@tanstack/react-query';
@@ -99,11 +100,13 @@ export const AdminLayout: React.FC = () => {
   const { isConnected: wsConnected } = useRealtimeStatus();
   const navigate = useNavigate();
   const breadcrumbs = useBreadcrumb();
+  const { pathname } = useLocation();
+  const schemaScope = adminSchemaScope(pathname);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const schemaQuery = useQuery({
-    queryKey: ['admin', 'schema-health'],
-    queryFn: () => adminApi.checkSchema(),
+    queryKey: ['admin', 'schema-health', schemaScope, user?.id],
+    queryFn: () => adminApi.checkSchema(schemaScope),
     retry: false,
     staleTime: 5 * 60_000,
   });
@@ -266,7 +269,7 @@ export const AdminLayout: React.FC = () => {
                 />
               </span>
               <span className="text-[11px] text-slate-500">
-                {wsConnected ? 'Live' : 'Offline'}
+                {wsConnected ? 'Live updates' : 'Live updates paused'}
               </span>
             </div>
 

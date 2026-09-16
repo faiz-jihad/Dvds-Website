@@ -1,118 +1,89 @@
-# AZ Rayan DVDs — Payment Gateway & Checkout Architecture
+# Checkout and admin payment setup
 
-This document provides a comprehensive operational guide for the multi-gateway payment architecture implemented for **AZ Rayan DVDs** (UK DVD E-Commerce).
+## Deployment requirements
 
----
+Apply every pending SQL file in `supabase/migrations` in filename order, including `20260915000001_admin_reliability.sql` and `20260915000002_checkout_sync.sql`. Deploy the frontend and `/api` handlers together. The Vite development server loads these same handlers; it does not simulate payments.
 
-## 1. Overview of Payment Methods
+Configure these variables on the server (see `.env.example`):
 
-| Method | Provider | Flow Type | Payment Status Upon Creation | Fulfillment Trigger |
-| :--- | :--- | :--- | :--- | :--- |
-| **Credit / Debit Card** | Stripe | Stripe Hosted Checkout | `pending` | Automated upon Stripe webhook / server verification (`paid`) |
-| **PayPal** | PayPal v2 | Hosted / Approval redirect | `pending` | Automated upon PayPal capture / webhook (`paid`) |
-| **Bank Transfer** | Barclays Bank UK | Direct BACS / Faster Payments | `awaiting_payment` | **Manual admin confirmation** in Admin Orders panel (`paid`) |
+| Feature | Required server configuration |
+| --- | --- |
+| All checkout methods | `SUPABASE_URL` (or `VITE_SUPABASE_URL`), `SUPABASE_SERVICE_ROLE_KEY` |
+| Provider redirects | `SITE_URL`, the canonical HTTPS storefront origin |
+| Card | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
+| PayPal | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_ENVIRONMENT=sandbox` or `live` |
 
-### Core Store Policy
-- **Free Delivery Across the UK**: Standard UK shipping is fixed at **£0.00** across all UK orders.
-- **Currency**: British Pounds (**GBP, £**).
-- **Server Price Integrity**: Product prices and line item amounts are validated against trusted database records on the server; client-submitted totals are never trusted.
+The browser uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Never prefix service-role keys or payment secrets with `VITE_`. Hosted Stripe Checkout does not require Stripe.js or a publishable key in the payment page.
 
----
+The existing `supabase/functions/*` Stripe implementation is legacy. This storefront uses `/api/*` exclusively. Do not deploy or configure the old Edge Function checkout/webhook alongside the new handlers. Remove old webhook destinations when switching deployments after any old in-flight payments have settled.
 
-## 2. Stripe Payment Integration
+## Admin settings
 
-### Supported Payment Types
-- Visa
-- Mastercard
-- American Express
-- Apple Pay (where supported by customer device)
-- Google Pay (where supported by customer browser)
+Open **Admin > Store Settings > Payment methods & bank account**. Enable the desired methods and save. Online methods appear as available only when their required server configuration exists. A configured key is not a proof of provider connectivity: perform sandbox checks before enabling live traffic.
 
-### Server Endpoints & Handlers
-- `/api/create-checkout-session`: Fetches database product pricing, computes trusted order subtotal and £0.00 UK delivery, creates a pending order record, and generates a Stripe Checkout Session URL with metadata (`order_id`, `order_number`).
-- `/api/verify-stripe-payment`: Verifies the Stripe Session status directly with the Stripe API before showing confirmation.
-- `/api/stripe-webhook`: Listens for `checkout.session.completed` events, verifies signature via `STRIPE_WEBHOOK_SECRET`, and idempotently marks order as `paid`, sets `paid_at`, and saves `payment_intent_id`.
+Bank transfer starts disabled. Enter and verify the receiving company account, then enable it. The migration clears only the old template sort code/account combination. It preserves other configured accounts. Every new bank order stores a snapshot of its bank details so later setting changes do not silently change instructions already issued to customers.
 
-### Environment Variables
-```env
-VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
-```
+Delivery service names, estimates, standard fees, express fees, and free-delivery thresholds come from **Store Settings > Logistics**. A standard threshold of zero means free standard delivery. Express delivery uses its configured fee, including zero. Promotional discounts apply to merchandise; they do not discount delivery.
 
-### Setting up Stripe Webhook (Production)
-1. Go to your [Stripe Dashboard](https://dashboard.stripe.com/) -> **Developers** -> **Webhooks**.
-2. Click **Add endpoint**.
-3. Set **Endpoint URL** to `https://your-domain.com/api/stripe-webhook`.
-4. Under **Events to listen to**, select:
-   - `checkout.session.completed`
-   - `payment_intent.succeeded`
-5. Reveal your **Signing secret** (`whsec_...`) and copy it into your Vercel or production environment variables as `STRIPE_WEBHOOK_SECRET`.
+## Order lifecycle
 
----
+1. `/api/checkout-quote` validates active database products, available quantities, current deal/promotion dates, delivery settings, and computes integer-pence totals.
+2. The browser sends product IDs, quantities, delivery/address details, a request UUID, a random guest-access token, and the displayed total. The server recalculates the total and rejects a changed price before charging.
+3. `create_checkout_order` creates one order, its actual line items, status history and stock reservation atomically. Repeating the request UUID returns the same order. Prices and stock are rechecked while the products are locked.
+4. Card and PayPal orders start `pending`. Bank orders start `awaiting_payment`. A redirect or locally saved receipt never marks an order paid.
+5. A verified provider payment or an administrator's bank confirmation changes the same database order to `paid` / `processing`. Payment reference and received time are saved. Retried events do not duplicate stock changes or reset dispatch status.
+6. Admin order changes invalidate customer status queries. Bank/paid orders also poll every 15 seconds; pending online payments poll every 5 seconds. Guest customers use the protected status API; account owners can also access their own orders.
+7. Failed provider requests preserve the original checkout attempt. The customer can retry it or cancel a saved unpaid order. Stripe cancellation expires its provider session first. Cancellation/expiry releases inventory once.
+8. If a payment arrives after cancellation, it is recorded as paid with `payment_review_required`; dispatch is blocked until the exception is resolved. Refund through the corresponding provider dashboard when the order cannot be fulfilled.
 
-## 3. PayPal Integration
+Checkout guest-access tokens are stored in `sessionStorage`, with only their hashes saved in the database. Guest receipts must be opened in the browser session used for checkout. Signed-in customers can open their own orders from their account. There is no email-delivery implementation in this flow, so the UI does not claim an email was sent.
 
-### Flow
-1. Customer selects **PayPal** on checkout and submits order.
-2. `/api/create-paypal-order` generates an order with PayPal REST API v2 using OAuth token exchange.
-3. Customer is redirected to PayPal to authorize the payment.
-4. Customer is redirected back to `/order-success/:id?token=...`.
-5. `/api/capture-paypal-order` captures authorized funds server-side, saves `paypal_capture_id`, and marks order as `paid`.
-6. `/api/paypal-webhook` listens for `CHECKOUT.ORDER.APPROVED` and `PAYMENT.CAPTURE.COMPLETED` as an asynchronous guarantee.
+Bank transfers and abandoned PayPal orders have no automatic expiry timer. Administrators can cancel unpaid orders with a reason to release reserved stock. Refunds do not automatically restock physically shipped goods; use the inventory adjustment workflow after checking returned stock.
 
-### Environment Variables
-```env
-PAYPAL_CLIENT_ID=your-client-id
-PAYPAL_CLIENT_SECRET=your-client-secret
-PAYPAL_ENVIRONMENT=live    # or 'sandbox' during testing
-PAYPAL_WEBHOOK_ID=your-webhook-id
-```
+## Stripe webhook
 
-### Setting up PayPal REST App
-1. Go to the [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/).
-2. Under **Apps & Credentials**, create a new App or select your existing App.
-3. Set app type to **Merchant**.
-4. Copy your **Client ID** and **Secret**.
-5. Under **Webhooks**, add an endpoint: `https://your-domain.com/api/paypal-webhook` subscribing to `PAYMENT.CAPTURE.COMPLETED`.
+Point a Stripe endpoint to `https://YOUR-SITE/api/stripe-webhook` and set its signing secret as `STRIPE_WEBHOOK_SECRET`. Subscribe to:
 
----
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.expired`
+- `charge.refunded`
 
-## 4. Company Bank Transfer (Barclays Bank UK)
+The handler verifies the signature against the raw body. Both checkout session metadata and PaymentIntent metadata contain the local order ID. Return verification checks session ownership, amount and currency. Refunds check the stored payment reference and use the cumulative refunded amount, so duplicate/out-of-order notifications do not subtract money twice.
 
-### Business Account Details
-- **Account Name**: AZ Rayan Ltd
-- **Bank**: Barclays Bank UK
-- **Sort Code**: `20-00-00`
-- **Account Number**: `13894195`
-- **Payment Reference**: Customer's Order Number (e.g. `AZ-1024`)
+See [Stripe Checkout fulfilment](https://docs.stripe.com/checkout/fulfillment) and [Stripe webhook signatures](https://docs.stripe.com/webhooks?lang=node).
 
-### Operational Workflow
-1. **Customer Placement**:
-   - Customer chooses **Company Bank Transfer** at checkout.
-   - Order is recorded with status `pending`, `payment_status = 'awaiting_payment'`, `payment_provider = 'manual_bank'`.
-   - Customer is shown the confirmation page with copy buttons for Barclays Bank UK Sort Code, Account Number, and Order Reference.
-   - Clear notice: *"Your order has been received and is awaiting payment. Please transfer £X.XX to the bank details above using your order number as reference. Your order will be processed once payment is confirmed."*
-2. **Customer Transfer**:
-   - Customer opens their mobile banking app (Barclays, HSBC, Lloyds, Monzo, etc.) and transfers the exact total with their order number as reference.
-3. **Admin Verification & Confirmation**:
-   - Store administrator checks the Barclays Business account for the incoming transfer.
-   - Admin opens **Admin Portal** -> **Orders**.
-   - Awaiting bank transfer orders are prominently badged with `AWAITING BANK PAYMENT`.
-   - Admin clicks **Confirm Payment** (either in the row or order details modal).
-   - Admin confirms the dialog (optionally inputting statement note or transaction ref).
-   - Order is instantly updated to:
-     - `payment_status = 'paid'`
-     - `status = 'processing'`
-     - `paid_at = NOW()`
-     - `payment_confirmed_by = admin_id`
-   - Order can now proceed to dispatch and Royal Mail tracking entry.
+## PayPal webhook
 
----
+Create a webhook for the same PayPal application and environment as its credentials, with URL `https://YOUR-SITE/api/paypal-webhook`. Save its ID as `PAYPAL_WEBHOOK_ID`. Subscribe to:
 
-## 5. Security & Compliance Safeguards
+- `CHECKOUT.ORDER.APPROVED`
+- `PAYMENT.CAPTURE.COMPLETED`
+- `PAYMENT.CAPTURE.REFUNDED`
 
-1. **No Raw Card Storage**: No raw card numbers, CVVs, or cardholder credentials touch or pass through the server. All card entry is isolated inside Stripe Hosted Checkout.
-2. **Server Price Authority**: Order totals are recomputed on the backend from active database prices. Client tampering of prices in local storage or network payloads is blocked.
-3. **Idempotency**: Webhook handlers check current order state before applying transitions to prevent duplicate charges or duplicate stock decrements.
-4. **Zero Client Trust**: Frontend cannot mark an order as `paid`. Only verified server-side callbacks or authenticated admin RPC calls can set `payment_status = 'paid'`.
+The handler verifies PayPal's transmission headers through the signature verification API before writing to the database. Approved orders can be captured from the webhook even if the browser never returns. Creation and capture use request IDs for retry safety. Capture amount/currency/order linkage must match the local order. Refund resource IDs deduplicate incremental refunds.
+
+See [PayPal webhook verification](https://developer.paypal.com/api/webhooks/v1/verify-webhook-signature-post/) and [PayPal request idempotency](https://developer.paypal.com/reference/guidelines/idempotency/).
+
+## Admin operations
+
+- **Bank payment:** Match the exact order reference and received amount against the receiving account, then use **Orders > Confirm payment**. Only administrators can confirm; staff cannot. Confirmation is atomic and audited.
+- **Dispatch:** Requires a paid processing order, carrier and tracking number. Those details appear on the customer's order page.
+- **Refund:** Perform the refund in Stripe/PayPal. Verified refund notifications update `refunded_amount`, payment status, order status for full refunds, and admin revenue. Revenue is payment-date sales net of recorded refunds; it is not a settlement-date cash-flow report.
+- **Receipt:** Shows order totals, the current payment status, delivery and any refund. It does not fabricate VAT details, company registration data or internal admin notes.
+
+## Verification
+
+Run `npm test` and `npm run build`. Tests cover quote rounding, delivery, promotions, guest authorization, safe retries, payment state rendering, RLS, atomic stock reservation, bank confirmation, webhook prerequisites, provider matching, late payment handling and refund deduplication.
+
+Before live use, also check with provider sandbox accounts and a migrated Supabase project:
+
+1. Standard and express delivery totals agree between checkout, provider and admin.
+2. Complete one card payment and one PayPal payment; verify the same order/line items in admin.
+3. Repeat callbacks and refresh the return page; no duplicate orders or stock decrements.
+4. Cancel a pending checkout; stock is released. A late paid notification must require admin review.
+5. Create a bank order, confirm actual test receipt in admin, and observe customer status changing.
+6. Dispatch with tracking and observe customer status. Test partial/full provider refunds.
+7. Confirm disabled methods cannot be selected or invoked directly, and a guest cannot access another order.
+
+Local unit/database tests do not prove live gateway configuration, bank ownership, webhook delivery or production browser rendering.

@@ -18,6 +18,7 @@ export async function paypalRequest(path, options = {}) {
 export async function capturePayPal(db, order, paypalId) {
   if (order.payment_provider !== 'paypal' || order.paypal_order_id !== paypalId) throw new CheckoutError('PayPal payment does not belong to this order.', 403, 'PAYMENT_MISMATCH');
   if (['paid','refunded','partially_refunded'].includes(order.payment_status)) return;
+  if (order.status === 'cancelled') throw new CheckoutError('This order has been cancelled. Start a new checkout.', 409, 'ATTEMPT_CLOSED');
   let result = await paypalRequest(`/v2/checkout/orders/${encodeURIComponent(paypalId)}`);
   if (result.status === 'APPROVED') result = await paypalRequest(`/v2/checkout/orders/${encodeURIComponent(paypalId)}/capture`, { method: 'POST', headers: { 'PayPal-Request-Id': `capture-${order.id}`, Prefer: 'return=representation' }, body: '{}' });
   if (result.status !== 'COMPLETED') return;

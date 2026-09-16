@@ -70,6 +70,8 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         break;
 
       case 'orders':
+        queryClient.invalidateQueries({ queryKey: ['order'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'activity'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'inventory'] });
@@ -106,6 +108,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         break;
 
       case 'store_settings':
+        queryClient.invalidateQueries({ queryKey: ['checkout-quote'] });
         queryClient.invalidateQueries({ queryKey: ['store', 'settings'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
         break;
@@ -134,6 +137,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         break;
 
       case 'promotions':
+        queryClient.invalidateQueries({ queryKey: ['checkout-quote'] });
         queryClient.invalidateQueries({ queryKey: ['store', 'promotions'] });
         queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'promotions'] });

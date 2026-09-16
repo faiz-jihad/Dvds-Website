@@ -28,7 +28,7 @@ export const AdminStoreSettings: React.FC = () => {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const dirty = useRef(false);
   const products = productsQuery.data || [];
-  const [activeTab, setActiveTab] = useState<'hero' | 'deal' | 'curator' | 'logistics'>('hero');
+  const [activeTab, setActiveTab] = useState<'hero' | 'deal' | 'curator' | 'logistics' | 'payments'>('hero');
   const [isSaving, setIsSaving] = useState(false);
   const addToast = useUiStore((state) => state.addToast);
 
@@ -57,7 +57,7 @@ export const AdminStoreSettings: React.FC = () => {
       settings.support_phone, settings.dispatch_cutoff_time, settings.standard_shipping_name,
       settings.standard_shipping_eta, settings.express_shipping_name, settings.express_shipping_eta,
     ];
-    if (requiredText.some((value) => !value.trim()) || !/^\S+@\S+\.\S+$/.test(settings.support_email)) {
+    if (activeTab !== 'payments' && (requiredText.some((value) => !value.trim()) || !/^\S+@\S+\.\S+$/.test(settings.support_email))) {
       addToast('Complete the required storefront, warehouse, dispatch, and support fields.', 'error');
       return;
     }
@@ -74,6 +74,10 @@ export const AdminStoreSettings: React.FC = () => {
       addToast('The timed-deal price must be lower than the current product price.', 'error');
       return;
     }
+    if (settings.payment_bank_transfer_enabled && (!settings.bank_name?.trim() || !settings.bank_account_name?.trim() || !/^\d{6}$/.test((settings.bank_sort_code || '').replace(/\D/g, '')) || !/^\d{8}$/.test((settings.bank_account_number || '').trim()))) {
+      addToast('Enter verified company bank details: bank name, account name, 6-digit sort code and 8-digit account number.', 'error');
+      setActiveTab('payments'); return;
+    }
     setIsSaving(true);
     try {
       const updated = await adminApi.saveStoreSettings(settings);
@@ -81,6 +85,7 @@ export const AdminStoreSettings: React.FC = () => {
       setSettings(updated);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
       await queryClient.invalidateQueries({ queryKey: ['store'] });
+      await queryClient.invalidateQueries({ queryKey: ['checkout-quote'] });
       await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       addToast('Store settings and homepage content saved successfully!', 'success');
     } catch (err: any) {
@@ -212,6 +217,7 @@ export const AdminStoreSettings: React.FC = () => {
         ))}
       </div>
 
+      <Button type="button" variant="secondary" onClick={() => setActiveTab('payments')}><Building2 className="w-4 h-4 mr-2" />Payment methods & bank account</Button>
       <form onSubmit={handleSave} className="space-y-8">
         {/* ==========================================
             TAB 1: HERO & ANNOUNCEMENTS
@@ -681,6 +687,23 @@ export const AdminStoreSettings: React.FC = () => {
             </div>
           </div>
         )}
+
+        {activeTab === 'payments' && <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-6">
+          <div><h2 className="text-lg font-semibold">Payment methods</h2><p className="text-sm text-gray-500 mt-2">Enabled methods appear at checkout when the provider is configured. Card and PayPal also require server credentials and verified webhooks.</p></div>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {([['payment_card_enabled', 'Card / Stripe'], ['payment_paypal_enabled', 'PayPal'], ['payment_bank_transfer_enabled', 'Company bank transfer']] as const).map(([field, label]) => <label key={field} className="flex items-center gap-3 border border-gray-200 rounded-xl p-4 text-sm font-medium"><input type="checkbox" className="w-4 h-4 accent-blue-600" checked={settings[field] ?? field !== 'payment_bank_transfer_enabled'} onChange={(e) => handleChange(field, e.target.checked)} />{label}</label>)}
+          </div>
+          <div className="border-t border-gray-100 pt-6"><h3 className="font-semibold">Company bank account</h3><p className="text-sm text-gray-500 mt-2">Enter the verified receiving account before enabling bank transfer. New orders keep a copy of these details and their payment reference; existing orders retain the details issued at checkout.</p></div>
+          <div className="grid sm:grid-cols-2 gap-5">
+            <Input label="Bank name" value={settings.bank_name || ''} onChange={(e) => handleChange('bank_name', e.target.value)} />
+            <Input label="Account holder name" value={settings.bank_account_name || ''} onChange={(e) => handleChange('bank_account_name', e.target.value)} />
+            <Input label="Sort code" value={settings.bank_sort_code || ''} placeholder="6 digits" onChange={(e) => handleChange('bank_sort_code', e.target.value)} />
+            <Input label="Account number" value={settings.bank_account_number || ''} placeholder="8 digits" onChange={(e) => handleChange('bank_account_number', e.target.value)} />
+            <Input label="IBAN (optional)" value={settings.bank_iban || ''} onChange={(e) => handleChange('bank_iban', e.target.value)} />
+          </div>
+          <label className="block text-sm font-medium">Transfer instructions<textarea rows={3} value={settings.bank_payment_instructions || ''} onChange={(e) => handleChange('bank_payment_instructions', e.target.value)} className="block w-full mt-2 rounded-xl border border-gray-200 p-3 text-sm font-normal" /></label>
+          <p className="text-xs text-amber-800 bg-amber-50 p-4 rounded-lg">Enabling bank transfer confirms that you have checked the receiving account. Confirm each payment in Orders only after the funds appear in that account.</p>
+        </section>}
 
         {/* Bottom Save Bar */}
         <div className="flex flex-col gap-4 pt-4 border-t border-gray-200 sm:flex-row sm:items-center sm:justify-between">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, Eye, PackageCheck, Truck, Check, Disc, Filter, Building2, CreditCard, AlertCircle } from 'lucide-react';
 import { adminApi } from '../../lib/adminApi';
@@ -27,6 +27,10 @@ export const AdminOrders: React.FC = () => {
   const [internalNote, setInternalNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
+  useEffect(() => {
+    setSelectedOrder((current) => current ? ordersQuery.data?.find((order) => order.id === current.id) || current : null);
+  }, [ordersQuery.data]);
+
   // Bank Transfer manual confirmation states
   const [confirmingBankOrder, setConfirmingBankOrder] = useState<Order | null>(null);
   const [bankConfirmNote, setBankConfirmNote] = useState('');
@@ -47,6 +51,8 @@ export const AdminOrders: React.FC = () => {
     try {
       const updated = await adminApi.confirmBankTransferPayment(confirmingBankOrder.id, bankConfirmNote);
       await queryClient.invalidateQueries({ queryKey: ['admin'] });
+      await queryClient.invalidateQueries({ queryKey: ['order'] });
+      await queryClient.invalidateQueries({ queryKey: ['my-orders'] });
       if (selectedOrder?.id === updated.id) {
         setSelectedOrder(updated);
       }
@@ -77,6 +83,8 @@ export const AdminOrders: React.FC = () => {
         note: internalNote,
       });
       await queryClient.invalidateQueries({ queryKey: ['admin'] });
+      await queryClient.invalidateQueries({ queryKey: ['order'] });
+      await queryClient.invalidateQueries({ queryKey: ['my-orders'] });
       setSelectedOrder(updated);
       addToast(`Order ${updated.order_number} marked as ${newStatus}`, 'success');
     } catch (updateError) {
@@ -199,7 +207,7 @@ export const AdminOrders: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      {user?.role === 'admin' && !['cancelled', 'refunded'].includes(o.status) && o.payment_method === 'bank_transfer' && o.payment_status === 'awaiting_payment' && (
+            {user?.role === 'admin' && !['cancelled', 'refunded'].includes(o.status) && o.payment_method === 'bank_transfer' && o.payment_status === 'awaiting_payment' && (
                         <button
                           type="button"
                           onClick={(e) => {
@@ -258,6 +266,8 @@ export const AdminOrders: React.FC = () => {
           maxWidth="xl"
         >
           <div className="space-y-6 text-xs">
+                      {selectedOrder.payment_review_required && <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Payment arrived after cancellation and stock was released. Verify availability with the customer or issue a refund in the payment provider dashboard before fulfilment.</div>}
+            {Number(selectedOrder.refunded_amount) > 0 && <p className="text-sm text-blue-700">Refunded: {formatGBP(selectedOrder.refunded_amount!)}</p>}
             {/* Awaiting Bank Transfer Notice */}
             {user?.role === 'admin' && !['cancelled', 'refunded'].includes(selectedOrder.status) && selectedOrder.payment_method === 'bank_transfer' && selectedOrder.payment_status === 'awaiting_payment' && (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -265,7 +275,7 @@ export const AdminOrders: React.FC = () => {
                   <Building2 className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-amber-950 text-xs block">
-                      Awaiting Barclays Bank Transfer Confirmation
+                      Awaiting Bank Transfer Confirmation
                     </span>
                     <p className="text-[11px] text-amber-800 mt-0.5">
                       Customer reference: <strong className="font-mono">{selectedOrder.order_number}</strong> • Amount: <strong>{formatGBP(selectedOrder.total_amount)}</strong>
@@ -293,7 +303,7 @@ export const AdminOrders: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {selectedOrder.payment_status === 'paid' && selectedOrder.status === 'processing' && (
+                {selectedOrder.payment_status === 'paid' && !selectedOrder.payment_review_required && selectedOrder.status === 'processing' && (
                   <Button
                     variant="primary"
                     size="sm"
@@ -322,7 +332,7 @@ export const AdminOrders: React.FC = () => {
                     Awaiting verified payment
                   </span>
                 )}
-                {selectedOrder.payment_status !== 'paid' && !['cancelled', 'delivered', 'refunded'].includes(selectedOrder.status) && (
+                {!['paid', 'partially_refunded', 'refunded'].includes(selectedOrder.payment_status) && !['cancelled', 'delivered', 'refunded'].includes(selectedOrder.status) && (
                   <Button
                     variant="destructive"
                     size="sm"
@@ -470,10 +480,10 @@ export const AdminOrders: React.FC = () => {
             <div className="p-3 bg-gray-50 rounded-md space-y-1.5 text-right font-mono">
               <div className="text-gray-500">Subtotal: {formatGBP(selectedOrder.subtotal)}</div>
               <div className="text-gray-500">
-                Shipping: {selectedOrder.shipping_amount === 0 ? 'FREE' : formatGBP(selectedOrder.shipping_amount)}
+                {selectedOrder.delivery_name || 'Shipping'}: {selectedOrder.shipping_amount === 0 ? 'FREE' : formatGBP(selectedOrder.shipping_amount)}
               </div>
               <div className="text-dark font-bold text-sm pt-1 border-t border-gray-200">
-                Total Paid: {formatGBP(selectedOrder.total_amount)}
+                Order Total: {formatGBP(selectedOrder.total_amount)}
               </div>
             </div>
           </div>
