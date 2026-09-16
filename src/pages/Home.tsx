@@ -11,8 +11,10 @@ import { SpykerManifestoVideo } from '../components/homepage/SpykerManifestoVide
 import { HomepageSectionRenderer } from '../components/homepage/HomepageSectionRenderer';
 import { AnimatedContent } from '../components/motion/AnimatedContent';
 import { Seo } from '../components/common/Seo';
+import { useIntroEntry } from '../components/intro/IntroContext';
 
 export const Home: React.FC = () => {
+  const introEntry = useIntroEntry();
   const configQuery = useQuery({
     queryKey: ['homepage', 'config'],
     queryFn: () => homepageApi.getHomepageConfig(),
@@ -76,7 +78,7 @@ export const Home: React.FC = () => {
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
-    <main className="min-h-screen bg-[#06080b] text-white antialiased selection:bg-white selection:text-black">
+    <main data-intro-ready className="min-h-screen bg-[#06080b] text-white antialiased selection:bg-white selection:text-black">
       <Seo
         title="AZ Rayan DVDs — Buy Physical DVDs & TV Box Sets UK | Official Physical Media Store"
         description="Discover definitive DVD box sets, restored British cinema, and rare collector editions preserved in uncompressed physical permanence. Dispatched with Royal Mail Tracked. Free delivery across the UK on all orders."
@@ -131,7 +133,7 @@ export const Home: React.FC = () => {
         );
 
         return (
-          <AnimatedContent key={section.id} delay={Math.min(index * 0.03, 0.12)} distance={28}>
+          <AnimatedContent key={section.id} disabled={introEntry && section.type === 'hero'} delay={Math.min(index * 0.03, 0.12)} distance={28}>
             {renderedSection}
           </AnimatedContent>
         );

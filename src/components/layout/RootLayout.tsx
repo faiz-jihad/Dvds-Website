@@ -11,6 +11,7 @@ import { ToastContainer } from '../common/Toast';
 import { publicApi } from '../../lib/publicApi';
 import { useCartStore } from '../../stores/useCartStore';
 import { StoreDataState } from '../common/StoreDataState';
+import { IntroLoader } from '../intro/IntroLoader';
 
 export const RootLayout: React.FC = () => {
   const { pathname } = useLocation();
@@ -42,9 +43,11 @@ export const RootLayout: React.FC = () => {
   // Scroll to top on route change
   useEffect(() => {
     window.scrollTo(0, 0);
+    document.documentElement.toggleAttribute('data-home-entry', pathname === '/');
   }, [pathname]);
 
   return (
+    <IntroLoader home={pathname === '/'}>
     <div className="flex flex-col min-h-screen bg-white text-dark">
       {/* Top Announcements */}
       <AnnouncementBar />
@@ -67,7 +70,9 @@ export const RootLayout: React.FC = () => {
             }}
           />
         ) : (
-          <Outlet />
+          <React.Suspense fallback={<div className={pathname === '/' ? 'min-h-screen bg-[#050505]' : 'min-h-[40vh]'} role="status"><span className="sr-only">Loading page</span></div>}>
+            <Outlet />
+          </React.Suspense>
         )}
       </main>
 
@@ -80,5 +85,6 @@ export const RootLayout: React.FC = () => {
       <MobileNavDrawer />
       <ToastContainer />
     </div>
+    </IntroLoader>
   );
 };

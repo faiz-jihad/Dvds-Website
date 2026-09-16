@@ -14,16 +14,18 @@ mean the database is offline.
 
 The connected project was checked without modifying data. `profiles` and the
 operational tables exist, but `orders.payment_method`,
-`store_settings.bank_account_number`, the newer checkout fields and
-`payment_events` are absent.
+`store_settings.registered_company_name`, `store_settings.bank_account_number`,
+the newer checkout fields, `payment_events` and `media_assets` are absent.
 
 1. Open the connected project in the Supabase Dashboard, then **SQL Editor**.
 2. Run the complete contents of [repair_admin_schema.sql](../supabase/repair_admin_schema.sql).
 3. Return to the affected admin page and select **Recheck database**.
 
 The same SQL is available from **Download repair SQL** in the admin error panel.
-It applies the payment upgrade, admin reliability functions and checkout sync
-inside one transaction. It does not replay catalogue imports, create admin
+It adds missing company identity columns, the payment upgrade, admin reliability
+functions, checkout sync, atomic product/genre saves and the shared media library
+inside one transaction. Existing company identity values are preserved.
+It does not replay catalogue imports, create admin
 accounts, delete business records, or change passwords. It preserves configured
 bank accounts while clearing the old sample receiving account. Bank transfer
 starts disabled when its setting is first created.
@@ -43,11 +45,13 @@ Regenerate the repair file after changing its source migrations:
 node scripts/build-admin-repair.mjs
 npm test
 npm run build
+node src/scripts/testDb.js
 ```
 
 The regression tests cover page-specific checks, an accessible Users page with
 missing payment schema, precise errors and the download on the affected Orders
-page, permission failures, and data-preserving SQL upgrades/retries.
+page, permission failures, and data-preserving SQL upgrades/retries. The schema
+script uses only GET requests with `limit=0`; it never invokes mutating RPCs.
 
 The local environment has no administrative database connection or Supabase
 management token. Generating this file does not apply it to the hosted database.

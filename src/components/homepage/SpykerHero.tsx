@@ -2,8 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Disc3 } from 'lucide-react';
 import { gsap } from 'gsap';
+import { useIntroEntry } from '../intro/IntroContext';
 
 export const SpykerHero: React.FC = () => {
+  const introEntry = useIntroEntry();
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const headlineLine1Ref = useRef<HTMLSpanElement>(null);
@@ -18,6 +20,7 @@ export const SpykerHero: React.FC = () => {
       });
     }
 
+    if (introEntry || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
@@ -45,12 +48,14 @@ export const SpykerHero: React.FC = () => {
 
   return (
     <section
+      data-intro-hero
       ref={containerRef}
       className="relative w-full min-h-[90vh] lg:min-h-screen bg-[#08090A] text-white flex flex-col justify-between overflow-hidden select-none"
     >
       {/* Cinematic Ambient Video Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <video
+          data-intro-media
           ref={videoRef}
           src="https://res.cloudinary.com/lsrzjokx/video/upload/v1789362877/use_english_dan_jangan_ada_tex_gwr_video_mvp.mp4"
           autoPlay
@@ -58,7 +63,8 @@ export const SpykerHero: React.FC = () => {
           muted
           playsInline
           preload="auto"
-          className="w-full h-full object-cover opacity-55 scale-105 will-change-transform"
+          poster="/brand/hero-bg.jpg"
+          className="w-full h-full object-cover opacity-55"
         />
         {/* Cinematic Vignette & Radial Gradients */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#08090A] via-[#08090A]/50 to-[#08090A]/80" />
@@ -73,16 +79,17 @@ export const SpykerHero: React.FC = () => {
       <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-10 lg:px-16 py-16 sm:py-24 flex flex-col items-center text-center my-auto">
         {/* Monumental Condensed Headline */}
         <h1 className="font-display font-black uppercase text-4xl min-[380px]:text-5xl sm:text-7xl md:text-8xl lg:text-[108px] leading-[0.88] sm:leading-[0.84] tracking-[-0.03em] text-white mb-6">
-          <span ref={headlineLine1Ref} className="block overflow-hidden">
+          <span className="block overflow-hidden"><span data-intro-title ref={headlineLine1Ref} className="block">
             Films Worth
-          </span>
-          <span ref={headlineLine2Ref} className="block overflow-hidden text-neutral-300">
+          </span></span>
+          <span className="block overflow-hidden text-neutral-300"><span data-intro-title ref={headlineLine2Ref} className="block">
             Owning.
-          </span>
+          </span></span>
         </h1>
 
         {/* Minimalist Editorial Description */}
         <p
+          data-intro-description
           ref={descRef}
           className="text-sm sm:text-base md:text-lg text-neutral-400 max-w-2xl font-light leading-relaxed mb-10 text-balance"
         >
@@ -90,7 +97,7 @@ export const SpykerHero: React.FC = () => {
         </p>
 
         {/* Spyker-Inspired High-End Action CTAs */}
-        <div ref={ctaRef} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <div data-intro-cta ref={ctaRef} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <Link
             to="/shop"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-white text-[#08090A] hover:bg-neutral-200 px-9 py-4 rounded-full text-xs sm:text-sm font-mono font-bold uppercase tracking-[0.16em] transition-all duration-300 shadow-2xl hover:scale-[1.02] active:scale-[0.98]"

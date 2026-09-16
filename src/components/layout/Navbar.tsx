@@ -124,6 +124,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <header
+      data-intro-nav
       className={cn(
         'sticky top-0 z-40 w-full transition-all duration-200 bg-white border-b',
         isScrolled

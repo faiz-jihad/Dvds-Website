@@ -6,6 +6,7 @@ import { HeroSectionConfig } from '../../types/homepage';
 import { Button } from '../common/Button';
 import { AnimatedContent } from '../motion/AnimatedContent';
 import { SplitText } from '../motion/SplitText';
+import { useIntroEntry } from '../intro/IntroContext';
 
 interface HeroSectionProps {
   data: HeroSectionConfig;
@@ -14,7 +15,9 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ data, startsAt, endsAt }) => {
-  const reduceMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion();
+  const introEntry = useIntroEntry();
+  const reduceMotion = prefersReducedMotion || introEntry;
   const now = Date.now();
   if (startsAt && Date.parse(startsAt) > now) return null;
   if (endsAt && Date.parse(endsAt) < now) return null;
@@ -37,6 +40,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ data, startsAt, endsAt
 
   return (
     <section
+      data-intro-hero
       className="relative w-full overflow-hidden bg-black text-white min-h-[500px] sm:min-h-[580px] lg:min-h-[72vh] flex items-end"
       style={{ backgroundColor: data.backgroundColor || '#000000' }}
     >
@@ -46,6 +50,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ data, startsAt, endsAt
           <source media="(max-width: 640px)" srcSet={data.mobileImage} />
         )}
         <motion.img
+          data-intro-media
           src={data.desktopImage}
           alt={data.imageAlt || data.title}
           className="w-full h-full object-cover will-change-transform"
@@ -71,7 +76,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ data, startsAt, endsAt
       <div className="relative z-10 w-full max-w-container mx-auto px-4 sm:px-6 md:px-12 py-12 sm:py-16 lg:py-20">
         <div className={`flex flex-col max-w-3xl ${alignmentClasses}`}>
           {data.eyebrow && (
-            <AnimatedContent delay={0.05} distance={18}>
+            <AnimatedContent disabled={introEntry} delay={0.05} distance={18}>
               <span className="mb-3 inline-flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-brand-blue-soft sm:text-xs">
                 <span className="h-px w-8 bg-brand-blue" />
                 {data.eyebrow}
@@ -80,24 +85,26 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ data, startsAt, endsAt
           )}
 
           {/* Title */}
-          <SplitText
+          {introEntry ? <h1 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl xl:text-7xl tracking-tighter text-white leading-[1.03] mb-4 sm:mb-5 drop-shadow-sm">
+            <span className="block overflow-hidden"><span data-intro-title className="block">{data.title}</span></span>
+          </h1> : <SplitText
             text={data.title}
             className="font-display font-black text-3xl sm:text-5xl lg:text-6xl xl:text-7xl tracking-tighter text-white leading-[1.03] mb-4 sm:mb-5 drop-shadow-sm"
-          />
+          />}
 
           {/* Description */}
           {data.description && (
-            <AnimatedContent delay={0.38} distance={22}>
-              <p className="text-sm sm:text-base lg:text-lg text-neutral-300 max-w-2xl leading-relaxed mb-6 sm:mb-8 font-light drop-shadow-xs">
+            <AnimatedContent disabled={introEntry} delay={0.38} distance={22}>
+              <p data-intro-description className="text-sm sm:text-base lg:text-lg text-neutral-300 max-w-2xl leading-relaxed mb-6 sm:mb-8 font-light drop-shadow-xs">
                 {data.description}
               </p>
             </AnimatedContent>
           )}
 
           {/* Action CTAs */}
-          <AnimatedContent className="flex flex-wrap items-center gap-3 sm:gap-4 pt-1" delay={0.52} distance={20}>
+          <div data-intro-cta><AnimatedContent disabled={introEntry} className="flex flex-wrap items-center gap-3 sm:gap-4 pt-1" delay={0.52} distance={20}>
             {data.primaryCta && data.primaryCta.label && (
-              <motion.div whileHover={reduceMotion ? undefined : { y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <motion.div whileHover={prefersReducedMotion ? undefined : { y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to={data.primaryCta.href || '/shop'}>
                   <Button
                     size="lg"
@@ -111,7 +118,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ data, startsAt, endsAt
             )}
 
             {data.secondaryCta && data.secondaryCta.label && (
-              <motion.div whileHover={reduceMotion ? undefined : { y: -3 }} whileTap={{ scale: 0.98 }}>
+              <motion.div whileHover={prefersReducedMotion ? undefined : { y: -3 }} whileTap={{ scale: 0.98 }}>
                 <Link to={data.secondaryCta.href || '/shop?filter=new'}>
                   <button
                     type="button"
@@ -122,7 +129,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ data, startsAt, endsAt
                 </Link>
               </motion.div>
             )}
-          </AnimatedContent>
+          </AnimatedContent></div>
         </div>
       </div>
 
