@@ -4,7 +4,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Building2, Check, CreditCard, Lock, Truck, Wallet } from 'lucide-react';
 import { useCartStore } from '../stores/useCartStore';
 import { checkoutApi, currentCheckoutAttempt } from '../lib/checkoutApi';
-import { formatGBP } from '../lib/formatters';
+import { COUNTRIES, addressRules, countryCode, countryName, formatMoney, normalizeAddress } from '../../shared/commerce.js';
 import { Address, PaymentMethodType } from '../types';
 import { useCustomerAuth } from '../auth/CustomerAuth';
 
@@ -21,7 +21,13 @@ export const CheckoutPage: React.FC = () => {
   const items = useCartStore((state) => state.items);
   const appliedPromo = useCartStore((state) => state.appliedPromoCode);
   const [email, setEmail] = useState(customer?.email || '');
-  const [address, setAddress] = useState<Address>({ id: 'checkout', full_name: customer?.full_name || '', address_line_1: '', address_line_2: '', city: '', county: '', postcode: '', country: 'United Kingdom', phone: customer?.phone || '' });
+  const [address, setAddress] = useState<Address>({ id: 'checkout', full_name: customer?.full_name || '', address_line_1: '', address_line_2: '', city: '', county: '', postcode: '', country: 'GB', phone: customer?.phone || '' });
+  const [currency, setCurrency] = useState('GBP');
+  const [internationalAcknowledged, setInternationalAcknowledged] = useState(false);
+  const rules = addressRules(address.country);
+  const international = countryCode(address.country) !== 'GB';
+  const configQuery = useQuery({ queryKey: ['checkout-config'], queryFn: checkoutApi.configuration, staleTime: 30_000 });
+  const currencies = configQuery.data?.currencies || ['GBP'];
   const [tier, setTier] = useState<'standard' | 'express'>('standard');
   const [method, setMethod] = useState<PaymentMethodType>('card');
   const [promo, setPromo] = useState(appliedPromo || '');
@@ -31,12 +37,13 @@ export const CheckoutPage: React.FC = () => {
   const [attempt, setAttempt] = useState(currentCheckoutAttempt);
   const basket = items.map((item) => ({ product_id: item.product_id, quantity: item.quantity }));
   const quoteQuery = useQuery({
-    queryKey: ['checkout-quote', basket, tier, promo],
-    queryFn: () => checkoutApi.quote({ items: basket, deliveryTier: tier, promoCode: promo }),
+    queryKey: ['checkout-quote', basket, tier, promo, address.country, currency],
+    queryFn: () => checkoutApi.quote({ items: basket, deliveryTier: tier, promoCode: promo, country: address.country, currency }),
     enabled: items.length > 0 && !attempt,
     retry: false, staleTime: 0, refetchOnWindowFocus: true,
   });
   const quote = quoteQuery.data;
+  const displayPrice = (amount: number) => formatMoney(amount, quote?.currency || currency);
   useEffect(() => {
     if (quote && !quote.methods[method]) {
       const available = methods.find((option) => quote.methods[option.id]);
@@ -49,7 +56,10 @@ export const CheckoutPage: React.FC = () => {
       setAddress((value) => ({ ...value, full_name: value.full_name || customer.full_name || '', phone: value.phone || customer.phone || '' }));
     }
   }, [customer]);
-  const updateAddress = (key: keyof Address, value: string) => setAddress((previous) => ({ ...previous, [key]: value }));
+  const updateAddress = (key: keyof Address, value: string) => {
+    if (key === 'country') { setTier('standard'); setInternationalAcknowledged(false); setError(''); }
+    setAddress((previous) => ({ ...previous, [key]: value }));
+  };
   const retryAttempt = async () => {
     if (!attempt?.input) return;
     setBusy(true); setError('');
@@ -70,12 +80,13 @@ export const CheckoutPage: React.FC = () => {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (busy || !quote || quoteQuery.isFetching || quoteQuery.isError || !quote.methods[method] || attempt) return;
-    if (!/^(GIR 0AA|[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2})$/i.test(address.postcode.trim())) {
-      setError('Enter a valid UK postcode.'); return;
-    }
+    let validatedAddress;
+    try { validatedAddress = normalizeAddress({ ...address }); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Check your address.'); return; }
+    if (international && !internationalAcknowledged) { setError('Acknowledge the international delivery notice to continue.'); return; }
     setBusy(true); setError('');
     try {
-      const result = await checkoutApi.create(method, { items: basket, customerEmail: email, shippingAddress: { ...address, postcode: address.postcode.trim().toUpperCase() }, deliveryTier: tier, promoCode: promo, expectedTotal: quote.total_amount });
+      const result = await checkoutApi.create(method, { items: basket, customerEmail: email, shippingAddress: { ...address, ...validatedAddress }, deliveryTier: tier, promoCode: promo, expectedTotal: quote.total_amount, currency, internationalAcknowledged });
       setAttempt(currentCheckoutAttempt());
       if (method === 'bank_transfer' || result.completed) navigate(`/order-success/${result.orderId}`);
       else if (result.url && new URL(result.url).protocol === 'https:') window.location.assign(result.url);
@@ -112,22 +123,24 @@ export const CheckoutPage: React.FC = () => {
               <legend className="text-lg font-semibold mb-5"><span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-brand-blue rounded-full text-xs mr-3">1</span>Contact & delivery details</legend>
               <div className="grid sm:grid-cols-2 gap-4">
                 <label className="text-sm sm:col-span-2">Email address<input className={fieldClass} type="email" autoComplete="email" required maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+                <label className="text-sm">Delivery country<select className={fieldClass} autoComplete="shipping country" value={address.country} onChange={(event) => updateAddress('country', event.target.value)}>{COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}</select></label>
+                <label className="text-sm">Pay in<select className={fieldClass} value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencies.map((code) => <option key={code} value={code}>{code}</option>)}</select></label>
                 <label className="text-sm sm:col-span-2">Full name<input className={fieldClass} autoComplete="shipping name" required maxLength={200} value={address.full_name} onChange={(e) => updateAddress('full_name', e.target.value)} /></label>
                 <label className="text-sm sm:col-span-2">Address line 1<input className={fieldClass} autoComplete="shipping address-line1" required maxLength={200} value={address.address_line_1} onChange={(e) => updateAddress('address_line_1', e.target.value)} /></label>
                 <label className="text-sm sm:col-span-2">Address line 2 <span className="text-gray-400">(optional)</span><input className={fieldClass} autoComplete="shipping address-line2" maxLength={200} value={address.address_line_2 || ''} onChange={(e) => updateAddress('address_line_2', e.target.value)} /></label>
                 <label className="text-sm">Town / city<input className={fieldClass} autoComplete="shipping address-level2" required maxLength={200} value={address.city} onChange={(e) => updateAddress('city', e.target.value)} /></label>
-                <label className="text-sm">Postcode<input className={fieldClass} autoComplete="shipping postal-code" required maxLength={10} value={address.postcode} onChange={(e) => updateAddress('postcode', e.target.value)} /></label>
+                <label className="text-sm">{rules.postalLabel}{!rules.postalRequired && <span className="text-gray-400"> (optional)</span>}<input className={fieldClass} autoComplete="shipping postal-code" required={rules.postalRequired} maxLength={32} value={address.postcode} onChange={(e) => updateAddress('postcode', e.target.value)} /></label>
                 <label className="text-sm">Phone <span className="text-gray-400">(optional)</span><input className={fieldClass} type="tel" autoComplete="tel" maxLength={30} value={address.phone || ''} onChange={(e) => updateAddress('phone', e.target.value)} /></label>
-                <label className="text-sm">Country<input className={`${fieldClass} text-gray-500`} autoComplete="shipping country-name" readOnly value="United Kingdom" /></label>
+                <label className="text-sm">{rules.stateLabel}{!rules.stateRequired && <span className="text-gray-400"> (optional)</span>}<input className={fieldClass} autoComplete="shipping address-level1" required={rules.stateRequired} maxLength={120} value={address.county || ''} onChange={(event) => updateAddress('county', event.target.value)} /></label>
               </div>
             </fieldset>
             <fieldset disabled={busy || Boolean(attempt)} className="border-t border-gray-100 pt-7">
               <legend className="text-lg font-semibold float-left w-full mb-5"><span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-brand-blue rounded-full text-xs mr-3">2</span>Delivery method</legend>
               <div className="clear-both space-y-3">
-                {(['standard', 'express'] as const).map((option) => <label key={option} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer focus-within:ring-2 focus-within:ring-blue-200 ${tier === option ? 'border-brand-blue bg-blue-50/40' : 'border-gray-200'}`}>
+                {(['standard', 'express'] as const).filter((option) => !quote || Boolean(quote.delivery[option])).map((option) => <label key={option} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer focus-within:ring-2 focus-within:ring-blue-200 ${tier === option ? 'border-brand-blue bg-blue-50/40' : 'border-gray-200'}`}>
                   <input type="radio" name="delivery" checked={tier === option} onChange={() => setTier(option)} className="accent-blue-600 w-4 h-4 shrink-0" />
-                  <span className="flex-1 min-w-0"><span className="block text-sm font-semibold">{quote?.delivery[option].name || (option === 'standard' ? 'Standard delivery' : 'Express delivery')}</span><span className="block text-xs text-gray-500 mt-1">{quote?.delivery[option].eta || 'Delivery estimate shown with your total'}</span></span>
-                  <span className={`text-sm font-semibold shrink-0 ${quote?.delivery[option].amount === 0 ? 'text-emerald-700' : ''}`}>{quote ? quote.delivery[option].amount === 0 ? 'FREE' : formatGBP(quote.delivery[option].amount) : '--'}</span>
+                  <span className="flex-1 min-w-0"><span className="block text-sm font-semibold">{quote?.delivery[option]?.name || (option === 'standard' ? 'Standard delivery' : 'Express delivery')}</span><span className="block text-xs text-gray-500 mt-1">{quote?.delivery[option]?.eta || 'Delivery estimate shown with your total'}</span></span>
+                  <span className={`text-sm font-semibold shrink-0 ${quote?.delivery[option]?.amount === 0 ? 'text-emerald-700' : ''}`}>{quote ? quote.delivery[option]!.amount === 0 ? 'FREE' : displayPrice(quote.delivery[option]!.amount) : '--'}</span>
                 </label>)}
               </div>
             </fieldset>
@@ -155,21 +168,23 @@ export const CheckoutPage: React.FC = () => {
           <aside className="lg:sticky lg:top-28 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Order summary <span className="text-sm font-normal text-gray-400">({items.reduce((sum, item) => sum + item.quantity, 0)} items)</span></h2>
             <div className="my-5 divide-y divide-gray-100 max-h-72 overflow-auto">
-              {items.map((item) => <div key={item.product_id} className="flex gap-3 py-3"><img src={item.product.cover_image_url} alt="" className="w-11 h-16 rounded object-cover bg-gray-100" /><div className="flex-1 min-w-0"><p className="text-sm font-medium leading-snug">{item.product.title}</p><p className="text-xs text-gray-500 mt-1">Qty {item.quantity}</p></div><span className="text-sm whitespace-nowrap">{quote ? formatGBP(quote.items.find((line) => line.product_id === item.product_id)?.total_price || 0) : '--'}</span></div>)}
+              {items.map((item) => <div key={item.product_id} className="flex gap-3 py-3"><img src={item.product.cover_image_url} alt="" className="w-11 h-16 rounded object-cover bg-gray-100" /><div className="flex-1 min-w-0"><p className="text-sm font-medium leading-snug">{item.product.title}</p><p className="text-xs text-gray-500 mt-1">Qty {item.quantity}</p></div><span className="text-sm whitespace-nowrap">{quote ? displayPrice(quote.items.find((line) => line.product_id === item.product_id)?.total_price || 0) : '--'}</span></div>)}
             </div>
             <label htmlFor="checkout-promo" className="text-xs font-medium text-gray-600">Promotion code</label>
             <div className="flex gap-2 mt-2 mb-3"><input id="checkout-promo" className="w-full min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm uppercase focus:outline-blue-500" value={promoDraft} disabled={busy || Boolean(attempt)} onChange={(e) => setPromoDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setPromo(promoDraft.trim().toUpperCase()); } }} /><button type="button" disabled={busy || Boolean(attempt)} onClick={() => setPromo(promoDraft.trim().toUpperCase())} className="text-sm font-medium border border-gray-200 rounded-lg px-3 disabled:opacity-50">Apply</button></div>
             {promo && <button type="button" disabled={busy || Boolean(attempt)} onClick={() => { setPromo(''); setPromoDraft(''); }} className="text-xs text-brand-blue underline mb-3">Remove {promo}</button>}
             {quoteQuery.isError && <div role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg p-3 mb-4">{quoteQuery.error.message}<button type="button" onClick={() => quoteQuery.refetch()} className="block underline mt-2">Refresh basket total</button></div>}
             <dl className="space-y-3 text-sm border-t border-gray-100 pt-5" aria-live="polite" aria-busy={quoteQuery.isFetching}>
-              <div className="flex justify-between"><dt className="text-gray-500">Subtotal</dt><dd>{quote ? formatGBP(quote.subtotal) : '--'}</dd></div>
-              {Boolean(quote?.discount_amount) && <div className="flex justify-between text-emerald-700"><dt>Discount</dt><dd>-{formatGBP(quote!.discount_amount)}</dd></div>}
-              <div className="flex justify-between"><dt className="text-gray-500">Delivery</dt><dd>{quote ? quote.shipping_amount === 0 ? 'FREE' : formatGBP(quote.shipping_amount) : '--'}</dd></div>
-              <div className="flex justify-between border-t border-gray-100 pt-4 text-xl font-bold"><dt>Total <span className="text-xs text-gray-400 font-normal">GBP</span></dt><dd>{quote ? formatGBP(quote.total_amount) : '--'}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">Subtotal</dt><dd>{quote ? displayPrice(quote.subtotal) : '--'}</dd></div>
+              {Boolean(quote?.discount_amount) && <div className="flex justify-between text-emerald-700"><dt>Discount</dt><dd>-{displayPrice(quote!.discount_amount)}</dd></div>}
+              <div className="flex justify-between"><dt className="text-gray-500">Delivery</dt><dd>{quote ? quote.shipping_amount === 0 ? 'FREE' : displayPrice(quote.shipping_amount) : '--'}</dd></div>
+              <div className="flex justify-between border-t border-gray-100 pt-4 text-xl font-bold"><dt>Total <span className="text-xs text-gray-400 font-normal">{quote?.currency || currency}</span></dt><dd>{quote ? displayPrice(quote.total_amount) : '--'}</dd></div>
             </dl>
+            {quote?.duties_notice && <label className="flex items-start gap-2 text-xs text-gray-600 mt-5 leading-relaxed"><input type="checkbox" className="mt-0.5" checked={internationalAcknowledged} disabled={busy || Boolean(attempt)} onChange={(event) => setInternationalAcknowledged(event.target.checked)} required /><span>{quote.duties_notice} I understand that these charges may be payable on arrival.</span></label>}
+            {quote && quote.currency !== 'GBP' && <p className="text-xs text-gray-500 mt-4">Charged in {quote.currency}. Exchange rate dated {quote.exchange_rate_date}; your provider may apply separate account conversion fees.</p>}
             <button type="submit" disabled={busy || quoteQuery.isFetching || quoteQuery.isError || !quote?.methods[method] || Boolean(attempt)} className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-blue text-white px-4 py-4 mt-6 text-sm font-semibold hover:brightness-95 disabled:opacity-45 disabled:cursor-not-allowed">{busy ? 'Please wait...' : quoteQuery.isFetching ? 'Updating total...' : method === 'bank_transfer' ? 'Place order - pay by bank transfer' : method === 'paypal' ? 'Continue with PayPal' : 'Continue to secure payment'}<ArrowRight size={16} className="shrink-0" /></button>
             <p className="text-xs leading-relaxed text-gray-500 mt-4 text-center">{method === 'bank_transfer' ? 'Your order will await payment confirmation before dispatch.' : 'You will review and complete payment with your selected provider.'}</p>
-            <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-5 pt-5 border-t border-gray-100"><Truck size={15} /> Delivery within the United Kingdom</div>
+            <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-5 pt-5 border-t border-gray-100"><Truck size={15} /> Delivery to {countryName(address.country)}</div>
           </aside>
         </form>
       </div>

@@ -109,6 +109,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         break;
 
       case 'store_settings':
+        queryClient.invalidateQueries({ queryKey: ['checkout-config'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['checkout-quote'] });
         queryClient.invalidateQueries({ queryKey: ['store', 'settings'] });

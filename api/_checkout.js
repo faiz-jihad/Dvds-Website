@@ -1,3 +1,5 @@
+import { countryCode, normalizeAddress, validateShippingZones, minorAmount } from '../shared/commerce.js';
+import { exchangeRate, convertQuote } from './_fx.js';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import Stripe from 'stripe';
 import { getSupabaseServerClient } from './_supabase.js';
@@ -48,7 +50,7 @@ export function paymentMethods(settings) {
     bank_transfer: backend && settings.payment_bank_transfer_enabled === true && Boolean(settings.bank_name?.trim() && settings.bank_account_name?.trim() && /^\d{6}$/.test(String(settings.bank_sort_code || '').replace(/\D/g, '')) && /^\d{8}$/.test(String(settings.bank_account_number || '').trim())),
   };
 }
-export function calculateQuote(items, products, settings, promo, promoCode, deliveryTier, now = Date.now()) {
+export function calculateQuote(items, products, settings, promo, promoCode, deliveryTier, now = Date.now(), country = 'GB') {
   if (!['standard', 'express'].includes(deliveryTier)) throw new CheckoutError('Choose a delivery method.');
   const lines = normalizeItems(items).map((item) => {
     const product = products.find((row) => row.id === item.product_id);
@@ -61,9 +63,25 @@ export function calculateQuote(items, products, settings, promo, promoCode, deli
     return { ...item, product_title: product.title, product_sku: product.sku, cover_image_url: product.cover_image_url, unit_price: unit / 100, base_price: base / 100, total_price: unit * item.quantity / 100 };
   });
   const subtotal = lines.reduce((sum, line) => sum + money(line.total_price), 0);
-  const standard = Number(settings.free_shipping_threshold) <= 0 || subtotal >= money(settings.free_shipping_threshold) ? 0 : money(settings.standard_shipping_fee);
-  const express = money(settings.express_shipping_fee);
-  if (![standard, express].every((fee) => Number.isSafeInteger(fee) && fee >= 0)) throw new CheckoutError('Delivery is temporarily unavailable.', 503);
+  const code = countryCode(country);
+  if (!code) throw new CheckoutError('Choose a valid delivery country.');
+  let standard, express, delivery, zoneName = 'United Kingdom';
+  if (code === 'GB') {
+    standard = Number(settings.free_shipping_threshold) <= 0 || subtotal >= money(settings.free_shipping_threshold) ? 0 : money(settings.standard_shipping_fee);
+    express = money(settings.express_shipping_fee);
+    delivery = { standard: { name: settings.standard_shipping_name, eta: settings.standard_shipping_eta, amount: standard / 100 }, express: { name: settings.express_shipping_name, eta: settings.express_shipping_eta, amount: express / 100 } };
+  } else {
+    try { validateShippingZones(settings.shipping_zones || []); }
+    catch { throw new CheckoutError('International delivery settings are unavailable. Please contact the store.', 503); }
+    const zone = (settings.shipping_zones || []).find((zone) => zone.enabled && zone.countries.includes(code));
+    if (!zone) throw new CheckoutError('Delivery to this country is not available yet. Please contact us for a shipping quote.', 400, 'DESTINATION_UNAVAILABLE');
+    zoneName = zone.name;
+    standard = zone.free_threshold != null && subtotal >= money(zone.free_threshold) ? 0 : money(zone.standard.fee);
+    express = zone.express ? money(zone.express.fee) : null;
+    delivery = { standard: { name: zone.standard.name, eta: zone.standard.eta, amount: standard / 100 }, express: zone.express ? { name: zone.express.name, eta: zone.express.eta, amount: express / 100 } : null };
+  }
+  if (![standard, ...(express == null ? [] : [express])].every((fee) => Number.isSafeInteger(fee) && fee >= 0)) throw new CheckoutError('Delivery is temporarily unavailable.', 503);
+  if (!delivery[deliveryTier]) throw new CheckoutError('This delivery service is not available for your destination. Choose standard delivery.');
   const shipping = deliveryTier === 'express' ? express : standard;
   let discount = 0;
   if (promoCode) {
@@ -75,7 +93,8 @@ export function calculateQuote(items, products, settings, promo, promoCode, deli
   }
   return { items: lines, subtotal: subtotal / 100, discount_amount: discount / 100, shipping_amount: shipping / 100,
     total_amount: (subtotal - discount + shipping) / 100, currency: 'GBP', delivery_tier: deliveryTier,
-    delivery: { standard: { name: settings.standard_shipping_name, eta: settings.standard_shipping_eta, amount: standard / 100 }, express: { name: settings.express_shipping_name, eta: settings.express_shipping_eta, amount: express / 100 } },
+    delivery, country: code, shipping_zone_name: zoneName,
+    duties_notice: code === 'GB' ? '' : (settings.international_duties_notice || 'Import duties, taxes and carrier clearance fees may be collected by your destination country. These are not included in this total.'),
     methods: paymentMethods(settings), bank_name: settings.bank_name,
   };
 }
@@ -86,7 +105,11 @@ export async function quoteCheckout(db, input) {
   if (!settings || typeof settings.payment_card_enabled !== 'boolean') throw new CheckoutError('Checkout is temporarily unavailable while store settings are being updated.', 503);
   const code = String(input.promoCode || '').trim().toUpperCase();
   const promo = code ? check(await db.from('promotions').select('*').eq('code', code).maybeSingle()) : null;
-  return { quote: calculateQuote(items, products || [], settings, promo, code, input.deliveryTier), settings };
+  const currency = String(input.currency || 'GBP').toUpperCase();
+  if (!(settings.checkout_currencies || ['GBP']).includes(currency)) throw new CheckoutError('This currency is not enabled by the store.');
+  const baseQuote = calculateQuote(items, products || [], settings, promo, code, input.deliveryTier, Date.now(), input.shippingAddress?.country || input.country || 'GB');
+  const fx = await exchangeRate(currency);
+  return { quote: convertQuote(baseQuote, currency, fx), settings };
 }
 export async function requestUser(db, req) {
   const authorization = req.headers.authorization;
@@ -124,7 +147,7 @@ export async function authorizeOrder(db, req, order) {
 }
 export function publicOrder(order) {
   // Internal notes, access hashes and request fingerprints never leave the server.
-  const keys = ['id','order_number','email','status','payment_status','payment_method','payment_provider','fulfilment_status','subtotal','shipping_amount','discount_amount','total_amount','currency','shipping_address','shipping_carrier','tracking_number','dispatched_at','delivered_at','paid_at','payment_reference','bank_transfer_reference','bank_details','delivery_tier','delivery_name','created_at','updated_at','payment_review_required','refunded_amount'];
+  const keys = ['id','order_number','email','status','payment_status','payment_method','payment_provider','fulfilment_status','subtotal','shipping_amount','discount_amount','total_amount','currency','shipping_address','shipping_carrier','tracking_number','dispatched_at','delivered_at','paid_at','payment_reference','bank_transfer_reference','bank_details','delivery_tier','delivery_name','created_at','updated_at','payment_review_required','refunded_amount','exchange_rate','exchange_rate_date','base_total_amount','shipping_zone_name','duties_notice'];
   return Object.fromEntries([...keys.map((key) => [key, order[key]]), ['items', (order.items || []).map((item) => ({ id: item.id, product_id: item.product_id, product_title: item.product_title, product_sku: item.product_sku, quantity: item.quantity, unit_price: Number(item.unit_price), total_price: Number(item.total_price), cover_image_url: item.product_snapshot?.cover_image_url }))]]);
 }
 export async function initializeOrder(db, req, method) {
@@ -132,17 +155,12 @@ export async function initializeOrder(db, req, method) {
   if (!uuid.test(input.requestId || '') || !uuid.test(input.accessToken || '')) throw new CheckoutError('Please refresh checkout and try again.');
   const email = String(input.customerEmail || '').trim().toLowerCase();
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new CheckoutError('Enter a valid email address.');
-  const address = {};
-  for (const field of ['full_name', 'address_line_1', 'city', 'postcode', 'country', 'address_line_2', 'county', 'phone']) {
-    address[field] = String(input.shippingAddress?.[field] || '').trim();
-    if (address[field].length > 200 || (['full_name','address_line_1','city','postcode','country'].includes(field) && !address[field])) throw new CheckoutError(`Check your ${field.replaceAll('_', ' ')}.`);
-  }
-  if (!['United Kingdom', 'GB', 'UK'].includes(address.country)) throw new CheckoutError('Delivery is currently available within the United Kingdom.');
-  if (!/^(GIR 0AA|[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2})$/i.test(address.postcode)) throw new CheckoutError('Enter a valid UK postcode.');
-  address.postcode = address.postcode.toUpperCase();
-  address.country = 'United Kingdom';
+  let address;
+  try { address = normalizeAddress(input.shippingAddress); }
+  catch (error) { throw new CheckoutError(error.message); }
   const user = await requestUser(db, req);
   const normalized = { items: normalizeItems(input.items), email, address, deliveryTier: input.deliveryTier, promoCode: String(input.promoCode || '').trim().toUpperCase(), method, expectedTotal: input.expectedTotal, userId: user?.id || null };
+  if (input.currency && input.currency !== 'GBP') normalized.currency = input.currency;
   const requestHash = hash(JSON.stringify(normalized));
   const existing = check(await db.from('orders').select('*, items:order_items(*)').eq('checkout_request_id', input.requestId).maybeSingle());
   if (existing) {
@@ -152,12 +170,14 @@ export async function initializeOrder(db, req, method) {
     return existing;
   }
   const { quote, settings } = await quoteCheckout(db, input);
+  if (quote.country !== 'GB' && input.internationalAcknowledged !== true) throw new CheckoutError('Please acknowledge the international delivery and import charges notice.');
   if (!quote.methods[method]) throw new CheckoutError('This payment method is currently unavailable. Please choose another method.', 503, 'METHOD_UNAVAILABLE');
-  if (!Number.isFinite(input.expectedTotal) || money(input.expectedTotal) !== money(quote.total_amount)) throw new CheckoutError('Your basket total has changed. Review the updated total and try again.', 409, 'TOTAL_CHANGED');
-  if (quote.total_amount < 0.5) throw new CheckoutError('The checkout total must be at least £0.50.');
+  if (!Number.isFinite(input.expectedTotal) || minorAmount(input.expectedTotal, quote.currency) !== minorAmount(quote.total_amount, quote.currency)) throw new CheckoutError('Your basket total has changed. Review the updated total and try again.', 409, 'TOTAL_CHANGED');
+  if (quote.base_total_amount < 0.5) throw new CheckoutError('The checkout total must be at least £0.50.');
   const bank = method === 'bank_transfer' ? Object.fromEntries(['bank_name','bank_account_name','bank_sort_code','bank_account_number','bank_iban','bank_payment_instructions'].map((key) => [key, settings[key]])) : null;
-  const data = await db.rpc('create_checkout_order', { p_request_id: input.requestId, p_request_hash: requestHash, p_access_hash: hash(input.accessToken),
+  const data = await db.rpc('create_global_checkout_order', { p_request_id: input.requestId, p_request_hash: requestHash, p_access_hash: hash(input.accessToken),
     p_order: { email, user_id: user?.id || null, shipping_address: address, payment_method: method, payment_provider: { card: 'stripe', paypal: 'paypal', bank_transfer: 'manual_bank' }[method],
+      currency: quote.currency, exchange_rate: quote.exchange_rate, exchange_rate_date: quote.exchange_rate_date, base_total_amount: quote.base_total_amount, shipping_zone_name: quote.shipping_zone_name, duties_notice: quote.duties_notice,
       subtotal: quote.subtotal, shipping_amount: quote.shipping_amount, discount_amount: quote.discount_amount, total_amount: quote.total_amount, delivery_tier: input.deliveryTier, delivery_name: quote.delivery[input.deliveryTier].name, bank_details: bank }, p_items: quote.items });
   if (data.error) throw new CheckoutError(data.error.code === 'P0001' ? data.error.message : 'Your order could not be created. Please try again.', data.error.code === 'P0001' ? 409 : 503, data.error.code === 'P0001' ? 'STOCK_CHANGED' : 'DATABASE_ERROR');
   const order = await loadOrder(db, data.data.id);
@@ -165,13 +185,13 @@ export async function initializeOrder(db, req, method) {
   return order;
 }
 export async function recordPayment(db, order, providerOrderId, reference, amount, currency) {
-  if (money(amount) !== money(order.total_amount) || String(currency).toUpperCase() !== 'GBP') throw new CheckoutError('Payment amount or currency did not match this order.', 409, 'PAYMENT_MISMATCH');
+  if (minorAmount(amount, order.currency || 'GBP') !== minorAmount(order.total_amount, order.currency || 'GBP') || String(currency).toUpperCase() !== (order.currency || 'GBP')) throw new CheckoutError('Payment amount or currency did not match this order.', 409, 'PAYMENT_MISMATCH');
   check(await db.rpc('record_checkout_payment', { p_order_id: order.id, p_provider: order.payment_provider, p_provider_order_id: providerOrderId, p_reference: reference, p_amount: amount, p_currency: String(currency).toUpperCase() }));
 }
 export async function verifyStripe(db, order, sessionId) {
   const session = await stripeClient().checkout.sessions.retrieve(sessionId);
   if (order.payment_provider !== 'stripe' || session.metadata?.order_id !== order.id || (order.checkout_session_id && order.checkout_session_id !== session.id)) throw new CheckoutError('Payment does not belong to this order.', 403, 'PAYMENT_MISMATCH');
-  if (session.payment_status === 'paid') await recordPayment(db, order, session.id, typeof session.payment_intent === 'string' ? session.payment_intent : session.id, session.amount_total / 100, session.currency);
+  if (session.payment_status === 'paid') await recordPayment(db, order, session.id, typeof session.payment_intent === 'string' ? session.payment_intent : session.id, session.amount_total / (order.currency === 'JPY' ? 1 : 100), session.currency);
   if (session.status === 'expired' && order.payment_status !== 'paid') check(await db.rpc('expire_checkout_order', { p_order_id: order.id, p_provider_order_id: session.id }));
   return session;
 }

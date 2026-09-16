@@ -2,6 +2,7 @@ import { isSupabaseConfigured, supabase } from './supabase';
 import { Category, FinancialStats, FulfilmentStatus, Genre, Order, OrderStatus, Product, Promotion, StoreSettings, Profile, UserRole } from '../types';
 import { adminSchemaChecks, AdminSchemaScope } from './adminSchema';
 import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
+import { CURRENCIES, validateShippingZones } from '../../shared/commerce.js';
 
 export interface InventoryMovement {
   id: string;
@@ -295,6 +296,8 @@ export const adminApi = {
   },
 
   async saveStoreSettings(input: StoreSettings): Promise<StoreSettings> {
+    if (input.shipping_zones) validateShippingZones(input.shipping_zones);
+    if (input.checkout_currencies && (!input.checkout_currencies.includes('GBP') || input.checkout_currencies.some((currency) => !CURRENCIES.includes(currency)))) throw new Error('Enable GBP and select supported checkout currencies.');
     const { data: existing, error: readError } = await client().from('store_settings').select('id').eq('singleton', true).maybeSingle();
     if (readError) fail(readError, 'Store settings could not be loaded before saving.');
     const { id, ...values } = input;
@@ -311,7 +314,7 @@ export const adminApi = {
     const [orders, products, settings] = await Promise.all([adminApi.getOrders(), adminApi.getProducts(), adminApi.getStoreSettings()]);
     const today = new Date().toISOString().slice(0, 10);
     const paidOrders = orders.filter((order) => ['paid', 'partially_refunded', 'refunded'].includes(order.payment_status));
-    const netAmount = (order: Order) => order.payment_status === 'refunded' ? 0 : Math.max(0, order.total_amount - Number(order.refunded_amount || 0));
+    const netAmount = (order: Order) => order.payment_status === 'refunded' ? 0 : Math.round(Math.max(0, order.total_amount - Number(order.refunded_amount || 0)) / Number(order.exchange_rate || 1) * 100) / 100;
     const totalRevenue = paidOrders.reduce((sum, order) => sum + netAmount(order), 0);
     const todayPaid = paidOrders.filter((order) => (order.paid_at || order.created_at).slice(0, 10) === today);
     const buckets = new Map<string, { amount: number; orders: number }>();

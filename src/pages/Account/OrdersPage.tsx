@@ -1,3 +1,4 @@
+import { formatMoney, countryName } from '../../../shared/commerce.js';
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -373,7 +374,7 @@ export const OrdersPage: React.FC = () => {
                           </div>
                           <div className="text-right">
                             <span className="text-xs font-mono font-bold text-dark">
-                              {formatGBP(item.total_price || item.unit_price * item.quantity)}
+                              {formatMoney(item.total_price || item.unit_price * item.quantity, order.currency)}
                             </span>
                           </div>
                         </div>
@@ -432,7 +433,7 @@ export const OrdersPage: React.FC = () => {
                       <div className="pt-2 border-t border-gray-100">
                         <span className="text-[11px] text-gray-500 block">Total Amount Paid</span>
                         <span className="font-mono font-black text-lg text-dark">
-                          {formatGBP(order.total_amount)}
+                          {formatMoney(order.total_amount, order.currency)}
                         </span>
                       </div>
                     </div>

@@ -7,15 +7,14 @@ timeline through explicit `data-intro-*` attributes.
 
 ## Sequence
 
-- Black viewport, monochrome existing logo, a single restrained 18-degree disc
-  movement, and a one-pixel progress line.
+- Black viewport with only the existing monochrome logo fading in and gently
+  scaling up. No percentage, progress line, disc decoration or tagline.
 - The first phase lasts 1.65 seconds on desktop and 1.4 seconds on mobile.
 - The handoff checks the rendered homepage, primary hero media, logo and fonts.
-  Slow assets stop gating at 1.9 seconds (1.55 on mobile). The percentage is
-  **intro progress**, not an assertion about downloaded bytes.
-- After 100% and a 160ms hold, the curtain rises. Media, headline, description,
+  Slow assets stop gating at 1.9 seconds (1.55 on mobile).
+- After the logo reveal and a 160ms hold, the curtain rises. Media, headline, description,
   CTA and navigation enter in sequence. The whole timeline takes approximately
-  3.2–3.9 seconds. Scroll and keyboard access return when the curtain clears,
+  3–3.7 seconds. Scroll and keyboard access return when the curtain clears,
   while the last portion of the media zoom finishes.
 - A 4.2-second emergency fallback releases the page if animation stalls.
 

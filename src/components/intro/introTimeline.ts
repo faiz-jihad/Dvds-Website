@@ -88,29 +88,17 @@ export function startIntro(root: HTMLElement, content: HTMLElement, overlay: HTM
     listen(reduced, 'change', () => { if (reduced.matches) finish(); });
 
     const gate = mobile ? 1.4 : 1.65;
-    const reveal = gate + .34;
+    const reveal = gate + .16;
     context = gsap.context(() => {}, root);
     context.add(() => {
       const logo = overlay.querySelector('.intro-loader__identity');
-      const disc = overlay.querySelector('.intro-loader__disc');
-      const progress = overlay.querySelector('.intro-loader__progress');
-      const counter = overlay.querySelector('.intro-loader__counter');
-      const fill = overlay.querySelector('.intro-loader__fill');
       const navbar = content.querySelector('[data-intro-nav]');
-      const count = { value: 0 };
-      const updateCount = () => { if (counter) counter.textContent = `${Math.round(count.value).toString().padStart(2, '0')}%`; };
       timeline = gsap.timeline({ onComplete: finish });
       gsap.set(navbar, { opacity: 0, y: -10, transition: 'none' });
       timeline
         .to(logo, { opacity: 1, y: 0, scale: 1, duration: mobile ? .95 : 1.2, ease: 'power4.out' }, 0)
-        .to(disc, { rotation: 18, duration: gate + .2, ease: 'sine.inOut', transformOrigin: '50% 50%' }, 0)
-        .to(fill, { scaleX: .85, duration: gate, ease: 'power1.inOut' }, 0)
-        .to(count, { value: 85, duration: gate, ease: 'power1.inOut', onUpdate: updateCount }, 0)
         .addPause(gate, () => { if (released) timeline?.play(); })
-        .to(fill, { scaleX: 1, duration: .18, ease: 'power1.out' }, gate)
-        .to(count, { value: 100, duration: .18, ease: 'power1.out', onUpdate: updateCount }, gate)
         .to(logo, { opacity: 0, scale: 1.06, duration: .4, ease: 'power2.in' }, reveal)
-        .to(progress, { opacity: 0, duration: .25 }, reveal)
         .to(overlay, { yPercent: -100, duration: mobile ? .85 : 1.05, ease: 'expo.inOut', onComplete: unlock }, reveal)
         .to(navbar, { opacity: 1, y: 0, duration: .8, ease: 'power4.out' }, reveal + .65);
     });

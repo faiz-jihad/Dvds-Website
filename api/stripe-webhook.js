@@ -13,13 +13,13 @@ export default endpoint(async (req) => {
   if (['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(event.type) && session.metadata?.order_id) {
     const order = await loadOrder(db, session.metadata.order_id);
     if (order.payment_provider !== 'stripe') throw new CheckoutError('Provider mismatch.', 409);
-    if (session.payment_status === 'paid') await recordPayment(db, order, session.id, typeof session.payment_intent === 'string' ? session.payment_intent : session.id, session.amount_total / 100, session.currency);
+    if (session.payment_status === 'paid') await recordPayment(db, order, session.id, typeof session.payment_intent === 'string' ? session.payment_intent : session.id, session.amount_total / (order.currency === 'JPY' ? 1 : 100), session.currency);
   } else if (event.type === 'checkout.session.expired' && session.metadata?.order_id) {
     check(await db.rpc('expire_checkout_order', { p_order_id: session.metadata.order_id, p_provider_order_id: session.id }));
   } else if (event.type === 'charge.refunded' && session.metadata?.order_id) {
     const order = await loadOrder(db, session.metadata.order_id);
     if (order.payment_provider !== 'stripe' || order.payment_reference !== session.payment_intent || session.currency?.toUpperCase() !== order.currency) throw new CheckoutError('Refund does not match order.', 409);
-    check(await db.rpc('record_checkout_refund', { p_order_id: order.id, p_event_id: event.id, p_amount: session.amount_refunded / 100, p_cumulative: true }));
+    check(await db.rpc('record_checkout_refund', { p_order_id: order.id, p_event_id: event.id, p_amount: session.amount_refunded / (order.currency === 'JPY' ? 1 : 100), p_cumulative: true }));
   }
   return { received: true };
 });

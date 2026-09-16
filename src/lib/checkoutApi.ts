@@ -4,12 +4,14 @@ import { Address, Order, PaymentMethodType } from '../types';
 export interface CheckoutQuote {
   items: { product_id: string; product_title: string; product_sku: string; cover_image_url: string; quantity: number; unit_price: number; total_price: number }[];
   subtotal: number; discount_amount: number; shipping_amount: number; total_amount: number; currency: string;
-  delivery: Record<'standard' | 'express', { name: string; eta: string; amount: number }>;
+  delivery: { standard: { name: string; eta: string; amount: number }; express: { name: string; eta: string; amount: number } | null };
+  country: string; duties_notice?: string; exchange_rate: number; exchange_rate_date: string;
   methods: Record<PaymentMethodType, boolean>; bank_name?: string;
 }
 export interface CheckoutInput {
   items: { product_id: string; quantity: number }[];
   customerEmail: string; shippingAddress: Address; deliveryTier: 'standard' | 'express'; promoCode?: string | null; expectedTotal: number;
+  currency?: string; internationalAcknowledged?: boolean;
 }
 interface Attempt { input?: CheckoutInput; fingerprint: string; requestId: string; accessToken: string; items: CheckoutInput['items']; orderId?: string; url?: string; method: PaymentMethodType; consumed?: boolean }
 const ATTEMPT_KEY = 'az_checkout_attempt_v2';
@@ -47,7 +49,8 @@ async function post<T>(path: string, body: unknown, orderId?: string, accessToke
   return data;
 }
 export const checkoutApi = {
-  quote(input: Pick<CheckoutInput, 'items' | 'deliveryTier' | 'promoCode'>) { return post<CheckoutQuote>('checkout-quote', input); },
+  configuration() { return post<{ currencies: string[]; countries: string[] }>('checkout-quote', { configuration: true }); },
+  quote(input: Pick<CheckoutInput, 'items' | 'deliveryTier' | 'promoCode' | 'currency'> & { country?: string }) { return post<CheckoutQuote>('checkout-quote', input); },
   async create(method: PaymentMethodType, input: CheckoutInput) {
     const fingerprint = JSON.stringify({ method, ...input });
     let attempt = currentCheckoutAttempt();

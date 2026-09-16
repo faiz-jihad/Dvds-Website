@@ -1,3 +1,4 @@
+import { formatMoney, countryName } from '../../../shared/commerce.js';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -232,7 +233,7 @@ export const AdminDashboard: React.FC = () => {
                     </span>
                   </td>
                   <td className="p-3.5 text-right font-mono font-bold text-dark">
-                    {formatGBP(order.total_amount)}
+                    {formatMoney(order.total_amount, order.currency)}
                   </td>
                 </tr>
               ))}

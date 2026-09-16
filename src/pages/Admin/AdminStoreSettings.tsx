@@ -1,3 +1,4 @@
+import { InternationalShippingSettings } from '../../components/admin/InternationalShippingSettings';
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -89,6 +90,7 @@ export const AdminStoreSettings: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
       await queryClient.invalidateQueries({ queryKey: ['store'] });
       await queryClient.invalidateQueries({ queryKey: ['checkout-quote'] });
+      await queryClient.invalidateQueries({ queryKey: ['checkout-config'] });
       await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       addToast('Store settings and homepage content saved successfully!', 'success');
     } catch (err: any) {
@@ -690,6 +692,8 @@ export const AdminStoreSettings: React.FC = () => {
             </div>
           </div>
         )}
+
+        {activeTab === 'logistics' && <InternationalShippingSettings settings={settings} onChange={handleChange} />}
 
         {activeTab === 'payments' && <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-6">
           <div><h2 className="text-lg font-semibold">Payment methods</h2><p className="text-sm text-gray-500 mt-2">Enabled methods appear at checkout when the provider is configured. Card and PayPal also require server credentials and verified webhooks.</p></div>

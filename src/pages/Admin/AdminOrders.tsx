@@ -1,3 +1,4 @@
+import { formatMoney, countryName } from '../../../shared/commerce.js';
 import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, Eye, PackageCheck, Truck, Check, Disc, Filter, Building2, CreditCard, AlertCircle } from 'lucide-react';
@@ -236,7 +237,7 @@ export const AdminOrders: React.FC = () => {
                     </span>
                   </td>
                   <td className="p-3.5 text-right font-mono font-bold text-dark">
-                    {formatGBP(o.total_amount)}
+                    {formatMoney(o.total_amount, o.currency)}
                   </td>
                   <td className="p-3.5 text-right">
                     <Button
@@ -267,7 +268,7 @@ export const AdminOrders: React.FC = () => {
         >
           <div className="space-y-6 text-xs">
                       {selectedOrder.payment_review_required && <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Payment arrived after cancellation and stock was released. Verify availability with the customer or issue a refund in the payment provider dashboard before fulfilment.</div>}
-            {Number(selectedOrder.refunded_amount) > 0 && <p className="text-sm text-blue-700">Refunded: {formatGBP(selectedOrder.refunded_amount!)}</p>}
+            {Number(selectedOrder.refunded_amount) > 0 && <p className="text-sm text-blue-700">Refunded: {formatMoney(selectedOrder.refunded_amount!, selectedOrder.currency)}</p>}
             {/* Awaiting Bank Transfer Notice */}
             {user?.role === 'admin' && !['cancelled', 'refunded'].includes(selectedOrder.status) && selectedOrder.payment_method === 'bank_transfer' && selectedOrder.payment_status === 'awaiting_payment' && (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -278,7 +279,7 @@ export const AdminOrders: React.FC = () => {
                       Awaiting Bank Transfer Confirmation
                     </span>
                     <p className="text-[11px] text-amber-800 mt-0.5">
-                      Customer reference: <strong className="font-mono">{selectedOrder.order_number}</strong> • Amount: <strong>{formatGBP(selectedOrder.total_amount)}</strong>
+                      Customer reference: <strong className="font-mono">{selectedOrder.order_number}</strong> • Amount: <strong>{formatMoney(selectedOrder.total_amount, selectedOrder.currency)}</strong>
                     </p>
                   </div>
                 </div>
@@ -470,7 +471,7 @@ export const AdminOrders: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <span className="font-mono font-bold text-dark">{formatGBP(item.total_price)}</span>
+                    <span className="font-mono font-bold text-dark">{formatMoney(item.total_price, selectedOrder.currency)}</span>
                   </div>
                 ))}
               </div>
@@ -478,12 +479,12 @@ export const AdminOrders: React.FC = () => {
 
             {/* Pricing Total Breakdown */}
             <div className="p-3 bg-gray-50 rounded-md space-y-1.5 text-right font-mono">
-              <div className="text-gray-500">Subtotal: {formatGBP(selectedOrder.subtotal)}</div>
+              <div className="text-gray-500">Subtotal: {formatMoney(selectedOrder.subtotal, selectedOrder.currency)}</div>
               <div className="text-gray-500">
-                {selectedOrder.delivery_name || 'Shipping'}: {selectedOrder.shipping_amount === 0 ? 'FREE' : formatGBP(selectedOrder.shipping_amount)}
+                {selectedOrder.delivery_name || 'Shipping'}: {selectedOrder.shipping_amount === 0 ? 'FREE' : formatMoney(selectedOrder.shipping_amount, selectedOrder.currency)}
               </div>
               <div className="text-dark font-bold text-sm pt-1 border-t border-gray-200">
-                Order Total: {formatGBP(selectedOrder.total_amount)}
+                Order Total: {formatMoney(selectedOrder.total_amount, selectedOrder.currency)}
               </div>
             </div>
           </div>
@@ -496,14 +497,14 @@ export const AdminOrders: React.FC = () => {
           isOpen={Boolean(confirmingBankOrder)}
           onClose={() => setConfirmingBankOrder(null)}
           title="Confirm Bank Transfer Payment"
-          description={`Order ${confirmingBankOrder.order_number} (${formatGBP(confirmingBankOrder.total_amount)})`}
+          description={`Order ${confirmingBankOrder.order_number} (${formatMoney(confirmingBankOrder.total_amount, confirmingBankOrder.currency)})`}
           maxWidth="md"
         >
           <div className="space-y-4 text-xs">
             <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-1">
-              <p className="font-semibold text-emerald-950">Confirm Funds Received in Barclays Bank UK</p>
+              <p className="font-semibold text-emerald-950">Confirm funds received in {confirmingBankOrder.bank_details?.bank_name || 'the saved bank account'}</p>
               <p className="text-[11px] text-emerald-800">
-                Please confirm that the customer has transferred <strong>{formatGBP(confirmingBankOrder.total_amount)}</strong> to Sort Code <strong>20-00-00</strong>, Account Number <strong>13894195</strong> with payment reference <strong>{confirmingBankOrder.order_number}</strong>.
+                Please confirm that the customer has transferred <strong>{formatMoney(confirmingBankOrder.total_amount, confirmingBankOrder.currency)}</strong> to Sort Code <strong>{confirmingBankOrder.bank_details?.bank_sort_code || '--'}</strong>, Account Number <strong>{confirmingBankOrder.bank_details?.bank_account_number || '--'}</strong> with payment reference <strong>{confirmingBankOrder.order_number}</strong>.
               </p>
             </div>
 
@@ -513,7 +514,7 @@ export const AdminOrders: React.FC = () => {
                 type="text"
                 value={bankConfirmNote}
                 onChange={(e) => setBankConfirmNote(e.target.value)}
-                placeholder="e.g. Verified on Barclays Business statement ref #9482"
+                placeholder="Bank statement reference and verification notes"
                 className="w-full h-10 px-3 text-xs bg-gray-50 border border-gray-300 rounded-md outline-none focus:border-brand-blue"
               />
             </label>

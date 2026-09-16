@@ -1,4 +1,6 @@
 import { check, dbClient, endpoint, initializeOrder, siteOrigin, stripeClient } from './_checkout.js';
+import { minorAmount } from '../shared/commerce.js';
+import { stripeShipping } from './_provider-shipping.js';
 export default endpoint(async (req) => {
   const db = dbClient();
   const origin = siteOrigin(req);
@@ -7,9 +9,9 @@ export default endpoint(async (req) => {
   if (order.checkout_url) return { url: order.checkout_url, orderId: order.id, orderNumber: order.order_number };
   const session = await stripeClient().checkout.sessions.create({
     mode: 'payment', payment_method_types: ['card'], customer_email: order.email,
-    line_items: [{ price_data: { currency: 'gbp', unit_amount: Math.round(Number(order.total_amount) * 100),
+    line_items: [{ price_data: { currency: order.currency.toLowerCase(), unit_amount: minorAmount(order.total_amount, order.currency),
       product_data: { name: `AZ Rayan DVDs - ${order.order_number}`, description: `${order.delivery_name} - ${order.items.length} titles` } }, quantity: 1 }],
-    metadata: { order_id: order.id }, payment_intent_data: { metadata: { order_id: order.id } },
+    metadata: { order_id: order.id }, payment_intent_data: { metadata: { order_id: order.id }, shipping: stripeShipping(order) },
     success_url: `${origin}/order-success/${order.id}?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/checkout?cancelled=1`,
   }, { idempotencyKey: `checkout-${order.id}` });

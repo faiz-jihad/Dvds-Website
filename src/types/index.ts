@@ -114,6 +114,11 @@ export interface Order {
   discount_amount: number;
   total_amount: number;
   currency: string;
+  exchange_rate?: number;
+  exchange_rate_date?: string;
+  base_total_amount?: number;
+  shipping_zone_name?: string;
+  duties_notice?: string;
   shipping_address: Address;
   payment_method?: PaymentMethodType;
   payment_provider?: PaymentProviderType;
@@ -212,6 +217,9 @@ export interface StoreSettings {
   // UK Logistics & Delivery
   free_shipping_threshold: number;
   standard_shipping_fee: number;
+  shipping_zones: import('../../shared/commerce').ShippingZone[];
+  checkout_currencies: string[];
+  international_duties_notice: string;
   express_shipping_fee: number;
   standard_shipping_name: string;
   standard_shipping_eta: string;
