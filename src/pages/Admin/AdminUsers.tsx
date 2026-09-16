@@ -45,6 +45,7 @@ export const AdminUsers: React.FC = () => {
     },
     onSuccess: (updatedProfile) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
       addToast(`Role for ${updatedProfile.email} updated to "${updatedProfile.role.toUpperCase()}"`, 'success');
       setUpdatingUserId(null);
     },
@@ -64,6 +65,7 @@ export const AdminUsers: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
       addToast('User account deleted successfully', 'success');
     },
     onError: (err: any) => {

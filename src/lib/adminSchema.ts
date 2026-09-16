@@ -16,12 +16,13 @@ const checks = {
   admin_audit_log: 'id,table_name,record_id,action,created_at',
   contact_messages: 'id,name,email,message,status,assigned_to,internal_note',
   homepage_config: 'id,config_data',
+  media_assets: 'id,asset_data,created_at',
 } as const;
 
 type Table = keyof typeof checks;
 const dependencies: Record<Exclude<AdminSchemaScope, 'all'>, readonly Table[]> = {
   dashboard: ['orders', 'order_items', 'products', 'categories', 'genres', 'product_genres', 'store_settings'],
-  homepage: ['homepage_config', 'products', 'categories', 'genres', 'product_genres'],
+  homepage: ['homepage_config', 'media_assets', 'products', 'categories', 'genres', 'product_genres'],
   products: ['products', 'categories', 'genres', 'product_genres'],
   taxonomy: ['categories', 'genres'],
   inventory: ['products', 'categories', 'genres', 'product_genres', 'inventory_movements', 'store_settings'],

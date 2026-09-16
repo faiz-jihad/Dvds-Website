@@ -99,6 +99,7 @@ export const AdminTaxonomy: React.FC = () => {
 
   const refreshAll = async () => {
     await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] }),
       queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] }),
       queryClient.invalidateQueries({ queryKey: ['admin', 'genres'] }),
       queryClient.invalidateQueries({ queryKey: ['store', 'categories'] }),

@@ -8,7 +8,6 @@ import { Input } from '../../components/common/Input';
 import { Modal } from '../../components/common/Modal';
 import { useUiStore } from '../../stores/useUiStore';
 import { AdminDataState } from '../../components/admin/AdminDataState';
-import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
 
 export const AdminInventory: React.FC = () => {
   const queryClient = useQueryClient();
@@ -24,9 +23,9 @@ export const AdminInventory: React.FC = () => {
 
   const handleAdjustStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProduct) return;
-    const delta = parseInt(adjustment, 10);
-    if (isNaN(delta) || delta === 0) {
+    if (!selectedProduct || updating) return;
+    const delta = Number(adjustment);
+    if (!Number.isInteger(delta) || delta === 0) {
       addToast('Enter a non-zero whole number to adjust inventory', 'error');
       return;
     }
@@ -50,15 +49,16 @@ export const AdminInventory: React.FC = () => {
     } finally { setUpdating(false); }
   };
 
-  if (productsQuery.isLoading) {
+  if (productsQuery.isLoading || settingsQuery.isLoading) {
     return <AdminDataState loading={true} error={null} onRetry={() => { productsQuery.refetch(); settingsQuery.refetch(); }} />;
   }
 
-  if (productsQuery.error) {
-    return <AdminDataState loading={false} error={productsQuery.error} onRetry={() => { productsQuery.refetch(); settingsQuery.refetch(); }} />;
+  if (productsQuery.error || settingsQuery.error) {
+    return <AdminDataState loading={false} error={productsQuery.error || settingsQuery.error} onRetry={() => { productsQuery.refetch(); settingsQuery.refetch(); }} />;
   }
 
-  const threshold = settingsQuery.data?.low_stock_threshold ?? DEFAULT_STORE_SETTINGS.low_stock_threshold;
+  if (!settingsQuery.data) return <AdminDataState empty emptyTitle="Configure inventory alerts" emptyDescription="Save Store Settings to set the low-stock threshold before managing inventory." />;
+  const threshold = settingsQuery.data.low_stock_threshold;
   const filtered = products.filter((product) => product.title.toLowerCase().includes(search.toLowerCase()) || product.sku.toLowerCase().includes(search.toLowerCase()));
 
   return (

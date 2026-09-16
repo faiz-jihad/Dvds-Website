@@ -49,6 +49,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
       timestamp: new Date().toLocaleTimeString(),
     };
     setLastEvent(info);
+    queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
 
     switch (table) {
       case 'products':
@@ -71,7 +72,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
 
       case 'orders':
         queryClient.invalidateQueries({ queryKey: ['order'] });
-        queryClient.invalidateQueries({ queryKey: ['admin', 'activity'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'inventory'] });
@@ -108,6 +109,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         break;
 
       case 'store_settings':
+        queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['checkout-quote'] });
         queryClient.invalidateQueries({ queryKey: ['store', 'settings'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
@@ -118,6 +120,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         break;
 
       case 'categories':
+        queryClient.invalidateQueries({ queryKey: ['store', 'product'] });
         queryClient.invalidateQueries({ queryKey: ['store', 'categories'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
         queryClient.invalidateQueries({ queryKey: ['store', 'products'] });
@@ -125,6 +128,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         break;
 
       case 'genres':
+        queryClient.invalidateQueries({ queryKey: ['store', 'product'] });
         queryClient.invalidateQueries({ queryKey: ['store', 'genres'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'genres'] });
         queryClient.invalidateQueries({ queryKey: ['store', 'products'] });
@@ -132,6 +136,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         break;
 
       case 'product_genres':
+        queryClient.invalidateQueries({ queryKey: ['store', 'product'] });
         queryClient.invalidateQueries({ queryKey: ['store', 'products'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
         break;
@@ -151,6 +156,15 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
             link: '/shop?filter=sale',
           });
         }
+        break;
+
+      case 'profiles':
+        queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+        break;
+
+      case 'inventory_movements':
+        queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
         break;
 
       case 'contact_messages':
@@ -258,6 +272,14 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         { event: '*', schema: 'public', table: 'contact_messages' },
         (payload) => handleTableChange('contact_messages', payload.eventType, payload.new)
       )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' },
+        (payload) => handleTableChange('profiles', payload.eventType, payload.new))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_movements' },
+        (payload) => handleTableChange('inventory_movements', payload.eventType, payload.new))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_status_history' },
+        (payload) => handleTableChange('order_status_history', payload.eventType, payload.new))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_audit_log' },
+        (payload) => handleTableChange('admin_audit_log', payload.eventType, payload.new))
       .subscribe((subscribeStatus) => {
         if (subscribeStatus === 'SUBSCRIBED') {
           setStatus('connected');

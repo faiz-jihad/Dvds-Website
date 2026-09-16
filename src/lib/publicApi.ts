@@ -65,137 +65,49 @@ export const publicApi = {
   },
 
   async getCategories(): Promise<Category[]> {
-    let dbCategories: Category[] = [];
-    try {
-      const sb = client();
-      if (sb) {
-        const { data, error } = await sb
-          .from('categories')
-          .select('*')
-          .eq('is_active', true)
-          .order('sort_order');
-        if (!error && data && data.length > 0) {
-          dbCategories = data as Category[];
-        }
-      }
-    } catch (err) {
-      console.warn('[publicApi] getCategories error:', err);
-    }
-
-    if (typeof window !== 'undefined') {
-      try {
-        const demoRaw = localStorage.getItem('az_rayan_demo_categories_v1');
-        const demoCats: Category[] = demoRaw ? JSON.parse(demoRaw) : [];
-        const deletedRaw = localStorage.getItem('az_rayan_deleted_categories_v1');
-        const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
-
-        const map = new Map<string, Category>();
-        dbCategories.forEach((c) => {
-          if (!deletedIds.has(c.id) && c.is_active) map.set(c.id, c);
-        });
-        demoCats.forEach((c) => {
-          if (!deletedIds.has(c.id) && c.is_active) map.set(c.id, c);
-        });
-        if (map.size > 0) {
-          return Array.from(map.values()).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    return dbCategories.length > 0 ? dbCategories : DEFAULT_CATEGORIES;
+    const sb = client();
+    if (!sb) return DEFAULT_CATEGORIES;
+    const { data, error } = await sb.from('categories').select('*').eq('is_active', true).order('sort_order');
+    if (error) throw new Error('Categories could not be loaded. Please retry.');
+    return data || [];
   },
 
   async getGenres(): Promise<Genre[]> {
-    let dbGenres: Genre[] = [];
-    try {
-      const sb = client();
-      if (sb) {
-        const { data, error } = await sb.from('genres').select('*').order('name');
-        if (!error && data && data.length > 0) {
-          dbGenres = data as Genre[];
-        }
-      }
-    } catch (err) {
-      console.warn('[publicApi] getGenres error:', err);
-    }
-
-    if (typeof window !== 'undefined') {
-      try {
-        const demoRaw = localStorage.getItem('az_rayan_demo_genres_v1');
-        const demoGenres: Genre[] = demoRaw ? JSON.parse(demoRaw) : [];
-        const deletedRaw = localStorage.getItem('az_rayan_deleted_genres_v1');
-        const deletedIds = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : []);
-
-        const map = new Map<string, Genre>();
-        dbGenres.forEach((g) => {
-          if (!deletedIds.has(g.id)) map.set(g.id, g);
-        });
-        demoGenres.forEach((g) => {
-          if (!deletedIds.has(g.id)) map.set(g.id, g);
-        });
-        if (map.size > 0) {
-          return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    return dbGenres.length > 0 ? dbGenres : DEFAULT_GENRES;
+    const sb = client();
+    if (!sb) return DEFAULT_GENRES;
+    const { data, error } = await sb.from('genres').select('*').order('name');
+    if (error) throw new Error('Genres could not be loaded. Please retry.');
+    return data || [];
   },
 
   async getStoreSettings(): Promise<StoreSettings> {
-    try {
-      const sb = client();
-      if (sb) {
-        const { data, error } = await sb.from('store_settings').select('*').limit(1).maybeSingle();
-        if (!error && data) {
-          return {
-            ...DEFAULT_STORE_SETTINGS,
-            ...data,
-            deal_discount_price: Number(data.deal_discount_price),
-            free_shipping_threshold: Number(data.free_shipping_threshold),
-            standard_shipping_fee: Number(data.standard_shipping_fee),
-            express_shipping_fee: Number(data.express_shipping_fee),
-            low_stock_threshold: Number(data.low_stock_threshold),
-            budget_collection_threshold: Number(data.budget_collection_threshold),
-            vip_promo_discount: Number(data.vip_promo_discount),
-            vip_min_spend: Number(data.vip_min_spend),
-          } as StoreSettings;
-        }
-      }
-    } catch (err) {
-      console.warn('[publicApi] Could not load store settings from database, using defaults:', err);
-    }
-
-    return DEFAULT_STORE_SETTINGS;
+    const sb = client();
+    if (!sb) return DEFAULT_STORE_SETTINGS;
+    const { data, error } = await sb.from('store_settings').select('*').eq('singleton', true).maybeSingle();
+    if (error || !data) throw new Error('Store settings are unavailable. Please retry.');
+    return {
+      ...DEFAULT_STORE_SETTINGS, ...data,
+      deal_discount_price: Number(data.deal_discount_price),
+      free_shipping_threshold: Number(data.free_shipping_threshold),
+      standard_shipping_fee: Number(data.standard_shipping_fee),
+      express_shipping_fee: Number(data.express_shipping_fee),
+      low_stock_threshold: Number(data.low_stock_threshold),
+      budget_collection_threshold: Number(data.budget_collection_threshold),
+      vip_promo_discount: Number(data.vip_promo_discount),
+      vip_min_spend: Number(data.vip_min_spend),
+    } as StoreSettings;
   },
 
   async getActivePromotions(): Promise<Promotion[]> {
+    const sb = client();
+    if (!sb) return [];
     const now = new Date().toISOString();
-    let dbPromotions: Promotion[] = [];
-    try {
-      const { data, error } = await requireClient()
-        .from('promotions')
-        .select('*')
-        .eq('is_active', true)
-        .lte('starts_at', now)
-        .or(`ends_at.is.null,ends_at.gte.${now}`)
-        .order('created_at', { ascending: false });
-      if (!error && data) {
-        dbPromotions = (data || []).map((promotion) => ({
-          ...promotion,
-          value: Number(promotion.value),
-          minimum_order: Number(promotion.minimum_order),
-        })) as Promotion[];
-      }
-    } catch (err) {
-      console.warn('Could not load DB promotions:', err);
-    }
-
-    return dbPromotions;
+    const { data, error } = await sb.from('promotions').select('*').eq('is_active', true)
+      .lte('starts_at', now).or(`ends_at.is.null,ends_at.gte.${now}`).order('created_at', { ascending: false });
+    if (error) throw new Error('Promotions could not be loaded. Please retry.');
+    return (data || []).map((promotion) => ({ ...promotion,
+      value: Number(promotion.value), minimum_order: Number(promotion.minimum_order),
+    })) as Promotion[];
   },
 
   async createCheckoutSession(input: CheckoutInput) {
@@ -212,85 +124,13 @@ export const publicApi = {
   },
 
   async getMyOrders(): Promise<Order[]> {
-    const sb = client();
-    let authUser: { id: string; email?: string } | null = null;
-    try {
-      if (sb) {
-        const { data: auth } = await sb.auth.getUser();
-        if (auth?.user) authUser = auth.user;
-      }
-    } catch {
-      // ignore
-    }
-
-    if (!authUser && typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('az_rayan_customer_profile');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed?.id) authUser = { id: parsed.id, email: parsed.email };
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    if (!authUser) throw new Error('Sign in to view your order history.');
-
-    let dbOrders: Order[] = [];
-    try {
-      if (sb) {
-        const { data, error } = await sb
-          .from('orders')
-          .select('*, items:order_items(*)')
-          .eq('user_id', authUser.id)
-          .order('created_at', { ascending: false });
-        if (!error && data) {
-          dbOrders = data as Order[];
-        }
-      }
-    } catch (err) {
-      console.warn('[publicApi] Could not fetch DB orders:', err);
-    }
-
-    // Merge with local demo orders matching user id or email
-    let localOrders: Order[] = [];
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = localStorage.getItem('az_rayan_demo_orders_v1');
-        if (raw) {
-          const list: Order[] = JSON.parse(raw);
-          localOrders = list.filter(
-            (o) =>
-              (authUser?.id && o.user_id === authUser.id) ||
-              (authUser?.email && o.email && o.email.toLowerCase() === authUser.email.toLowerCase())
-          );
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    const seenIds = new Set<string>();
-    const seenNumbers = new Set<string>();
-    const merged: Order[] = [];
-
-    for (const order of dbOrders) {
-      seenIds.add(order.id);
-      if (order.order_number) seenNumbers.add(order.order_number);
-      merged.push(order);
-    }
-
-    for (const order of localOrders) {
-      if (!seenIds.has(order.id) && !seenNumbers.has(order.order_number)) {
-        seenIds.add(order.id);
-        if (order.order_number) seenNumbers.add(order.order_number);
-        merged.push(order);
-      }
-    }
-
-    merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return merged;
+    const sb = requireClient();
+    const { data: auth, error: authError } = await sb.auth.getUser();
+    if (authError || !auth?.user) throw new Error('Sign in to view your order history.');
+    const { data, error } = await sb.from('orders').select('*, items:order_items(*)')
+      .eq('user_id', auth.user.id).order('created_at', { ascending: false });
+    if (error) throw new Error('Your orders could not be loaded. Please retry.');
+    return data || [];
   },
 
   async getMyProfile(): Promise<Profile> {

@@ -22,9 +22,6 @@ export const AnnouncementBar: React.FC = () => {
 
   const announcement = homepageConfig?.announcement;
 
-  // If announcement explicitly disabled in dynamic config
-  if (announcement && !announcement.enabled) return null;
-
   const text = announcement?.text || settings?.announcement_center || 'Free UK Delivery on All Orders • Royal Mail Tracked 24/48 UK Dispatch';
   const linkText = announcement?.linkText || 'Delivery Info';
   const linkUrl = announcement?.linkUrl || settings?.announcement_link || '/delivery';
@@ -48,7 +45,8 @@ export const AnnouncementBar: React.FC = () => {
     return () => clearInterval(interval);
   }, [messages.length]);
 
-  if (!text) return null;
+  // Keep the hook order stable when an admin enables/disables the live announcement.
+  if (!text || (announcement && !announcement.enabled)) return null;
 
   return (
     <div
@@ -84,4 +82,3 @@ export const AnnouncementBar: React.FC = () => {
     </div>
   );
 };
-

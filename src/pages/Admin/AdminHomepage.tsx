@@ -100,7 +100,7 @@ export const AdminHomepage: React.FC = () => {
 
   useEffect(() => {
     if (draftQuery.data) {
-      setConfig(JSON.parse(JSON.stringify(draftQuery.data)));
+      setConfig((current) => current || JSON.parse(JSON.stringify(draftQuery.data)));
     }
   }, [draftQuery.data]);
 
@@ -188,11 +188,12 @@ export const AdminHomepage: React.FC = () => {
   // Save & Publish Handlers
   // ==========================================
   const handleSaveDraft = async () => {
-    if (!config) return;
+    if (!config || isSaving || isPublishing) return;
     setIsSaving(true);
     try {
       await homepageApi.saveDraftHomepageConfig(config);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'homepage'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
       addToast('Draft homepage saved successfully', 'success');
     } catch (error) {
       addToast(error instanceof Error ? error.message : 'Failed to save draft homepage', 'error');
@@ -202,12 +203,13 @@ export const AdminHomepage: React.FC = () => {
   };
 
   const handlePublish = async () => {
-    if (!config) return;
+    if (!config || isSaving || isPublishing) return;
     setIsPublishing(true);
     try {
       await homepageApi.publishHomepageConfig(config);
       await queryClient.invalidateQueries({ queryKey: ['homepage'] });
       await queryClient.invalidateQueries({ queryKey: ['admin', 'homepage'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
       addToast('🎉 Homepage published live to customer storefront!', 'success');
     } catch (error) {
       addToast(error instanceof Error ? error.message : 'Failed to publish homepage', 'error');
@@ -217,14 +219,18 @@ export const AdminHomepage: React.FC = () => {
   };
 
   const handleRevert = async () => {
+    if (isSaving || isPublishing) return;
     if (!confirm('Revert all draft changes back to the currently published live homepage?')) return;
+    setIsSaving(true);
     try {
       const reverted = await homepageApi.revertDraftToPublished();
       setConfig(reverted);
+      queryClient.setQueryData(['admin', 'homepage', 'draft'], reverted);
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
       addToast('Draft reverted to live version', 'info');
     } catch (error) {
       addToast(error instanceof Error ? error.message : 'Failed to revert draft', 'error');
-    }
+    } finally { setIsSaving(false); }
   };
 
   // ==========================================
@@ -488,6 +494,7 @@ export const AdminHomepage: React.FC = () => {
             variant="secondary"
             size="sm"
             onClick={handleRevert}
+            disabled={isSaving || isPublishing}
             className="flex items-center gap-1.5 text-xs font-semibold"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Revert

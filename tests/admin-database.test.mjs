@@ -178,6 +178,45 @@ test('complete settings form persists with generated UUID and can be updated', a
   });
 });
 
+test('product and genre saving is atomic, stock-safe, audited and restricted to staff', async () => {
+  const genre = (await db.query("INSERT INTO genres(name,slug) VALUES ('Atomic','atomic') RETURNING id")).rows[0].id;
+  const fields = { sku: 'ATOMIC', title: 'Atomic title', slug: 'atomic-title', price: 15, stock_quantity: 4, cover_image_url: '/cover.jpg' };
+  const save = (id, values, genres) => db.query('SELECT save_admin_product($1,$2,$3) AS product', [id, values, genres]);
+  await assert.rejects(asUser(customer, () => save(null, fields, [genre])), /Admin access/);
+  await assert.rejects(asUser(staff, () => save(null, fields, [randomUUID()])), /foreign key/);
+  assert.equal((await db.query("SELECT id FROM products WHERE sku='ATOMIC'")).rows.length, 0);
+  const saved = (await asUser(staff, () => save(null, fields, [genre]))).rows[0].product;
+  assert.equal(saved.stock_quantity, 4);
+  const ledger = (await db.query('SELECT * FROM inventory_movements WHERE product_id=$1', [saved.id])).rows;
+  assert.equal(ledger.length, 1);
+  assert.equal(ledger[0].quantity_before, 0);
+  assert.equal(ledger[0].actor_id, staff);
+  await assert.rejects(asUser(staff, () => save(saved.id, { title: 'Failed edit' }, [randomUUID()])), /foreign key/);
+  assert.equal((await db.query('SELECT title FROM products WHERE id=$1', [saved.id])).rows[0].title, 'Atomic title');
+  assert.equal((await db.query('SELECT genre_id FROM product_genres WHERE product_id=$1', [saved.id])).rows[0].genre_id, genre);
+  await asUser(staff, () => save(saved.id, { title: 'Saved edit', runtime_minutes: null }, []));
+  assert.equal((await db.query('SELECT stock_quantity FROM products WHERE id=$1', [saved.id])).rows[0].stock_quantity, 4);
+  assert.equal((await db.query('SELECT * FROM product_genres WHERE product_id=$1', [saved.id])).rows.length, 0);
+  await assert.rejects(asUser(staff, () => save(saved.id, { stock_quantity: 100 }, [])), /Use Inventory/);
+  await assert.rejects(asUser(staff, () => save(saved.id, { id: randomUUID() }, [])), /Unsupported/);
+  assert.ok((await db.query('SELECT id FROM admin_audit_log WHERE record_id=$1', [saved.id])).rows.length >= 2);
+});
+
+test('media library is shared between administrators and staff, private to customers and audited', async () => {
+  const id = randomUUID();
+  await asUser(staff, () => db.query('INSERT INTO media_assets(id,asset_data) VALUES ($1,$2)', [id, { url: '/shared.jpg', filename: 'shared.jpg' }]));
+  await asUser(owner, async () => {
+    assert.equal((await db.query('SELECT asset_data FROM media_assets WHERE id=$1', [id])).rows[0].asset_data.url, '/shared.jpg');
+  });
+  await asUser(customer, async () => {
+    assert.equal((await db.query('SELECT * FROM media_assets WHERE id=$1', [id])).rows.length, 0);
+    await assert.rejects(db.query("INSERT INTO media_assets(id,asset_data) VALUES ('denied','{\"url\":\"/x.jpg\",\"filename\":\"x.jpg\"}')"), /row-level security/);
+  });
+  await asUser(staff, () => db.query('DELETE FROM media_assets WHERE id=$1', [id]));
+  assert.equal((await db.query('SELECT * FROM admin_audit_log WHERE record_id=$1', [id])).rows.length, 2);
+  assert.ok((await db.query("SELECT * FROM admin_audit_log WHERE table_name='homepage_config'")).rows.length > 0);
+});
+
 async function checkoutFixture(method = 'card', quantity = 2) {
   const productId = randomUUID();
   await db.query("INSERT INTO products(id,sku,title,slug,price,stock_quantity,status,cover_image_url) VALUES ($1::UUID,$2,'Checkout title',$2,10,3,'active','/snapshot.jpg')", [productId, productId]);
@@ -299,6 +338,7 @@ test('out-of-order Stripe cumulative refunds never reduce the refunded amount', 
 });
 
 test('admin repair SQL can be repeated without removing orders, users, products or their stock', async () => {
+  await db.query("UPDATE store_settings SET registered_company_name='Existing company' WHERE singleton=true");
   const snapshot = () => db.query(`SELECT
     (SELECT count(*) FROM orders) AS orders,
     (SELECT count(*) FROM profiles) AS users,
@@ -309,6 +349,7 @@ test('admin repair SQL can be repeated without removing orders, users, products 
   await db.exec(repair);
   await db.exec(repair);
   assert.deepEqual((await snapshot()).rows, before);
+  assert.equal((await db.query('SELECT registered_company_name FROM store_settings WHERE singleton=true')).rows[0].registered_company_name, 'Existing company');
   assert.equal((await db.query("SELECT support_email FROM store_settings WHERE singleton=true")).rows[0].support_email, 'support@example.test');
   await asUser(staff, async () => {
     await assert.rejects(db.query('SELECT admin_set_user_role($1,$2)', [customer, 'admin']), /Administrator access/);
@@ -327,7 +368,7 @@ test('repair upgrades the pre-payment schema without replaying catalogue seed da
       CREATE TABLE storage.objects(id UUID DEFAULT gen_random_uuid(), bucket_id TEXT, name TEXT);
       ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
       GRANT USAGE ON SCHEMA public, auth, storage TO anon, authenticated;`);
-    const migrations = (await readdir('supabase/migrations')).filter((file) => file.endsWith('.sql') && file < '20260914000008').sort();
+    const migrations = (await readdir('supabase/migrations')).filter((file) => file.endsWith('.sql') && file < '20260914000006').sort();
     for (const file of migrations) await legacy.exec(await readFile(`supabase/migrations/${file}`, 'utf8'));
     await assert.rejects(legacy.query('SELECT payment_method FROM orders LIMIT 0'), /does not exist/);
     const productCount = (await legacy.query('SELECT count(*) FROM products')).rows[0].count;
@@ -335,6 +376,9 @@ test('repair upgrades the pre-payment schema without replaying catalogue seed da
     await legacy.query('SELECT payment_method,checkout_session_id,refunded_amount FROM orders LIMIT 0');
     await legacy.query('SELECT payment_card_enabled,payment_bank_transfer_enabled,bank_account_number FROM store_settings LIMIT 0');
     await legacy.query('SELECT id FROM payment_events LIMIT 0');
+    await legacy.query('SELECT registered_company_name,company_number FROM store_settings LIMIT 0');
+    await legacy.query('SELECT id,asset_data FROM media_assets LIMIT 0');
+    assert.ok((await legacy.query("SELECT to_regprocedure('public.save_admin_product(uuid,jsonb,uuid[])') AS fn")).rows[0].fn);
     assert.equal((await legacy.query('SELECT count(*) FROM products')).rows[0].count, productCount);
     assert.ok((await legacy.query("SELECT to_regprocedure('public.admin_delete_user(uuid)') AS fn")).rows[0].fn);
   } finally { await legacy.close(); }

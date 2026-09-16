@@ -102,6 +102,7 @@ test('admin routes select their own schema scope including nested and trailing s
 
 test('every admin mutation rejects denied writes instead of reporting local success', async (t) => {
   const cases = [
+    ['saveProductWithGenres', [null, { title: 'Test' }, []]],
     ['createProduct', [{}]], ['updateProduct', ['id', {}]], ['archiveProduct', ['id']], ['deleteProduct', ['id']],
     ['setProductGenres', ['id', []]], ['createCategory', [{}]], ['updateCategory', ['id', {}]], ['deleteCategory', ['id']],
     ['createGenre', [{}]], ['updateGenre', ['id', {}]], ['deleteGenre', ['id']],
@@ -165,6 +166,46 @@ test('homepage publishes draft and live together, then reports success', async (
   const rows = db.calls[0].actions.find(([action]) => action === 'upsert')[1];
   assert.equal(rows[0].config_data.status, 'published');
   assert.equal(rows[1].config_data.status, 'draft');
+});
+
+test('live taxonomy, promotions and order history never substitute demo rows or hide errors', async () => {
+  for (const method of ['getCategories', 'getGenres', 'getActivePromotions', 'getMyOrders']) {
+    const { publicApi } = await load('src/lib/publicApi.ts', backend([{ data: [] }]));
+    assert.equal((await publicApi[method]()).length, 0, method);
+    const failed = await load('src/lib/publicApi.ts', backend([denied]));
+    await assert.rejects(failed.publicApi[method](), /could not be loaded/);
+  }
+});
+
+test('missing settings stay unconfigured in dashboard, while storefront reports an error', async () => {
+  const { adminApi } = await load('src/lib/adminApi.ts', backend([{ data: [] }, { data: [] }, { data: null }]));
+  assert.equal((await adminApi.getFinancialStats()).settingsConfigured, false);
+  const { publicApi } = await load('src/lib/publicApi.ts', backend([{ data: null }]));
+  await assert.rejects(publicApi.getStoreSettings(), /unavailable/);
+});
+
+test('product form saves metadata and genre links in one RPC', async () => {
+  const db = backend([{ data: { id: 'saved', title: 'Updated' } }]);
+  const { adminApi } = await load('src/lib/adminApi.ts', db);
+  const saved = await adminApi.saveProductWithGenres('saved', { title: 'Updated' }, ['genre']);
+  assert.equal(saved.title, 'Updated');
+  assert.equal(db.calls.length, 1);
+  assert.equal(db.calls[0].rpc, 'save_admin_product');
+  assert.equal(db.calls[0].args.p_genre_ids[0], 'genre');
+});
+
+test('shared media library persists server metadata and propagates all failures', async () => {
+  const asset = { id: 'shared', url: '/image.jpg', filename: 'image.jpg', altText: 'Cover' };
+  const db = backend([{ data: { id: asset.id, asset_data: asset } }, { data: [{ id: asset.id, asset_data: asset }] }, { data: { id: asset.id } }]);
+  const { homepageApi } = await load('src/lib/homepageApi.ts', db);
+  assert.equal((await homepageApi.saveMediaAsset(asset)).url, asset.url);
+  assert.equal((await homepageApi.getMediaLibrary())[0].altText, 'Cover');
+  await homepageApi.deleteMediaAsset(asset.id);
+  assert.ok(db.calls.every((call) => call.table === 'media_assets'));
+  for (const [method, args] of [['saveMediaAsset', [asset]], ['getMediaLibrary', []], ['deleteMediaAsset', [asset.id]]]) {
+    const failed = await load('src/lib/homepageApi.ts', backend([denied]));
+    await assert.rejects(failed.homepageApi[method](...args), /denied/);
+  }
 });
 
 test('wrong admin password never creates a demo session', async () => {

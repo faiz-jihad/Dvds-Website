@@ -71,7 +71,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
     try {
       const dataUrl = await uploadAdminImage(file);
       const newAsset: MediaAsset = {
-        id: `upload-${Date.now()}`,
+        id: crypto.randomUUID(),
         url: dataUrl,
         filename: file.name,
         altText: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),

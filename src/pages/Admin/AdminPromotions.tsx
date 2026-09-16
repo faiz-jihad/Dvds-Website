@@ -67,6 +67,7 @@ export const AdminPromotions: React.FC = () => {
 
   const handleSavePromotion = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (saving) return;
     const numericValue = Number(value);
     const numericMinimum = Number(minimumOrder);
     if (!code.trim() || !type || value === '' || minimumOrder === '' || !Number.isFinite(numericValue) || numericValue <= 0 || !Number.isFinite(numericMinimum) || numericMinimum < 0) {
@@ -90,7 +91,7 @@ export const AdminPromotions: React.FC = () => {
           value: numericValue,
           minimum_order: numericMinimum,
           is_active: activateNow,
-          starts_at: startsAt ? new Date(startsAt).toISOString() : undefined,
+          starts_at: startsAt ? new Date(startsAt).toISOString() : new Date().toISOString(),
           ends_at: endsAt ? new Date(endsAt).toISOString() : null,
         });
         addToast(`Promotion "${code.toUpperCase()}" updated successfully`, 'success');
@@ -101,12 +102,14 @@ export const AdminPromotions: React.FC = () => {
           value: numericValue,
           minimum_order: numericMinimum,
           is_active: activateNow,
-          starts_at: startsAt ? new Date(startsAt).toISOString() : undefined,
+          starts_at: startsAt ? new Date(startsAt).toISOString() : new Date().toISOString(),
           ends_at: endsAt ? new Date(endsAt).toISOString() : null,
         });
         addToast(`Promotion "${code.toUpperCase()}" created successfully`, 'success');
       }
       await queryClient.invalidateQueries({ queryKey: ['admin', 'promotions'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
+      await queryClient.invalidateQueries({ queryKey: ['checkout-quote'] });
       await queryClient.invalidateQueries({ queryKey: ['store'] });
       await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       setModalOpen(false);
@@ -122,6 +125,8 @@ export const AdminPromotions: React.FC = () => {
     try {
       await adminApi.updatePromotion(promotion.id, { is_active: !promotion.is_active });
       await queryClient.invalidateQueries({ queryKey: ['admin', 'promotions'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
+      await queryClient.invalidateQueries({ queryKey: ['checkout-quote'] });
       await queryClient.invalidateQueries({ queryKey: ['store'] });
       await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       addToast(`${promotion.code} is now ${promotion.is_active ? 'paused' : 'active'}`, 'success');
@@ -137,6 +142,8 @@ export const AdminPromotions: React.FC = () => {
       await adminApi.deletePromotion(deletingPromotion.id);
       setDeletingPromotion(null);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'promotions'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
+      await queryClient.invalidateQueries({ queryKey: ['checkout-quote'] });
       await queryClient.invalidateQueries({ queryKey: ['store'] });
       await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       addToast(`Promotion "${deletingPromotion.code}" deleted`, 'success');

@@ -20,6 +20,7 @@ import { Input } from '../../components/common/Input';
 import { useUiStore } from '../../stores/useUiStore';
 import { formatGBP } from '../../lib/formatters';
 import { AdminDataState } from '../../components/admin/AdminDataState';
+import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
 
 export const AdminStoreSettings: React.FC = () => {
   const queryClient = useQueryClient();
@@ -33,8 +34,8 @@ export const AdminStoreSettings: React.FC = () => {
   const addToast = useUiStore((state) => state.addToast);
 
   useEffect(() => {
-    if (settingsQuery.data && !dirty.current) setSettings(settingsQuery.data);
-  }, [settingsQuery.data]);
+    if (settingsQuery.isSuccess && !dirty.current) setSettings(settingsQuery.data || { ...DEFAULT_STORE_SETTINGS });
+  }, [settingsQuery.data, settingsQuery.isSuccess]);
 
   const handleChange = <K extends keyof StoreSettings>(field: K, value: StoreSettings[K]) => {
     dirty.current = true;
@@ -84,6 +85,8 @@ export const AdminStoreSettings: React.FC = () => {
       dirty.current = false;
       setSettings(updated);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
       await queryClient.invalidateQueries({ queryKey: ['store'] });
       await queryClient.invalidateQueries({ queryKey: ['checkout-quote'] });
       await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });

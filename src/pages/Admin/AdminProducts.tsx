@@ -136,14 +136,14 @@ export const AdminProducts: React.FC = () => {
     setComparePrice(prod.compare_at_price ? prod.compare_at_price.toString() : '');
     setStockQuantity(prod.stock_quantity.toString());
     setReleaseYear(prod.release_year.toString());
-    setRuntimeMinutes(prod.runtime_minutes.toString());
+    setRuntimeMinutes((prod.runtime_minutes ?? '').toString());
     setAgeRating(prod.age_rating);
     setRegionCode(prod.region_code);
     setLanguage(prod.language);
     setSubtitles(prod.subtitles);
     setCondition(prod.condition);
     setCoverImageUrl(prod.cover_image_url);
-    setDescription(prod.description);
+    setDescription(prod.description || '');
     setStatus(prod.status);
     setIsFeatured(prod.is_featured);
     setIsNewRelease(prod.is_new_release);
@@ -155,12 +155,14 @@ export const AdminProducts: React.FC = () => {
     e.preventDefault();
     const parsedPrice = Number(price);
     const parsedStock = Number(stockQuantity);
+    const parsedComparePrice = comparePrice.trim() ? Number(comparePrice) : null;
     const parsedYear = Number(releaseYear);
     const parsedRuntime = Number(runtimeMinutes);
     const parsedImdb = imdbRating.trim() ? Number(imdbRating) : null;
     if (!title.trim() || !sku.trim() || !coverImageUrl.trim() || !language.trim() || !subtitles.trim()
       || !format || !ageRating || !regionCode.trim() || !condition || !status
       || !Number.isFinite(parsedPrice) || parsedPrice < 0
+      || (parsedComparePrice != null && (!Number.isFinite(parsedComparePrice) || parsedComparePrice < parsedPrice))
       || !Number.isInteger(parsedStock) || parsedStock < 0
       || !Number.isInteger(parsedYear) || parsedYear < 1888
       || !Number.isInteger(parsedRuntime) || parsedRuntime < 1
@@ -177,70 +179,22 @@ export const AdminProducts: React.FC = () => {
     if (isUploadingImage || isSaving) return;
     setIsSaving(true);
     try {
-      if (editingProduct) {
-        const updated = await adminApi.updateProduct(editingProduct.id, {
-        title,
-        sku,
-        slug,
-        category_id: categoryId || null,
-        format: format as DvdFormat,
-        spine_number: spineNumber.trim() || null,
-        director: director.trim() || null,
-        aspect_ratio: aspectRatio.trim() || null,
-        audio_format: audioFormat.trim() || null,
-        imdb_rating: parsedImdb,
-        price: parsedPrice,
-        compare_at_price: comparePrice ? parseFloat(comparePrice) : null,
-        release_year: parsedYear,
-        runtime_minutes: parsedRuntime,
-        age_rating: ageRating as AgeRating,
-        region_code: regionCode,
-        language,
-        subtitles,
-        condition,
-        cover_image_url: coverImageUrl,
-        description,
-        status: status as ProductStatus,
-        is_featured: isFeatured,
-        is_new_release: isNewRelease,
-        is_best_seller: isBestSeller,
-      });
-        await adminApi.setProductGenres(updated.id, selectedGenreIds);
-        addToast(`Updated product "${updated.title}" successfully`, 'success');
-      } else {
-        const created = await adminApi.createProduct({
-        title,
-        sku,
-        slug,
-        category_id: categoryId || null,
-        format: format as DvdFormat,
-        spine_number: spineNumber.trim() || null,
-        director: director.trim() || null,
-        aspect_ratio: aspectRatio.trim() || null,
-        audio_format: audioFormat.trim() || null,
-        imdb_rating: parsedImdb,
-        price: parsedPrice,
-        compare_at_price: comparePrice ? parseFloat(comparePrice) : null,
-        stock_quantity: parsedStock,
-        release_year: parsedYear,
-        runtime_minutes: parsedRuntime,
-        age_rating: ageRating as AgeRating,
-        region_code: regionCode,
-        language,
-        subtitles,
-        condition,
-        cover_image_url: coverImageUrl,
-        description,
+      const saved = await adminApi.saveProductWithGenres(editingProduct?.id || null, {
+        title: title.trim(), sku: sku.trim(), slug,
+        category_id: categoryId || null, format: format as DvdFormat,
+        spine_number: spineNumber.trim() || null, director: director.trim() || null,
+        aspect_ratio: aspectRatio.trim() || null, audio_format: audioFormat.trim() || null,
+        imdb_rating: parsedImdb, price: parsedPrice,
+        compare_at_price: comparePrice ? Number(comparePrice) : null,
+        ...(!editingProduct ? { stock_quantity: parsedStock } : {}),
+        release_year: parsedYear, runtime_minutes: parsedRuntime, age_rating: ageRating as AgeRating,
+        region_code: regionCode, language, subtitles, condition,
+        cover_image_url: coverImageUrl, description,
         short_description: description.trim().slice(0, 160) || null,
         status: status as ProductStatus,
-        is_featured: isFeatured,
-        is_new_release: isNewRelease,
-        is_best_seller: isBestSeller,
-      });
-        setEditingProduct(created);
-        await adminApi.setProductGenres(created.id, selectedGenreIds);
-        addToast(`Added new title "${created.title}" to DVD catalogue`, 'success');
-      }
+        is_featured: isFeatured, is_new_release: isNewRelease, is_best_seller: isBestSeller,
+      }, selectedGenreIds);
+      addToast(`${editingProduct ? 'Updated' : 'Added'} product "${saved.title}" successfully`, 'success');
       await queryClient.invalidateQueries({ queryKey: ['admin'] });
       await queryClient.invalidateQueries({ queryKey: ['store'] });
       setIsModalOpen(false);

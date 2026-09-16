@@ -2,56 +2,28 @@ import { isSupabaseConfigured, supabase } from './supabase';
 import { HomepageConfig, MediaAsset } from '../types/homepage';
 import { DEFAULT_HOMEPAGE_CONFIG, PRESET_MEDIA_LIBRARY } from '../data/defaultHomepageConfig';
 
-const STORAGE_KEY_MEDIA = 'az_rayan_homepage_media_v1';
-
 function client() {
   if (!isSupabaseConfigured || !supabase) return null;
   return supabase;
 }
 
-function getLocalItem<T>(key: string, fallback: T): T {
-  try {
-    const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function setLocalItem<T>(key: string, value: T): void {
-  try {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
-  } catch (err) {
-    throw new Error('Media library could not be saved on this device.');
-  }
+function mediaClient() {
+  const sb = client();
+  if (!sb) throw new Error('Connect Supabase to use the shared media library.');
+  return sb;
 }
 
 export const homepageApi = {
   /**
    * Fetches published homepage configuration for public storefront.
-   * Resilient fallback: Always returns DEFAULT_HOMEPAGE_CONFIG if database is unseeded.
+   * Uses the starter layout until a homepage has been published.
    */
   async getHomepageConfig(): Promise<HomepageConfig> {
-    try {
-      const sb = client();
-      if (sb) {
-        const { data, error } = await sb
-          .from('homepage_config')
-          .select('config_data')
-          .eq('id', 'published')
-          .maybeSingle();
-        if (!error && data?.config_data) {
-          return data.config_data as HomepageConfig;
-        }
-      }
-    } catch (err) {
-      console.warn('[homepageApi] Live homepage configuration query warning:', err);
-    }
-
-    return DEFAULT_HOMEPAGE_CONFIG;
+    const sb = client();
+    if (!sb) return { ...DEFAULT_HOMEPAGE_CONFIG, status: 'draft' };
+    const { data, error } = await sb.from('homepage_config').select('config_data').eq('id', 'published').maybeSingle();
+    if (error) throw new Error('The published homepage could not be loaded. Please retry.');
+    return data?.config_data ? { ...data.config_data, status: 'published' } : { ...DEFAULT_HOMEPAGE_CONFIG, status: 'draft' };
   },
 
   /**
@@ -102,25 +74,28 @@ export const homepageApi = {
    * Retrieves media library (preset + uploaded)
    */
   async getMediaLibrary(): Promise<MediaAsset[]> {
-    const userMedia = getLocalItem<MediaAsset[]>(STORAGE_KEY_MEDIA, []);
-    return [...userMedia, ...PRESET_MEDIA_LIBRARY];
+    const { data, error } = await mediaClient().from('media_assets').select('id,asset_data').order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return [...(data || []).map((row) => ({ ...row.asset_data, id: row.id } as MediaAsset)), ...PRESET_MEDIA_LIBRARY];
   },
 
   /**
    * Adds an uploaded media asset to the library
    */
   async saveMediaAsset(asset: MediaAsset): Promise<MediaAsset> {
-    const current = getLocalItem<MediaAsset[]>(STORAGE_KEY_MEDIA, []);
-    const updated = [asset, ...current.filter((m) => m.id !== asset.id)];
-    setLocalItem(STORAGE_KEY_MEDIA, updated);
-    return asset;
+    const { data, error } = await mediaClient().from('media_assets')
+      .upsert({ id: asset.id, asset_data: asset }).select('id,asset_data').single();
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('The media asset could not be saved.');
+    return { ...data.asset_data, id: data.id } as MediaAsset;
   },
 
   /**
    * Deletes a media asset from library
    */
   async deleteMediaAsset(id: string): Promise<void> {
-    const current = getLocalItem<MediaAsset[]>(STORAGE_KEY_MEDIA, []);
-    setLocalItem(STORAGE_KEY_MEDIA, current.filter((m) => m.id !== id));
+    const { data, error } = await mediaClient().from('media_assets').delete().eq('id', id).select('id').single();
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('The media asset could not be removed.');
   },
 };

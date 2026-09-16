@@ -61,16 +61,17 @@ export const Home: React.FC = () => {
     );
   }
 
-  // Filter enabled sections, retaining only curated product rails, categories, and newsletter
+  // A published builder layout controls every section. Keep the existing template until first publish.
+  const isPublished = config.status === 'published';
   const catalogueSections = [...config.sections]
     .filter(
       (section) =>
         section.enabled &&
-        section.type !== 'hero' &&
+        (isPublished || (section.type !== 'hero' &&
         section.type !== 'editorial' &&
         section.type !== 'featured' &&
         section.type !== 'spotlight' &&
-        section.type !== 'campaign'
+        section.type !== 'campaign'))
     )
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
@@ -102,6 +103,7 @@ export const Home: React.FC = () => {
         }}
       />
 
+      {!isPublished && <>
       {/* 00: Monumental Dutch Coachbuilder Hero */}
       <SpykerHero />
 
@@ -116,6 +118,7 @@ export const Home: React.FC = () => {
 
       {/* Chapter 03: Cinema Manifesto (2.39:1 Anamorphic Player HUD & 3 Pillars) */}
       <SpykerManifestoVideo />
+      </>}
 
       {/* Curated Dynamic Catalogue Sections (Product Rails, Category Grids, Vault Dispatch) */}
       {catalogueSections.map((section, index) => {

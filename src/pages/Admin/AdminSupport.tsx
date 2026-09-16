@@ -21,11 +21,12 @@ export const AdminSupport: React.FC = () => {
   const messages = query.data || [];
   const open = (message: ContactMessage) => { setSelected(message); setStatus(message.status); setNote(message.internal_note || ''); };
   const save = async () => {
-    if (!selected) return;
+    if (!selected || saving) return;
     setSaving(true);
     try {
       const updated = await adminApi.updateContactMessage(selected.id, status, note);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'contact-messages'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
       setSelected(updated);
       addToast('Enquiry status updated', 'success');
     } catch (error) { addToast(error instanceof Error ? error.message : 'Enquiry could not be updated', 'error'); }

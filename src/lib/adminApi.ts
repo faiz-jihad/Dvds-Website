@@ -190,6 +190,14 @@ export const adminApi = {
     if (error || !data) fail(error, 'Genre was not deleted. It may no longer exist or access was denied.');
   },
 
+  async saveProductWithGenres(id: string | null, fields: Partial<Product>, genreIds: string[]): Promise<Product> {
+    const { data, error } = await client().rpc('save_admin_product', {
+      p_product_id: id, p_fields: fields, p_genre_ids: genreIds,
+    });
+    if (error || !data) fail(error, 'Product and genres could not be saved.');
+    return data as Product;
+  },
+
   async createProduct(input: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'category' | 'genres'>): Promise<Product> {
     const { data, error } = await client().from('products').insert(input).select('*').single();
     if (error || !data) fail(error, 'Product could not be created.');
@@ -280,10 +288,10 @@ export const adminApi = {
     if (error || !data) fail(error, 'Promotion could not be deleted.');
   },
 
-  async getStoreSettings(): Promise<StoreSettings> {
+  async getStoreSettings(): Promise<StoreSettings | null> {
     const { data, error } = await client().from('store_settings').select('*').eq('singleton', true).maybeSingle();
     if (error) fail(error, 'Store settings could not be loaded.');
-    return { ...DEFAULT_STORE_SETTINGS, ...data } as StoreSettings;
+    return data ? { ...DEFAULT_STORE_SETTINGS, ...data } as StoreSettings : null;
   },
 
   async saveStoreSettings(input: StoreSettings): Promise<StoreSettings> {
