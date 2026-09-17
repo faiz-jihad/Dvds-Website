@@ -165,7 +165,7 @@ export const SpykerManifestoVideo: React.FC = () => {
             y: prefersReduced ? 0 : videoY,
             opacity: prefersReduced ? 1 : videoOpacity,
           }}
-          className="group relative rounded-2xl overflow-hidden border border-white/[0.14] bg-[#07090d] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.95)] aspect-[16/9] md:aspect-[2.39/1] max-w-6xl mx-auto will-change-transform transition-shadow duration-500 hover:border-white/25 hover:shadow-[0_30px_90px_-20px_rgba(20,50,90,0.35)]"
+          className="group relative rounded-2xl overflow-hidden border border-white/[0.14] bg-[#07090d] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.95)] min-h-[350px] sm:min-h-0 sm:aspect-[16/9] md:aspect-[2.39/1] max-w-6xl mx-auto will-change-transform transition-shadow duration-500 hover:border-white/25 hover:shadow-[0_30px_90px_-20px_rgba(20,50,90,0.35)]"
         >
           {/* Active Cinema Video element with same master footage as homepage */}
           <div className="absolute inset-0 overflow-hidden">
@@ -209,24 +209,24 @@ export const SpykerManifestoVideo: React.FC = () => {
           </div>
 
           {/* Center Cinematic Typography & Play/Pause Trigger */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 pointer-events-none">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10 pointer-events-none">
             <button
               type="button"
               onClick={togglePlay}
-              className="pointer-events-auto mb-5 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/30 flex items-center justify-center text-white transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
+              className="pointer-events-auto mb-3 sm:mb-5 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/30 flex items-center justify-center text-white transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
               aria-label={isPlaying ? 'Pause film' : 'Play film'}
             >
               {isPlaying ? (
-                <Pause className="w-6 h-6 sm:w-8 sm:h-8" />
+                <Pause className="w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8" />
               ) : (
-                <Play className="w-6 h-6 sm:w-8 sm:h-8 translate-x-0.5" />
+                <Play className="w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 translate-x-0.5" />
               )}
             </button>
 
-            <span className="text-[10px] sm:text-xs font-mono tracking-[0.35em] text-white/70 uppercase mb-2 drop-shadow-sm">
+            <span className="text-[9px] sm:text-xs font-mono tracking-[0.25em] sm:tracking-[0.35em] text-white/70 uppercase mb-1.5 sm:mb-2 drop-shadow-sm">
               THE ART OF PHYSICAL CINEMA
             </span>
-            <h3 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter uppercase text-white max-w-2xl leading-[0.95] drop-shadow-md">
+            <h3 className="text-xl sm:text-3xl md:text-5xl font-black tracking-tighter uppercase text-white max-w-2xl leading-[0.95] drop-shadow-md">
               PERMANENCE IS TRUE LUXURY.
             </h3>
           </div>

@@ -10,8 +10,19 @@ export function countryCode(value) {
 export function countryName(value) { return COUNTRIES.find((country) => country.code === countryCode(value))?.name || value; }
 export function currencyDigits(currency) { return currency === 'JPY' ? 0 : 2; }
 export function minorAmount(value, currency = 'GBP') { return Math.round(Number(value) * 10 ** currencyDigits(currency)); }
+const CURRENCY_LOCALES = {
+  GBP: 'en-GB',
+  USD: 'en-US',
+  EUR: 'en-IE',
+  CAD: 'en-CA',
+  AUD: 'en-AU',
+  JPY: 'ja-JP',
+  IDR: 'id-ID',
+};
 export function formatMoney(value, currency = 'GBP') {
-  return new Intl.NumberFormat('en-GB', { style: 'currency', currency, minimumFractionDigits: currencyDigits(currency), maximumFractionDigits: currencyDigits(currency) }).format(Number(value));
+  const code = String(currency || 'GBP').toUpperCase();
+  const locale = CURRENCY_LOCALES[code] || 'en-GB';
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: code, minimumFractionDigits: currencyDigits(code), maximumFractionDigits: currencyDigits(code) }).format(Number(value));
 }
 export function addressRules(value) {
   const code = countryCode(value);

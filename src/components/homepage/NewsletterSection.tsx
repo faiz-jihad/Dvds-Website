@@ -63,20 +63,20 @@ export const NewsletterSection: React.FC<NewsletterSectionProps> = ({ data }) =>
           </div>
         ) : (
           <form onSubmit={handleSubscribe} className="max-w-md mx-auto space-y-3">
-            <div className="flex flex-col sm:flex-row items-center gap-2 bg-white/[0.04] p-1.5 rounded-full border border-white/15 focus-within:border-white/40 transition-colors">
+            <div className="flex flex-col sm:flex-row items-center gap-2 bg-white/[0.04] p-2 sm:p-1.5 rounded-2xl sm:rounded-full border border-white/15 focus-within:border-white/40 transition-colors">
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={data.placeholder || 'Enter your email address...'}
-                className="w-full bg-transparent px-4 py-2.5 text-xs text-white placeholder:text-white/40 focus:outline-hidden font-mono"
+                className="w-full bg-transparent px-4 py-2.5 text-xs text-white placeholder:text-white/40 focus:outline-hidden font-mono text-center sm:text-left"
                 aria-label="Email address for newsletter dispatch"
               />
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:w-auto px-6 py-3 bg-white hover:bg-neutral-200 text-black font-mono font-bold text-xs tracking-widest uppercase rounded-full transition-all shrink-0 active:scale-95 disabled:opacity-50"
+                className="w-full sm:w-auto px-6 py-3 bg-white hover:bg-neutral-200 text-black font-mono font-bold text-xs tracking-widest uppercase rounded-xl sm:rounded-full transition-all shrink-0 active:scale-95 disabled:opacity-50"
               >
                 {isSubmitting ? 'JOINING...' : data.buttonText ? data.buttonText.toUpperCase() : 'JOIN DISPATCH'}
               </button>

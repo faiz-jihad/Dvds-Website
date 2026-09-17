@@ -56,38 +56,38 @@ export const SpykerScrollExpandSection: React.FC = () => {
           </div>
         }
         scrollHint={
-          <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-black/85 hover:bg-black text-white text-xs font-mono tracking-[0.22em] uppercase border border-white/20 backdrop-blur-md shadow-2xl transition-transform hover:scale-105 cursor-pointer">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            <span>SCROLL TO EXPAND THE VAULT</span>
-            <span className="animate-bounce">↓</span>
+          <div className="inline-flex items-center gap-2 sm:gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-black/85 hover:bg-black text-white text-[10px] sm:text-xs font-mono tracking-wider sm:tracking-[0.22em] uppercase border border-white/20 backdrop-blur-md shadow-2xl transition-transform hover:scale-105 cursor-pointer max-w-[92vw]">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+            <span className="truncate">SCROLL TO EXPAND THE VAULT</span>
+            <span className="animate-bounce shrink-0">↓</span>
           </div>
         }
       >
         {/* Full-width Expanded Canvas Content */}
-        <div className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center p-6 sm:p-10 pt-20 sm:pt-24">
+        <div className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center p-4 sm:p-10 pt-16 sm:pt-24">
           <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight uppercase text-white leading-[0.92] max-w-3xl drop-shadow-2xl">
             PERMANENCE IS THE <br />
             <span className="text-white/60">ULTIMATE LUXURY.</span>
           </h2>
 
-          <p className="mt-5 text-sm sm:text-base md:text-lg text-white/80 max-w-2xl font-light leading-relaxed drop-shadow-lg">
+          <p className="mt-4 sm:mt-5 text-xs sm:text-base md:text-lg text-white/80 max-w-2xl font-light leading-relaxed drop-shadow-lg">
             Streaming platforms dynamically compress bitrates and silently delete titles without warning.
             A physical optical disc in your collection is an immutable piece of cinema history that you own forever.
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 mt-8">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mt-6 sm:mt-8 w-full sm:w-auto max-w-md sm:max-w-none">
             <Link
               to="/product/star-wars-the-mandalorian-seasons-1-3"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white hover:bg-neutral-200 text-black font-mono font-bold text-xs tracking-widest uppercase rounded-full transition-all duration-200 shadow-2xl active:scale-95"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-white hover:bg-neutral-200 text-black font-mono font-bold text-[11px] sm:text-xs tracking-wider sm:tracking-widest uppercase rounded-full transition-all duration-200 shadow-2xl active:scale-95 text-center"
             >
               <span>ACQUIRE THE MANDALORIAN 1–3 (£24.99)</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 shrink-0" />
             </Link>
 
             <Link
               to="/shop"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-mono font-semibold text-xs tracking-widest uppercase rounded-full transition-all duration-200"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-mono font-semibold text-[11px] sm:text-xs tracking-wider sm:tracking-widest uppercase rounded-full transition-all duration-200 text-center"
             >
               <span>BROWSE ALL 11 ARCHIVE DISCS</span>
             </Link>

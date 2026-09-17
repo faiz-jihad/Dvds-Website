@@ -159,7 +159,7 @@ export const AddressesPage: React.FC = () => {
             Manage your personal delivery locations for rapid, one-click checkout.
           </p>
         </div>
-        <Button variant="primary" size="sm" onClick={openAddModal} className="gap-1.5 shadow-xs">
+        <Button variant="primary" size="sm" onClick={openAddModal} className="w-full sm:w-auto justify-center gap-1.5 shadow-xs">
           <Plus className="h-3.5 w-3.5" />
           <span>Add New Address</span>
         </Button>
@@ -336,15 +336,16 @@ export const AddressesPage: React.FC = () => {
             />
             <span>Set as default address for future orders</span>
           </label>
-          <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 sm:col-span-2">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 border-t border-gray-100 pt-4 sm:col-span-2">
             <Button
               type="button"
               variant="secondary"
+              className="w-full sm:w-auto justify-center"
               onClick={() => setModalOpen(false)}
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={saving}>
+            <Button type="submit" isLoading={saving} className="w-full sm:w-auto justify-center">
               {editingAddress ? 'Save Changes' : 'Save Address'}
             </Button>
           </div>

@@ -2,42 +2,67 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { AccordionGallery, AccordionGalleryItem } from '../motion/AccordionGallery';
 import { DEFAULT_PRODUCTS } from '../../data/defaultProducts';
-import { formatGbp } from '../../lib/formatters';
+import { Product } from '../../types';
+import { formatGBP } from '../../lib/formatters';
 import { ChevronRight, Film } from 'lucide-react';
 
 type FilterCategory = 'all' | 'star-wars' | 'prestige-drama' | 'special-editions';
 
-export const SpykerInteractiveGallery: React.FC = () => {
+interface SpykerInteractiveGalleryProps {
+  products?: Product[];
+}
+
+export const SpykerInteractiveGallery: React.FC<SpykerInteractiveGalleryProps> = ({ products = [] }) => {
   const [activeCategory, setActiveCategory] = useState<FilterCategory>('all');
+
+  const sourceProducts = useMemo(() => {
+    return products.length > 0 ? products : DEFAULT_PRODUCTS;
+  }, [products]);
 
   // Filter products according to category
   const filteredProducts = useMemo(() => {
     switch (activeCategory) {
-      case 'star-wars':
-        return DEFAULT_PRODUCTS.filter((p) => p.title.toLowerCase().includes('star wars'));
-      case 'prestige-drama':
-        return DEFAULT_PRODUCTS.filter((p) =>
-          ['The Chosen', 'SEAL Team', 'Dutton Ranch', 'Marshals'].some((term) =>
-            p.title.includes(term)
+      case 'star-wars': {
+        const matched = sourceProducts.filter((p) =>
+          p.title.toLowerCase().includes('star wars') ||
+          p.category?.slug === 'sci-fi' ||
+          (p.genres && p.genres.some((g) => g.slug === 'science-fiction'))
+        );
+        return matched.length > 0 ? matched.slice(0, 6) : sourceProducts.slice(0, 6);
+      }
+      case 'prestige-drama': {
+        const matched = sourceProducts.filter((p) =>
+          p.category?.slug === 'drama' ||
+          p.category?.slug === 'tv-box-sets' ||
+          ['The Chosen', 'SEAL Team', 'Dutton Ranch', 'Marshals', 'drama'].some((term) =>
+            p.title.toLowerCase().includes(term.toLowerCase())
           )
         );
-      case 'special-editions':
-        return DEFAULT_PRODUCTS.filter((p) =>
-          ['Beatles', 'Greyhound', 'Friends'].some((term) => p.title.includes(term))
+        return matched.length > 0 ? matched.slice(0, 6) : sourceProducts.slice(0, 6);
+      }
+      case 'special-editions': {
+        const matched = sourceProducts.filter((p) =>
+          p.is_best_seller ||
+          p.is_new_release ||
+          Boolean(p.compare_at_price && p.compare_at_price > p.price) ||
+          ['Beatles', 'Greyhound', 'Friends', 'Box Set'].some((term) =>
+            p.title.toLowerCase().includes(term.toLowerCase())
+          )
         );
+        return matched.length > 0 ? matched.slice(0, 6) : sourceProducts.slice(0, 6);
+      }
       case 'all':
-      default:
-        // Top 6 headline products for optimal accordion layout
-        return [
-          DEFAULT_PRODUCTS[1], // Mando 1-3
-          DEFAULT_PRODUCTS[0], // Boba Fett
-          DEFAULT_PRODUCTS[4], // The Chosen
-          DEFAULT_PRODUCTS[5], // Greyhound
-          DEFAULT_PRODUCTS[6], // Beatles Get Back
-          DEFAULT_PRODUCTS[7], // Friends Reunion
+      default: {
+        // Prioritize featured titles, then bestsellers, up to 6 for the accordion gallery
+        const prioritized = [
+          ...sourceProducts.filter((p) => p.is_featured),
+          ...sourceProducts.filter((p) => !p.is_featured && p.is_best_seller),
+          ...sourceProducts.filter((p) => !p.is_featured && !p.is_best_seller),
         ];
+        return prioritized.slice(0, 6);
+      }
     }
-  }, [activeCategory]);
+  }, [activeCategory, sourceProducts]);
 
   // Convert to AccordionGallery items
   const galleryItems: AccordionGalleryItem[] = useMemo(() => {
@@ -47,7 +72,7 @@ export const SpykerInteractiveGallery: React.FC = () => {
       link: `/product/${product.slug}`,
       alt: product.title,
       eyebrow: product.format.toUpperCase(),
-      meta: `${formatGbp(product.price)} • ${product.release_year}`,
+      meta: `${formatGBP(product.price)} • ${product.release_year}`,
     }));
   }, [filteredProducts]);
 
@@ -77,7 +102,7 @@ export const SpykerInteractiveGallery: React.FC = () => {
           </div>
 
           {/* Collection Filter Buttons */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none max-w-full -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
             {[
               { id: 'all', label: 'CURATED' },
               { id: 'star-wars', label: 'STAR WARS' },
@@ -90,7 +115,7 @@ export const SpykerInteractiveGallery: React.FC = () => {
                 onClick={() => {
                   setActiveCategory(tab.id as FilterCategory);
                 }}
-                className={`text-xs font-mono tracking-widest uppercase px-4 py-2.5 rounded-full transition-all duration-200 border ${
+                className={`text-[11px] sm:text-xs font-mono tracking-wider sm:tracking-widest uppercase px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full transition-all duration-200 border whitespace-nowrap shrink-0 ${
                   activeCategory === tab.id
                     ? 'bg-white text-black border-white shadow-lg'
                     : 'bg-white/[0.03] text-white/60 border-white/[0.1] hover:border-white/30 hover:text-white'
@@ -130,7 +155,7 @@ export const SpykerInteractiveGallery: React.FC = () => {
             to="/shop"
             className="inline-flex items-center gap-2 text-xs font-mono tracking-widest uppercase text-white/80 hover:text-white transition-colors group"
           >
-            <span>EXPLORE ALL 11 ARCHIVED DISCS</span>
+            <span>EXPLORE ALL {sourceProducts.length} ARCHIVED DISCS</span>
             <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>

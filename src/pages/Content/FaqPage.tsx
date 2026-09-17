@@ -40,16 +40,16 @@ export const FaqPage: React.FC = () => {
   const faqs = createFaqs(settingsQuery.data.free_shipping_threshold, settingsQuery.data.dispatch_cutoff_time, settingsQuery.data.standard_shipping_name);
 
   return (
-    <div className="bg-white min-h-screen py-16">
-      <div className="max-w-3xl mx-auto px-6 space-y-10">
+    <div className="bg-white min-h-screen py-8 sm:py-16">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
         <div>
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
             KNOWLEDGE BASE
           </span>
-          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-dark tracking-tight mt-1 mb-3">
+          <h1 className="font-display font-extrabold text-2xl sm:text-4xl md:text-5xl text-dark tracking-tight mt-1 mb-3">
             Frequently Asked Questions
           </h1>
-          <p className="text-sm text-gray-600 leading-relaxed">
+          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
             Find immediate answers regarding physical disc formats, UK regions, dispatch times, and payments.
           </p>
         </div>

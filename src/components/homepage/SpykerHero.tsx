@@ -76,9 +76,9 @@ export const SpykerHero: React.FC = () => {
       <div className="h-20 sm:h-28" />
 
       {/* Hero Content Center / Spyker Style */}
-      <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-10 lg:px-16 py-16 sm:py-24 flex flex-col items-center text-center my-auto">
+      <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-10 lg:px-16 py-12 sm:py-24 flex flex-col items-center text-center my-auto">
         {/* Monumental Condensed Headline */}
-        <h1 className="font-display font-black uppercase text-4xl min-[380px]:text-5xl sm:text-7xl md:text-8xl lg:text-[108px] leading-[0.88] sm:leading-[0.84] tracking-[-0.03em] text-white mb-6">
+        <h1 className="font-display font-black uppercase text-3xl min-[360px]:text-4xl min-[420px]:text-5xl sm:text-7xl md:text-8xl lg:text-[108px] leading-[0.88] sm:leading-[0.84] tracking-[-0.03em] text-white mb-6 break-words">
           <span className="block overflow-hidden"><span data-intro-title ref={headlineLine1Ref} className="block">
             Films Worth
           </span></span>
@@ -91,16 +91,16 @@ export const SpykerHero: React.FC = () => {
         <p
           data-intro-description
           ref={descRef}
-          className="text-sm sm:text-base md:text-lg text-neutral-400 max-w-2xl font-light leading-relaxed mb-10 text-balance"
+          className="text-xs sm:text-base md:text-lg text-neutral-400 max-w-2xl font-light leading-relaxed mb-8 sm:mb-10 text-balance px-2"
         >
           Boutique DVD box sets, restored British cinema, and definitive collector editions preserved in tangible, uncompressed physical permanence. Dispatched across the UK.
         </p>
 
         {/* Spyker-Inspired High-End Action CTAs */}
-        <div data-intro-cta ref={ctaRef} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <div data-intro-cta ref={ctaRef} className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto max-w-sm sm:max-w-none">
           <Link
             to="/shop"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-white text-[#08090A] hover:bg-neutral-200 px-9 py-4 rounded-full text-xs sm:text-sm font-mono font-bold uppercase tracking-[0.16em] transition-all duration-300 shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-white text-[#08090A] hover:bg-neutral-200 px-6 sm:px-9 py-3.5 sm:py-4 rounded-full text-xs sm:text-sm font-mono font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] transition-all duration-300 shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
           >
             <span>Discover Archive</span>
             <ArrowRight className="w-4 h-4" />
@@ -108,7 +108,7 @@ export const SpykerHero: React.FC = () => {
 
           <Link
             to="/shop?category=tv-box-sets"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/20 hover:border-white/50 text-white hover:bg-white/5 px-8 py-4 rounded-full text-xs sm:text-sm font-mono font-semibold uppercase tracking-[0.16em] transition-all duration-300 backdrop-blur-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/20 hover:border-white/50 text-white hover:bg-white/5 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-xs sm:text-sm font-mono font-semibold uppercase tracking-[0.14em] sm:tracking-[0.16em] transition-all duration-300 backdrop-blur-sm"
           >
             <Disc3 className="w-4 h-4 text-brand-blue" />
             <span>Complete Box Sets</span>

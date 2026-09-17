@@ -5,16 +5,16 @@ import { Button } from '../../components/common/Button';
 
 export const ReturnsPage: React.FC = () => {
   return (
-    <div className="bg-white min-h-screen py-16">
-      <div className="max-w-3xl mx-auto px-6 space-y-8">
+    <div className="bg-white min-h-screen py-8 sm:py-16">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8">
         <div>
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
             CUSTOMER ASSURANCE
           </span>
-          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-dark tracking-tight mt-1 mb-3">
+          <h1 className="font-display font-extrabold text-2xl sm:text-4xl md:text-5xl text-dark tracking-tight mt-1 mb-3">
             30-Day Returns Policy
           </h1>
-          <p className="text-sm text-gray-600 leading-relaxed">
+          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
             We want you to be completely satisfied with every physical disc you purchase from DVDs Zone.
           </p>
         </div>

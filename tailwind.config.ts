@@ -5,6 +5,8 @@ export default {
   theme: {
     extend: {
       colors: {
+        background: 'var(--background, #ffffff)',
+        foreground: 'var(--foreground, #111111)',
         brand: {
           blue: '#1769E0',
           'blue-hover': '#1256BA',

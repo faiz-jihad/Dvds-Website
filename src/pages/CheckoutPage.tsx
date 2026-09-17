@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Building2, Check, CreditCard, Lock, Truck, Wallet } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, Check, CheckCircle2, CreditCard, Lock, MapPin, Plus, Truck, User, Wallet } from 'lucide-react';
 import { useCartStore } from '../stores/useCartStore';
 import { checkoutApi, currentCheckoutAttempt } from '../lib/checkoutApi';
+import { publicApi } from '../lib/publicApi';
 import { COUNTRIES, addressRules, countryCode, countryName, formatMoney, normalizeAddress } from '../../shared/commerce.js';
 import { Address, PaymentMethodType } from '../types';
 import { useCustomerAuth } from '../auth/CustomerAuth';
+import { clearCheckoutDraft, loadCheckoutDraft, saveCheckoutDraft } from '../lib/checkoutDraft';
 
 const fieldClass = 'mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50';
 const methods = [
@@ -15,28 +17,58 @@ const methods = [
   { id: 'bank_transfer' as const, name: 'Company bank transfer', icon: Building2, description: 'Transfer directly to our company bank account.', detail: 'Place your order to receive bank details and a unique reference. Dispatch starts after payment is confirmed.', badge: 'Manual confirmation' },
 ];
 
+const CURRENCY_DISPLAY: Record<string, string> = {
+  GBP: 'GBP (£) — British Pound',
+  EUR: 'EUR (€) — Euro',
+  USD: 'USD ($) — US Dollar',
+  CAD: 'CAD ($) — Canadian Dollar',
+  AUD: 'AUD ($) — Australian Dollar',
+  JPY: 'JPY (¥) — Japanese Yen',
+  IDR: 'IDR (Rp) — Indonesian Rupiah',
+};
+
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
-  const { customer } = useCustomerAuth();
+  const { customer, isLoading: authLoading } = useCustomerAuth();
   const items = useCartStore((state) => state.items);
   const appliedPromo = useCartStore((state) => state.appliedPromoCode);
-  const [email, setEmail] = useState(customer?.email || '');
-  const [address, setAddress] = useState<Address>({ id: 'checkout', full_name: customer?.full_name || '', address_line_1: '', address_line_2: '', city: '', county: '', postcode: '', country: 'GB', phone: customer?.phone || '' });
-  const [currency, setCurrency] = useState('GBP');
-  const [internationalAcknowledged, setInternationalAcknowledged] = useState(false);
+
+  // Restore previous checkout draft if user navigated away or reloaded
+  const savedDraft = React.useMemo(() => loadCheckoutDraft(customer?.id), [customer?.id]);
+
+  const [email, setEmail] = useState<string>(() => savedDraft?.email || customer?.email || '');
+  const [address, setAddress] = useState<Address>(() => {
+    if (savedDraft?.address) return savedDraft.address;
+    return {
+      id: 'checkout',
+      full_name: customer?.full_name || '',
+      address_line_1: '',
+      address_line_2: '',
+      city: '',
+      county: '',
+      postcode: '',
+      country: 'GB',
+      phone: customer?.phone || '',
+    };
+  });
+  const [currency, setCurrency] = useState<string>(() => savedDraft?.currency || 'GBP');
+  const [internationalAcknowledged, setInternationalAcknowledged] = useState<boolean>(() => savedDraft?.internationalAcknowledged ?? false);
   const rules = addressRules(address.country);
   const international = countryCode(address.country) !== 'GB';
   const configQuery = useQuery({ queryKey: ['checkout-config'], queryFn: checkoutApi.configuration, staleTime: 30_000 });
-  const currencies = configQuery.data?.currencies || ['GBP'];
-  const [tier, setTier] = useState<'standard' | 'express'>('standard');
-  const [method, setMethod] = useState<PaymentMethodType>('card');
-  const [promo, setPromo] = useState(appliedPromo || '');
-  const [promoDraft, setPromoDraft] = useState(appliedPromo || '');
+  const currencies = configQuery.data?.currencies?.length ? configQuery.data.currencies : ['GBP', 'EUR', 'USD'];
+  const [tier, setTier] = useState<'standard' | 'express'>(() => savedDraft?.tier || 'standard');
+  const [method, setMethod] = useState<PaymentMethodType>(() => savedDraft?.method || 'card');
+  const [promo, setPromo] = useState<string>(() => savedDraft?.promo ?? (appliedPromo || ''));
+  const [promoDraft, setPromoDraft] = useState<string>(() => savedDraft?.promoDraft ?? (appliedPromo || ''));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(currentCheckoutAttempt);
   const [applePaySupported, setApplePaySupported] = useState(false);
   const [googlePaySupported, setGooglePaySupported] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>(() => savedDraft?.selectedAddressId || 'initial');
+  const [saveNewAddress, setSaveNewAddress] = useState<boolean>(() => savedDraft?.saveNewAddress ?? true);
+
   const basket = items.map((item) => ({ product_id: item.product_id, quantity: item.quantity }));
   const quoteQuery = useQuery({
     queryKey: ['checkout-quote', basket, tier, promo, address.country, currency],
@@ -46,18 +78,102 @@ export const CheckoutPage: React.FC = () => {
   });
   const quote = quoteQuery.data;
   const displayPrice = (amount: number) => formatMoney(amount, quote?.currency || currency);
+
   useEffect(() => {
     if (quote && !quote.methods[method]) {
       const available = methods.find((option) => quote.methods[option.id]);
       if (available) setMethod(available.id);
     }
   }, [quote, method]);
+
+  const savedAddressesQuery = useQuery({
+    queryKey: ['account', 'addresses'],
+    queryFn: publicApi.getMyAddresses,
+    enabled: Boolean(customer),
+    staleTime: 30_000,
+  });
+  const savedAddresses = savedAddressesQuery.data || [];
+
+  const applySavedAddress = (saved: Address) => {
+    const code = countryCode(saved.country) || 'GB';
+    setAddress({
+      id: saved.id,
+      full_name: saved.full_name || customer?.full_name || '',
+      phone: saved.phone || customer?.phone || '',
+      address_line_1: saved.address_line_1 || '',
+      address_line_2: saved.address_line_2 || '',
+      city: saved.city || '',
+      county: saved.county || '',
+      postcode: saved.postcode || '',
+      country: code,
+    });
+    setTier('standard');
+    setInternationalAcknowledged(false);
+    setError('');
+    if (code === 'US' && currencies.includes('USD')) {
+      setCurrency('USD');
+    } else if (['AT','BE','CY','EE','FI','FR','DE','GR','IE','IT','LV','LT','LU','MT','NL','PT','SK','SI','ES'].includes(code) && currencies.includes('EUR')) {
+      setCurrency('EUR');
+    } else if (code === 'GB') {
+      setCurrency('GBP');
+    }
+  };
+
+  // Sync customer details when customer auth loads
   useEffect(() => {
     if (customer) {
       setEmail((value) => value || customer.email);
-      setAddress((value) => ({ ...value, full_name: value.full_name || customer.full_name || '', phone: value.phone || customer.phone || '' }));
+      setAddress((prev) => ({
+        ...prev,
+        full_name: prev.full_name || customer.full_name || '',
+        phone: prev.phone || customer.phone || '',
+      }));
     }
   }, [customer]);
+
+  // Handle saved addresses initialization when no draft was already present
+  useEffect(() => {
+    if (savedAddresses.length > 0) {
+      if (selectedAddressId === 'initial') {
+        const defaultAddr = savedAddresses.find((a) => a.is_default) || savedAddresses[0];
+        setSelectedAddressId(defaultAddr.id);
+        applySavedAddress(defaultAddr);
+      }
+    } else if (selectedAddressId === 'initial') {
+      setSelectedAddressId('custom');
+    }
+  }, [savedAddresses, selectedAddressId]);
+
+  // Automatically persist all user input to localStorage draft so leaving or going back never loses fields
+  useEffect(() => {
+    if (authLoading) return;
+    saveCheckoutDraft({
+      customerId: customer?.id,
+      email,
+      address,
+      currency,
+      tier,
+      method,
+      promo,
+      promoDraft,
+      selectedAddressId,
+      saveNewAddress,
+      internationalAcknowledged,
+    });
+  }, [
+    authLoading,
+    customer?.id,
+    email,
+    address,
+    currency,
+    tier,
+    method,
+    promo,
+    promoDraft,
+    selectedAddressId,
+    saveNewAddress,
+    internationalAcknowledged,
+  ]);
   useEffect(() => {
     // Apple Pay: available on Safari / iOS / macOS with a card enrolled in Wallet.
     const applePay = (window as Window & { ApplePaySession?: { canMakePayments: () => boolean } }).ApplePaySession;
@@ -72,7 +188,19 @@ export const CheckoutPage: React.FC = () => {
     }
   }, []);
   const updateAddress = (key: keyof Address, value: string) => {
-    if (key === 'country') { setTier('standard'); setInternationalAcknowledged(false); setError(''); }
+    if (key === 'country') {
+      setTier('standard');
+      setInternationalAcknowledged(false);
+      setError('');
+      const code = countryCode(value);
+      if (code === 'US' && currencies.includes('USD')) {
+        setCurrency('USD');
+      } else if (['AT','BE','CY','EE','FI','FR','DE','GR','IE','IT','LV','LT','LU','MT','NL','PT','SK','SI','ES'].includes(code) && currencies.includes('EUR')) {
+        setCurrency('EUR');
+      } else if (code === 'GB') {
+        setCurrency('GBP');
+      }
+    }
     setAddress((previous) => ({ ...previous, [key]: value }));
   };
   const retryAttempt = async () => {
@@ -80,8 +208,12 @@ export const CheckoutPage: React.FC = () => {
     setBusy(true); setError('');
     try {
       const result = await checkoutApi.create(attempt.method, attempt.input);
-      if (result.completed || attempt.method === 'bank_transfer') navigate(`/order-success/${result.orderId}`);
-      else if (result.url) window.location.assign(result.url);
+      if (result.completed || attempt.method === 'bank_transfer') {
+        clearCheckoutDraft();
+        navigate(`/order-success/${result.orderId}`);
+      } else if (result.url) {
+        window.location.assign(result.url);
+      }
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Please retry.'); }
     finally { setAttempt(currentCheckoutAttempt()); setBusy(false); }
   };
@@ -101,17 +233,49 @@ export const CheckoutPage: React.FC = () => {
     if (international && !internationalAcknowledged) { setError('Acknowledge the international delivery notice to continue.'); return; }
     setBusy(true); setError('');
     try {
+      if (selectedAddressId === 'custom' && saveNewAddress && customer && address.address_line_1) {
+        publicApi.createMyAddress({
+          full_name: address.full_name,
+          phone: address.phone,
+          address_line_1: address.address_line_1,
+          address_line_2: address.address_line_2 || undefined,
+          city: address.city,
+          county: address.county || undefined,
+          postcode: address.postcode,
+          country: countryName(address.country),
+          is_default: savedAddresses.length === 0,
+        }).catch((err) => console.warn('[checkout] Could not save address to account:', err));
+      }
       const result = await checkoutApi.create(method, { items: basket, customerEmail: email, shippingAddress: { ...address, ...validatedAddress }, deliveryTier: tier, promoCode: promo, expectedTotal: quote.total_amount, currency, internationalAcknowledged });
       setAttempt(currentCheckoutAttempt());
-      if (method === 'bank_transfer' || result.completed) navigate(`/order-success/${result.orderId}`);
-      else if (result.url && new URL(result.url).protocol === 'https:') window.location.assign(result.url);
-      else throw new Error('The payment link is unavailable. Your order is saved; please retry from its status page.');
+      if (method === 'bank_transfer' || result.completed) {
+        clearCheckoutDraft();
+        navigate(`/order-success/${result.orderId}`);
+      } else if (result.url && new URL(result.url).protocol === 'https:') {
+        window.location.assign(result.url);
+      } else {
+        throw new Error('The payment link is unavailable. Your order is saved; please retry from its status page.');
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Payment could not be started. Please retry.');
       setAttempt(currentCheckoutAttempt());
       await quoteQuery.refetch();
     } finally { setBusy(false); }
   };
+  if (authLoading) {
+    return (
+      <div className="bg-gray-50/70 min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-10 h-10 border-4 border-brand-blue border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-semibold text-gray-800">Verifying customer account...</p>
+        <p className="text-xs text-gray-500 mt-1">Please wait a moment while we load your secure checkout.</p>
+      </div>
+    );
+  }
+
+  if (!customer) {
+    return <Navigate to="/login?redirect=/checkout" state={{ from: '/checkout' }} replace />;
+  }
+
   if (!items.length && !attempt && !busy) return <Navigate to="/cart" replace />;
 
   return (
@@ -135,11 +299,116 @@ export const CheckoutPage: React.FC = () => {
         <form onSubmit={submit} className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-6 lg:gap-8 items-start">
           <div className="rounded-2xl bg-white border border-gray-200 p-5 sm:p-8 space-y-8">
             <fieldset disabled={busy || Boolean(attempt)}>
-              <legend className="text-lg font-semibold mb-5"><span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-brand-blue rounded-full text-xs mr-3">1</span>Contact &amp; delivery details</legend>
+              <legend className="text-lg font-semibold mb-4"><span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-brand-blue rounded-full text-xs mr-3">1</span>Contact &amp; delivery details</legend>
+
+              {customer && savedAddresses.length > 0 && (
+                <div className="mb-6 rounded-2xl border border-blue-100 bg-gradient-to-b from-blue-50/60 to-transparent p-4 sm:p-5">
+                  <div className="flex items-center justify-between gap-2 mb-3.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
+                      <MapPin size={14} className="text-brand-blue" />
+                      Select saved address ({savedAddresses.length})
+                    </span>
+                    <Link to="/account/addresses" target="_blank" className="text-xs text-brand-blue hover:underline">
+                      Manage addresses ↗
+                    </Link>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {savedAddresses.map((addr) => {
+                      const isSelected = selectedAddressId === addr.id;
+                      return (
+                        <button
+                          key={addr.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedAddressId(addr.id);
+                            applySavedAddress(addr);
+                          }}
+                          className={`text-left p-3.5 rounded-xl border transition-all text-xs relative ${
+                            isSelected
+                              ? 'border-brand-blue bg-white ring-2 ring-blue-200 shadow-sm'
+                              : 'border-gray-200 bg-white hover:border-blue-300'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+                              {isSelected && <CheckCircle2 size={15} className="text-brand-blue shrink-0" />}
+                              {addr.full_name}
+                            </span>
+                            {addr.is_default && (
+                              <span className="text-[10px] bg-blue-100 text-blue-800 font-semibold px-1.5 py-0.5 rounded shrink-0">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-gray-600 mt-1.5 truncate">{addr.address_line_1}</p>
+                          <p className="text-gray-500 truncate">
+                            {[addr.city, addr.county, addr.postcode].filter(Boolean).join(', ')}
+                          </p>
+                          <p className="text-gray-500 font-medium mt-0.5">{countryName(addr.country)}</p>
+                          {addr.phone && <p className="text-gray-400 mt-1">{addr.phone}</p>}
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAddressId('custom');
+                        setAddress({
+                          id: 'checkout',
+                          full_name: customer?.full_name || '',
+                          phone: customer?.phone || '',
+                          address_line_1: '',
+                          address_line_2: '',
+                          city: '',
+                          county: '',
+                          postcode: '',
+                          country: 'GB',
+                        });
+                      }}
+                      className={`text-left p-3.5 rounded-xl border-2 border-dashed transition-all text-xs flex flex-col items-center justify-center min-h-[95px] ${
+                        selectedAddressId === 'custom'
+                          ? 'border-brand-blue bg-white text-brand-blue font-semibold ring-2 ring-blue-100'
+                          : 'border-gray-200 bg-white/70 hover:bg-white text-gray-600'
+                      }`}
+                    >
+                      <Plus size={17} className="mb-1 text-brand-blue" />
+                      <span className="font-medium">Enter a new address</span>
+                      <span className="text-[10px] text-gray-400 mt-0.5">Input custom delivery address</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-900">
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
+                  <span>Logged in as <strong className="font-semibold text-blue-950">{customer?.full_name ? `${customer.full_name} (${customer.email})` : customer?.email}</strong></span>
+                </span>
+                <Link to="/login?redirect=/checkout" className="text-brand-blue hover:underline font-medium">
+                  Switch account
+                </Link>
+              </div>
+
+              {customer && selectedAddressId !== 'custom' && (
+                <div className="mb-4 flex items-center justify-between bg-blue-50/70 border border-blue-100 rounded-xl px-3.5 py-2.5 text-xs text-blue-900">
+                  <span>Using saved account address. You can adjust details below for this delivery if needed.</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = savedAddresses.find((a) => a.id === selectedAddressId);
+                      if (current) applySavedAddress(current);
+                    }}
+                    className="underline text-brand-blue font-medium ml-2 shrink-0"
+                  >
+                    Reset
+                  </button>
+                </div>
+              )}
+
               <div className="grid sm:grid-cols-2 gap-4">
                 <label className="text-sm sm:col-span-2">Email address<input className={fieldClass} type="email" autoComplete="email" required maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} /></label>
                 <label className="text-sm">Delivery country<select className={fieldClass} autoComplete="shipping country" value={address.country} onChange={(event) => updateAddress('country', event.target.value)}>{COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}</select></label>
-                <label className="text-sm">Pay in<select className={fieldClass} value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencies.map((code) => <option key={code} value={code}>{code}</option>)}</select></label>
+                <label className="text-sm">Pay in<select className={fieldClass} value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencies.map((code) => <option key={code} value={code}>{CURRENCY_DISPLAY[code] || code}</option>)}</select></label>
                 <label className="text-sm sm:col-span-2">Full name<input className={fieldClass} autoComplete="shipping name" required maxLength={200} value={address.full_name} onChange={(e) => updateAddress('full_name', e.target.value)} /></label>
                 <label className="text-sm sm:col-span-2">Address line 1<input className={fieldClass} autoComplete="shipping address-line1" required maxLength={200} value={address.address_line_1} onChange={(e) => updateAddress('address_line_1', e.target.value)} /></label>
                 <label className="text-sm sm:col-span-2">Address line 2 <span className="text-gray-400">(optional)</span><input className={fieldClass} autoComplete="shipping address-line2" maxLength={200} value={address.address_line_2 || ''} onChange={(e) => updateAddress('address_line_2', e.target.value)} /></label>
@@ -147,6 +416,18 @@ export const CheckoutPage: React.FC = () => {
                 <label className="text-sm">{rules.postalLabel}{!rules.postalRequired && <span className="text-gray-400"> (optional)</span>}<input className={fieldClass} autoComplete="shipping postal-code" required={rules.postalRequired} maxLength={32} value={address.postcode} onChange={(e) => updateAddress('postcode', e.target.value)} /></label>
                 <label className="text-sm">Phone <span className="text-gray-400">(optional)</span><input className={fieldClass} type="tel" autoComplete="tel" maxLength={30} value={address.phone || ''} onChange={(e) => updateAddress('phone', e.target.value)} /></label>
                 <label className="text-sm">{rules.stateLabel}{!rules.stateRequired && <span className="text-gray-400"> (optional)</span>}<input className={fieldClass} autoComplete="shipping address-level1" required={rules.stateRequired} maxLength={120} value={address.county || ''} onChange={(event) => updateAddress('county', event.target.value)} /></label>
+
+                {selectedAddressId === 'custom' && customer && (
+                  <label className="flex items-center gap-2 text-xs text-gray-600 sm:col-span-2 mt-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={saveNewAddress}
+                      onChange={(e) => setSaveNewAddress(e.target.checked)}
+                      className="accent-blue-600 w-4 h-4 rounded"
+                    />
+                    <span>Save this address to my account for future orders</span>
+                  </label>
+                )}
               </div>
             </fieldset>
             <fieldset disabled={busy || Boolean(attempt)} className="border-t border-gray-100 pt-7">

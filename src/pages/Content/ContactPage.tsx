@@ -132,7 +132,7 @@ export const ContactPage: React.FC = () => {
                     className="w-full p-3 bg-white border border-gray-300 rounded-md text-sm text-dark placeholder:text-gray-400 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
                   />
                 </div>
-                <Button variant="primary" type="submit" size="md" className="gap-2" isLoading={submitting}>
+                <Button variant="primary" type="submit" size="md" className="w-full sm:w-auto justify-center gap-2" isLoading={submitting}>
                   <Send className="w-4 h-4" />
                   Send Message
                 </Button>

@@ -39,8 +39,13 @@ export const ProductRailSection: React.FC<ProductRailSectionProps> = ({ data, al
         }
         break;
       case 'manual':
-        const idSet = new Set(data.manualProductIds || []);
-        list = list.filter((p) => idSet.has(p.id));
+        if (data.manualProductIds && data.manualProductIds.length > 0) {
+          const productMap = new Map(allProducts.map((p) => [p.id, p]));
+          const matched = data.manualProductIds.map((id) => productMap.get(id)).filter(Boolean) as Product[];
+          if (matched.length > 0) {
+            list = matched;
+          }
+        }
         break;
       default:
         break;

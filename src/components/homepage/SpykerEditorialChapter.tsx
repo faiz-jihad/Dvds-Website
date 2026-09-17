@@ -95,7 +95,7 @@ export const SpykerEditorialChapter: React.FC = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full bg-[#06080b] text-white py-24 sm:py-32 lg:py-40 overflow-hidden border-b border-white/[0.08] select-none"
+      className="relative w-full bg-[#06080b] text-white py-16 sm:py-28 lg:py-40 overflow-hidden border-b border-white/[0.08] select-none"
     >
       {/* Ambient Radial Deep Glow */}
       <div
@@ -106,11 +106,11 @@ export const SpykerEditorialChapter: React.FC = () => {
         }}
       />
 
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-10 lg:px-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
           {/* Left Asymmetric Editorial Column / Spyker Pure Passion Style */}
           <div className="lg:col-span-5 lg:sticky lg:top-32 flex flex-col items-start">
-            <h2 className="font-display font-black uppercase text-4xl sm:text-6xl lg:text-7xl leading-[0.88] tracking-[-0.03em] text-white mb-8">
+            <h2 className="font-display font-black uppercase text-3xl min-[380px]:text-4xl sm:text-6xl lg:text-7xl leading-[0.92] sm:leading-[0.88] tracking-[-0.03em] text-white mb-6 sm:mb-8">
               <span ref={titleLine1Ref} className="block overflow-hidden will-change-transform">
                 PURE
               </span>

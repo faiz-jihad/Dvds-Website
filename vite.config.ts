@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -32,12 +33,18 @@ const devApiPlugin = () => ({
   },
 });
 
+const lenisModulePath = fs.existsSync(path.resolve(__dirname, 'node_modules/@studio-freight/lenis'))
+  ? '@studio-freight/lenis'
+  : path.resolve(__dirname, './src/lib/lenis-shim.ts');
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), devApiPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'motion/react': 'framer-motion',
+      '@studio-freight/lenis': lenisModulePath,
     },
   },
   build: {

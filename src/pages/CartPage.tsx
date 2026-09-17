@@ -6,8 +6,10 @@ import { formatGBP } from '../lib/formatters';
 import { QuantitySelector } from '../components/commerce/QuantitySelector';
 import { Button } from '../components/common/Button';
 import { EmptyState } from '../components/common/EmptyState';
+import { useCustomerAuth } from '../auth/CustomerAuth';
 
 export const CartPage: React.FC = () => {
+  const { customer } = useCustomerAuth();
   const {
     items,
     removeItem,
@@ -217,11 +219,23 @@ export const CartPage: React.FC = () => {
                 variant="primary"
                 size="lg"
                 className="w-full justify-between"
-                onClick={() => navigate('/checkout')}
+                onClick={() => {
+                  if (!customer) {
+                    navigate('/login?redirect=/checkout', { state: { from: '/checkout' } });
+                  } else {
+                    navigate('/checkout');
+                  }
+                }}
               >
-                <span>Proceed to Checkout</span>
+                <span>{customer ? 'Proceed to Checkout' : 'Sign in to Checkout'}</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
+
+              {!customer && (
+                <p className="text-[11px] text-center text-gray-500 bg-gray-100/80 rounded-lg py-2 px-3">
+                  Account sign-in is required at checkout to protect your order &amp; tracking.
+                </p>
+              )}
 
               <div className="pt-2 flex items-center justify-center gap-2 text-[11px] text-gray-400">
                 <ShieldCheck className="w-3.5 h-3.5 text-brand-blue" />

@@ -7,9 +7,11 @@ import { useUiStore } from '../../stores/useUiStore';
 import { formatGBP } from '../../lib/formatters';
 import { QuantitySelector } from './QuantitySelector';
 import { Button } from '../common/Button';
+import { useCustomerAuth } from '../../auth/CustomerAuth';
 
 export const CartDrawer: React.FC = () => {
   const { isCartDrawerOpen, closeCartDrawer } = useUiStore();
+  const { customer } = useCustomerAuth();
   const {
     items,
     removeItem,
@@ -29,7 +31,11 @@ export const CartDrawer: React.FC = () => {
 
   const handleCheckout = () => {
     closeCartDrawer();
-    navigate('/checkout');
+    if (!customer) {
+      navigate('/login?redirect=/checkout', { state: { from: '/checkout' } });
+    } else {
+      navigate('/checkout');
+    }
   };
 
   return (
@@ -209,7 +215,7 @@ export const CartDrawer: React.FC = () => {
                       className="w-full justify-between"
                       onClick={handleCheckout}
                     >
-                      <span>Proceed to Checkout</span>
+                      <span>{customer ? 'Proceed to Checkout' : 'Sign in to Checkout'}</span>
                       <ArrowRight className="w-4 h-4" />
                     </Button>
 

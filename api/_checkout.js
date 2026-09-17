@@ -4,6 +4,27 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import Stripe from 'stripe';
 import { getSupabasePublicClient, getSupabaseServerClient } from './_supabase.js';
 
+export const DEFAULT_SHIPPING_ZONES = [
+  {
+    id: 'zone-europe',
+    name: 'Europe (EU)',
+    enabled: true,
+    countries: ['DE', 'FR', 'IT', 'ES', 'NL', 'IE', 'BE', 'AT', 'SE', 'DK', 'PL', 'PT', 'CH', 'NO', 'FI'],
+    standard: { name: 'Royal Mail International Tracked Europe', eta: '4-7 working days', fee: 6.95 },
+    express: { name: 'DHL Express Europe', eta: '2-3 working days', fee: 14.95 },
+    free_threshold: 60.0,
+  },
+  {
+    id: 'zone-north-america',
+    name: 'USA & North America',
+    enabled: true,
+    countries: ['US', 'CA'],
+    standard: { name: 'Royal Mail International Tracked USA', eta: '5-9 working days', fee: 9.95 },
+    express: { name: 'FedEx International Priority', eta: '2-4 working days', fee: 19.95 },
+    free_threshold: 75.0,
+  },
+];
+
 export class CheckoutError extends Error {
   constructor(message, status = 400, code = 'CHECKOUT_ERROR') { super(message); this.status = status; this.code = code; }
 }
@@ -78,9 +99,12 @@ export function calculateQuote(items, products, settings, promo, promoCode, deli
     express = money(settings.express_shipping_fee);
     delivery = { standard: { name: settings.standard_shipping_name, eta: settings.standard_shipping_eta, amount: standard / 100 }, express: { name: settings.express_shipping_name, eta: settings.express_shipping_eta, amount: express / 100 } };
   } else {
-    try { validateShippingZones(settings.shipping_zones || []); }
+    const rawZones = Array.isArray(settings.shipping_zones) && settings.shipping_zones.length > 0
+      ? settings.shipping_zones
+      : DEFAULT_SHIPPING_ZONES;
+    try { validateShippingZones(rawZones); }
     catch { throw new CheckoutError('International delivery settings are unavailable. Please contact the store.', 503); }
-    const zone = (settings.shipping_zones || []).find((zone) => zone.enabled && zone.countries.includes(code));
+    const zone = rawZones.find((z) => z.enabled && z.countries.includes(code));
     if (!zone) throw new CheckoutError('Delivery to this country is not available yet. Please contact us for a shipping quote.', 400, 'DESTINATION_UNAVAILABLE');
     zoneName = zone.name;
     standard = zone.free_threshold != null && subtotal >= money(zone.free_threshold) ? 0 : money(zone.standard.fee);
@@ -113,7 +137,10 @@ export async function quoteCheckout(db, input) {
   const code = String(input.promoCode || '').trim().toUpperCase();
   const promo = code ? check(await db.from('promotions').select('*').eq('code', code).maybeSingle()) : null;
   const currency = String(input.currency || 'GBP').toUpperCase();
-  if (!(settings.checkout_currencies || ['GBP']).includes(currency)) throw new CheckoutError('This currency is not enabled by the store.');
+  const allowedCurrencies = Array.isArray(settings.checkout_currencies) && settings.checkout_currencies.length > 0
+    ? Array.from(new Set(['GBP', 'EUR', 'USD', ...settings.checkout_currencies]))
+    : ['GBP', 'EUR', 'USD'];
+  if (!allowedCurrencies.includes(currency)) throw new CheckoutError('This currency is not enabled by the store.');
   const baseQuote = calculateQuote(items, products || [], settings, promo, code, input.deliveryTier, Date.now(), input.shippingAddress?.country || input.country || 'GB');
   const fx = await exchangeRate(currency);
   return { quote: convertQuote(baseQuote, currency, fx), settings };

@@ -130,7 +130,7 @@ export const AdminStoreSettings: React.FC = () => {
       free_shipping_threshold: 0,
       standard_shipping_fee: 0,
       shipping_zones: [],
-      checkout_currencies: ['GBP'],
+      checkout_currencies: ['GBP', 'EUR', 'USD'],
       international_duties_notice: '',
       express_shipping_fee: 0,
       standard_shipping_name: '',

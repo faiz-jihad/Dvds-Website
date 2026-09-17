@@ -38,7 +38,6 @@ export const DvdSpecsTable: React.FC<DvdSpecsTableProps> = ({ product }) => {
         </div>
       ),
     },
-    { label: 'Region Code', value: product.region_code },
     { label: 'Aspect Ratio', value: product.aspect_ratio || '16:9 Anamorphic Widescreen (1.85:1)' },
     { label: 'Audio Transfer', value: product.audio_format || product.language },
     { label: 'Subtitles', value: product.subtitles },
@@ -52,7 +51,7 @@ export const DvdSpecsTable: React.FC<DvdSpecsTableProps> = ({ product }) => {
         <h4 className="font-display font-semibold text-xs uppercase tracking-wider text-dark">
           Physical Disc Specifications
         </h4>
-        <span className="text-[11px] font-mono text-gray-500">PAL / REGION 2</span>
+        <span className="text-[11px] font-mono text-gray-500">OFFICIAL PAL EDITION</span>
       </div>
       <dl className="divide-y divide-gray-100 text-xs">
         {specs.map((item, index) => (

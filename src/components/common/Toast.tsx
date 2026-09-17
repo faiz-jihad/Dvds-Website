@@ -7,25 +7,53 @@ export const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useUiStore();
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full">
+    <div
+      className="fixed z-50 pointer-events-none flex flex-col gap-2.5 bottom-4 inset-x-3.5 sm:bottom-6 sm:left-auto sm:right-6 sm:inset-x-auto sm:max-w-sm sm:w-full items-center sm:items-end"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
             key={toast.id}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
-            className="pointer-events-auto flex items-center justify-between p-4 bg-dark text-white rounded-md shadow-lg border border-neutral-800 text-sm"
+            exit={{ opacity: 0, y: 8, scale: 0.96, transition: { duration: 0.15 } }}
+            transition={{ type: 'spring', damping: 26, stiffness: 360 }}
+            className="pointer-events-auto w-full sm:w-auto sm:min-w-[320px] sm:max-w-sm flex items-start gap-3 p-3.5 sm:p-4 bg-[#0a0d14]/95 backdrop-blur-md text-white rounded-xl sm:rounded-2xl shadow-2xl shadow-black/70 border border-white/10 ring-1 ring-white/5"
           >
-            <div className="flex items-center gap-3">
-              {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />}
-              {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-brand-red shrink-0" />}
-              {toast.type === 'info' && <Info className="w-5 h-5 text-brand-blue shrink-0" />}
-              <span className="font-medium tracking-tight text-neutral-100">{toast.message}</span>
+            {/* Status Icon with subtle ambient badge */}
+            <div className="shrink-0 mt-0.5">
+              {toast.type === 'success' && (
+                <div className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+              )}
+              {toast.type === 'error' && (
+                <div className="w-6 h-6 rounded-full bg-rose-500/15 border border-rose-500/30 flex items-center justify-center">
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                </div>
+              )}
+              {toast.type === 'info' && (
+                <div className="w-6 h-6 rounded-full bg-sky-500/15 border border-sky-500/30 flex items-center justify-center">
+                  <Info className="w-3.5 h-3.5 text-sky-400" />
+                </div>
+              )}
             </div>
+
+            {/* Message Content */}
+            <div className="flex-1 min-w-0 pr-1">
+              <p className="text-xs sm:text-sm font-medium text-white/95 leading-snug break-words">
+                {toast.message}
+              </p>
+            </div>
+
+            {/* Dismiss Button */}
             <button
+              type="button"
               onClick={() => removeToast(toast.id)}
-              className="ml-3 text-neutral-400 hover:text-white p-1"
+              className="shrink-0 -mr-1 -mt-0.5 p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+              aria-label="Dismiss notification"
             >
               <X className="w-4 h-4" />
             </button>

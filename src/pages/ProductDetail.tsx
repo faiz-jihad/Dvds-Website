@@ -119,8 +119,6 @@ export const ProductDetail: React.FC = () => {
                 <Disc className="w-4 h-4 text-brand-blue" />
                 Original PAL DVD Edition
               </span>
-              <span>•</span>
-              <span>Region 2 UK Compatible</span>
             </div>
           </div>
 

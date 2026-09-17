@@ -8,6 +8,7 @@ import { formatGBP, formatDateUK } from '../lib/formatters';
 import { StoreDataState } from '../components/common/StoreDataState';
 import { OrderReceiptModal } from '../components/orders/OrderReceiptModal';
 import { useCartStore } from '../stores/useCartStore';
+import { clearCheckoutDraft } from '../lib/checkoutDraft';
 
 export const OrderSuccessPage: React.FC = () => {
   const params = useParams<{ orderId: string; id: string }>();
@@ -36,6 +37,7 @@ export const OrderSuccessPage: React.FC = () => {
   useEffect(() => {
     if (!order || (!paid && !bankPending && !partiallyRefunded && order.payment_status !== 'refunded')) return;
     const purchased = consumeCheckoutReceipt(order.id);
+    clearCheckoutDraft();
     if (!purchased) return;
     useCartStore.setState((state) => {
       const remaining = state.items.flatMap((item) => {

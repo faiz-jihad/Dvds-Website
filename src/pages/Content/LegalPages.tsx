@@ -19,10 +19,10 @@ const LegalPage: React.FC<LegalPageProps> = ({ title, children }) => {
   const settings = settingsQuery.data;
 
   return (
-    <div className="bg-white min-h-screen py-16">
-      <div className="max-w-3xl mx-auto px-6 space-y-6 text-xs text-gray-700 leading-relaxed">
+    <div className="bg-white min-h-screen py-8 sm:py-16">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-6 text-xs text-gray-700 leading-relaxed">
         <span className="font-mono text-brand-blue uppercase tracking-widest text-[11px]">LEGAL NOTICE</span>
-        <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-dark">{title}</h1>
+        <h1 className="font-display font-extrabold text-2xl sm:text-4xl text-dark">{title}</h1>
         {children(settings)}
         <aside className="mt-10 rounded-lg border border-gray-200 bg-gray-50 p-5 space-y-1">
           <strong className="block text-dark">Legal operator</strong>

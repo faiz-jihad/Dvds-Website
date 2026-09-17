@@ -131,11 +131,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
       {/* Metadata */}
       <div className="pt-3 pb-1 flex flex-col flex-grow">
         <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
             <BbfcBadge rating={product.age_rating} size="xs" />
             <span className="font-mono uppercase tracking-wider">{product.format}</span>
+            {product.region_code && (
+              <>
+                <span className="text-gray-300 font-mono text-[10px]">•</span>
+                <span className="font-mono text-[10px] text-gray-400 uppercase truncate">{product.region_code}</span>
+              </>
+            )}
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <ImdbBadge product={product} size="xs" />
             <span className="text-gray-300 font-mono text-[10px]">•</span>
             <span className="font-mono text-[11px] text-gray-400">{product.release_year}</span>

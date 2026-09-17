@@ -20,6 +20,7 @@ import {
   Sparkles,
   Tag,
   Film,
+  Search,
   FolderTree,
   BookOpen,
   Mail,
@@ -97,6 +98,8 @@ export const AdminHomepage: React.FC = () => {
     isOpen: false,
     targetField: '',
   });
+
+  const [productPickerSearch, setProductPickerSearch] = useState('');
 
   useEffect(() => {
     if (draftQuery.data) {
@@ -1074,17 +1077,18 @@ export const AdminHomepage: React.FC = () => {
                       }
                       className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-xs text-dark"
                     >
-                      <option value="bestsellers">Best Sellers</option>
-                      <option value="newest">New Releases</option>
-                      <option value="sale">Special Offers / Sale</option>
-                      <option value="featured">Curator Featured</option>
-                      <option value="category">Specific Category</option>
+                      <option value="bestsellers">Best Sellers (Automatic)</option>
+                      <option value="newest">New Releases (Automatic)</option>
+                      <option value="sale">Special Offers / On Sale (Automatic)</option>
+                      <option value="featured">Curator Featured (Automatic)</option>
+                      <option value="category">Filter by Specific Category</option>
+                      <option value="manual">Manual DVD Selection (Pick Specific Titles)</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
-                      Product Count Limit
+                      Max Items Displayed
                     </label>
                     <input
                       type="number"
@@ -1104,6 +1108,177 @@ export const AdminHomepage: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                {/* Specific Category Selector if sourceType is category */}
+                {(editingSection.data as ProductRailSectionConfig).sourceType === 'category' && (
+                  <div className="p-3 bg-blue-50/50 border border-blue-200/80 rounded-lg space-y-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700">
+                      Select Category
+                    </label>
+                    <select
+                      value={(editingSection.data as ProductRailSectionConfig).categorySlug || ''}
+                      onChange={(e) =>
+                        setEditingSection({
+                          ...editingSection,
+                          data: {
+                            ...(editingSection.data as ProductRailSectionConfig),
+                            categorySlug: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-xs text-dark"
+                    >
+                      <option value="">-- Choose Category --</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.slug}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Manual Product Picker UI if sourceType is manual */}
+                {(editingSection.data as ProductRailSectionConfig).sourceType === 'manual' && (
+                  <div className="space-y-3 pt-1 border border-blue-200/80 bg-blue-50/30 p-3 rounded-xl">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-800">
+                          Select DVDs to Feature in this Section
+                        </label>
+                        <p className="text-[11px] text-gray-500">Check each DVD title you wish to display.</p>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-brand-blue bg-blue-100 px-2.5 py-0.5 rounded-full">
+                        {((editingSection.data as ProductRailSectionConfig).manualProductIds || []).length} Selected
+                      </span>
+                    </div>
+
+                    {/* Search & Bulk Toggle Controls */}
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          placeholder="Filter DVDs by title or SKU..."
+                          value={productPickerSearch}
+                          onChange={(e) => setProductPickerSearch(e.target.value)}
+                          className="w-full h-8 pl-8 pr-7 text-xs rounded-md border border-gray-200 bg-white placeholder:text-gray-400 focus:outline-none focus:border-brand-blue"
+                        />
+                        {productPickerSearch && (
+                          <button
+                            type="button"
+                            onClick={() => setProductPickerSearch('')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-dark p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const selected = (editingSection.data as ProductRailSectionConfig).manualProductIds || [];
+                          const filtered = products
+                            .filter((p) =>
+                              !productPickerSearch ||
+                              p.title.toLowerCase().includes(productPickerSearch.toLowerCase()) ||
+                              p.sku.toLowerCase().includes(productPickerSearch.toLowerCase())
+                            )
+                            .map((p) => p.id);
+                          const newSet = Array.from(new Set([...selected, ...filtered]));
+                          setEditingSection({
+                            ...editingSection,
+                            data: {
+                              ...(editingSection.data as ProductRailSectionConfig),
+                              manualProductIds: newSet,
+                            },
+                          });
+                        }}
+                        className="text-[11px] font-semibold text-brand-blue hover:bg-blue-50 px-2.5 py-1.5 rounded border border-blue-200 bg-white transition shrink-0"
+                      >
+                        Select All
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingSection({
+                            ...editingSection,
+                            data: {
+                              ...(editingSection.data as ProductRailSectionConfig),
+                              manualProductIds: [],
+                            },
+                          });
+                        }}
+                        className="text-[11px] font-semibold text-gray-500 hover:bg-gray-100 px-2.5 py-1.5 rounded border border-gray-200 bg-white transition shrink-0"
+                      >
+                        Clear
+                      </button>
+                    </div>
+
+                    {/* Scrollable Products List */}
+                    <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100 bg-white p-1 shadow-2xs">
+                      {products
+                        .filter((p) =>
+                          !productPickerSearch ||
+                          p.title.toLowerCase().includes(productPickerSearch.toLowerCase()) ||
+                          p.sku.toLowerCase().includes(productPickerSearch.toLowerCase())
+                        )
+                        .map((p) => {
+                          const selected = ((editingSection.data as ProductRailSectionConfig).manualProductIds || []).includes(p.id);
+                          return (
+                            <label
+                              key={p.id}
+                              className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition select-none ${
+                                selected ? 'bg-blue-50/80 font-medium' : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selected}
+                                onChange={() => {
+                                  const currentIds = (editingSection.data as ProductRailSectionConfig).manualProductIds || [];
+                                  const nextIds = selected
+                                    ? currentIds.filter((id) => id !== p.id)
+                                    : [...currentIds, p.id];
+                                  setEditingSection({
+                                    ...editingSection,
+                                    data: {
+                                      ...(editingSection.data as ProductRailSectionConfig),
+                                      manualProductIds: nextIds,
+                                    },
+                                  });
+                                }}
+                                className="accent-brand-blue w-4 h-4 rounded shrink-0"
+                              />
+
+                              <div className="w-8 h-11 bg-gray-100 rounded overflow-hidden shrink-0 border border-gray-200">
+                                <img src={p.cover_image_url} alt={p.title} className="w-full h-full object-cover" />
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-semibold text-dark truncate">{p.title}</p>
+                                <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono mt-0.5">
+                                  <span>{p.format}</span>
+                                  <span>•</span>
+                                  <span>{p.release_year}</span>
+                                  <span>•</span>
+                                  <span>{p.sku}</span>
+                                </div>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <span className="text-xs font-mono font-bold text-dark">
+                                  £{p.price.toFixed(2)}
+                                </span>
+                              </div>
+                            </label>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <Input
@@ -1130,6 +1305,97 @@ export const AdminHomepage: React.FC = () => {
               </div>
             )}
 
+            {/* CATEGORY GRID EDITOR */}
+            {editingSection.type === 'categoryGrid' && (
+              <div className="space-y-4">
+                <Input
+                  label="Section Title *"
+                  value={(editingSection.data as CategoryGridSectionConfig).title}
+                  onChange={(e) =>
+                    setEditingSection({
+                      ...editingSection,
+                      data: { ...(editingSection.data as CategoryGridSectionConfig), title: e.target.value },
+                    })
+                  }
+                  required
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    label="Eyebrow"
+                    value={(editingSection.data as CategoryGridSectionConfig).eyebrow || ''}
+                    onChange={(e) =>
+                      setEditingSection({
+                        ...editingSection,
+                        data: { ...(editingSection.data as CategoryGridSectionConfig), eyebrow: e.target.value },
+                      })
+                    }
+                  />
+                  <Input
+                    label="Subtitle"
+                    value={(editingSection.data as CategoryGridSectionConfig).subtitle || ''}
+                    onChange={(e) =>
+                      setEditingSection({
+                        ...editingSection,
+                        data: { ...(editingSection.data as CategoryGridSectionConfig), subtitle: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700">
+                      Choose Categories to Display on Homepage
+                    </label>
+                    <span className="text-xs font-mono font-bold text-brand-blue bg-blue-50 px-2 py-0.5 rounded-full">
+                      {((editingSection.data as CategoryGridSectionConfig).categorySlugs || []).length} Categories Selected
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 max-h-56 overflow-y-auto">
+                    {categories.map((cat) => {
+                      const slugs = (editingSection.data as CategoryGridSectionConfig).categorySlugs || [];
+                      const isSelected = slugs.includes(cat.slug);
+                      const prodCount = products.filter((p) => p.category_id === cat.id).length;
+
+                      return (
+                        <label
+                          key={cat.id}
+                          className={`flex items-center gap-2 p-2 rounded-md border text-xs cursor-pointer transition select-none ${
+                            isSelected
+                              ? 'bg-white border-brand-blue font-bold text-dark shadow-2xs'
+                              : 'bg-white/60 border-gray-200 text-gray-600 hover:bg-white'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              const nextSlugs = isSelected
+                                ? slugs.filter((s) => s !== cat.slug)
+                                : [...slugs, cat.slug];
+                              setEditingSection({
+                                ...editingSection,
+                                data: {
+                                  ...(editingSection.data as CategoryGridSectionConfig),
+                                  categorySlugs: nextSlugs,
+                                },
+                              });
+                            }}
+                            className="accent-brand-blue w-3.5 h-3.5 rounded shrink-0"
+                          />
+                          <span className="truncate flex-1">{cat.name}</span>
+                          <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 py-0.2 rounded shrink-0">
+                            {prodCount}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* CAMPAIGN EDITOR */}
             {editingSection.type === 'campaign' && (
               <div className="space-y-4">
@@ -1144,27 +1410,75 @@ export const AdminHomepage: React.FC = () => {
                   }
                   required
                 />
-                <Input
-                  label="Badge Tag"
-                  value={(editingSection.data as CampaignSectionConfig).badgeText || ''}
-                  onChange={(e) =>
-                    setEditingSection({
-                      ...editingSection,
-                      data: { ...(editingSection.data as CampaignSectionConfig), badgeText: e.target.value },
-                    })
-                  }
-                  placeholder="SALE UNDER £15"
-                />
-                <Input
-                  label="Subtitle"
-                  value={(editingSection.data as CampaignSectionConfig).subtitle || ''}
-                  onChange={(e) =>
-                    setEditingSection({
-                      ...editingSection,
-                      data: { ...(editingSection.data as CampaignSectionConfig), subtitle: e.target.value },
-                    })
-                  }
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    label="Badge Tag"
+                    value={(editingSection.data as CampaignSectionConfig).badgeText || ''}
+                    onChange={(e) =>
+                      setEditingSection({
+                        ...editingSection,
+                        data: { ...(editingSection.data as CampaignSectionConfig), badgeText: e.target.value },
+                      })
+                    }
+                    placeholder="SALE UNDER £15"
+                  />
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+                      Product Data Source
+                    </label>
+                    <select
+                      value={(editingSection.data as CampaignSectionConfig).productSource || 'sale'}
+                      onChange={(e) =>
+                        setEditingSection({
+                          ...editingSection,
+                          data: {
+                            ...(editingSection.data as CampaignSectionConfig),
+                            productSource: e.target.value as any,
+                          },
+                        })
+                      }
+                      className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-xs text-dark"
+                    >
+                      <option value="sale">Special Offers / On Sale</option>
+                      <option value="bestsellers">Best Sellers</option>
+                      <option value="newest">New Releases</option>
+                      <option value="featured">Curator Featured</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    label="Subtitle"
+                    value={(editingSection.data as CampaignSectionConfig).subtitle || ''}
+                    onChange={(e) =>
+                      setEditingSection({
+                        ...editingSection,
+                        data: { ...(editingSection.data as CampaignSectionConfig), subtitle: e.target.value },
+                      })
+                    }
+                  />
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+                      Product Count Limit
+                    </label>
+                    <input
+                      type="number"
+                      min="2"
+                      max="12"
+                      value={(editingSection.data as CampaignSectionConfig).productLimit || 4}
+                      onChange={(e) =>
+                        setEditingSection({
+                          ...editingSection,
+                          data: {
+                            ...(editingSection.data as CampaignSectionConfig),
+                            productLimit: Number(e.target.value),
+                          },
+                        })
+                      }
+                      className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-xs text-dark"
+                    />
+                  </div>
+                </div>
                 <div className="flex gap-2 items-center">
                   <div className="w-16 h-12 rounded bg-gray-900 overflow-hidden shrink-0">
                     <img
@@ -1193,7 +1507,7 @@ export const AdminHomepage: React.FC = () => {
             )}
 
             {/* GENERIC / SIMPLE FALLBACK FOR OTHER TYPES */}
-            {['featured', 'categoryGrid', 'editorial', 'spotlight', 'newsletter'].includes(
+            {['featured', 'editorial', 'spotlight', 'newsletter'].includes(
               editingSection.type
             ) && (
               <div className="space-y-3">

@@ -1,6 +1,19 @@
 import { CURRENCIES, minorAmount } from '../shared/commerce.js';
 import { CheckoutError } from './_checkout.js';
 const cache = new Map();
+const FALLBACK_RATES = {
+  EUR: 1.17,
+  USD: 1.31,
+  CAD: 1.77,
+  AUD: 1.96,
+  NZD: 2.12,
+  CHF: 1.11,
+  SGD: 1.70,
+  HKD: 10.20,
+  JPY: 188,
+  IDR: 20200,
+};
+
 export async function exchangeRate(currency) {
   if (!CURRENCIES.includes(currency)) throw new CheckoutError('Choose a supported checkout currency.');
   if (currency === 'GBP') return { rate: 1, date: new Date().toISOString().slice(0,10) };
@@ -15,7 +28,14 @@ export async function exchangeRate(currency) {
     const value = { rate: data.rate, date: data.date };
     cache.set(currency, { value, expires: Date.now() + 10 * 60_000 });
     return value;
-  } catch { throw new CheckoutError('This currency is temporarily unavailable. Choose GBP or try again later.', 503, 'FX_UNAVAILABLE'); }
+  } catch {
+    if (FALLBACK_RATES[currency]) {
+      const fallbackValue = { rate: FALLBACK_RATES[currency], date: new Date().toISOString().slice(0,10) };
+      cache.set(currency, { value: fallbackValue, expires: Date.now() + 5 * 60_000 });
+      return fallbackValue;
+    }
+    throw new CheckoutError('This currency is temporarily unavailable. Choose GBP or try again later.', 503, 'FX_UNAVAILABLE');
+  }
 }
 export function convertQuote(quote, currency, fx) {
   const scale = currency === 'JPY' ? 1 : 100;

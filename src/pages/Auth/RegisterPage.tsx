@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Mail, LockKeyhole, Eye, EyeOff, User, ArrowRight, ShieldCheck, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useCustomerAuth } from '../../auth/CustomerAuth';
 import { useUiStore } from '../../stores/useUiStore';
@@ -7,7 +7,14 @@ import { useUiStore } from '../../stores/useUiStore';
 export const RegisterPage: React.FC = () => {
   const { register, loginWithGoogle, customer } = useCustomerAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const addToast = useUiStore((state) => state.addToast);
+
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get('redirect');
+  const rawFrom = (location.state as { from?: string } | null)?.from || redirectParam || '/account';
+  const from = rawFrom.startsWith('/') ? rawFrom : '/account';
+  const isCheckoutRedirect = from.startsWith('/checkout') || (redirectParam || '').startsWith('/checkout');
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -21,9 +28,9 @@ export const RegisterPage: React.FC = () => {
   // If already logged in, redirect
   React.useEffect(() => {
     if (customer) {
-      navigate('/account', { replace: true });
+      navigate(from, { replace: true });
     }
-  }, [customer, navigate]);
+  }, [customer, from, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +51,7 @@ export const RegisterPage: React.FC = () => {
       const res = await register(email, password, fullName);
       if (res.success) {
         addToast('Account created successfully! Welcome to DVDs Zone.', 'success');
-        navigate('/account', { replace: true });
+        navigate(from, { replace: true });
       } else {
         setError(res.message || 'Registration could not be completed.');
       }
@@ -59,10 +66,10 @@ export const RegisterPage: React.FC = () => {
     setError('');
     setGoogleSubmitting(true);
     try {
-      const res = await loginWithGoogle('/account');
+      const res = await loginWithGoogle(from);
       if (res.success) {
         addToast('Account registered with Google', 'success');
-        navigate('/account', { replace: true });
+        navigate(from, { replace: true });
       } else if (res.message) {
         setError(res.message);
       }
@@ -122,6 +129,21 @@ export const RegisterPage: React.FC = () => {
           {error && (
             <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 leading-relaxed" role="alert">
               {error}
+            </div>
+          )}
+
+          {/* Checkout Redirect Notice */}
+          {isCheckoutRedirect && (
+            <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50/90 p-4 text-xs text-blue-900 flex items-start gap-3 shadow-xs">
+              <div className="p-1.5 bg-blue-100 text-brand-blue rounded-lg shrink-0 mt-0.5">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-bold text-blue-950 text-sm">Create an account to complete checkout</p>
+                <p className="text-blue-800/80 mt-1 leading-relaxed">
+                  Join DVDs Zone in seconds to finalize your order with tracked Royal Mail delivery and order protection.
+                </p>
+              </div>
             </div>
           )}
 
@@ -273,7 +295,11 @@ export const RegisterPage: React.FC = () => {
           <div className="mt-8 pt-6 border-t border-gray-100 text-center">
             <p className="text-xs text-gray-500">
               Already have an account?{' '}
-              <Link to="/login" className="font-bold text-brand-blue hover:underline">
+              <Link
+                to={from !== '/account' ? `/login?redirect=${encodeURIComponent(from)}` : '/login'}
+                state={{ from }}
+                className="font-bold text-brand-blue hover:underline"
+              >
                 Sign in here
               </Link>
             </p>

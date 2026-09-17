@@ -63,17 +63,17 @@ export const Home: React.FC = () => {
     );
   }
 
-  // A published builder layout controls every section. Keep the existing template until first publish.
+  // Catalogue sections managed by Admin Homepage Builder
   const isPublished = config.status === 'published';
   const catalogueSections = [...config.sections]
     .filter(
       (section) =>
         section.enabled &&
-        (isPublished || (section.type !== 'hero' &&
-        section.type !== 'editorial' &&
-        section.type !== 'featured' &&
-        section.type !== 'spotlight' &&
-        section.type !== 'campaign'))
+        (section.type === 'productRail' ||
+         section.type === 'categoryGrid' ||
+         section.type === 'campaign' ||
+         section.type === 'newsletter' ||
+         (isPublished && section.type !== 'hero' && section.type !== 'editorial'))
     )
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
@@ -105,7 +105,6 @@ export const Home: React.FC = () => {
         }}
       />
 
-      {!isPublished && <>
       {/* 00: Monumental Dutch Coachbuilder Hero */}
       <SpykerHero />
 
@@ -115,12 +114,11 @@ export const Home: React.FC = () => {
       {/* Chapter 01: Architectural 12-Column Asymmetric Editorial Layout */}
       <SpykerEditorialChapter />
 
-      {/* Chapter 02: Interactive Accordion Vault (Displaying the 11 real Zack DVDs) */}
-      <SpykerInteractiveGallery />
+      {/* Chapter 02: Interactive Accordion Vault (Displaying real store DVDs) */}
+      <SpykerInteractiveGallery products={products} />
 
       {/* Chapter 03: Cinema Manifesto (2.39:1 Anamorphic Player HUD & 3 Pillars) */}
       <SpykerManifestoVideo />
-      </>}
 
       {/* Curated Dynamic Catalogue Sections (Product Rails, Category Grids, Vault Dispatch) */}
       {catalogueSections.map((section, index) => {

@@ -17,7 +17,9 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "motion/react": ["node_modules/framer-motion"],
+      "@studio-freight/lenis": ["src/lib/lenis-shim.ts"]
     }
   },
   "include": ["src"]

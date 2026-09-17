@@ -4,6 +4,8 @@
 
 @layer base {
   :root {
+    --background: #FFFFFF;
+    --foreground: #111111;
     --brand-blue: #1769E0;
     --brand-blue-hover: #1256BA;
     --brand-blue-soft: #EAF2FF;
@@ -162,5 +164,132 @@
     break-inside: avoid;
   }
 }
+
+/* ==========================================================================
+   Parallax Scrolling Component Styles (Osmo Layers)
+   ========================================================================== */
+.parallax {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.parallax__header {
+  position: relative;
+  height: 160vh;
+  width: 100%;
+}
+
+.parallax__visuals {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.parallax__black-line-overflow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #000000;
+  z-index: 10;
+}
+
+.parallax__layers {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.parallax__layer-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.parallax__layer-title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.parallax__title {
+  font-family: 'Manrope', 'Inter', sans-serif;
+  font-size: clamp(3.5rem, 14vw, 10rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-align: center;
+  margin: 0;
+  line-height: 1;
+  text-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+}
+
+.parallax__fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40vh;
+  background: linear-gradient(to bottom, transparent 0%, #000000 95%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.parallax__content {
+  position: relative;
+  min-height: 80vh;
+  background-color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 2rem;
+  z-index: 2;
+}
+
+.osmo-icon-svg {
+  width: clamp(64px, 12vw, 120px);
+  height: clamp(64px, 12vw, 120px);
+  color: #ffffff;
+  opacity: 0.9;
+}
+
+.osmo-credits {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #888888;
+  background-color: #000000;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.osmo-credits__p-a {
+  color: #ffffff;
+  text-decoration: underline;
+  transition: opacity 0.2s;
+}
+
+.osmo-credits__p-a:hover {
+  opacity: 0.8;
+}
+
 
 
