@@ -32,6 +32,7 @@ export const CustomerNotificationMenu: React.FC = () => {
   const clearNotification = useNotificationStore((state) => state.clearNotification);
   const permission = useNotificationStore((state) => state.permission);
   const requestPermission = useNotificationStore((state) => state.requestPermission);
+  const sendTestNotification = useNotificationStore((state) => state.sendTestNotification);
 
   // Close when clicking outside
   useEffect(() => {
@@ -204,16 +205,24 @@ export const CustomerNotificationMenu: React.FC = () => {
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-100 bg-gray-50/80 px-4 py-2 text-center text-[11px]">
+          <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/80 px-4 py-2.5 text-[11px] text-gray-500">
+            <button
+              type="button"
+              onClick={() => sendTestNotification('customer')}
+              className="font-semibold text-gray-600 hover:text-dark hover:underline cursor-pointer"
+              title="Test notification chime and toast"
+            >
+              Test Alert
+            </button>
             <button
               type="button"
               onClick={() => {
                 setIsOpen(false);
                 navigate('/account/orders');
               }}
-              className="font-medium text-brand-blue hover:underline"
+              className="font-bold text-brand-blue hover:underline cursor-pointer"
             >
-              View My Order History
+              My Orders →
             </button>
           </div>
         </div>

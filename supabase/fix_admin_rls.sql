@@ -109,9 +109,7 @@ AS $$
     -- Direct JWT email check
     (auth.jwt() ->> 'email') = 'admin@azrayan.co.uk'
     OR
-    -- Metadata roles
-    (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'staff')
-    OR
+    -- Only server-set app_metadata (never client-controlled user_metadata)
     (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin', 'staff')
   );
 $$;

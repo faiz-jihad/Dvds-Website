@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Mail, LockKeyhole, Eye, EyeOff, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useCustomerAuth } from '../../auth/CustomerAuth';
 import { useUiStore } from '../../stores/useUiStore';
+import { sanitizeRedirectPath } from '../../lib/utils';
 
 export const LoginPage: React.FC = () => {
   const { login, loginWithGoogle, customer } = useCustomerAuth();
@@ -16,12 +17,23 @@ export const LoginPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get('redirect');
   const rawFrom = (location.state as { from?: string } | null)?.from || redirectParam || '/account';
-  const from = rawFrom.startsWith('/') ? rawFrom : '/account';
-  const isCheckoutRedirect = from.startsWith('/checkout') || (redirectParam || '').startsWith('/checkout');
+  const from = sanitizeRedirectPath(rawFrom, '/account');
+  const isCheckoutRedirect = from.startsWith('/checkout');
+
+  // Handle brute-force cooldown timer
+  React.useEffect(() => {
+    if (cooldownRemaining <= 0) return;
+    const timer = setInterval(() => {
+      setCooldownRemaining((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownRemaining]);
 
   // If already logged in, redirect
   React.useEffect(() => {
@@ -32,19 +44,33 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cooldownRemaining > 0) {
+      setError(`Too many login attempts. Please wait ${cooldownRemaining}s before trying again.`);
+      return;
+    }
+
     setError('');
     setSubmitting(true);
 
     try {
       const res = await login(email, password);
       if (res.success) {
+        setFailedAttempts(0);
         addToast('Welcome back to DVDs Zone!', 'success');
         navigate(from, { replace: true });
       } else {
-        setError(res.message || 'Invalid email or password');
+        const nextAttempts = failedAttempts + 1;
+        setFailedAttempts(nextAttempts);
+        if (nextAttempts >= 5) {
+          setCooldownRemaining(30);
+          setError('Too many failed attempts. For your security, please wait 30 seconds.');
+        } else {
+          // Generic authentication error prevents account enumeration
+          setError('Invalid email or password. Please verify your details.');
+        }
       }
     } catch (err: any) {
-      setError(err?.message || 'Login failed. Please retry.');
+      setError('An error occurred during authentication. Please retry.');
     } finally {
       setSubmitting(false);
     }

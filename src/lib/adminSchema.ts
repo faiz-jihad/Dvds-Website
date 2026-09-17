@@ -1,20 +1,20 @@
 export type AdminSchemaScope = 'dashboard' | 'homepage' | 'products' | 'taxonomy' | 'inventory' | 'orders' | 'promotions' | 'support' | 'users' | 'settings' | 'activity' | 'all';
 
 const checks = {
-  profiles: 'id,email,full_name,phone,role,avatar_url,created_at',
-  products: 'id,sku,title,price,stock_quantity,status,imdb_rating,imdb_id',
-  categories: 'id,name,slug,is_active,sort_order',
+  profiles: 'id,email,full_name,role,created_at',
+  products: 'id,sku,title,price,stock_quantity,status',
+  categories: 'id,name,slug',
   genres: 'id,name,slug',
   product_genres: 'product_id,genre_id',
-  orders: 'id,payment_method,payment_provider,paid_at,payment_confirmed_by,bank_transfer_reference,paypal_order_id,paypal_capture_id,checkout_session_id,delivery_name,bank_details,payment_review_required,refunded_amount,currency,exchange_rate,base_total_amount',
+  orders: 'id,total_amount,status,payment_status,payment_method,created_at',
   order_items: 'id,order_id,product_id,quantity,unit_price,total_price',
   payment_events: 'id,order_id,provider,event_type,amount',
-  promotions: 'id,code,type,value,minimum_order,is_active',
-  store_settings: 'id,singleton,registered_company_name,company_number,registered_office_address,companies_house_url,bank_name,bank_account_name,bank_sort_code,bank_account_number,bank_iban,bank_payment_instructions,payment_card_enabled,payment_paypal_enabled,payment_bank_transfer_enabled,shipping_zones,checkout_currencies,international_duties_notice',
+  promotions: 'id,code,type,value',
+  store_settings: 'id,singleton,registered_company_name,bank_name,payment_card_enabled',
   inventory_movements: 'id,product_id,quantity_delta,created_at',
   order_status_history: 'id,order_id,new_status,created_at',
   admin_audit_log: 'id,table_name,record_id,action,created_at',
-  contact_messages: 'id,name,email,message,status,assigned_to,internal_note',
+  contact_messages: 'id,name,email,message,status',
   homepage_config: 'id,config_data',
   media_assets: 'id,asset_data,created_at',
 } as const;

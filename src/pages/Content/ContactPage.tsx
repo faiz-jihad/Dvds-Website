@@ -4,6 +4,7 @@ import { Building2, Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { useUiStore } from '../../stores/useUiStore';
+import { useNotificationStore } from '../../stores/useNotificationStore';
 import { publicApi } from '../../lib/publicApi';
 import { StoreDataState } from '../../components/common/StoreDataState';
 
@@ -24,6 +25,22 @@ export const ContactPage: React.FC = () => {
       await publicApi.submitContactMessage({ name, email, order_reference: orderReference, message });
       setSubmitted(true);
       addToast('Your message was saved in the customer support queue.', 'success');
+
+      // Immediate notification synchronization for customer and admin
+      useNotificationStore.getState().addNotification({
+        target: 'admin',
+        type: 'support',
+        title: 'New Customer Enquiry',
+        message: `Message from ${name} (${email}): "${message.slice(0, 70)}${message.length > 70 ? '...' : ''}"`,
+        link: '/admin/support',
+      });
+      useNotificationStore.getState().addNotification({
+        target: 'customer',
+        type: 'support',
+        title: 'Enquiry Received',
+        message: 'Your inquiry has been submitted. Our team will get back to you shortly.',
+        link: '/contact',
+      });
     } catch (error) {
       addToast(error instanceof Error ? error.message : 'Message could not be sent.', 'error');
     } finally { setSubmitting(false); }

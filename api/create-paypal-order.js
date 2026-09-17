@@ -17,4 +17,4 @@ export default endpoint(async (req) => {
   if (!url) throw new CheckoutError('PayPal did not return a checkout link. Please retry.', 502);
   check(await db.from('orders').update({ paypal_order_id: result.id, checkout_url: url }).eq('id', order.id).select('id').single());
   return { url, orderId: order.id, orderNumber: order.order_number, paypalOrderId: result.id };
-});
+}, 'POST', { max: 15, windowMs: 60000 });

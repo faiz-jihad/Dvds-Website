@@ -278,15 +278,34 @@ AS $$
         AND role IN ('admin', 'staff')
     )
     OR
+    -- Direct JWT email check
     (auth.jwt() ->> 'email') = 'admin@azrayan.co.uk'
     OR
-    (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'staff')
-    OR
+    -- Only server-set app_metadata (never client-controlled user_metadata)
     (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin', 'staff')
   );
 $$;
 
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, anon;
+
+-- Role protection trigger to prevent self-privilege escalation
+CREATE OR REPLACE FUNCTION public.protect_profile_role()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.role IS DISTINCT FROM OLD.role THEN
+    IF NOT public.is_admin() THEN
+      NEW.role := OLD.role;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS tr_protect_profile_role ON public.profiles;
+CREATE TRIGGER tr_protect_profile_role
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.protect_profile_role();
 
 CREATE OR REPLACE FUNCTION public.subscribe_newsletter(p_email TEXT)
 RETURNS JSONB
@@ -317,11 +336,19 @@ ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.homepage_config ENABLE ROW LEVEL SECURITY;
 
--- Profiles policies
+-- Profiles policies (Strict Customer Isolation & Admin Control)
 DROP POLICY IF EXISTS "Public profiles read" ON public.profiles;
-CREATE POLICY "Public profiles read" ON public.profiles FOR SELECT USING (TRUE);
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can manage all profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update own profile fields" ON public.profiles;
+
+CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Admins can view all profiles" ON public.profiles FOR SELECT USING (public.is_admin());
+CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id AND role = 'customer');
 CREATE POLICY "Users can update own profile fields" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+CREATE POLICY "Admins can manage all profiles" ON public.profiles FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- Categories policies
 DROP POLICY IF EXISTS "Public can view active categories" ON public.categories;
@@ -386,6 +413,13 @@ DROP POLICY IF EXISTS "Anyone can submit contact message" ON public.contact_mess
 CREATE POLICY "Anyone can submit contact message" ON public.contact_messages FOR INSERT WITH CHECK (TRUE);
 DROP POLICY IF EXISTS "Admins can manage contact messages" ON public.contact_messages;
 CREATE POLICY "Admins can manage contact messages" ON public.contact_messages FOR ALL USING (public.is_admin());
+
+-- Newsletter Subscribers policies
+DROP POLICY IF EXISTS "Public can subscribe to newsletter" ON public.newsletter_subscribers;
+CREATE POLICY "Public can subscribe to newsletter" ON public.newsletter_subscribers FOR INSERT WITH CHECK (TRUE);
+DROP POLICY IF EXISTS "Admins can manage newsletter subscribers" ON public.newsletter_subscribers;
+CREATE POLICY "Admins can manage newsletter subscribers" ON public.newsletter_subscribers FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+DROP POLICY IF EXISTS "Public can view newsletter subscribers" ON public.newsletter_subscribers;
 
 -- 5. INITIAL SEED DATA
 

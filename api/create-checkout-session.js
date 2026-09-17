@@ -22,4 +22,4 @@ export default endpoint(async (req) => {
   }, { idempotencyKey: `checkout-${order.id}` });
   check(await db.from('orders').update({ checkout_session_id: session.id, checkout_url: session.url }).eq('id', order.id).select('id').single());
   return { url: session.url, orderId: order.id, orderNumber: order.order_number };
-});
+}, 'POST', { max: 15, windowMs: 60000 });

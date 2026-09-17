@@ -8,6 +8,7 @@ import { formatGBP, formatDateUK } from '../lib/formatters';
 import { StoreDataState } from '../components/common/StoreDataState';
 import { OrderReceiptModal } from '../components/orders/OrderReceiptModal';
 import { useCartStore } from '../stores/useCartStore';
+import { useNotificationStore } from '../stores/useNotificationStore';
 import { clearCheckoutDraft } from '../lib/checkoutDraft';
 
 export const OrderSuccessPage: React.FC = () => {
@@ -39,6 +40,23 @@ export const OrderSuccessPage: React.FC = () => {
     const purchased = consumeCheckoutReceipt(order.id);
     clearCheckoutDraft();
     if (!purchased) return;
+
+    // Dispatch order confirmation for customer & admin
+    useNotificationStore.getState().addNotification({
+      target: 'customer',
+      type: 'order',
+      title: 'Order Confirmed',
+      message: `Your order #${order.order_number} has been received (${formatMoney(order.total_amount, order.currency)}). Follow delivery progress anytime.`,
+      link: `/order-success/${order.id}`,
+    });
+    useNotificationStore.getState().addNotification({
+      target: 'admin',
+      type: 'order',
+      title: 'New Order Received',
+      message: `Order #${order.order_number} (${formatMoney(order.total_amount, order.currency)}) placed by customer.`,
+      link: '/admin/orders',
+    });
+
     useCartStore.setState((state) => {
       const remaining = state.items.flatMap((item) => {
         const quantity = item.quantity - (purchased.find((line) => line.product_id === item.product_id)?.quantity || 0);

@@ -22,7 +22,7 @@ async function load(entry, extra = {}) {
         b.onResolve({ filter: /\/useCartStore$/ }, () => ({ path: 'cart', namespace: 'mock' }));
         b.onResolve({ filter: /^@tanstack\/react-query$/ }, () => ({ path: 'query', namespace: 'mock' }));
         b.onLoad({ filter: /.*/, namespace: 'mock' }, ({ path }) => ({ contents: {
-          supabase: 'export const supabase = null;',
+          supabase: 'export const supabase = null; export const isSupabaseConfigured = false;',
           auth: 'export const useCustomerAuth = () => ({ customer: null });',
           cart: 'export const useCartStore = (selector) => selector(globalThis.cart);',
           query: 'export const useQuery = () => globalThis.query;',

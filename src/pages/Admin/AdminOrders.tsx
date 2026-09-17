@@ -8,6 +8,7 @@ import { formatGBP, formatDateUK } from '../../lib/formatters';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { useUiStore } from '../../stores/useUiStore';
+import { useNotificationStore } from '../../stores/useNotificationStore';
 import { AdminDataState } from '../../components/admin/AdminDataState';
 import { useAdminAuth } from '../../auth/AdminAuth';
 
@@ -88,6 +89,25 @@ export const AdminOrders: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['my-orders'] });
       setSelectedOrder(updated);
       addToast(`Order ${updated.order_number} marked as ${newStatus}`, 'success');
+
+      // Dispatch real-time notifications for both customer and admin
+      useNotificationStore.getState().addNotification({
+        target: 'customer',
+        type: 'order',
+        title: 'Order Status Updated',
+        message: `Order #${updated.order_number} status is now ${newStatus.toUpperCase()} (${fulfilment})${trackingNumber ? ` • Tracking: ${trackingNumber}` : ''}.`,
+        link: '/account/orders',
+      });
+      useNotificationStore.getState().addNotification(
+        {
+          target: 'admin',
+          type: 'order',
+          title: 'Order Updated',
+          message: `Order #${updated.order_number} changed to ${newStatus.toUpperCase()} (${fulfilment}).`,
+          link: '/admin/orders',
+        },
+        { showToast: false }
+      );
     } catch (updateError) {
       addToast(updateError instanceof Error ? updateError.message : 'Order could not be updated', 'error');
     } finally {

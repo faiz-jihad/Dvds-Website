@@ -30,13 +30,13 @@
   height: 100dvh;
   overflow: hidden;
   --se-title-size: 4rem;
-  z-index: 20;
+  z-index: 5;
 }
 
 .scroll-expand__frame {
   position: absolute;
   inset: 0;
-  clip-path: inset(18% 20% 18% 20% round 20px);
+  clip-path: inset(11% 8% 11% 8% round 20px);
   will-change: clip-path;
   background: #080a0f;
   box-shadow: 0 25px 80px -15px rgba(0, 0, 0, 0.95);
@@ -72,8 +72,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 4%;
-  padding-top: max(5rem, 80px);
+  padding: 1.5rem;
   opacity: 0;
   pointer-events: none;
   will-change: opacity, transform;
@@ -104,11 +103,11 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 2.5rem;
+  bottom: max(1.25rem, 2.5vh);
   display: flex;
   justify-content: center;
   pointer-events: auto;
   cursor: pointer;
   will-change: opacity, transform;
-  z-index: 6;
+  z-index: 15;
 }

@@ -302,12 +302,22 @@ export const adminApi = {
     if (readError) fail(readError, 'Store settings could not be loaded before saving.');
     const { id, ...values } = input;
     const payload = { ...values, singleton: true, updated_at: new Date().toISOString() };
-    const query = existing
-      ? client().from('store_settings').update(payload).eq('id', existing.id)
-      : client().from('store_settings').insert(payload);
-    const { data, error } = await query.select('*').single();
-    if (error || !data) fail(error, 'Store settings could not be saved.');
-    return { ...DEFAULT_STORE_SETTINGS, ...data } as StoreSettings;
+    
+    let result = existing
+      ? await client().from('store_settings').update(payload).eq('id', existing.id).select('*').single()
+      : await client().from('store_settings').insert(payload).select('*').single();
+
+    // If saving fails due to columns not existing in DB schema (e.g. shipping_zones, checkout_currencies, international_duties_notice)
+    if (result.error && (result.error.code === '42703' || result.error.message?.includes('does not exist'))) {
+      const { shipping_zones, checkout_currencies, international_duties_notice, ...legacyValues } = values as any;
+      const legacyPayload = { ...legacyValues, singleton: true, updated_at: new Date().toISOString() };
+      result = existing
+        ? await client().from('store_settings').update(legacyPayload).eq('id', existing.id).select('*').single()
+        : await client().from('store_settings').insert(legacyPayload).select('*').single();
+    }
+
+    if (result.error || !result.data) fail(result.error, 'Store settings could not be saved.');
+    return { ...DEFAULT_STORE_SETTINGS, ...result.data } as StoreSettings;
   },
 
   async getFinancialStats(): Promise<FinancialStats> {

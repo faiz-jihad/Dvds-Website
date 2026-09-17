@@ -17,4 +17,4 @@ export default endpoint(async (req) => {
     };
   }
   return (await quoteCheckout(db, req.body || {})).quote;
-});
+}, 'POST', { max: 30, windowMs: 60000 });

@@ -48,7 +48,7 @@ export const RootLayout: React.FC = () => {
 
   return (
     <IntroLoader home={pathname === '/'}>
-    <div className="flex flex-col min-h-screen bg-white text-dark overflow-x-hidden w-full max-w-[100vw]">
+    <div className="flex flex-col min-h-screen bg-white text-dark overflow-x-clip w-full max-w-[100vw]">
       {/* Top Announcements */}
       <AnnouncementBar />
 

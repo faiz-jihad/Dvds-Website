@@ -337,19 +337,23 @@ export const MobileNavDrawer: React.FC = () => {
                   </span>
                 )}
               </Link>
-              {unreadCount > 0 && (
-                <div
-                  className="flex items-center justify-between py-2 px-3 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors font-medium"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Bell className="w-4 h-4 text-gray-400" />
-                    <span>Notifications</span>
-                  </div>
-                  <span className="px-1.5 py-0.2 rounded-full bg-blue-50 text-brand-blue font-bold text-[10px] font-mono border border-blue-100">
+              <Link
+                to="/account/orders"
+                onClick={closeMobileNav}
+                className="flex items-center justify-between py-2 px-3 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors font-medium"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Bell className="w-4 h-4 text-gray-400" />
+                  <span>Order & Store Alerts</span>
+                </div>
+                {unreadCount > 0 ? (
+                  <span className="px-1.5 py-0.2 rounded-full bg-brand-blue text-white font-bold text-[10px] font-mono shadow-2xs">
                     {unreadCount} new
                   </span>
-                </div>
-              )}
+                ) : (
+                  <span className="text-[10px] text-gray-400 font-mono">Active</span>
+                )}
+              </Link>
               <Link
                 to="/admin"
                 onClick={closeMobileNav}

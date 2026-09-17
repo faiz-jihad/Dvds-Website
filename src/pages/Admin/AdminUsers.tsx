@@ -16,6 +16,7 @@ import {
   KeyRound,
 } from 'lucide-react';
 import { AdminDataState } from '../../components/admin/AdminDataState';
+import { UserAvatar } from '../../components/common/UserAvatar';
 import { adminApi } from '../../lib/adminApi';
 import { Profile, UserRole } from '../../types';
 import { useAdminAuth } from '../../auth/AdminAuth';
@@ -261,17 +262,12 @@ export const AdminUsers: React.FC = () => {
                       {/* Name & Avatar */}
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
-                          {u.avatar_url ? (
-                            <img
-                              src={u.avatar_url}
-                              alt={u.full_name || u.email}
-                              className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0"
-                            />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs uppercase border border-slate-200 shrink-0">
-                              {(u.full_name || u.email).slice(0, 2)}
-                            </div>
-                          )}
+                          <UserAvatar
+                            avatarUrl={u.avatar_url}
+                            name={u.full_name}
+                            email={u.email}
+                            size="md"
+                          />
                           <div className="min-w-0">
                             <div className="font-bold text-dark flex items-center gap-2">
                               <span>{u.full_name || 'No Name Provided'}</span>

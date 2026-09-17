@@ -7,6 +7,7 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Modal } from '../../components/common/Modal';
 import { useUiStore } from '../../stores/useUiStore';
+import { useNotificationStore } from '../../stores/useNotificationStore';
 import { AdminDataState } from '../../components/admin/AdminDataState';
 
 export const AdminInventory: React.FC = () => {
@@ -41,6 +42,30 @@ export const AdminInventory: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['store'] });
       await queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
       addToast(`Updated stock for "${selectedProduct.title}" to ${updated.stock_quantity}`, 'success');
+
+      // Dispatch real-time low-stock or adjustment notification
+      const currentThreshold = settingsQuery.data?.low_stock_threshold ?? 3;
+      if (updated.stock_quantity <= currentThreshold) {
+        useNotificationStore.getState().addNotification({
+          target: 'admin',
+          type: 'stock',
+          title: 'Low Stock Alert',
+          message: `Film "${updated.title}" has reached ${updated.stock_quantity} units remaining (Threshold: ${currentThreshold}).`,
+          link: '/admin/inventory',
+        });
+      } else {
+        useNotificationStore.getState().addNotification(
+          {
+            target: 'admin',
+            type: 'stock',
+            title: 'Inventory Adjusted',
+            message: `"${selectedProduct.title}" stock changed by ${delta > 0 ? `+${delta}` : delta} (New level: ${updated.stock_quantity}).`,
+            link: '/admin/inventory',
+          },
+          { showToast: false }
+        );
+      }
+
       setSelectedProduct(null);
       setAdjustment('');
       setReason('');

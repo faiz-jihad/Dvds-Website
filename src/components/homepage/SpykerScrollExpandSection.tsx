@@ -1,23 +1,26 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ScrollExpand } from '../motion/ScrollExpand';
-import { BlurReveal } from '../ui/blur-reveal';
+import { TextReveal } from '../TextReveal';
 import { ChevronRight } from 'lucide-react';
 
 export const SpykerScrollExpandSection: React.FC = () => {
+  const manifestoText =
+    "Streaming platforms dynamically compress bitrates and silently delete titles without warning. A physical optical disc in your collection is an immutable piece of cinema history that you own forever.";
+
   return (
     <section className="relative bg-[#050609] border-b border-white/[0.08] select-none">
       <ScrollExpand
         useWindowScroll={true}
-        startWidth={60}
-        startHeight={64}
+        startWidth={84}
+        startHeight={78}
         startRadius={20}
         endRadius={0}
         mediaZoom={1.12}
-        scrollDistance={0.75}
-        holdDistance={0.12}
+        scrollDistance={1.2}
+        holdDistance={0.85}
         smoothing={0}
-        overlayScrim={0.72}
+        overlayScrim={0.75}
         customMedia={
           <div className="relative w-full h-full bg-[#080a0f] overflow-hidden">
             {/* Cinematic Background Media with Iridescent Lighting */}
@@ -43,38 +46,17 @@ export const SpykerScrollExpandSection: React.FC = () => {
           </div>
         }
         title={
-          <div className="flex flex-col items-center justify-center text-center px-4 max-w-xl sm:max-w-2xl mx-auto pointer-events-none">
-            {/* Monumental Title with cinematic BlurReveal character animation */}
-            <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight uppercase leading-[0.92] text-white drop-shadow-[0_4px_35px_rgba(0,0,0,0.95)]">
-              <BlurReveal
-                as="span"
-                delay={0.1}
-                speedReveal={2.0}
-                speedSegment={0.7}
-                className="block text-white"
-              >
-                BUILT FOR
-              </BlurReveal>
-              <BlurReveal
-                as="span"
-                delay={0.28}
-                speedReveal={2.0}
-                speedSegment={0.7}
-                className="block text-white/45"
-              >
-                PERMANENCE.
-              </BlurReveal>
+          <div className="flex flex-col items-center justify-center text-center px-4 max-w-2xl sm:max-w-3xl mx-auto pointer-events-none">
+            {/* Monumental Title properly proportioned to fit the cinematic card frame */}
+            <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight uppercase leading-[0.92] text-white drop-shadow-[0_4px_35px_rgba(0,0,0,0.95)]">
+              BUILT FOR <br />
+              <span className="text-white/45">PERMANENCE.</span>
             </h2>
 
             {/* Subline */}
-            <BlurReveal
-              as="p"
-              delay={0.45}
-              speedReveal={2.2}
-              className="mt-3 text-xs sm:text-sm font-mono tracking-[0.2em] text-white/75 uppercase max-w-md drop-shadow-md"
-            >
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm md:text-base font-mono tracking-[0.2em] text-white/75 uppercase max-w-xl drop-shadow-md">
               Uncompressed Optical Mastering • Sovereign Shelf Ownership
-            </BlurReveal>
+            </p>
           </div>
         }
         scrollHint={
@@ -85,45 +67,65 @@ export const SpykerScrollExpandSection: React.FC = () => {
           </div>
         }
       >
-        {/* Full-width Expanded Canvas Content */}
-        <div className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center p-4 sm:p-10 pt-16 sm:pt-24">
-          <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight uppercase text-white leading-[0.92] max-w-3xl drop-shadow-2xl">
-            <BlurReveal as="span" delay={0.1} speedReveal={1.8} className="block text-white">
-              PERMANENCE IS THE
-            </BlurReveal>
-            <BlurReveal as="span" delay={0.25} speedReveal={1.8} className="block text-white/60">
-              ULTIMATE LUXURY.
-            </BlurReveal>
-          </h2>
+        {(progress) => {
+          // Map scroll progress from [0.40, 0.82] into [0, 1] for word-by-word TextReveal
+          const revealProgress = Math.max(0, Math.min(1, (progress - 0.40) / 0.42));
 
-          <BlurReveal
-            as="p"
-            delay={0.4}
-            speedReveal={2.4}
-            className="mt-4 sm:mt-5 text-xs sm:text-base md:text-lg text-white/80 max-w-2xl font-light leading-relaxed drop-shadow-lg"
-          >
-            Streaming platforms dynamically compress bitrates and silently delete titles without warning. A physical optical disc in your collection is an immutable piece of cinema history that you own forever.
-          </BlurReveal>
+          return (
+            <div className="max-w-3xl mx-auto flex flex-col items-center justify-center text-center px-4 my-auto">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight uppercase text-white leading-[0.95] drop-shadow-2xl">
+                PERMANENCE IS THE <br />
+                <span className="text-white/60">ULTIMATE LUXURY.</span>
+              </h2>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mt-6 sm:mt-8 w-full sm:w-auto max-w-md sm:max-w-none">
-            <Link
-              to="/product/star-wars-the-mandalorian-seasons-1-3"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-white hover:bg-neutral-200 text-black font-mono font-bold text-[11px] sm:text-xs tracking-wider sm:tracking-widest uppercase rounded-full transition-all duration-200 shadow-2xl active:scale-95 text-center"
-            >
-              <span>ACQUIRE THE MANDALORIAN 1–3 (£24.99)</span>
-              <ChevronRight className="w-4 h-4 shrink-0" />
-            </Link>
+              {/* Word-by-word Interactive Text Reveal requested by user */}
+              <div className="mt-4 sm:mt-5 max-w-2xl mx-auto">
+                <TextReveal body={manifestoText} progress={revealProgress}>
+                  {(tokens) => (
+                    <p className="text-xs sm:text-base md:text-lg leading-relaxed drop-shadow-lg font-light">
+                      {tokens.map((token, index) => (
+                        <TextReveal.Token key={index} index={index}>
+                          {(isActive) => (
+                            <span
+                              className={`inline-block transition-all duration-200 ${
+                                isActive
+                                  ? 'text-white opacity-100 font-normal drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]'
+                                  : 'text-white/25 opacity-25'
+                              }`}
+                            >
+                              {token}&nbsp;
+                            </span>
+                          )}
+                        </TextReveal.Token>
+                      ))}
+                    </p>
+                  )}
+                </TextReveal>
+              </div>
 
-            <Link
-              to="/shop"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-mono font-semibold text-[11px] sm:text-xs tracking-wider sm:tracking-widest uppercase rounded-full transition-all duration-200 text-center"
-            >
-              <span>BROWSE ALL 11 ARCHIVE DISCS</span>
-            </Link>
-          </div>
-        </div>
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 sm:mt-8 w-full sm:w-auto">
+                <Link
+                  to="/product/star-wars-the-mandalorian-seasons-1-3"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-neutral-200 text-black font-mono font-bold text-xs tracking-wider uppercase rounded-full transition-all duration-200 shadow-2xl active:scale-95 text-center"
+                >
+                  <span>ACQUIRE THE MANDALORIAN (£24.99)</span>
+                  <ChevronRight className="w-4 h-4 shrink-0" />
+                </Link>
+
+                <Link
+                  to="/shop"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-mono font-semibold text-xs tracking-wider uppercase rounded-full transition-all duration-200 text-center"
+                >
+                  <span>BROWSE ALL 11 ARCHIVE DISCS</span>
+                </Link>
+              </div>
+            </div>
+          );
+        }}
       </ScrollExpand>
     </section>
   );
 };
+
+export default SpykerScrollExpandSection;

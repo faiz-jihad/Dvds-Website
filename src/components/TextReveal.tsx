@@ -16,6 +16,7 @@ export interface TextRevealProps {
   body: string;
   className?: string;
   style?: React.CSSProperties;
+  progress?: number;
   children: (tokens: string[]) => React.ReactNode;
 }
 
@@ -44,9 +45,11 @@ export const TextRevealToken: React.FC<TextRevealTokenProps> = ({ index, childre
 
 export const TextReveal: React.FC<TextRevealProps> & {
   Token: typeof TextRevealToken;
-} = ({ body = '', className = '', style, children }) => {
+} = ({ body = '', className = '', style, progress: progressProp, children }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [progress, setProgress] = useState(0);
+  const [internalProgress, setInternalProgress] = useState(0);
+
+  const effectiveProgress = progressProp !== undefined ? progressProp : internalProgress;
 
   // Split body into tokens (preserving words and trailing whitespace)
   const tokens = useMemo(() => {
@@ -56,6 +59,7 @@ export const TextReveal: React.FC<TextRevealProps> & {
   }, [body]);
 
   useEffect(() => {
+    if (progressProp !== undefined) return;
     const el = containerRef.current;
     if (!el) return;
 
@@ -74,7 +78,7 @@ export const TextReveal: React.FC<TextRevealProps> & {
       }
 
       const clamped = Math.max(0, Math.min(1, p));
-      setProgress(clamped);
+      setInternalProgress(clamped);
     };
 
     const onScroll = () => {
@@ -91,10 +95,10 @@ export const TextReveal: React.FC<TextRevealProps> & {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };
-  }, []);
+  }, [progressProp]);
 
   return (
-    <TextRevealContext.Provider value={{ progress, totalTokens: tokens.length }}>
+    <TextRevealContext.Provider value={{ progress: effectiveProgress, totalTokens: tokens.length }}>
       <div ref={containerRef} className={className} style={style}>
         {children(tokens)}
       </div>

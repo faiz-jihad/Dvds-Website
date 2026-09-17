@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { sanitizeRedirectPath } from '../../lib/utils';
 
 /**
  * OAuthCallback – handles redirect after OAuth (Google, etc.).
@@ -69,10 +70,11 @@ export const OAuthCallback: React.FC = () => {
       if (!isMounted) return;
 
       // 4. Retrieve intended redirect destination, default to /account
-      const redirectPath = sessionStorage.getItem('oauth_redirect_path') || '/account';
+      const rawRedirect = sessionStorage.getItem('oauth_redirect_path');
       sessionStorage.removeItem('oauth_redirect_path');
+      const redirectPath = sanitizeRedirectPath(rawRedirect, '/account');
 
-      // Navigate to destination
+      // Navigate to sanitized destination
       navigate(redirectPath, { replace: true });
     };
 

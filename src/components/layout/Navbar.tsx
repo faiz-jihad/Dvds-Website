@@ -349,8 +349,8 @@ export const Navbar: React.FC = () => {
             )}
           </Link>
 
-          {/* Customer Notifications Menu (Desktop md+ only, mobile accessible in drawer) */}
-          <div className="hidden md:block">
+          {/* Customer Notifications Menu (Accessible across all viewport sizes) */}
+          <div>
             <CustomerNotificationMenu />
           </div>
 

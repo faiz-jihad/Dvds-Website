@@ -3,7 +3,9 @@ import {
   getNotificationPermission,
   requestNotificationPermission,
   triggerNativeNotification,
+  playNotificationChime,
 } from '../lib/pushNotifications';
+import { useUiStore } from './useUiStore';
 
 export type NotificationRole = 'admin' | 'customer';
 export type NotificationType = 'order' | 'stock' | 'promo' | 'support' | 'system';
@@ -20,13 +22,19 @@ export interface AppNotification {
   metadata?: Record<string, any>;
 }
 
+export interface NotificationDispatchOptions {
+  sendNativePush?: boolean;
+  playAudio?: boolean;
+  showToast?: boolean;
+}
+
 interface NotificationState {
   notifications: AppNotification[];
   permission: NotificationPermission;
 
   addNotification: (
     item: Omit<AppNotification, 'id' | 'read' | 'createdAt'>,
-    sendNativePush?: boolean
+    options?: boolean | NotificationDispatchOptions
   ) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: (target: NotificationRole) => void;
@@ -34,16 +42,17 @@ interface NotificationState {
   clearAll: (target: NotificationRole) => void;
   updatePermission: () => void;
   requestPermission: () => Promise<NotificationPermission>;
+  sendTestNotification: (target: NotificationRole) => void;
 }
 
 const STORAGE_KEY = 'az_rayan_notifications_v1';
+const BROADCAST_CHANNEL = 'az_rayan_notifications_sync_v1';
 
 const getInitialNotifications = (): AppNotification[] => {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      // Provide clean default sample notifications to demonstrate tupoksi
       return [
         {
           id: 'init-admin-1',
@@ -82,77 +91,157 @@ const saveNotifications = (list: AppNotification[]) => {
   }
 };
 
-export const useNotificationStore = create<NotificationState>((set, get) => ({
-  notifications: getInitialNotifications(),
-  permission: getNotificationPermission(),
+// Cross-tab broadcast channel for instantaneous multi-tab sync
+const notifChannel =
+  typeof window !== 'undefined' && 'BroadcastChannel' in window
+    ? new BroadcastChannel(BROADCAST_CHANNEL)
+    : null;
 
-  addNotification: (item, sendNativePush = true) => {
-    const newNotif: AppNotification = {
-      ...item,
-      id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      read: false,
-      createdAt: new Date().toISOString(),
+export const useNotificationStore = create<NotificationState>((set, get) => {
+  // Listen to incoming notifications from other tabs
+  if (notifChannel) {
+    notifChannel.onmessage = (event) => {
+      const data = event.data;
+      if (data?.type === 'ADD' && data?.notification) {
+        set((state) => {
+          if (state.notifications.some((n) => n.id === data.notification.id)) return state;
+          const updated = [data.notification, ...state.notifications];
+          return { notifications: updated };
+        });
+      } else if (data?.type === 'SYNC') {
+        const fresh = getInitialNotifications();
+        set({ notifications: fresh });
+      }
     };
+  }
 
-    set((state) => {
-      const updated = [newNotif, ...state.notifications];
-      saveNotifications(updated);
-      return { notifications: updated };
-    });
+  return {
+    notifications: getInitialNotifications(),
+    permission: getNotificationPermission(),
 
-    if (sendNativePush) {
-      triggerNativeNotification({
-        title: item.title,
-        body: item.message,
-        url: item.link || '/',
-        tag: `notif-${item.type}`,
+    addNotification: (item, options = true) => {
+      const opts: NotificationDispatchOptions =
+        typeof options === 'boolean'
+          ? { sendNativePush: options, playAudio: true, showToast: true }
+          : { sendNativePush: true, playAudio: true, showToast: true, ...options };
+
+      const newNotif: AppNotification = {
+        ...item,
+        id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        read: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      set((state) => {
+        const updated = [newNotif, ...state.notifications];
+        saveNotifications(updated);
+        return { notifications: updated };
       });
-    }
-  },
 
-  markAsRead: (id: string) => {
-    set((state) => {
-      const updated = state.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
-      );
-      saveNotifications(updated);
-      return { notifications: updated };
-    });
-  },
+      // Broadcast to other open tabs
+      if (notifChannel) {
+        try {
+          notifChannel.postMessage({ type: 'ADD', notification: newNotif });
+        } catch {
+          // Ignore broadcast errors
+        }
+      }
 
-  markAllAsRead: (target: NotificationRole) => {
-    set((state) => {
-      const updated = state.notifications.map((n) =>
-        n.target === target ? { ...n, read: true } : n
-      );
-      saveNotifications(updated);
-      return { notifications: updated };
-    });
-  },
+      // 1. Play auditory chime
+      if (opts.playAudio) {
+        playNotificationChime();
+      }
 
-  clearNotification: (id: string) => {
-    set((state) => {
-      const updated = state.notifications.filter((n) => n.id !== id);
-      saveNotifications(updated);
-      return { notifications: updated };
-    });
-  },
+      // 2. Dispatch in-app Toast for immediate visible feedback
+      if (opts.showToast) {
+        const toastType =
+          item.type === 'order'
+            ? 'success'
+            : item.type === 'stock'
+            ? 'error'
+            : 'info';
+        useUiStore.getState().addToast(`${item.title} — ${item.message}`, toastType);
+      }
 
-  clearAll: (target: NotificationRole) => {
-    set((state) => {
-      const updated = state.notifications.filter((n) => n.target !== target);
-      saveNotifications(updated);
-      return { notifications: updated };
-    });
-  },
+      // 3. Dispatch Native OS / Browser Push Notification
+      if (opts.sendNativePush) {
+        triggerNativeNotification({
+          title: item.title,
+          body: item.message,
+          url: item.link || '/',
+          tag: `notif-${item.type}`,
+        });
+      }
+    },
 
-  updatePermission: () => {
-    set({ permission: getNotificationPermission() });
-  },
+    markAsRead: (id: string) => {
+      set((state) => {
+        const updated = state.notifications.map((n) =>
+          n.id === id ? { ...n, read: true } : n
+        );
+        saveNotifications(updated);
+        return { notifications: updated };
+      });
+      if (notifChannel) notifChannel.postMessage({ type: 'SYNC' });
+    },
 
-  requestPermission: async () => {
-    const res = await requestNotificationPermission();
-    set({ permission: res });
-    return res;
-  },
-}));
+    markAllAsRead: (target: NotificationRole) => {
+      set((state) => {
+        const updated = state.notifications.map((n) =>
+          n.target === target ? { ...n, read: true } : n
+        );
+        saveNotifications(updated);
+        return { notifications: updated };
+      });
+      if (notifChannel) notifChannel.postMessage({ type: 'SYNC' });
+    },
+
+    clearNotification: (id: string) => {
+      set((state) => {
+        const updated = state.notifications.filter((n) => n.id !== id);
+        saveNotifications(updated);
+        return { notifications: updated };
+      });
+      if (notifChannel) notifChannel.postMessage({ type: 'SYNC' });
+    },
+
+    clearAll: (target: NotificationRole) => {
+      set((state) => {
+        const updated = state.notifications.filter((n) => n.target !== target);
+        saveNotifications(updated);
+        return { notifications: updated };
+      });
+      if (notifChannel) notifChannel.postMessage({ type: 'SYNC' });
+    },
+
+    updatePermission: () => {
+      set({ permission: getNotificationPermission() });
+    },
+
+    requestPermission: async () => {
+      const res = await requestNotificationPermission();
+      set({ permission: res });
+      return res;
+    },
+
+    sendTestNotification: (target: NotificationRole) => {
+      if (target === 'admin') {
+        get().addNotification({
+          target: 'admin',
+          type: 'order',
+          title: 'Test Live Notification',
+          message: 'Order dispatch alerts, audio chime, and push notifications are operational.',
+          link: '/admin',
+        });
+      } else {
+        get().addNotification({
+          target: 'customer',
+          type: 'order',
+          title: 'Test Order Alert',
+          message: 'Your customer order tracking and store updates are active.',
+          link: '/account/orders',
+        });
+      }
+    },
+  };
+});

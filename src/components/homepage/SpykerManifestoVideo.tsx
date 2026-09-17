@@ -171,7 +171,7 @@ export const SpykerManifestoVideo: React.FC = () => {
           <div className="absolute inset-0 overflow-hidden">
             <video
               ref={videoRef}
-              src="https://res.cloudinary.com/lsrzjokx/video/upload/v1789362877/use_english_dan_jangan_ada_tex_gwr_video_mvp.mp4"
+              src="https://res.cloudinary.com/lsrzjokx/video/upload/v1789661527/Create_a_second_premium_cin.mp4"
               playsInline
               loop
               muted={isMuted}

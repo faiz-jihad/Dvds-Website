@@ -3,6 +3,7 @@ import { exchangeRate, convertQuote } from './_fx.js';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import Stripe from 'stripe';
 import { getSupabasePublicClient, getSupabaseServerClient } from './_supabase.js';
+import { checkRateLimit, getClientIp, sanitizeInputObject } from './_rate-limit.js';
 
 export const DEFAULT_SHIPPING_ZONES = [
   {
@@ -46,10 +47,46 @@ export function check(result, message = 'The order could not be saved. Please re
   if (result.error) throw new CheckoutError(message, 503, 'DATABASE_ERROR');
   return result.data;
 }
-export function endpoint(action, method = 'POST') {
+export function endpoint(action, method = 'POST', rateLimitOptions = { max: 60, windowMs: 60000 }) {
   return async (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
-    if (req.method !== method) { res.setHeader('Allow', method); return res.status(405).json({ error: 'Method not allowed' }); }
+    if (typeof res.setHeader === 'function') {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    }
+    if (req.method !== method) {
+      if (typeof res.setHeader === 'function') res.setHeader('Allow', method);
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    if (rateLimitOptions && rateLimitOptions.max > 0) {
+      const headers = req?.headers || {};
+      const safeReq = { ...req, headers };
+      const ip = getClientIp(safeReq);
+      const path = typeof req.url === 'string' ? req.url.split('?')[0] : 'checkout-action';
+      const key = `${ip}:${path}`;
+      const limit = checkRateLimit(key, rateLimitOptions);
+
+      if (typeof res.setHeader === 'function') {
+        res.setHeader('X-RateLimit-Limit', String(limit.limit));
+        res.setHeader('X-RateLimit-Remaining', String(limit.remaining));
+        res.setHeader('X-RateLimit-Reset', String(Math.ceil(limit.resetMs / 1000)));
+      }
+
+      if (!limit.allowed) {
+        if (typeof res.setHeader === 'function') {
+          res.setHeader('Retry-After', String(Math.ceil(limit.resetMs / 1000)));
+        }
+        return res.status(429).json({
+          error: 'Too many requests. Please wait a moment before retrying.',
+          code: 'RATE_LIMITED',
+        });
+      }
+    }
+
+    if (req.body && typeof req.body === 'object') {
+      req.body = sanitizeInputObject(req.body);
+    }
+
     try { return res.status(200).json(await action(req)); }
     catch (error) {
       if (!(error instanceof CheckoutError)) console.error('[checkout]', error.code || error.name, error.message);

@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './ScrollExpand.css';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 
@@ -27,7 +33,7 @@ export interface ScrollExpandProps {
   overlayScrim?: number;
   useWindowScroll?: boolean;
   enabled?: boolean;
-  children?: React.ReactNode;
+  children?: React.ReactNode | ((progress: number) => React.ReactNode);
   className?: string;
   style?: React.CSSProperties;
 }
@@ -40,15 +46,15 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
   title = '',
   scrollHint = '',
   customMedia,
-  startWidth = 62,
-  startHeight = 66,
-  startRadius = 22,
+  startWidth = 84,
+  startHeight = 78,
+  startRadius = 20,
   endRadius = 0,
   mediaZoom = 1.10,
-  scrollDistance = 0.75,
-  holdDistance = 0.12,
+  scrollDistance = 1.2,
+  holdDistance = 0.8,
   smoothing = 0,
-  overlayScrim = 0.65,
+  overlayScrim = 0.72,
   useWindowScroll = false,
   enabled = true,
   children,
@@ -56,6 +62,7 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
   style,
   ...rest
 }) => {
+  const [progress, setProgress] = React.useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -103,10 +110,10 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
 
     const e = smoothstep(0, 1, p);
 
-    // Responsive initial card sizing
+    // Responsive initial card sizing: cinematic frame that fits the screen majestically
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    const baseW = isMobile ? 88 : c.startWidth;
-    const baseH = isMobile ? 56 : c.startHeight;
+    const baseW = isMobile ? 92 : c.startWidth;
+    const baseH = isMobile ? 70 : c.startHeight;
 
     const w = baseW + (100 - baseW) * e;
     const h = baseH + (100 - baseH) * e;
@@ -121,28 +128,28 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
       scrimRef.current.style.opacity = `${c.overlayScrim * e}`;
     }
 
-    // Hint: fades out smoothly as soon as scrolling initiates (0% -> 15%)
+    // Hint: fades out smoothly as soon as scrolling initiates (0% -> 12%)
     if (hintRef.current) {
-      const gone = smoothstep(0, 0.15, p);
+      const gone = smoothstep(0, 0.12, p);
       hintRef.current.style.opacity = `${1 - gone}`;
       hintRef.current.style.transform = `translate3d(0, ${15 * gone}px, 0)`;
-      hintRef.current.style.pointerEvents = p < 0.10 ? 'auto' : 'none';
+      hintRef.current.style.pointerEvents = p < 0.08 ? 'auto' : 'none';
     }
 
-    // Title: stays crisp and visible from 0% to 18%, then dissolves smoothly during 18% -> 48%
+    // Title: stays crisp and visible from 0% to 12%, then dissolves smoothly during 12% -> 32%
     if (titleRef.current) {
-      const out = smoothstep(0.18, 0.48, p);
+      const out = smoothstep(0.12, 0.32, p);
       titleRef.current.style.opacity = `${1 - out}`;
-      titleRef.current.style.transform = `translate3d(0, ${-25 * out}px, 0) scale(${1 + 0.02 * out})`;
+      titleRef.current.style.transform = `translate3d(0, ${-20 * out}px, 0)`;
       titleRef.current.style.pointerEvents = 'none';
     }
 
-    // Overlay (expanded content): starts emerging at 38% for seamless cross-fade, fully active by 68%
+    // Overlay (expanded content): starts emerging at 28% as card expands, fully active by 46%
     if (overlayRef.current) {
-      const inn = smoothstep(0.38, 0.68, p);
+      const inn = smoothstep(0.28, 0.46, p);
       overlayRef.current.style.opacity = `${inn}`;
-      overlayRef.current.style.transform = `translate3d(0, ${20 * (1 - inn)}px, 0)`;
-      overlayRef.current.style.pointerEvents = p > 0.60 ? 'auto' : 'none';
+      overlayRef.current.style.transform = `translate3d(0, ${18 * (1 - inn)}px, 0)`;
+      overlayRef.current.style.pointerEvents = p > 0.45 ? 'auto' : 'none';
     }
   }, []);
 
@@ -309,7 +316,7 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
             <div ref={scrimRef} className="scroll-expand__scrim" />
             {children ? (
               <div ref={overlayRef} className="scroll-expand__overlay">
-                {children}
+                {typeof children === 'function' ? children(progress) : children}
               </div>
             ) : null}
           </div>

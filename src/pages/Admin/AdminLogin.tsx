@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
 import { useAdminAuth } from '../../auth/AdminAuth';
+import { sanitizeRedirectPath } from '../../lib/utils';
 
 export const AdminLogin: React.FC = () => {
   const { user, isLoading, login } = useAdminAuth();
@@ -14,8 +15,20 @@ export const AdminLogin: React.FC = () => {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
-  const from = (location.state as { from?: string } | null)?.from || '/admin';
+  const rawFrom = (location.state as { from?: string } | null)?.from || '/admin';
+  const from = sanitizeRedirectPath(rawFrom, '/admin');
+
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldownRemaining <= 0) return;
+    const timer = setInterval(() => {
+      setCooldownRemaining((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownRemaining]);
 
   useEffect(() => {
     if (!isLoading && user) navigate(from, { replace: true });
@@ -23,12 +36,28 @@ export const AdminLogin: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (cooldownRemaining > 0) {
+      setError(`Too many failed login attempts. Please wait ${cooldownRemaining}s before retrying.`);
+      return;
+    }
+
     setError('');
     setSubmitting(true);
     const result = await login(email, password, remember);
     setSubmitting(false);
-    if (result.success) navigate(from, { replace: true });
-    else setError(result.message);
+    if (result.success) {
+      setFailedAttempts(0);
+      navigate(from, { replace: true });
+    } else {
+      const nextAttempts = failedAttempts + 1;
+      setFailedAttempts(nextAttempts);
+      if (nextAttempts >= 5) {
+        setCooldownRemaining(30);
+        setError('Too many failed administrative login attempts. Locked for 30 seconds.');
+      } else {
+        setError(result.message || 'Invalid administrator credentials.');
+      }
+    }
   };
 
   return (
