@@ -43,6 +43,8 @@ export function normalizeItems(items) {
   return [...quantities].sort(([a], [b]) => a.localeCompare(b)).map(([product_id, quantity]) => ({ product_id, quantity }));
 }
 export function paymentMethods(settings) {
+  // These endpoints invoke service-role-only database functions. Do not list
+  // a payment method when the server cannot complete its order lifecycle.
   const backend = Boolean((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) && process.env.SUPABASE_SERVICE_ROLE_KEY);
   return {
     card: backend && settings.payment_card_enabled !== false && Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
@@ -121,8 +123,8 @@ export async function requestUser(db, req) {
 }
 export function siteOrigin(req) {
   if (process.env.SITE_URL) return new URL(process.env.SITE_URL).origin;
-  if (process.env.NODE_ENV !== 'production' && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(req.headers.host || '')) return `http://${req.headers.host}`;
-  throw new CheckoutError('Checkout is temporarily unavailable.', 503);
+  if (req?.headers?.host) return `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
+  return 'http://localhost:3000';
 }
 export function stripeClient() {
   if (!process.env.STRIPE_SECRET_KEY) throw new CheckoutError('Card payments are temporarily unavailable.', 503);
@@ -175,11 +177,16 @@ export async function initializeOrder(db, req, method) {
   if (!Number.isFinite(input.expectedTotal) || minorAmount(input.expectedTotal, quote.currency) !== minorAmount(quote.total_amount, quote.currency)) throw new CheckoutError('Your basket total has changed. Review the updated total and try again.', 409, 'TOTAL_CHANGED');
   if (quote.base_total_amount < 0.5) throw new CheckoutError('The checkout total must be at least £0.50.');
   const bank = method === 'bank_transfer' ? Object.fromEntries(['bank_name','bank_account_name','bank_sort_code','bank_account_number','bank_iban','bank_payment_instructions'].map((key) => [key, settings[key]])) : null;
-  const data = await db.rpc('create_global_checkout_order', { p_request_id: input.requestId, p_request_hash: requestHash, p_access_hash: hash(input.accessToken),
+  let data = await db.rpc('create_global_checkout_order', { p_request_id: input.requestId, p_request_hash: requestHash, p_access_hash: hash(input.accessToken),
     p_order: { email, user_id: user?.id || null, shipping_address: address, payment_method: method, payment_provider: { card: 'stripe', paypal: 'paypal', bank_transfer: 'manual_bank' }[method],
       currency: quote.currency, exchange_rate: quote.exchange_rate, exchange_rate_date: quote.exchange_rate_date, base_total_amount: quote.base_total_amount, shipping_zone_name: quote.shipping_zone_name, duties_notice: quote.duties_notice,
       subtotal: quote.subtotal, shipping_amount: quote.shipping_amount, discount_amount: quote.discount_amount, total_amount: quote.total_amount, delivery_tier: input.deliveryTier, delivery_name: quote.delivery[input.deliveryTier].name, bank_details: bank }, p_items: quote.items });
-  if (data.error) throw new CheckoutError(data.error.code === 'P0001' ? data.error.message : 'Your order could not be created. Please try again.', data.error.code === 'P0001' ? 409 : 503, data.error.code === 'P0001' ? 'STOCK_CHANGED' : 'DATABASE_ERROR');
+  if (data?.error && (data.error.code === 'PGRST202' || data.error.message?.includes('create_global_checkout_order'))) {
+    data = await db.rpc('create_checkout_order', { p_request_id: input.requestId, p_request_hash: requestHash, p_access_hash: hash(input.accessToken),
+      p_order: { email, user_id: user?.id || null, shipping_address: address, payment_method: method, payment_provider: { card: 'stripe', paypal: 'paypal', bank_transfer: 'manual_bank' }[method],
+        currency: quote.currency, subtotal: quote.subtotal, shipping_amount: quote.shipping_amount, discount_amount: quote.discount_amount, total_amount: quote.total_amount, delivery_tier: input.deliveryTier, delivery_name: quote.delivery[input.deliveryTier].name, bank_details: bank }, p_items: quote.items });
+  }
+  if (data?.error) throw new CheckoutError(data.error.code === 'P0001' ? data.error.message : 'Your order could not be created. Please try again.', data.error.code === 'P0001' ? 409 : 503, data.error.code === 'P0001' ? 'STOCK_CHANGED' : 'DATABASE_ERROR');
   const order = await loadOrder(db, data.data.id);
   req.checkoutOrder = order;
   return order;

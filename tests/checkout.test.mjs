@@ -43,11 +43,16 @@ test('deal expiry and promo validation use server data and never discount shippi
 });
 
 test('unconfigured providers and unverified bank accounts are not offered', () => {
-  const keys = ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','PAYPAL_CLIENT_ID','PAYPAL_CLIENT_SECRET','PAYPAL_WEBHOOK_ID'];
+  const keys = ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','SUPABASE_ANON_KEY','VITE_SUPABASE_URL','VITE_SUPABASE_ANON_KEY','STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','PAYPAL_CLIENT_ID','PAYPAL_CLIENT_SECRET','PAYPAL_WEBHOOK_ID'];
   const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
   try {
     keys.forEach((key) => { delete process.env[key]; });
     assert.deepEqual(paymentMethods(settings), { card: false, paypal: false, bank_transfer: false });
+    process.env.VITE_SUPABASE_URL = 'https://project.supabase.test';
+    process.env.VITE_SUPABASE_ANON_KEY = 'anon-key';
+    process.env.STRIPE_SECRET_KEY = 'stripe-secret';
+    process.env.STRIPE_WEBHOOK_SECRET = 'stripe-webhook-secret';
+    assert.equal(paymentMethods(settings).card, false);
     keys.forEach((key) => { process.env[key] = 'test-value'; });
     const bank = { bank_name: 'Test Bank', bank_account_name: 'Test company', bank_sort_code: '12-34-56', bank_account_number: '12345678' };
     assert.equal(paymentMethods(bank).bank_transfer, false);

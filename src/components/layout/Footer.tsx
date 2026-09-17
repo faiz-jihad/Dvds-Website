@@ -308,6 +308,9 @@ export const Footer: React.FC = () => {
         <div className="pt-3 text-[10px] text-neutral-500 text-left">
           {registeredCompanyName} • Registered office: {registeredOffice}
         </div>
+        <p className="pt-2 text-[10px] leading-relaxed text-neutral-400 text-left sm:text-center">
+          All our DVD are region 2 (UK) and zero region (UK).
+        </p>
       </div>
     </footer>
   );
