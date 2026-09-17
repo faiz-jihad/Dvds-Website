@@ -200,6 +200,8 @@ export const AdminOrders: React.FC = () => {
                             ? 'Bank Transfer'
                             : o.payment_method === 'paypal'
                             ? 'PayPal'
+                            : o.payment_provider === 'stripe'
+                            ? 'Stripe — Card / Apple Pay'
                             : 'Card (Stripe)'}
                         </span>
                         {o.paid_at && (
@@ -355,7 +357,7 @@ export const AdminOrders: React.FC = () => {
                     ? 'Company Bank Transfer'
                     : selectedOrder.payment_method === 'paypal'
                     ? 'PayPal'
-                    : 'Credit / Debit Card'}
+                    : 'Stripe — Visa / Apple Pay / Google Pay'}
                 </span>
                 <span className="text-[10px] text-gray-400 block font-mono">
                   Provider: {selectedOrder.payment_provider || 'standard'}

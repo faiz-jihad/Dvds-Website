@@ -10,7 +10,7 @@ import { useCustomerAuth } from '../auth/CustomerAuth';
 
 const fieldClass = 'mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50';
 const methods = [
-  { id: 'card' as const, name: 'Credit or debit card', icon: CreditCard, description: 'Complete your payment securely with Stripe.', detail: 'Card details are entered on Stripe. You will return here after payment.', badge: 'Powered by Stripe' },
+  { id: 'card' as const, name: 'Visa debit or credit card', icon: CreditCard, description: 'Pay securely with a Visa debit or credit card. Apple Pay and Google Pay are also offered on supported devices.', detail: 'Your card details are entered securely on Stripe. Apple Pay and Google Pay are available where supported — you will return here after payment.', badge: 'Powered by Stripe' },
   { id: 'paypal' as const, name: 'PayPal', icon: Wallet, description: 'Pay with your PayPal account or the options available at PayPal.', detail: 'Continue to PayPal to approve your payment, then return to your order.', badge: 'PayPal checkout' },
   { id: 'bank_transfer' as const, name: 'Company bank transfer', icon: Building2, description: 'Transfer directly to our company bank account.', detail: 'Place your order to receive bank details and a unique reference. Dispatch starts after payment is confirmed.', badge: 'Manual confirmation' },
 ];
@@ -35,6 +35,8 @@ export const CheckoutPage: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(currentCheckoutAttempt);
+  const [applePaySupported, setApplePaySupported] = useState(false);
+  const [googlePaySupported, setGooglePaySupported] = useState(false);
   const basket = items.map((item) => ({ product_id: item.product_id, quantity: item.quantity }));
   const quoteQuery = useQuery({
     queryKey: ['checkout-quote', basket, tier, promo, address.country, currency],
@@ -56,6 +58,19 @@ export const CheckoutPage: React.FC = () => {
       setAddress((value) => ({ ...value, full_name: value.full_name || customer.full_name || '', phone: value.phone || customer.phone || '' }));
     }
   }, [customer]);
+  useEffect(() => {
+    // Apple Pay: available on Safari / iOS / macOS with a card enrolled in Wallet.
+    const applePay = (window as Window & { ApplePaySession?: { canMakePayments: () => boolean } }).ApplePaySession;
+    setApplePaySupported(Boolean(applePay?.canMakePayments()));
+    // Google Pay: detected via the Payment Request API (Chrome, Edge, Android).
+    if (typeof window !== 'undefined' && window.PaymentRequest) {
+      const request = new window.PaymentRequest(
+        [{ supportedMethods: 'https://google.com/pay', data: { apiVersion: 2, apiVersionMinor: 0, allowedPaymentMethods: [{ type: 'CARD', parameters: { allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'], allowedCardNetworks: ['VISA', 'MASTERCARD'] } }] } }],
+        { total: { label: 'Total', amount: { currency: 'GBP', value: '0' } } }
+      );
+      request.canMakePayment().then((result) => setGooglePaySupported(Boolean(result))).catch(() => {});
+    }
+  }, []);
   const updateAddress = (key: keyof Address, value: string) => {
     if (key === 'country') { setTier('standard'); setInternationalAcknowledged(false); setError(''); }
     setAddress((previous) => ({ ...previous, [key]: value }));
@@ -120,7 +135,7 @@ export const CheckoutPage: React.FC = () => {
         <form onSubmit={submit} className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-6 lg:gap-8 items-start">
           <div className="rounded-2xl bg-white border border-gray-200 p-5 sm:p-8 space-y-8">
             <fieldset disabled={busy || Boolean(attempt)}>
-              <legend className="text-lg font-semibold mb-5"><span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-brand-blue rounded-full text-xs mr-3">1</span>Contact & delivery details</legend>
+              <legend className="text-lg font-semibold mb-5"><span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-brand-blue rounded-full text-xs mr-3">1</span>Contact &amp; delivery details</legend>
               <div className="grid sm:grid-cols-2 gap-4">
                 <label className="text-sm sm:col-span-2">Email address<input className={fieldClass} type="email" autoComplete="email" required maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} /></label>
                 <label className="text-sm">Delivery country<select className={fieldClass} autoComplete="shipping country" value={address.country} onChange={(event) => updateAddress('country', event.target.value)}>{COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}</select></label>
@@ -153,9 +168,24 @@ export const CheckoutPage: React.FC = () => {
                   return <label key={option.id} className={`block rounded-xl border overflow-hidden transition-colors focus-within:ring-2 focus-within:ring-blue-200 ${!available ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed' : selected ? 'border-brand-blue ring-1 ring-brand-blue cursor-pointer' : 'border-gray-200 hover:border-blue-300 cursor-pointer'}`}>
                     <div className="flex items-start gap-3 p-4 sm:p-5">
                       <input type="radio" name="payment" value={option.id} checked={selected} disabled={!available} onChange={() => setMethod(option.id)} className="accent-blue-600 w-4 h-4 shrink-0 mt-1" />
-                      <div className="flex-1 min-w-0"><div className="flex flex-wrap items-center gap-2"><Icon size={18} /><span className={`font-semibold ${option.id === 'paypal' && available ? 'text-blue-900 italic' : ''}`}>{option.name}</span></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2"><Icon size={18} /><span className={`font-semibold ${option.id === 'paypal' && available ? 'text-blue-900 italic' : ''}`}>{option.name}</span></div>
                         <p className="text-sm leading-relaxed mt-2 text-gray-500">{option.description}</p>
-                        <span className="inline-block mt-3 text-[11px] font-medium px-2 py-1 rounded bg-gray-100 text-gray-600">{available ? option.id === 'bank_transfer' ? quote?.bank_name : option.badge : 'Temporarily unavailable'}</span>
+                        <div className="flex flex-wrap items-center gap-2 mt-3">
+                          <span className="inline-block text-[11px] font-medium px-2 py-1 rounded bg-gray-100 text-gray-600">{available ? option.id === 'bank_transfer' ? quote?.bank_name : option.badge : 'Temporarily unavailable'}</span>
+                          {option.id === 'card' && available && applePaySupported && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded bg-gray-900 text-white" title="Apple Pay available on this device">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                              Apple Pay
+                            </span>
+                          )}
+                          {option.id === 'card' && available && googlePaySupported && !applePaySupported && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded bg-white border border-gray-300 text-gray-700" title="Google Pay available on this device">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 10.2v3.6h5.1c-.2 1.2-1.4 3.4-5.1 3.4-3.1 0-5.6-2.5-5.6-5.7s2.5-5.7 5.6-5.7c1.7 0 2.9.7 3.5 1.4l2.4-2.3C16.4 3.4 14.4 2.5 12 2.5 6.8 2.5 2.5 6.8 2.5 12s4.3 9.5 9.5 9.5c5.5 0 9.1-3.8 9.1-9.2 0-.6-.1-1.1-.2-1.6H12z" fill="#4285F4"/></svg>
+                              Google Pay
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {selected && <Check size={17} className="text-brand-blue shrink-0 mt-1" />}
                     </div>

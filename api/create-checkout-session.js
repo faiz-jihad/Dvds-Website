@@ -8,7 +8,12 @@ export default endpoint(async (req) => {
   if (order.payment_status === 'paid') return { orderId: order.id, orderNumber: order.order_number, completed: true };
   if (order.checkout_url) return { url: order.checkout_url, orderId: order.id, orderNumber: order.order_number };
   const session = await stripeClient().checkout.sessions.create({
-    mode: 'payment', payment_method_types: ['card'], customer_email: order.email,
+    // Omitting payment_method_types lets Stripe Hosted Checkout automatically
+    // surface Apple Pay, Google Pay, and Link on supported devices alongside
+    // standard Visa/Mastercard debit and credit card entry.
+    // Apple Pay requires the domain to be registered in the Stripe Dashboard:
+    // Settings > Payment methods > Apple Pay > Register domain.
+    mode: 'payment', customer_email: order.email,
     line_items: [{ price_data: { currency: order.currency.toLowerCase(), unit_amount: minorAmount(order.total_amount, order.currency),
       product_data: { name: `AZ Rayan DVDs - ${order.order_number}`, description: `${order.delivery_name} - ${order.items.length} titles` } }, quantity: 1 }],
     metadata: { order_id: order.id }, payment_intent_data: { metadata: { order_id: order.id }, shipping: stripeShipping(order) },

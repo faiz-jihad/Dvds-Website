@@ -15,6 +15,10 @@ Configure these variables on the server (see `.env.example`):
 
 The browser uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Never prefix service-role keys or payment secrets with `VITE_`. Hosted Stripe Checkout does not require Stripe.js or a publishable key in the payment page.
 
+## Visa and Apple Pay
+
+Card checkout is hosted by Stripe, so raw card numbers and CVVs never enter this application. Stripe supports Visa debit and credit cards through the enabled `card` payment method. Apple Pay is also handled by Stripe Checkout: it is shown only to eligible customers on a supported Apple device/browser and is not displayed as a selectable method elsewhere in the storefront. In Stripe Dashboard, enable Apple Pay and register the canonical HTTPS `SITE_URL` under **Payment method domains** before accepting live payments.
+
 The existing `supabase/functions/*` Stripe implementation is legacy. This storefront uses `/api/*` exclusively. Do not deploy or configure the old Edge Function checkout/webhook alongside the new handlers. Remove old webhook destinations when switching deployments after any old in-flight payments have settled.
 
 ## Admin settings
