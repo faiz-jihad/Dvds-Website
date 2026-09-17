@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   ArrowRight,
@@ -16,36 +16,42 @@ import {
   Tag,
   Film,
   ChevronDown,
-} from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { useUiStore } from '../../stores/useUiStore';
-import { useCustomerAuth } from '../../auth/CustomerAuth';
-import { useFavouritesStore } from '../../stores/useFavouritesStore';
-import { useNotificationStore } from '../../stores/useNotificationStore';
-import { publicApi } from '../../lib/publicApi';
-import { cn } from '../../lib/formatters';
+} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useUiStore } from "../../stores/useUiStore";
+import { useCustomerAuth } from "../../auth/CustomerAuth";
+import { useFavouritesStore } from "../../stores/useFavouritesStore";
+import { useNotificationStore } from "../../stores/useNotificationStore";
+import { publicApi } from "../../lib/publicApi";
+import { cn } from "../../lib/formatters";
 
 const GENRE_NAV_ITEMS = [
-  { name: 'Action & Military', slug: 'action' },
-  { name: 'Science Fiction', slug: 'science-fiction' },
-  { name: 'Drama & Crime', slug: 'drama' },
-  { name: 'TV Series Box Sets', href: '/shop?category=tv-box-sets' },
-  { name: 'Documentary & Music', slug: 'documentary' },
-  { name: 'Classic & Cult Cinema', slug: 'historical' },
-  { name: 'Western & Frontier', slug: 'western' },
+  { name: "Action & Military", slug: "action" },
+  { name: "Science Fiction", slug: "science-fiction" },
+  { name: "Drama & Crime", slug: "drama" },
+  { name: "TV Series Box Sets", href: "/shop?category=tv-box-sets" },
+  { name: "Documentary & Music", slug: "documentary" },
+  { name: "Classic & Cult Cinema", slug: "historical" },
+  { name: "Western & Frontier", slug: "western" },
 ];
 
 export const MobileNavDrawer: React.FC = () => {
   const { isMobileNavOpen, closeMobileNav, openSearch } = useUiStore();
-  const { customer, isAuthenticated, logout: customerLogout } = useCustomerAuth();
+  const {
+    customer,
+    isAuthenticated,
+    logout: customerLogout,
+  } = useCustomerAuth();
   const location = useLocation();
-  const [genresOpen, setGenresOpen] = useState(true);
+  const [genresOpen, setGenresOpen] = useState(false);
   const favourites = useFavouritesStore((state) => state.favourites);
   const allNotifications = useNotificationStore((state) => state.notifications);
-  const unreadCount = allNotifications.filter((n) => n.target === 'customer' && !n.read).length;
+  const unreadCount = allNotifications.filter(
+    (n) => n.target === "customer" && !n.read,
+  ).length;
   const categoriesQuery = useQuery({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: publicApi.getCategories,
     enabled: isMobileNavOpen,
     staleTime: 60_000,
@@ -67,16 +73,16 @@ export const MobileNavDrawer: React.FC = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={closeMobileNav}
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
           />
 
           {/* Drawer Menu */}
           <motion.div
-            initial={{ x: '-100%' }}
+            initial={{ x: "-100%" }}
             animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            className="fixed inset-y-0 left-0 w-[min(88vw,360px)] bg-white border-r border-gray-200 text-dark shadow-2xl z-10 flex flex-col justify-between overflow-y-auto overscroll-contain"
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 280 }}
+            className="fixed inset-y-0 left-0 w-[min(90vw,380px)] max-w-full bg-white border-r border-gray-200 text-dark shadow-2xl z-10 flex flex-col overflow-y-auto overscroll-contain"
           >
             <div>
               {/* Header */}
@@ -85,7 +91,7 @@ export const MobileNavDrawer: React.FC = () => {
                   <img
                     src="/brand/logo.png"
                     alt="DVDs Zone"
-                    className="h-10 w-auto object-contain"
+                    className="h-10 w-auto max-w-[9.5rem] object-contain"
                   />
                   <div className="flex flex-col">
                     <span className="font-display font-extrabold text-sm tracking-tight text-dark leading-none">
@@ -109,7 +115,7 @@ export const MobileNavDrawer: React.FC = () => {
               <div className="p-4 border-b border-gray-100">
                 <button
                   onClick={handleSearchClick}
-                  className="w-full py-2.5 px-3.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-xs text-gray-500 hover:text-dark flex items-center justify-between transition-colors cursor-pointer shadow-2xs"
+                  className="w-full min-h-12 py-2.5 px-3.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-xs text-gray-500 hover:text-dark flex items-center justify-between transition-colors cursor-pointer shadow-2xs"
                 >
                   <span className="flex items-center gap-2">
                     <Search className="w-3.5 h-3.5 text-gray-400" />
@@ -129,13 +135,17 @@ export const MobileNavDrawer: React.FC = () => {
                       className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-90 transition"
                     >
                       <div className="w-9 h-9 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-                        {(customer.full_name || customer.email).charAt(0).toUpperCase()}
+                        {(customer.full_name || customer.email)
+                          .charAt(0)
+                          .toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-dark truncate">
-                          {customer.full_name || 'My Account'}
+                          {customer.full_name || "My Account"}
                         </p>
-                        <p className="text-[10px] text-gray-400 truncate font-mono">{customer.email}</p>
+                        <p className="text-[10px] text-gray-400 truncate font-mono">
+                          {customer.email}
+                        </p>
                       </div>
                     </Link>
                     <button
@@ -177,10 +187,10 @@ export const MobileNavDrawer: React.FC = () => {
                   to="/shop"
                   onClick={closeMobileNav}
                   className={cn(
-                    'flex items-center justify-between py-2.5 px-3 font-semibold rounded-lg transition-colors',
-                    location.pathname === '/shop' && !location.search
-                      ? 'bg-gray-100 text-dark font-bold'
-                      : 'text-gray-700 hover:text-dark hover:bg-gray-100'
+                    "flex items-center justify-between min-h-11 py-2.5 px-3 font-semibold rounded-lg transition-colors",
+                    location.pathname === "/shop" && !location.search
+                      ? "bg-gray-100 text-dark font-bold"
+                      : "text-gray-700 hover:text-dark hover:bg-gray-100",
                   )}
                 >
                   <span>Complete Catalogue</span>
@@ -191,10 +201,11 @@ export const MobileNavDrawer: React.FC = () => {
                   to="/shop?filter=new"
                   onClick={closeMobileNav}
                   className={cn(
-                    'flex items-center justify-between py-2.5 px-3 font-semibold rounded-lg transition-colors',
-                    location.pathname === '/shop' && location.search.includes('filter=new')
-                      ? 'bg-gray-100 text-dark font-bold'
-                      : 'text-gray-700 hover:text-dark hover:bg-gray-100'
+                    "flex items-center justify-between min-h-11 py-2.5 px-3 font-semibold rounded-lg transition-colors",
+                    location.pathname === "/shop" &&
+                      location.search.includes("filter=new")
+                      ? "bg-gray-100 text-dark font-bold"
+                      : "text-gray-700 hover:text-dark hover:bg-gray-100",
                   )}
                 >
                   <span>New Pressings</span>
@@ -207,10 +218,11 @@ export const MobileNavDrawer: React.FC = () => {
                   to="/shop?filter=bestseller"
                   onClick={closeMobileNav}
                   className={cn(
-                    'flex items-center justify-between py-2.5 px-3 font-semibold rounded-lg transition-colors',
-                    location.pathname === '/shop' && location.search.includes('filter=bestseller')
-                      ? 'bg-gray-100 text-dark font-bold'
-                      : 'text-gray-700 hover:text-dark hover:bg-gray-100'
+                    "flex items-center justify-between min-h-11 py-2.5 px-3 font-semibold rounded-lg transition-colors",
+                    location.pathname === "/shop" &&
+                      location.search.includes("filter=bestseller")
+                      ? "bg-gray-100 text-dark font-bold"
+                      : "text-gray-700 hover:text-dark hover:bg-gray-100",
                   )}
                 >
                   <span>Best Sellers</span>
@@ -221,10 +233,11 @@ export const MobileNavDrawer: React.FC = () => {
                   to="/shop?filter=sale"
                   onClick={closeMobileNav}
                   className={cn(
-                    'flex items-center justify-between py-2.5 px-3 font-bold rounded-xl transition-all border',
-                    location.pathname === '/shop' && location.search.includes('filter=sale')
-                      ? 'bg-red-50 text-brand-red border-red-200 shadow-xs'
-                      : 'bg-red-50/40 text-brand-red border-red-100 hover:bg-red-50 hover:border-red-200'
+                    "flex items-center justify-between min-h-11 py-2.5 px-3 font-bold rounded-xl transition-all border",
+                    location.pathname === "/shop" &&
+                      location.search.includes("filter=sale")
+                      ? "bg-red-50 text-brand-red border-red-200 shadow-xs"
+                      : "bg-red-50/40 text-brand-red border-red-100 hover:bg-red-50 hover:border-red-200",
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -241,7 +254,9 @@ export const MobileNavDrawer: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setGenresOpen(!genresOpen)}
-                    className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500 hover:text-dark transition cursor-pointer"
+                    aria-expanded={genresOpen}
+                    aria-controls="mobile-genres-menu"
+                    className="w-full min-h-11 flex items-center justify-between px-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 hover:text-dark transition cursor-pointer rounded-lg"
                   >
                     <div className="flex items-center gap-2">
                       <Film className="w-3.5 h-3.5 text-gray-600" />
@@ -249,35 +264,42 @@ export const MobileNavDrawer: React.FC = () => {
                     </div>
                     <ChevronDown
                       className={cn(
-                        'w-3.5 h-3.5 text-gray-400 transition-transform duration-200',
-                        genresOpen ? 'rotate-180' : ''
+                        "w-3.5 h-3.5 text-gray-400 transition-transform duration-200",
+                        genresOpen ? "rotate-180" : "",
                       )}
                     />
                   </button>
 
                   {genresOpen && (
-                    <div className="mt-1 space-y-0.5 pl-1.5 pr-1">
+                    <div
+                      id="mobile-genres-menu"
+                      className="mt-1 space-y-0.5 pl-1.5 pr-1"
+                    >
                       {GENRE_NAV_ITEMS.map((item) => {
                         const isActive = item.slug
-                          ? location.pathname === '/shop' && location.search.includes(`genre=${item.slug}`)
-                          : location.pathname === '/shop' && location.search.includes('category=tv-box-sets');
+                          ? location.pathname === "/shop" &&
+                            location.search.includes(`genre=${item.slug}`)
+                          : location.pathname === "/shop" &&
+                            location.search.includes("category=tv-box-sets");
                         return (
                           <Link
                             key={item.name}
                             to={item.href || `/shop?genre=${item.slug}`}
                             onClick={closeMobileNav}
                             className={cn(
-                              'flex items-center justify-between py-2 px-3 text-xs rounded-lg transition-colors',
+                              "flex items-center justify-between min-h-11 py-2 px-3 text-xs rounded-lg transition-colors",
                               isActive
-                                ? 'bg-gray-100 text-dark font-bold'
-                                : 'text-gray-600 hover:text-dark hover:bg-gray-100'
+                                ? "bg-gray-100 text-dark font-bold"
+                                : "text-gray-600 hover:text-dark hover:bg-gray-100",
                             )}
                           >
                             <span>{item.name}</span>
                             <ArrowRight
                               className={cn(
-                                'w-3.5 h-3.5 transition-all',
-                                isActive ? 'text-dark translate-x-0.5' : 'text-gray-300'
+                                "w-3.5 h-3.5 transition-all",
+                                isActive
+                                  ? "text-dark translate-x-0.5"
+                                  : "text-gray-300",
                               )}
                             />
                           </Link>
@@ -351,7 +373,9 @@ export const MobileNavDrawer: React.FC = () => {
                     {unreadCount} new
                   </span>
                 ) : (
-                  <span className="text-[10px] text-gray-400 font-mono">Active</span>
+                  <span className="text-[10px] text-gray-400 font-mono">
+                    Active
+                  </span>
                 )}
               </Link>
               <Link

@@ -1,5 +1,11 @@
-import React, { useState } from 'react';
-import { NavLink, Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from "react";
+import {
+  NavLink,
+  Outlet,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import {
   LayoutDashboard,
   Film,
@@ -17,18 +23,18 @@ import {
   LayoutTemplate,
   Users,
   ChevronRight,
-} from 'lucide-react';
-import { cn } from '../../lib/formatters';
-import { useAdminAuth } from '../../auth/AdminAuth';
-import { ToastContainer } from '../common/Toast';
-import { adminSchemaScope } from '../../lib/adminSchema';
-import { adminApi } from '../../lib/adminApi';
-import { useRealtimeStatus } from '../../lib/realtime';
-import { useQuery } from '@tanstack/react-query';
-import { AdminDataState } from '../admin/AdminDataState';
-import { AdminNotificationMenu } from '../admin/AdminNotificationMenu';
-import { UserAvatar } from '../common/UserAvatar';
-import { useUiStore } from '../../stores/useUiStore';
+} from "lucide-react";
+import { cn } from "../../lib/formatters";
+import { useAdminAuth } from "../../auth/AdminAuth";
+import { ToastContainer } from "../common/Toast";
+import { adminSchemaScope } from "../../lib/adminSchema";
+import { adminApi } from "../../lib/adminApi";
+import { useRealtimeStatus } from "../../lib/realtime";
+import { useQuery } from "@tanstack/react-query";
+import { AdminDataState } from "../admin/AdminDataState";
+import { AdminNotificationMenu } from "../admin/AdminNotificationMenu";
+import { UserAvatar } from "../common/UserAvatar";
+import { useUiStore } from "../../stores/useUiStore";
 
 interface NavItem {
   label: string;
@@ -45,51 +51,57 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    title: 'Overview',
+    title: "Overview",
     items: [
-      { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, end: true },
-      { label: 'Homepage Builder', href: '/admin/homepage', icon: LayoutTemplate },
+      { label: "Dashboard", href: "/admin", icon: LayoutDashboard, end: true },
+      {
+        label: "Homepage Builder",
+        href: "/admin/homepage",
+        icon: LayoutTemplate,
+      },
     ],
   },
   {
-    title: 'Catalog',
+    title: "Catalog",
     items: [
-      { label: 'Products', href: '/admin/products', icon: Film },
-      { label: 'Categories', href: '/admin/taxonomy', icon: FolderTree },
-      { label: 'Inventory', href: '/admin/inventory', icon: Boxes },
+      { label: "Products", href: "/admin/products", icon: Film },
+      { label: "Categories", href: "/admin/taxonomy", icon: FolderTree },
+      { label: "Inventory", href: "/admin/inventory", icon: Boxes },
     ],
   },
   {
-    title: 'Sales & Orders',
+    title: "Sales & Orders",
     items: [
-      { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-      { label: 'Promotions', href: '/admin/promotions', icon: Tag },
-      { label: 'Customer Enquiries', href: '/admin/support', icon: Mail },
+      { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
+      { label: "Promotions", href: "/admin/promotions", icon: Tag },
+      { label: "Customer Enquiries", href: "/admin/support", icon: Mail },
     ],
   },
   {
-    title: 'Management',
+    title: "Management",
     items: [
-      { label: 'Users & Access', href: '/admin/users', icon: Users },
-      { label: 'Store Settings', href: '/admin/settings', icon: Sliders },
-      { label: 'Audit Log', href: '/admin/activity', icon: ClipboardList },
+      { label: "Users & Access", href: "/admin/users", icon: Users },
+      { label: "Store Settings", href: "/admin/settings", icon: Sliders },
+      { label: "Audit Log", href: "/admin/activity", icon: ClipboardList },
     ],
   },
 ];
 
 // Build a flat map of href → label for breadcrumb resolution
 const ROUTE_LABELS: Record<string, string> = {};
-NAV_GROUPS.forEach((g) => g.items.forEach((i) => (ROUTE_LABELS[i.href] = i.label)));
+NAV_GROUPS.forEach((g) =>
+  g.items.forEach((i) => (ROUTE_LABELS[i.href] = i.label)),
+);
 
 function useBreadcrumb() {
   const { pathname } = useLocation();
-  const segments = pathname.split('/').filter(Boolean); // ['admin', 'products']
+  const segments = pathname.split("/").filter(Boolean); // ['admin', 'products']
   const crumbs: { label: string; href: string }[] = [];
 
-  if (segments[0] === 'admin') {
-    crumbs.push({ label: 'Admin', href: '/admin' });
+  if (segments[0] === "admin") {
+    crumbs.push({ label: "Admin", href: "/admin" });
     if (segments[1]) {
-      const href = `/${segments.slice(0, 2).join('/')}`;
+      const href = `/${segments.slice(0, 2).join("/")}`;
       crumbs.push({ label: ROUTE_LABELS[href] || segments[1], href });
     }
   }
@@ -107,7 +119,7 @@ export const AdminLayout: React.FC = () => {
   const [dismissedSchemaWarning, setDismissedSchemaWarning] = useState(false);
 
   const schemaQuery = useQuery({
-    queryKey: ['admin', 'schema-health', schemaScope, user?.id],
+    queryKey: ["admin", "schema-health", schemaScope, user?.id],
     queryFn: () => adminApi.checkSchema(schemaScope),
     retry: false,
     staleTime: 5 * 60_000,
@@ -116,60 +128,74 @@ export const AdminLayout: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/admin/login', { replace: true });
+      navigate("/admin/login", { replace: true });
     } catch (error) {
-      useUiStore.getState().addToast(error instanceof Error ? error.message : 'Sign out failed. Please retry.', 'error');
+      useUiStore
+        .getState()
+        .addToast(
+          error instanceof Error
+            ? error.message
+            : "Sign out failed. Please retry.",
+          "error",
+        );
     }
   };
 
   const SidebarNav = ({ onLinkClick }: { onLinkClick?: () => void }) => (
-    <nav className="flex-1 overflow-y-auto px-3.5 py-4 space-y-6">
+    <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3.5 py-4 space-y-6">
       {NAV_GROUPS.map((group) => (
         <div key={group.title}>
           <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
             {group.title}
           </p>
           <div className="space-y-1">
-            {group.items.filter((item) => item.href !== '/admin/users' || user?.role === 'admin').map((item) => (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                end={item.end}
-                onClick={onLinkClick}
-                className={({ isActive }) =>
-                  cn(
-                    'group flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] transition-all duration-150',
-                    isActive
-                      ? 'bg-slate-900 text-white font-semibold shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium'
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <item.icon
-                      className={cn(
-                        'h-4 w-4 shrink-0 transition-colors',
-                        isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'
-                      )}
-                    />
-                    <span className="flex-1 truncate">{item.label}</span>
-                    {item.badge && (
-                      <span
+            {group.items
+              .filter(
+                (item) =>
+                  item.href !== "/admin/users" || user?.role === "admin",
+              )
+              .map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  end={item.end}
+                  onClick={onLinkClick}
+                  className={({ isActive }) =>
+                    cn(
+                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] transition-all duration-150",
+                      isActive
+                        ? "bg-slate-900 text-white font-semibold shadow-xs"
+                        : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium",
+                    )
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <item.icon
                         className={cn(
-                          'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                          "h-4 w-4 shrink-0 transition-colors",
                           isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-slate-100 text-slate-600 border border-slate-200/60'
+                            ? "text-white"
+                            : "text-slate-400 group-hover:text-slate-700",
                         )}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
-                )}
-              </NavLink>
-            ))}
+                      />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {item.badge && (
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                            isActive
+                              ? "bg-white/20 text-white"
+                              : "bg-slate-100 text-slate-600 border border-slate-200/60",
+                          )}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              ))}
           </div>
         </div>
       ))}
@@ -189,18 +215,22 @@ export const AdminLayout: React.FC = () => {
                 alt="Logo"
                 className="h-full w-full object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
+                  (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="truncate text-sm font-bold text-slate-900 tracking-tight">DVDs Zone</p>
+                <p className="truncate text-sm font-bold text-slate-900 tracking-tight">
+                  DVDs Zone
+                </p>
                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-600 border border-slate-200/60">
                   UK
                 </span>
               </div>
-              <p className="text-[11px] font-medium text-slate-400">Admin Console</p>
+              <p className="text-[11px] font-medium text-slate-400">
+                Admin Console
+              </p>
             </div>
           </Link>
         </div>
@@ -211,16 +241,14 @@ export const AdminLayout: React.FC = () => {
         {/* Bottom User Strip */}
         <div className="border-t border-slate-100 p-3 bg-slate-50/40">
           <div className="flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white p-2.5 shadow-2xs">
-            <UserAvatar
-              size="sm"
-              name={user?.fullName}
-              email={user?.email}
-            />
+            <UserAvatar size="sm" name={user?.fullName} email={user?.email} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-bold text-slate-900">
-                {user?.fullName || 'Admin User'}
+                {user?.fullName || "Admin User"}
               </p>
-              <p className="truncate text-[11px] text-slate-400 font-medium">{user?.email}</p>
+              <p className="truncate text-[11px] text-slate-400 font-medium">
+                {user?.email}
+              </p>
             </div>
             <button
               type="button"
@@ -238,9 +266,9 @@ export const AdminLayout: React.FC = () => {
       {/* ── Main Area (Clean White Header + Content) ──────────────────── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Clean White Top Header Bar */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 sm:px-6">
+        <header className="flex h-16 min-w-0 shrink-0 items-center justify-between overflow-hidden border-b border-slate-200/80 bg-white px-4 sm:px-6">
           {/* Left: mobile menu trigger + breadcrumbs */}
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
@@ -251,16 +279,23 @@ export const AdminLayout: React.FC = () => {
             </button>
 
             {/* Breadcrumbs */}
-            <nav aria-label="Breadcrumb" className="hidden items-center gap-1.5 sm:flex">
+            <nav
+              aria-label="Breadcrumb"
+              className="hidden min-w-0 items-center gap-1.5 sm:flex"
+            >
               {breadcrumbs.map((crumb, i) => (
                 <React.Fragment key={crumb.href}>
-                  {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-slate-300" />}
+                  {i > 0 && (
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                  )}
                   {i === breadcrumbs.length - 1 ? (
-                    <span className="text-xs sm:text-sm font-bold text-slate-900">{crumb.label}</span>
+                    <span className="max-w-[34vw] truncate text-xs sm:text-sm font-bold text-slate-900">
+                      {crumb.label}
+                    </span>
                   ) : (
                     <Link
                       to={crumb.href}
-                      className="text-xs sm:text-sm font-medium text-slate-400 transition-colors hover:text-slate-800"
+                      className="max-w-[22vw] truncate text-xs sm:text-sm font-medium text-slate-400 transition-colors hover:text-slate-800"
                     >
                       {crumb.label}
                     </Link>
@@ -271,7 +306,7 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           {/* Right: Live status, View store, Notifications, User profile */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex min-w-0 max-w-full items-center gap-2 overflow-hidden sm:gap-3">
             {/* Live Sync Status */}
             <div className="hidden items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 text-xs text-slate-600 lg:flex shadow-2xs">
               <span className="relative flex h-2 w-2">
@@ -280,13 +315,13 @@ export const AdminLayout: React.FC = () => {
                 )}
                 <span
                   className={cn(
-                    'relative inline-flex h-2 w-2 rounded-full',
-                    wsConnected ? 'bg-emerald-500' : 'bg-slate-400'
+                    "relative inline-flex h-2 w-2 rounded-full",
+                    wsConnected ? "bg-emerald-500" : "bg-slate-400",
                   )}
                 />
               </span>
               <span className="text-[11px] font-medium text-slate-600">
-                {wsConnected ? 'Live Sync Active' : 'Live Sync Paused'}
+                {wsConnected ? "Live Sync Active" : "Live Sync Paused"}
               </span>
             </div>
 
@@ -307,18 +342,14 @@ export const AdminLayout: React.FC = () => {
             <AdminNotificationMenu />
 
             {/* User Avatar & Role */}
-            <div className="flex items-center gap-2.5 border-l border-slate-200 pl-2 sm:pl-3 md:pl-4">
-              <UserAvatar
-                size="sm"
-                name={user?.fullName}
-                email={user?.email}
-              />
+            <div className="flex min-w-0 items-center gap-2.5 border-l border-slate-200 pl-2 sm:pl-3 md:pl-4">
+              <UserAvatar size="sm" name={user?.fullName} email={user?.email} />
               <div className="hidden flex-col md:flex">
                 <span className="max-w-[130px] truncate text-xs font-bold text-slate-900">
-                  {user?.fullName || 'Admin'}
+                  {user?.fullName || "Admin"}
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  {user?.role || 'staff'}
+                  {user?.role || "staff"}
                 </span>
               </div>
             </div>
@@ -338,7 +369,8 @@ export const AdminLayout: React.FC = () => {
 
         {/* Content Viewport */}
         <main className="flex-1 overflow-y-auto bg-[#f8fafc] p-4 sm:p-6 lg:p-8">
-          {schemaQuery.error && (schemaQuery.error as any)?.code === 'BACKEND_NOT_CONFIGURED' ? (
+          {schemaQuery.error &&
+          (schemaQuery.error as any)?.code === "BACKEND_NOT_CONFIGURED" ? (
             <AdminDataState
               loading={schemaQuery.isLoading}
               error={schemaQuery.error}
@@ -351,7 +383,9 @@ export const AdminLayout: React.FC = () => {
                   <div className="flex items-center gap-2.5">
                     <span className="flex h-2 w-2 rounded-full bg-amber-500 shrink-0" />
                     <span>
-                      Notice: Some optional database schema items are pending migration. Store features are running smoothly with default values.
+                      Notice: Some optional database schema items are pending
+                      migration. Store features are running smoothly with
+                      default values.
                     </span>
                   </div>
                   <button
@@ -380,7 +414,7 @@ export const AdminLayout: React.FC = () => {
           />
 
           {/* Drawer panel */}
-          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col bg-white shadow-2xl border-r border-slate-200">
+          <aside className="absolute inset-y-0 left-0 flex w-[min(86vw,22rem)] max-w-full flex-col border-r border-slate-200 bg-white shadow-2xl">
             {/* Drawer header */}
             <div className="flex h-16 items-center justify-between border-b border-slate-100 px-5">
               <div className="flex items-center gap-3">
@@ -390,8 +424,12 @@ export const AdminLayout: React.FC = () => {
                   email={user?.email}
                 />
                 <div>
-                  <p className="text-sm font-bold text-slate-900">{user?.fullName || 'Admin'}</p>
-                  <p className="text-[11px] text-slate-400 font-medium">{user?.email}</p>
+                  <p className="text-sm font-bold text-slate-900">
+                    {user?.fullName || "Admin"}
+                  </p>
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    {user?.email}
+                  </p>
                 </div>
               </div>
               <button
