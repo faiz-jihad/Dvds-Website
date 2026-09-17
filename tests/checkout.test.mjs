@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { calculateQuote, normalizeItems, paymentMethods, hash, validAccess, publicOrder, authorizeOrder, initializeOrder, endpoint, CheckoutError } from '../api/_checkout.js';
+import { calculateQuote, normalizeItems, paymentMethods, hash, validAccess, publicOrder, authorizeOrder, initializeOrder, endpoint, quoteDbClient, CheckoutError } from '../api/_checkout.js';
 import stripeWebhook from '../api/stripe-webhook.js';
 import paypalWebhook from '../api/paypal-webhook.js';
 import Stripe from 'stripe';
@@ -62,6 +62,20 @@ test('unconfigured providers and unverified bank accounts are not offered', () =
     delete process.env.STRIPE_WEBHOOK_SECRET;
     assert.equal(paymentMethods({}).card, false);
   } finally { keys.forEach((key) => { if (previous[key] === undefined) delete process.env[key]; else process.env[key] = previous[key]; }); }
+});
+
+test('a public checkout quote can load without granting order-write access', () => {
+  const keys = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY', 'VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
+  const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+  try {
+    keys.forEach((key) => { delete process.env[key]; });
+    assert.throws(() => quoteDbClient(), /temporarily unavailable/);
+    process.env.VITE_SUPABASE_URL = 'https://project.supabase.test';
+    process.env.VITE_SUPABASE_ANON_KEY = 'anon-key';
+    assert.equal(typeof quoteDbClient().from, 'function');
+  } finally {
+    keys.forEach((key) => { if (previous[key] === undefined) delete process.env[key]; else process.env[key] = previous[key]; });
+  }
 });
 
 test('guest receipt requires its access token; unrelated accounts cannot inspect an order', async () => {

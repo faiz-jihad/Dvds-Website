@@ -2,7 +2,7 @@ import { countryCode, normalizeAddress, validateShippingZones, minorAmount } fro
 import { exchangeRate, convertQuote } from './_fx.js';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import Stripe from 'stripe';
-import { getSupabaseServerClient } from './_supabase.js';
+import { getSupabasePublicClient, getSupabaseServerClient } from './_supabase.js';
 
 export class CheckoutError extends Error {
   constructor(message, status = 400, code = 'CHECKOUT_ERROR') { super(message); this.status = status; this.code = code; }
@@ -13,6 +13,11 @@ const entityId = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 export function dbClient() {
   const db = getSupabaseServerClient();
+  if (!db) throw new CheckoutError('Checkout is temporarily unavailable. Please try again later.', 503, 'CHECKOUT_UNAVAILABLE');
+  return db;
+}
+export function quoteDbClient() {
+  const db = getSupabasePublicClient();
   if (!db) throw new CheckoutError('Checkout is temporarily unavailable. Please try again later.', 503, 'CHECKOUT_UNAVAILABLE');
   return db;
 }

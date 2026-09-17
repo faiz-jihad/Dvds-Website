@@ -1,6 +1,6 @@
-import { check, dbClient, endpoint, quoteCheckout } from './_checkout.js';
+import { endpoint, quoteCheckout, quoteDbClient } from './_checkout.js';
 export default endpoint(async (req) => {
-  const db = dbClient();
+  const db = quoteDbClient();
   if (req.body?.configuration === true) {
     const { data: settings } = await db.from('store_settings').select('*').eq('singleton', true).maybeSingle();
     const currencies = settings?.checkout_currencies || ['GBP'];
