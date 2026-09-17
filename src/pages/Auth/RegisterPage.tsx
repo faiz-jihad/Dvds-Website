@@ -43,7 +43,7 @@ export const RegisterPage: React.FC = () => {
     try {
       const res = await register(email, password, fullName);
       if (res.success) {
-        addToast('Account created successfully! Welcome to AZ Rayan DVDs.', 'success');
+        addToast('Account created successfully! Welcome to DVDs Zone.', 'success');
         navigate('/account', { replace: true });
       } else {
         setError(res.message || 'Registration could not be completed.');

@@ -80,11 +80,11 @@ export const Home: React.FC = () => {
   return (
     <main data-intro-ready className="min-h-screen bg-[#06080b] text-white antialiased selection:bg-white selection:text-black">
       <Seo
-        title="AZ Rayan DVDs — Buy Physical DVDs & TV Box Sets UK | Official Physical Media Store"
+        title="DVDs Zone — Your World of Entertainment | UK Physical Media Store"
         description="Discover definitive DVD box sets, restored British cinema, and rare collector editions preserved in uncompressed physical permanence. Dispatched with Royal Mail Tracked. Free delivery across the UK on all orders."
         canonicalPath="/"
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
-        siteName="AZ Rayan DVDs"
+        siteName="DVDs Zone"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'CollectionPage',

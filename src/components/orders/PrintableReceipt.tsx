@@ -5,7 +5,7 @@ import { formatGBP, formatDateUK } from '../../lib/formatters';
 export const PrintableReceipt: React.FC<{ order: Order; className?: string }> = ({ order, className = '' }) => (
   <article id="printable-receipt" className={`printable-receipt-content bg-white text-gray-900 p-6 sm:p-10 max-w-[850px] mx-auto print:p-0 ${className}`}>
     <header className="flex flex-wrap justify-between gap-4 border-b-2 border-gray-900 pb-6">
-      <div><h1 className="text-xl font-bold">AZ Rayan DVDs</h1><p className="text-sm mt-1">Order receipt</p></div>
+      <div><h1 className="text-xl font-bold">DVDs Zone</h1><p className="text-sm mt-1">Order receipt</p></div>
       <div className="text-sm"><p className="font-mono font-bold">{order.order_number}</p><p className="mt-1">{formatDateUK(order.created_at)}</p><p className="mt-2 capitalize">Payment: {order.payment_status.replace(/_/g, ' ')}</p></div>
     </header>
     <div className="grid grid-cols-2 gap-6 py-6 text-sm">

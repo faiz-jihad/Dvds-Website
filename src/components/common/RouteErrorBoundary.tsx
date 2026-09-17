@@ -33,7 +33,7 @@ export const RouteErrorBoundary: React.FC = () => {
 
         <div className="space-y-2">
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
-            AZ Rayan DVDs • Archive
+            DVDs Zone • Archive
           </span>
           <h1 className="font-display font-bold text-3xl text-dark">
             Something unexpected occurred

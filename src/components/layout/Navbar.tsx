@@ -148,11 +148,11 @@ export const Navbar: React.FC = () => {
           <Link
             to="/"
             className="flex items-center gap-2 shrink-0 group py-1"
-            title="AZ Rayan DVDs - Home"
+            title="DVDs Zone - Home"
           >
             <img
               src="/brand/logo-transparent.png"
-              alt="AZ Rayan LTD"
+              alt="DVDs Zone"
               className="h-8 sm:h-11 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
             />
             <span className="hidden min-[480px]:inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-[10px] font-mono font-bold tracking-widest uppercase border border-gray-200/80">

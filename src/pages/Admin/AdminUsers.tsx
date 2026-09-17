@@ -366,7 +366,7 @@ export const AdminUsers: React.FC = () => {
           </h3>
         </div>
         <p className="text-xs text-slate-400 max-w-2xl leading-relaxed mb-6">
-          Roles dictate which operations a user can execute within the AZ Rayan DVDs PostgreSQL database via Row-Level Security (RLS).
+          Roles dictate which operations a user can execute within the DVDs Zone PostgreSQL database via Row-Level Security (RLS).
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">

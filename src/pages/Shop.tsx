@@ -60,7 +60,7 @@ export const Shop: React.FC = () => {
   const isNewReleases = filterType === 'new';
   const isBestSellers = filterType === 'bestseller';
 
-  let pageEyebrow = 'AZ Rayan Catalogue';
+  let pageEyebrow = 'DVDs Zone Catalogue';
   let pageTitle = 'Physical Media Vault';
   let pageDescription = 'Showing certified UK editions. Verified discs and collector editions.';
 

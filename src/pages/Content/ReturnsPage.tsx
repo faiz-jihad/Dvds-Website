@@ -15,7 +15,7 @@ export const ReturnsPage: React.FC = () => {
             30-Day Returns Policy
           </h1>
           <p className="text-sm text-gray-600 leading-relaxed">
-            We want you to be completely satisfied with every physical disc you purchase from AZ Rayan DVDs.
+            We want you to be completely satisfied with every physical disc you purchase from DVDs Zone.
           </p>
         </div>
 

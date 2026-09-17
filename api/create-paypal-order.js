@@ -10,8 +10,8 @@ export default endpoint(async (req) => {
   if (order.checkout_url) return { url: order.checkout_url, orderId: order.id, orderNumber: order.order_number };
   const result = await paypalRequest('/v2/checkout/orders', { method: 'POST', headers: { 'PayPal-Request-Id': order.id },
     body: JSON.stringify({ intent: 'CAPTURE', purchase_units: [{ reference_id: order.order_number, custom_id: order.id,
-      description: `AZ Rayan DVDs - ${order.order_number}`, shipping: paypalShipping(order), amount: { currency_code: order.currency, value: Number(order.total_amount).toFixed(currencyDigits(order.currency)) } }],
-      payment_source: { paypal: { experience_context: { brand_name: 'AZ Rayan DVDs', locale: 'en-GB', user_action: 'PAY_NOW',
+      description: `DVDs Zone - ${order.order_number}`, shipping: paypalShipping(order), amount: { currency_code: order.currency, value: Number(order.total_amount).toFixed(currencyDigits(order.currency)) } }],
+      payment_source: { paypal: { experience_context: { brand_name: 'DVDs Zone', locale: 'en-GB', user_action: 'PAY_NOW',
         shipping_preference: 'SET_PROVIDED_ADDRESS', return_url: `${origin}/order-success/${order.id}?paypal=1`, cancel_url: `${origin}/checkout?cancelled=1` } } } }) });
   const url = result.links?.find((link) => ['payer-action','approve'].includes(link.rel))?.href;
   if (!url) throw new CheckoutError('PayPal did not return a checkout link. Please retry.', 502);

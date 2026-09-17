@@ -59,7 +59,7 @@ const getInitialNotifications = (): AppNotification[] => {
           id: 'init-customer-1',
           target: 'customer',
           type: 'promo',
-          title: 'Welcome to AZ Rayan DVDs',
+          title: 'Welcome to DVDs Zone',
           message: 'Enjoy 10% off your first physical media order with voucher code RAYAN10.',
           link: '/shop',
           read: false,

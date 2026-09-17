@@ -105,7 +105,7 @@ export const BrandDiscScroll: React.FC = () => {
           >
             <img
               src="/brand/disc-motif.svg"
-              alt="AZ Rayan DVD Disc Motif"
+              alt="DVDs Zone Disc Motif"
               className="w-full h-full object-contain"
             />
           </div>

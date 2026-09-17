@@ -48,7 +48,7 @@ export const AdminLogin: React.FC = () => {
         {/* Brand Header */}
         <div className="relative z-10 flex items-center gap-3">
           <div className="bg-white px-2.5 py-1 rounded shadow-xs">
-            <img src="/brand/logo.png" alt="AZ Rayan LTD" className="h-7 w-auto object-contain" />
+            <img src="/brand/logo.png" alt="DVDs Zone" className="h-7 w-auto object-contain" />
           </div>
           <span className="h-5 w-px bg-white/20" />
           <span className="text-xs font-mono uppercase tracking-widest text-gray-300">
@@ -68,7 +68,7 @@ export const AdminLogin: React.FC = () => {
 
         {/* Footer */}
         <div className="relative z-10 text-xs text-gray-400">
-          <span>AZ Rayan Ltd (No. 13894195) • Birmingham, UK</span>
+          <span>DVDs Zone • Birmingham, UK</span>
         </div>
       </section>
 

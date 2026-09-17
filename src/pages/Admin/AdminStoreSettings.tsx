@@ -144,7 +144,7 @@ export const AdminStoreSettings: React.FC = () => {
       vip_promo_discount: 0,
       vip_min_spend: 0,
       store_name: '',
-      registered_company_name: 'AZ Rayan Ltd',
+      registered_company_name: 'DVDs Zone Ltd',
       company_number: '13894195',
       registered_office_address: 'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
       companies_house_url: 'https://find-and-update.company-information.service.gov.uk/company/13894195',
@@ -282,7 +282,7 @@ export const AdminStoreSettings: React.FC = () => {
                     label="Editorial Badge Pill"
                     value={settings.hero_badge_text}
                     onChange={(e) => handleChange('hero_badge_text', e.target.value)}
-                    placeholder="e.g. AZ RAYAN DVDs • UK STORE & PHYSICAL ARCHIVE"
+                    placeholder="e.g. DVDS ZONE • UK STORE & PHYSICAL ARCHIVE"
                   />
                 </div>
 
@@ -635,14 +635,14 @@ export const AdminStoreSettings: React.FC = () => {
                 label="Registered Company / Store Name"
                 value={settings.store_name}
                 onChange={(e) => handleChange('store_name', e.target.value)}
-                placeholder="AZ Rayan DVDs"
+                placeholder="DVDs Zone"
               />
 
               <Input
                 label="Registered Legal Entity"
                 value={settings.registered_company_name}
                 onChange={(e) => handleChange('registered_company_name', e.target.value)}
-                placeholder="AZ Rayan Ltd"
+                placeholder="DVDs Zone Ltd"
               />
 
               <Input

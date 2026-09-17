@@ -84,12 +84,12 @@ export const MobileNavDrawer: React.FC = () => {
                 <div className="flex items-center gap-2.5">
                   <img
                     src="/brand/logo.png"
-                    alt="AZ Rayan LTD"
+                    alt="DVDs Zone"
                     className="h-7 w-auto object-contain"
                   />
                   <div className="flex flex-col">
                     <span className="font-display font-extrabold text-sm tracking-tight text-dark leading-none">
-                      AZ Rayan
+                      DVDs Zone
                     </span>
                     <span className="text-[9px] font-mono tracking-wider text-gray-400 uppercase mt-0.5">
                       Archive Vault

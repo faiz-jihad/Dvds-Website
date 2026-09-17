@@ -204,7 +204,7 @@ export const SpykerManifestoVideo: React.FC = () => {
               </span>
             </div>
             <div className="hidden sm:block tracking-widest text-[10px] sm:text-xs text-white/50">
-              AZ RAYAN VAULT MASTER REEL
+              DVDS ZONE VAULT MASTER REEL
             </div>
           </div>
 

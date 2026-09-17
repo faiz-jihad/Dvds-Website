@@ -1,4 +1,4 @@
-# AZ Rayan DVDs Production Robots.txt
+# DVDs Zone Production Robots.txt
 User-agent: *
 Allow: /
 Disallow: /admin

@@ -29,12 +29,12 @@ export const IntroLoader: React.FC<React.PropsWithChildren<{ home: boolean }>> =
     <IntroContext.Provider value={active && home}>
       <div ref={root}>
         <div ref={content}>{children}</div>
-        {active && home && <div ref={overlay} className="intro-loader" aria-label="AZ Rayan DVDs introduction">
+        {active && home && <div ref={overlay} className="intro-loader" aria-label="DVDs Zone introduction">
           <div className="intro-loader__identity" aria-hidden="true">
             <img className="intro-loader__logo" src="/brand/logo-transparent.png" alt="" width="577" height="433" fetchPriority="high" />
 
           </div>
-          <span className="sr-only" role="status">Preparing AZ Rayan DVDs. Press Escape to skip the introduction.</span>
+          <span className="sr-only" role="status">Preparing DVDs Zone. Press Escape to skip the introduction.</span>
           <button type="button" className="intro-loader__skip" onClick={() => stop.current?.()}>Skip intro</button>
         </div>}
       </div>

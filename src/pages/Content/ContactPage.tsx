@@ -42,7 +42,7 @@ export const ContactPage: React.FC = () => {
             CUSTOMER ASSISTANCE
           </span>
           <h1 className="font-display font-extrabold text-2xl sm:text-4xl md:text-5xl text-dark tracking-tight mt-1 mb-3">
-            Contact AZ Rayan DVDs
+            Contact DVDs Zone
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 max-w-md mx-auto">
             Have an enquiry regarding editions, order dispatch, or bulk collector orders? Our UK team is at your service.

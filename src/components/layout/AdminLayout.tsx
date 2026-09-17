@@ -186,7 +186,7 @@ export const AdminLayout: React.FC = () => {
             />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-white">AZ Rayan</p>
+            <p className="truncate text-sm font-bold text-white">DVDs Zone</p>
             <p className="text-[10px] text-slate-500">Admin Console</p>
           </div>
         </div>

@@ -2,14 +2,14 @@ import { StoreSettings } from '../types';
 
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   id: 's1000000-0000-0000-0000-000000000001',
-  seo_site_url: 'https://azrayan.co.uk',
-  seo_site_title: 'AZ Rayan DVDs — Films Worth Owning | UK Physical Media Store',
+  seo_site_url: 'https://dvdszone.co.uk',
+  seo_site_title: 'DVDs Zone — Your World of Entertainment | UK Physical Media Store',
   seo_site_description:
     'Curated boutique DVD editions, rare British cinema, collector box sets, and modern sci-fi classics dispatched directly from our UK vault.',
   seo_social_image_url:
     'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&auto=format&fit=crop&q=80',
   seo_organization_description:
-    'Independent physical media retailer operated by AZ Rayan Ltd, a company registered in England and Wales (Company No. 13894195).',
+    'Independent physical media retailer operated by DVDs Zone, a company registered in England and Wales.',
   hero_badge_text: 'SPRING ARCHIVE RELEASE — MARCH 2026',
   hero_headline_line1: 'Films worth',
   hero_headline_highlight: 'owning.',
@@ -45,22 +45,19 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   low_stock_threshold: 5,
   budget_collection_threshold: 8.0,
   dispatch_cutoff_time: '14:00 GMT',
-  vip_promo_code: 'RAYAN10',
+  vip_promo_code: 'ZONE10',
   vip_promo_discount: 10.0,
   vip_min_spend: 20.0,
-  store_name: 'AZ Rayan DVDs',
-  registered_company_name: 'AZ Rayan Ltd',
-  company_number: '13894195',
-  registered_office_address:
-    'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
-  companies_house_url:
-    'https://find-and-update.company-information.service.gov.uk/company/13894195',
-  warehouse_location:
-    'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
-  support_email: 'concierge@azrayan.co.uk',
+  store_name: 'DVDs Zone',
+  registered_company_name: 'DVDs Zone Ltd',
+  company_number: '',
+  registered_office_address: 'Birmingham, United Kingdom',
+  companies_house_url: '',
+  warehouse_location: 'Birmingham, United Kingdom',
+  support_email: 'enquiries@dvdszone.co.uk',
   support_phone: '+44 (0)121 496 0833',
   bank_name: 'Barclays Bank UK',
-  bank_account_name: 'AZ Rayan Ltd',
+  bank_account_name: 'DVDs Zone Ltd',
   payment_card_enabled: true,
   payment_paypal_enabled: true,
   payment_bank_transfer_enabled: false,

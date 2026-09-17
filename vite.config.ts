@@ -12,6 +12,7 @@ const devApiPlugin = () => ({
     server.middlewares.use(async (req: any, res: any, next: any) => {
       const route = req.url?.split('?')[0]?.replace('/api/', '');
       if (!req.url?.startsWith('/api/') || !endpoints.has(route)) return next();
+      dotenv.config({ override: true });
       res.status = (code: number) => { res.statusCode = code; return res; };
       res.json = (value: unknown) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(value)); };
       try {

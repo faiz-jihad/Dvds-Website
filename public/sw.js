@@ -1,4 +1,4 @@
-// AZ Rayan DVDs - Push Notification Service Worker
+// DVDs Zone - Push Notification Service Worker
 const SW_VERSION = 'v1.0.0';
 
 self.addEventListener('install', (event) => {
@@ -14,7 +14,7 @@ self.addEventListener('activate', (event) => {
 // Handle incoming Web Push from server
 self.addEventListener('push', (event) => {
   let data = {
-    title: 'AZ Rayan DVDs',
+    title: 'DVDs Zone',
     body: 'You have a new update.',
     icon: '/brand/logo.png',
     badge: '/favicon.svg',

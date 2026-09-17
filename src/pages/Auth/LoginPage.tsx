@@ -34,7 +34,7 @@ export const LoginPage: React.FC = () => {
     try {
       const res = await login(email, password);
       if (res.success) {
-        addToast('Welcome back to AZ Rayan DVDs!', 'success');
+        addToast('Welcome back to DVDs Zone!', 'success');
         navigate(from, { replace: true });
       } else {
         setError(res.message || 'Invalid email or password');

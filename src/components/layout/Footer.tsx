@@ -24,8 +24,8 @@ export const Footer: React.FC = () => {
   });
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
-  const storeName = settings.store_name || 'AZ Rayan DVDs';
-  const registeredCompanyName = settings.registered_company_name || 'AZ Rayan Ltd';
+  const storeName = settings.store_name || 'DVDs Zone';
+  const registeredCompanyName = settings.registered_company_name || 'DVDs Zone Ltd';
   const companyNumber = settings.company_number || '13894195';
   const companiesHouseUrl =
     settings.companies_house_url ||
@@ -127,10 +127,10 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Column 3: ABOUT AZ RAYAN */}
+          {/* Column 3: ABOUT DVDS ZONE */}
           <div className="lg:col-span-3">
             <h4 className="font-sans font-black text-[12px] tracking-wider uppercase text-white mb-3.5">
-              ABOUT AZ RAYAN
+              ABOUT DVDs ZONE
             </h4>
             <ul className="space-y-2.5 text-[11px] sm:text-[12px] text-neutral-400">
               <li>
