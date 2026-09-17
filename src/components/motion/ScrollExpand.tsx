@@ -45,9 +45,9 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
   startRadius = 22,
   endRadius = 0,
   mediaZoom = 1.10,
-  scrollDistance = 1.1,
-  holdDistance = 0.45,
-  smoothing = 0.06,
+  scrollDistance = 0.75,
+  holdDistance = 0.12,
+  smoothing = 0,
   overlayScrim = 0.65,
   useWindowScroll = false,
   enabled = true,
@@ -65,6 +65,7 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
   const overlayRef = useRef<HTMLDivElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
+  const stageHRef = useRef<number>(0);
 
   const propsRef = useRef({
     startWidth,
@@ -120,28 +121,28 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
       scrimRef.current.style.opacity = `${c.overlayScrim * e}`;
     }
 
-    // Hint: fades out quickly as soon as scrolling initiates (0% -> 12%)
+    // Hint: fades out smoothly as soon as scrolling initiates (0% -> 15%)
     if (hintRef.current) {
-      const gone = smoothstep(0, 0.12, p);
+      const gone = smoothstep(0, 0.15, p);
       hintRef.current.style.opacity = `${1 - gone}`;
-      hintRef.current.style.transform = `translate3d(0, ${12 * gone}px, 0)`;
-      hintRef.current.style.pointerEvents = p < 0.08 ? 'auto' : 'none';
+      hintRef.current.style.transform = `translate3d(0, ${15 * gone}px, 0)`;
+      hintRef.current.style.pointerEvents = p < 0.10 ? 'auto' : 'none';
     }
 
-    // Title: cleanly dissolves during the first phase of expansion (4% -> 35%)
+    // Title: stays crisp and visible from 0% to 18%, then dissolves smoothly during 18% -> 48%
     if (titleRef.current) {
-      const out = smoothstep(0.04, 0.35, p);
+      const out = smoothstep(0.18, 0.48, p);
       titleRef.current.style.opacity = `${1 - out}`;
-      titleRef.current.style.transform = `translate3d(0, ${-20 * out}px, 0) scale(${1 + 0.03 * out})`;
+      titleRef.current.style.transform = `translate3d(0, ${-25 * out}px, 0) scale(${1 + 0.02 * out})`;
       titleRef.current.style.pointerEvents = 'none';
     }
 
-    // Overlay (expanded content): fades in smoothly after title has faded (55% -> 90%)
+    // Overlay (expanded content): starts emerging at 38% for seamless cross-fade, fully active by 68%
     if (overlayRef.current) {
-      const inn = smoothstep(0.55, 0.90, p);
+      const inn = smoothstep(0.38, 0.68, p);
       overlayRef.current.style.opacity = `${inn}`;
-      overlayRef.current.style.transform = `translate3d(0, ${16 * (1 - inn)}px, 0)`;
-      overlayRef.current.style.pointerEvents = p > 0.70 ? 'auto' : 'none';
+      overlayRef.current.style.transform = `translate3d(0, ${20 * (1 - inn)}px, 0)`;
+      overlayRef.current.style.pointerEvents = p > 0.60 ? 'auto' : 'none';
     }
   }, []);
 
@@ -164,6 +165,7 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
     const measure = () => {
       const c = propsRef.current;
       stageH = c.useWindowScroll ? window.innerHeight : root.clientHeight;
+      stageHRef.current = stageH;
       if (stageH <= 0) return;
 
       stage.style.height = `${stageH}px`;
@@ -249,6 +251,19 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
     };
   }, [applyProgress, useWindowScroll]);
 
+  const handleHintClick = useCallback(() => {
+    const c = propsRef.current;
+    const stageH = stageHRef.current || window.innerHeight;
+    const scrollSpan = stageH * Math.max(0.01, c.scrollDistance);
+    if (c.useWindowScroll && trackRef.current) {
+      const rect = trackRef.current.getBoundingClientRect();
+      const targetY = window.scrollY + rect.top + scrollSpan * 0.95;
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    } else if (rootRef.current) {
+      rootRef.current.scrollTo({ top: scrollSpan * 0.95, behavior: 'smooth' });
+    }
+  }, []);
+
   const media =
     mediaType === 'video' ? (
       <video
@@ -304,7 +319,19 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
             </div>
           ) : null}
           {scrollHint ? (
-            <div ref={hintRef} className="scroll-expand__hint">
+            <div
+              ref={hintRef}
+              className="scroll-expand__hint"
+              onClick={handleHintClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleHintClick();
+                }
+              }}
+            >
               {scrollHint}
             </div>
           ) : null}

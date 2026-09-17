@@ -107,7 +107,8 @@
   bottom: 2.5rem;
   display: flex;
   justify-content: center;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   will-change: opacity, transform;
   z-index: 6;
 }
