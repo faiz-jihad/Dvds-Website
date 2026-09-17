@@ -153,11 +153,8 @@ export const Navbar: React.FC = () => {
             <img
               src="/brand/logo-transparent.png"
               alt="DVDs Zone"
-              className="h-8 sm:h-11 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
+              className="h-9 sm:h-12 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.03]"
             />
-            <span className="hidden min-[480px]:inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-[10px] font-mono font-bold tracking-widest uppercase border border-gray-200/80">
-              DVDs
-            </span>
           </Link>
         </div>
 

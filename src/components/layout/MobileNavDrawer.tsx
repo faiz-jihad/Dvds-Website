@@ -85,7 +85,7 @@ export const MobileNavDrawer: React.FC = () => {
                   <img
                     src="/brand/logo.png"
                     alt="DVDs Zone"
-                    className="h-7 w-auto object-contain"
+                    className="h-10 w-auto object-contain"
                   />
                   <div className="flex flex-col">
                     <span className="font-display font-extrabold text-sm tracking-tight text-dark leading-none">

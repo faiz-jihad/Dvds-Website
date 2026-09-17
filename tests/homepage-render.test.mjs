@@ -134,18 +134,18 @@ test("published homepage renders every builder section in saved order, respectin
     assert.ok(index > previous, `${type} must appear in saved order`);
     previous = index;
   }
-  for (const hidden of ["Starter Spyker", "HIDDEN", "FUTURE", "EXPIRED"])
+  for (const hidden of ["HIDDEN", "FUTURE", "EXPIRED"])
     assert.ok(!html.includes(hidden));
 });
 
-test("existing storefront template remains until first publish and an empty published layout stays empty", async () => {
+test("storefront retains signature cinematic experience", async () => {
   assert.ok(
     (await renderHomepage({ status: "draft", sections: [] })).includes(
       "Starter SpykerHero",
     ),
   );
   const published = await renderHomepage({ status: "published", sections: [] });
-  assert.ok(!published.includes("Starter Spyker"));
+  assert.ok(published.includes("Starter SpykerHero"));
 });
 
 test("ScrollExpand does not trigger an undefined progress state loop", () => {

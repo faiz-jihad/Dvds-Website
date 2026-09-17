@@ -63,10 +63,8 @@ export const Home: React.FC = () => {
     );
   }
 
-  const isPublished = config.status === 'published';
-  const shouldUseStarterLayout = config.status === 'draft' && (!config.sections || config.sections.length === 0);
-
   // Catalogue sections managed by Admin Homepage Builder
+  const isPublished = config.status === 'published';
   const catalogueSections = [...config.sections]
     .filter(
       (section) =>
@@ -77,10 +75,6 @@ export const Home: React.FC = () => {
          section.type === 'newsletter' ||
          (isPublished && section.type !== 'hero' && section.type !== 'editorial'))
     )
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-
-  const orderedSections = [...config.sections]
-    .filter((section) => section.enabled)
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
@@ -111,43 +105,23 @@ export const Home: React.FC = () => {
         }}
       />
 
-      {shouldUseStarterLayout && (
-        <>
-          {/* 00: Monumental Dutch Coachbuilder Hero */}
-          <SpykerHero />
+      {/* 00: Monumental Dutch Coachbuilder Hero */}
+      <SpykerHero />
 
-          {/* Interactive Cinematic Scroll Expand Transition */}
-          <SpykerScrollExpandSection />
+      {/* Interactive Cinematic Scroll Expand Transition */}
+      <SpykerScrollExpandSection />
 
-          {/* Chapter 01: Architectural 12-Column Asymmetric Editorial Layout */}
-          <SpykerEditorialChapter />
+      {/* Chapter 01: Architectural 12-Column Asymmetric Editorial Layout */}
+      <SpykerEditorialChapter />
 
-          {/* Chapter 02: Interactive Accordion Vault (Displaying real store DVDs) */}
-          <SpykerInteractiveGallery products={products} />
+      {/* Chapter 02: Interactive Accordion Vault (Displaying real store DVDs) */}
+      <SpykerInteractiveGallery products={products} />
 
-          {/* Chapter 03: Cinema Manifesto (2.39:1 Anamorphic Player HUD & 3 Pillars) */}
-          <SpykerManifestoVideo />
-        </>
-      )}
-
-      {!shouldUseStarterLayout && orderedSections.map((section, index) => {
-        const renderedSection = (
-          <HomepageSectionRenderer
-            section={section}
-            products={products}
-            categories={categories}
-          />
-        );
-
-        return (
-          <AnimatedContent key={section.id} disabled={introEntry && section.type === 'hero'} delay={Math.min(index * 0.03, 0.12)} distance={28}>
-            {renderedSection}
-          </AnimatedContent>
-        );
-      })}
+      {/* Chapter 03: Cinema Manifesto (2.39:1 Anamorphic Player HUD & 3 Pillars) */}
+      <SpykerManifestoVideo />
 
       {/* Curated Dynamic Catalogue Sections (Product Rails, Category Grids, Vault Dispatch) */}
-      {shouldUseStarterLayout && catalogueSections.map((section, index) => {
+      {catalogueSections.map((section, index) => {
         const renderedSection = (
           <HomepageSectionRenderer
             section={section}

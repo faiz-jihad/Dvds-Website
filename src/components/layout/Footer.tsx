@@ -51,9 +51,15 @@ export const Footer: React.FC = () => {
     <footer className="bg-[#111111] text-white select-none antialiased border-t border-neutral-800">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-12 pt-12 pb-8">
         {/* Main Columns Directory (Nike Signature Grid) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 pb-12">
-          {/* Column 1: Nike-Style Bold Primary Callouts */}
+          {/* Column 1: Brand Logo & Primary Callouts */}
           <div className="lg:col-span-3">
+            <Link to="/" className="inline-block mb-6 group">
+              <img
+                src="/brand/logo.png"
+                alt="DVDs Zone"
+                className="h-12 sm:h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+              />
+            </Link>
             <ul className="space-y-3.5 font-sans font-black text-[12px] sm:text-[13px] tracking-wider uppercase text-white">
               <li>
                 <Link to="/shop" className="hover:text-neutral-400 transition-colors block">

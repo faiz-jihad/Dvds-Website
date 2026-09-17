@@ -76,8 +76,8 @@ export const AdminLogin: React.FC = () => {
 
         {/* Brand Header */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="bg-white px-2.5 py-1 rounded shadow-xs">
-            <img src="/brand/logo.png" alt="DVDs Zone" className="h-7 w-auto object-contain" />
+          <div className="bg-white px-3 py-1.5 rounded-lg shadow-xs">
+            <img src="/brand/logo.png" alt="DVDs Zone" className="h-9 w-auto object-contain" />
           </div>
           <span className="h-5 w-px bg-white/20" />
           <span className="text-xs font-mono uppercase tracking-widest text-gray-300">
@@ -88,20 +88,21 @@ export const AdminLogin: React.FC = () => {
         {/* Headline & Description */}
         <div className="relative z-10 max-w-lg my-auto py-12">
           <h1 className="font-display text-4xl xl:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            Manage your store with confidence.
+            Curated Physical Media, Preserved Forever.
           </h1>
-          <p className="mt-5 text-base text-gray-300 leading-relaxed font-normal">
-            Curate DVD editions, oversee order fulfillment, track inventory, and review customer activity from one focused workspace.
+          <p className="mt-4 text-sm text-gray-300 leading-relaxed">
+            Manage your boutique catalog, inspect real-time Royal Mail dispatch manifests, and customize your cinematic storefront.
           </p>
         </div>
 
-        {/* Footer */}
-        <div className="relative z-10 text-xs text-gray-400">
-          <span>DVDs Zone • Birmingham, UK</span>
+        {/* Footer info */}
+        <div className="relative z-10 flex items-center justify-between text-xs text-gray-400 font-mono">
+          <span>Enterprise Vault Engine</span>
+          <span>v2.5.0</span>
         </div>
       </section>
 
-      {/* Right Column: Ultra Clean, Solid & Professional Form */}
+      {/* Right Column: Clean White Authentication Form */}
       <section className="flex min-h-screen items-center justify-center p-4 sm:p-8 md:p-12 bg-gray-50">
         <div className="w-full max-w-md">
           {/* Back link */}
@@ -118,6 +119,9 @@ export const AdminLogin: React.FC = () => {
           {/* Clean Login Card */}
           <div className="bg-white border border-gray-200 rounded-xl p-5 sm:p-8 md:p-10 shadow-xs">
             <div className="mb-6">
+              <div className="mb-4">
+                <img src="/brand/logo.png" alt="DVDs Zone" className="h-10 w-auto object-contain" />
+              </div>
               <h2 className="font-display text-2xl font-bold text-dark tracking-tight">
                 Admin Sign In
               </h2>

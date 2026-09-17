@@ -33,7 +33,7 @@ export interface ScrollExpandProps {
   overlayScrim?: number;
   useWindowScroll?: boolean;
   enabled?: boolean;
-  children?: React.ReactNode | ((progress: number) => React.ReactNode);
+  children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -62,7 +62,6 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
   style,
   ...rest
 }) => {
-  const [progress, setProgress] = React.useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -110,10 +109,10 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
 
     const e = smoothstep(0, 1, p);
 
-    // Responsive initial card sizing: cinematic frame that fits the screen majestically
+    // Responsive initial card sizing
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    const baseW = isMobile ? 92 : c.startWidth;
-    const baseH = isMobile ? 70 : c.startHeight;
+    const baseW = isMobile ? 88 : c.startWidth;
+    const baseH = isMobile ? 56 : c.startHeight;
 
     const w = baseW + (100 - baseW) * e;
     const h = baseH + (100 - baseH) * e;
@@ -128,28 +127,28 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
       scrimRef.current.style.opacity = `${c.overlayScrim * e}`;
     }
 
-    // Hint: fades out smoothly as soon as scrolling initiates (0% -> 12%)
+    // Hint: fades out smoothly as soon as scrolling initiates (0% -> 15%)
     if (hintRef.current) {
-      const gone = smoothstep(0, 0.12, p);
+      const gone = smoothstep(0, 0.15, p);
       hintRef.current.style.opacity = `${1 - gone}`;
       hintRef.current.style.transform = `translate3d(0, ${15 * gone}px, 0)`;
-      hintRef.current.style.pointerEvents = p < 0.08 ? 'auto' : 'none';
+      hintRef.current.style.pointerEvents = p < 0.10 ? 'auto' : 'none';
     }
 
-    // Title: stays crisp and visible from 0% to 12%, then dissolves smoothly during 12% -> 32%
+    // Title: stays crisp and visible from 0% to 18%, then dissolves smoothly during 18% -> 48%
     if (titleRef.current) {
-      const out = smoothstep(0.12, 0.32, p);
+      const out = smoothstep(0.18, 0.48, p);
       titleRef.current.style.opacity = `${1 - out}`;
-      titleRef.current.style.transform = `translate3d(0, ${-20 * out}px, 0)`;
+      titleRef.current.style.transform = `translate3d(0, ${-25 * out}px, 0) scale(${1 + 0.02 * out})`;
       titleRef.current.style.pointerEvents = 'none';
     }
 
-    // Overlay (expanded content): starts emerging at 28% as card expands, fully active by 46%
+    // Overlay (expanded content): starts emerging at 38% for seamless cross-fade, fully active by 68%
     if (overlayRef.current) {
-      const inn = smoothstep(0.28, 0.46, p);
+      const inn = smoothstep(0.38, 0.68, p);
       overlayRef.current.style.opacity = `${inn}`;
-      overlayRef.current.style.transform = `translate3d(0, ${18 * (1 - inn)}px, 0)`;
-      overlayRef.current.style.pointerEvents = p > 0.45 ? 'auto' : 'none';
+      overlayRef.current.style.transform = `translate3d(0, ${20 * (1 - inn)}px, 0)`;
+      overlayRef.current.style.pointerEvents = p > 0.60 ? 'auto' : 'none';
     }
   }, []);
 
@@ -193,10 +192,6 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
 
       if (c.useWindowScroll) {
         const rect = track.getBoundingClientRect();
-        // The track sticks when rect.top <= 0.
-        // rect.top is the distance from top of viewport to top of track.
-        // When rect.top <= 0, the stage is pinned at top: 0.
-        // Progress advances smoothly as user scrolls through scrollSpan.
         const scrolled = -rect.top;
         return clamp(scrolled / scrollSpan, 0, 1);
       }
@@ -316,7 +311,7 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
             <div ref={scrimRef} className="scroll-expand__scrim" />
             {children ? (
               <div ref={overlayRef} className="scroll-expand__overlay">
-                {typeof children === 'function' ? children(progress) : children}
+                {children}
               </div>
             ) : null}
           </div>
