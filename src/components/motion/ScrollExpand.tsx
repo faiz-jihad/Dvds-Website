@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './ScrollExpand.css';
@@ -33,7 +33,7 @@ export interface ScrollExpandProps {
   overlayScrim?: number;
   useWindowScroll?: boolean;
   enabled?: boolean;
-  children?: React.ReactNode;
+  children?: React.ReactNode | ((progress: number) => React.ReactNode);
   className?: string;
   style?: React.CSSProperties;
 }
@@ -62,6 +62,7 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
   style,
   ...rest
 }) => {
+  const [progress, setProgress] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -72,6 +73,9 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
   const scrimRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
   const stageHRef = useRef<number>(0);
+
+  const setProgressRef = useRef(setProgress);
+  useEffect(() => { setProgressRef.current = setProgress; }, [setProgress]);
 
   const propsRef = useRef({
     startWidth,
@@ -150,6 +154,9 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
       overlayRef.current.style.transform = `translate3d(0, ${20 * (1 - inn)}px, 0)`;
       overlayRef.current.style.pointerEvents = p > 0.60 ? 'auto' : 'none';
     }
+
+    // Expose progress to React for function-children (TextReveal etc)
+    setProgressRef.current(p);
   }, []);
 
   useEffect(() => {
@@ -311,7 +318,7 @@ export const ScrollExpand: React.FC<ScrollExpandProps> = ({
             <div ref={scrimRef} className="scroll-expand__scrim" />
             {children ? (
               <div ref={overlayRef} className="scroll-expand__overlay">
-                {children}
+                {typeof children === 'function' ? children(progress) : children}
               </div>
             ) : null}
           </div>

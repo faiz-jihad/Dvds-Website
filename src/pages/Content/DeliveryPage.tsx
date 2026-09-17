@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { publicApi } from '../../lib/publicApi';
 import { formatGBP } from '../../lib/formatters';
 import { StoreDataState } from '../../components/common/StoreDataState';
+import { Seo } from '../../components/common/Seo';
 
 export const DeliveryPage: React.FC = () => {
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: () => publicApi.getStoreSettings() });
@@ -12,6 +13,12 @@ export const DeliveryPage: React.FC = () => {
   const settings = settingsQuery.data;
   return (
     <div className="bg-white min-h-screen py-8 sm:py-16">
+      <Seo
+        title="Delivery & Dispatch Information — DVDs Zone | UK DVD Store"
+        description="DVDs Zone dispatches all orders with Royal Mail Tracked 24 from London. Free UK delivery on every order. International shipping available. Same-day dispatch on orders before 3pm."
+        canonicalPath="/delivery"
+        siteName="DVDs Zone"
+      />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
         <div>
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">

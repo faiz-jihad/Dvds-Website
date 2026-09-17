@@ -1,9 +1,13 @@
-# DVDs Zone Production Robots.txt
+# DVDs Zone – robots.txt
 User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin/*
 Disallow: /account
 Disallow: /account/*
+Disallow: /checkout
+Disallow: /cart
+Disallow: /api/
+Disallow: /search?q=
 
-Sitemap: https://dvds-website.vercel.app/sitemap.xml
+Sitemap: https://dvdszone.co.uk/sitemap.xml

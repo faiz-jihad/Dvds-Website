@@ -2,10 +2,17 @@ import React from 'react';
 import { ShieldCheck, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/common/Button';
+import { Seo } from '../../components/common/Seo';
 
 export const ReturnsPage: React.FC = () => {
   return (
     <div className="bg-white min-h-screen py-8 sm:py-16">
+      <Seo
+        title="Returns Policy — 30-Day Hassle-Free Returns | DVDs Zone UK"
+        description="DVDs Zone offers a 30-day returns policy. Faulty disc? Changed your mind? Contact our UK team and we'll arrange a replacement or full refund."
+        canonicalPath="/returns"
+        siteName="DVDs Zone"
+      />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8">
         <div>
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">

@@ -5,6 +5,7 @@ import { Disc, Shield, Film, Award } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { StoreDataState } from '../../components/common/StoreDataState';
 import { publicApi } from '../../lib/publicApi';
+import { Seo } from '../../components/common/Seo';
 
 export const AboutPage: React.FC = () => {
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: publicApi.getStoreSettings });
@@ -17,6 +18,20 @@ export const AboutPage: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen py-8 sm:py-16">
+      <Seo
+        title="About DVDs Zone — UK Physical DVD Retailer | Our Story"
+        description="DVDs Zone is a boutique UK physical media retailer specialising in TV box sets, restored British cinema and collector optical editions. Learn about our heritage and mission."
+        canonicalPath="/about"
+        siteName="DVDs Zone"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'AboutPage',
+          name: 'About DVDs Zone',
+          description: 'Boutique UK physical media retailer specialising in TV box sets, classic cinema, and collector editions.',
+          url: 'https://dvdszone.co.uk/about',
+          publisher: { '@type': 'Organization', name: 'DVDs Zone', url: 'https://dvdszone.co.uk' },
+        }}
+      />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-12">
         <div className="space-y-4 text-center">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-brand-blue-soft text-brand-blue flex items-center justify-center mx-auto">

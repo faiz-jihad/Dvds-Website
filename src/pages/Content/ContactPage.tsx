@@ -7,6 +7,7 @@ import { useUiStore } from '../../stores/useUiStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { publicApi } from '../../lib/publicApi';
 import { StoreDataState } from '../../components/common/StoreDataState';
+import { Seo } from '../../components/common/Seo';
 
 export const ContactPage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
@@ -53,6 +54,12 @@ export const ContactPage: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen py-8 sm:py-16">
+      <Seo
+        title="Contact DVDs Zone — Customer Support & Enquiries | UK DVD Store"
+        description="Get in touch with DVDs Zone. Questions about your order, dispatch, collector editions or bulk purchases? Our UK team is ready to help."
+        canonicalPath="/contact"
+        siteName="DVDs Zone"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-8 sm:mb-12">
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">

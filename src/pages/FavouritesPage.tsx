@@ -7,6 +7,7 @@ import { publicApi } from '../lib/publicApi';
 import { ProductCard } from '../components/product/ProductCard';
 import { EmptyState } from '../components/common/EmptyState';
 import { StoreDataState } from '../components/common/StoreDataState';
+import { Seo } from '../components/common/Seo';
 
 export const FavouritesPage: React.FC = () => {
   const { favourites } = useFavouritesStore();
@@ -21,6 +22,7 @@ export const FavouritesPage: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen py-6 sm:py-10">
+      <Seo title="My Wishlist — DVDs Zone" description="Your saved DVD wishlist." noIndex siteName="DVDs Zone" />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         <div className="pb-6 mb-8 border-b border-gray-100">
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">

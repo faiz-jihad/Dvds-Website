@@ -92,6 +92,12 @@ function fail(error: any, fallback: string): never {
       'INVALID_UUID'
     );
   }
+  if (error?.message?.includes('products_active_price_required')) {
+    throw new AdminBackendError(
+      'Active films must have a price greater than £0.00. Please enter a valid sale price in Pricing or select Draft.',
+      'ACTIVE_PRICE_REQUIRED'
+    );
+  }
   throw new AdminBackendError(error?.message || fallback, error?.code || 'QUERY_FAILED');
 }
 

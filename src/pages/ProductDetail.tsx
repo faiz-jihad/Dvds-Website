@@ -15,6 +15,7 @@ import { useCartStore } from '../stores/useCartStore';
 import { useFavouritesStore } from '../stores/useFavouritesStore';
 import { useUiStore } from '../stores/useUiStore';
 import { StoreDataState } from '../components/common/StoreDataState';
+import { Seo } from '../components/common/Seo';
 
 export const ProductDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -77,6 +78,45 @@ export const ProductDetail: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen py-8 sm:py-12">
+      <Seo
+        title={`${product.title} — Buy on DVD | DVDs Zone UK`}
+        description={`Buy ${product.title} on DVD. ${product.description ? product.description.slice(0, 130).replace(/\s\S+$/, '') + '...' : 'Region 2 UK edition.'} Free UK delivery. Royal Mail Tracked dispatch from London.`}
+        canonicalPath={`/product/${product.slug}`}
+        image={product.cover_image_url}
+        type="product"
+        siteName="DVDs Zone"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.title,
+          description: product.description || `${product.title} DVD – Region 2 UK edition.`,
+          image: `https://dvdszone.co.uk${product.cover_image_url}`,
+          url: `https://dvdszone.co.uk/product/${product.slug}`,
+          sku: product.id,
+          brand: { '@type': 'Brand', name: 'DVDs Zone' },
+          offers: {
+            '@type': 'Offer',
+            url: `https://dvdszone.co.uk/product/${product.slug}`,
+            priceCurrency: 'GBP',
+            price: product.price.toFixed(2),
+            priceValidUntil: new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0],
+            availability: product.stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            seller: { '@type': 'Organization', name: 'DVDs Zone' },
+            shippingDetails: {
+              '@type': 'OfferShippingDetails',
+              shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'GBP' },
+              shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'GB' },
+              deliveryTime: {
+                '@type': 'ShippingDeliveryTime',
+                handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
+                transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' },
+              },
+            },
+          },
+          ...(product.age_rating && { contentRating: product.age_rating }),
+          ...(product.format && { additionalProperty: { '@type': 'PropertyValue', name: 'Format', value: product.format } }),
+        }}
+      />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Breadcrumb Navigation */}
         <nav className="flex min-w-0 items-center gap-2 overflow-hidden text-xs text-gray-500 mb-8 font-medium">

@@ -8,6 +8,7 @@ import { Button } from '../components/common/Button';
 import { StoreDataState } from '../components/common/StoreDataState';
 import { searchCatalogue, findSearchSuggestion, SearchOptions } from '../lib/searchEngine';
 import { cn } from '../lib/formatters';
+import { Seo } from '../components/common/Seo';
 
 const FORMAT_FILTERS = [
   { label: 'All Editions', value: 'all' },
@@ -88,6 +89,12 @@ export const SearchPage: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen py-6 sm:py-10 text-dark">
+      <Seo
+        title={queryParam ? `Search results for "${queryParam}" — DVDs Zone` : 'Search DVDs — DVDs Zone'}
+        description={queryParam ? `Buy physical DVDs matching "${queryParam}" — UK delivery, Royal Mail Tracked. DVDs Zone.` : 'Search the DVDs Zone catalogue for box sets, TV series, and collector editions.'}
+        noIndex={!queryParam}
+        siteName="DVDs Zone"
+      />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Breadcrumb & Navigation */}
         <div className="mb-6 flex items-center justify-between">

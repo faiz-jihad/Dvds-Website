@@ -3,13 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import { StoreDataState } from '../../components/common/StoreDataState';
 import { publicApi } from '../../lib/publicApi';
 import { StoreSettings } from '../../types';
+import { Seo } from '../../components/common/Seo';
 
 interface LegalPageProps {
   title: string;
+  description?: string;
+  canonicalPath?: string;
   children: (settings: StoreSettings) => React.ReactNode;
 }
 
-const LegalPage: React.FC<LegalPageProps> = ({ title, children }) => {
+const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath, children }) => {
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: publicApi.getStoreSettings });
 
   if (settingsQuery.isLoading || settingsQuery.error || !settingsQuery.data) {
@@ -20,6 +23,12 @@ const LegalPage: React.FC<LegalPageProps> = ({ title, children }) => {
 
   return (
     <div className="bg-white min-h-screen py-8 sm:py-16">
+      <Seo
+        title={`${title} — DVDs Zone`}
+        description={description || `DVDs Zone legal document: ${title}.`}
+        canonicalPath={canonicalPath}
+        siteName="DVDs Zone"
+      />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-6 text-xs text-gray-700 leading-relaxed">
         <span className="font-mono text-brand-blue uppercase tracking-widest text-[11px]">LEGAL NOTICE</span>
         <h1 className="font-display font-extrabold text-2xl sm:text-4xl text-dark">{title}</h1>
@@ -44,7 +53,11 @@ const LegalPage: React.FC<LegalPageProps> = ({ title, children }) => {
 };
 
 export const PrivacyPage: React.FC = () => (
-  <LegalPage title="Privacy Policy">
+  <LegalPage
+    title="Privacy Policy"
+    description="DVDs Zone Privacy Policy — how we collect and use your data in accordance with UK GDPR and the Data Protection Act 2018."
+    canonicalPath="/privacy"
+  >
     {(settings) => (
       <>
         <p>Last updated: September 2026. {settings.registered_company_name} operates {settings.store_name} and processes personal data in accordance with UK GDPR and the Data Protection Act 2018.</p>
@@ -58,7 +71,11 @@ export const PrivacyPage: React.FC = () => (
 );
 
 export const TermsPage: React.FC = () => (
-  <LegalPage title="Terms & Conditions">
+  <LegalPage
+    title="Terms & Conditions"
+    description="DVDs Zone Terms & Conditions — our terms of sale, pricing, and customer support commitments."
+    canonicalPath="/terms"
+  >
     {(settings) => (
       <>
         <p>These terms govern purchases made from {settings.store_name}, operated by {settings.registered_company_name}.</p>
@@ -72,7 +89,11 @@ export const TermsPage: React.FC = () => (
 );
 
 export const RefundPolicyPage: React.FC = () => (
-  <LegalPage title="Refund Policy">
+  <LegalPage
+    title="Refund Policy"
+    description="DVDs Zone Refund Policy — 30-day returns, cancellation rights and statutory protections for UK consumers."
+    canonicalPath="/refund-policy"
+  >
     {(settings) => (
       <>
         <p>{settings.store_name} handles returns and refunds in accordance with applicable UK consumer law.</p>

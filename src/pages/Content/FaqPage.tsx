@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import { publicApi } from '../../lib/publicApi';
 import { formatGBP } from '../../lib/formatters';
 import { StoreDataState } from '../../components/common/StoreDataState';
+import { Seo } from '../../components/common/Seo';
 
 const createFaqs = (freeShippingThreshold: number, dispatchCutoff: string, standardService: string) => [
   {
@@ -41,6 +42,21 @@ export const FaqPage: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen py-8 sm:py-16">
+      <Seo
+        title="FAQ — DVD Regions, Delivery & Returns | DVDs Zone UK"
+        description="Answers to common questions about DVD regions, UK delivery times, free shipping, returns and our physical media collection at DVDs Zone."
+        canonicalPath="/faq"
+        siteName="DVDs Zone"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqs.map((faq) => ({
+            '@type': 'Question',
+            name: faq.q,
+            acceptedAnswer: { '@type': 'Answer', text: faq.a },
+          })),
+        }}
+      />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
         <div>
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">

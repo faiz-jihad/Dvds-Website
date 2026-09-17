@@ -80,8 +80,8 @@ export const Home: React.FC = () => {
   return (
     <main data-intro-ready className="min-h-screen bg-[#06080b] text-white antialiased selection:bg-white selection:text-black">
       <Seo
-        title="DVDs Zone — Your World of Entertainment | UK Physical Media Store"
-        description="Discover definitive DVD box sets, restored British cinema, and rare collector editions preserved in uncompressed physical permanence. Dispatched with Royal Mail Tracked. Free delivery across the UK on all orders."
+        title="DVDs Zone — Your World of Entertainment | Buy Physical DVDs UK"
+        description="Shop definitive DVD box sets, restored British cinema and rare collector editions. Free UK delivery on all orders. Royal Mail Tracked 24 dispatch from London. The Mandalorian, Star Wars, The Beatles & more."
         canonicalPath="/"
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
         siteName="DVDs Zone"
@@ -91,15 +91,15 @@ export const Home: React.FC = () => {
           name: 'Physical DVD Vault & Collector Editions',
           description:
             'Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.',
-          url: 'https://azrayan-dvds.co.uk/',
+          url: 'https://dvdszone.co.uk/',
           mainEntity: {
             '@type': 'ItemList',
             itemListElement: products.slice(0, 11).map((prod, idx) => ({
               '@type': 'ListItem',
               position: idx + 1,
               name: prod.title,
-              url: `https://azrayan-dvds.co.uk/product/${prod.slug}`,
-              image: `https://azrayan-dvds.co.uk${prod.cover_image_url}`,
+              url: `https://dvdszone.co.uk/product/${prod.slug}`,
+              image: `https://dvdszone.co.uk${prod.cover_image_url}`,
             })),
           },
         }}

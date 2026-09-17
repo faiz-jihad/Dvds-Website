@@ -1,43 +1,105 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- Homepage -->
   <url>
-    <loc>https://dvds-website.vercel.app/</loc>
+    <loc>https://dvdszone.co.uk/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <lastmod>2026-09-01</lastmod>
   </url>
+
+  <!-- Shop / Catalogue -->
   <url>
-    <loc>https://dvds-website.vercel.app/shop</loc>
+    <loc>https://dvdszone.co.uk/shop</loc>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
+    <lastmod>2026-09-01</lastmod>
   </url>
+
+  <!-- Product Pages -->
   <url>
-    <loc>https://dvds-website.vercel.app/delivery</loc>
+    <loc>https://dvdszone.co.uk/product/star-wars-the-mandalorian-seasons-1-3</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2026-09-01</lastmod>
+    <image:image>
+      <image:loc>https://dvdszone.co.uk/catalog/the-mandalorian-seasons-1-3.jpeg</image:loc>
+      <image:title>Star Wars: The Mandalorian Seasons 1–3 DVD Box Set</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://dvdszone.co.uk/product/star-wars-the-clone-wars-complete-series</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <lastmod>2026-09-01</lastmod>
+  </url>
+
+  <url>
+    <loc>https://dvdszone.co.uk/product/the-beatles-get-back</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <lastmod>2026-09-01</lastmod>
+  </url>
+
+  <!-- Content Pages -->
+  <url>
+    <loc>https://dvdszone.co.uk/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <lastmod>2026-08-01</lastmod>
+  </url>
+
+  <url>
+    <loc>https://dvdszone.co.uk/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <lastmod>2026-08-01</lastmod>
+  </url>
+
+  <url>
+    <loc>https://dvdszone.co.uk/delivery</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+    <lastmod>2026-08-01</lastmod>
   </url>
+
   <url>
-    <loc>https://dvds-website.vercel.app/returns</loc>
+    <loc>https://dvdszone.co.uk/returns</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+    <lastmod>2026-08-01</lastmod>
   </url>
+
   <url>
-    <loc>https://dvds-website.vercel.app/about</loc>
+    <loc>https://dvdszone.co.uk/faq</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+    <lastmod>2026-08-01</lastmod>
   </url>
+
+  <!-- Legal -->
   <url>
-    <loc>https://dvds-website.vercel.app/contact</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://dvds-website.vercel.app/privacy</loc>
-    <changefreq>monthly</changefreq>
+    <loc>https://dvdszone.co.uk/privacy</loc>
+    <changefreq>yearly</changefreq>
     <priority>0.4</priority>
+    <lastmod>2026-08-01</lastmod>
   </url>
+
   <url>
-    <loc>https://dvds-website.vercel.app/terms</loc>
-    <changefreq>monthly</changefreq>
+    <loc>https://dvdszone.co.uk/terms</loc>
+    <changefreq>yearly</changefreq>
     <priority>0.4</priority>
+    <lastmod>2026-08-01</lastmod>
   </url>
+
+  <url>
+    <loc>https://dvdszone.co.uk/refund-policy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+    <lastmod>2026-08-01</lastmod>
+  </url>
+
 </urlset>

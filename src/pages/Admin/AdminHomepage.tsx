@@ -213,7 +213,7 @@ export const AdminHomepage: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['homepage'] });
       await queryClient.invalidateQueries({ queryKey: ['admin', 'homepage'] });
       await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
-      addToast('🎉 Homepage published live to customer storefront!', 'success');
+      addToast('Homepage published live to customer storefront successfully.', 'success');
     } catch (error) {
       addToast(error instanceof Error ? error.message : 'Failed to publish homepage', 'error');
     } finally {

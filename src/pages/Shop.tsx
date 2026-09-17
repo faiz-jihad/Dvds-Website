@@ -7,6 +7,7 @@ import { Button } from '../components/common/Button';
 import { publicApi } from '../lib/publicApi';
 import { formatGBP } from '../lib/formatters';
 import { StoreDataState } from '../components/common/StoreDataState';
+import { Seo } from '../components/common/Seo';
 
 export const Shop: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -163,6 +164,31 @@ export const Shop: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen py-6 sm:py-10">
+      <Seo
+        title={`${pageTitle} — DVDs Zone | Buy Physical DVDs UK`}
+        description={`${pageDescription} Free UK delivery. Royal Mail Tracked dispatch from London.`}
+        canonicalPath="/shop"
+        image="/catalog/the-mandalorian-seasons-1-3.jpeg"
+        siteName="DVDs Zone"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: pageTitle,
+          description: pageDescription,
+          url: 'https://dvdszone.co.uk/shop',
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: filteredProducts.length,
+            itemListElement: filteredProducts.slice(0, 20).map((prod, idx) => ({
+              '@type': 'ListItem',
+              position: idx + 1,
+              name: prod.title,
+              url: `https://dvdszone.co.uk/product/${prod.slug}`,
+              image: `https://dvdszone.co.uk${prod.cover_image_url}`,
+            })),
+          },
+        }}
+      />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Editorial Page Header */}
         <div className="pb-8 mb-6 border-b border-gray-100 flex flex-col md:flex-row md:items-end justify-between gap-4">
