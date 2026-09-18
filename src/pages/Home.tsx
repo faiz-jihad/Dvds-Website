@@ -1,26 +1,11 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { publicApi } from '../lib/publicApi';
-import { homepageApi } from '../lib/homepageApi';
-import { StoreDataState } from '../components/common/StoreDataState';
-import { SpykerHero } from '../components/homepage/SpykerHero';
-import { SpykerScrollExpandSection } from '../components/homepage/SpykerScrollExpandSection';
-import { SpykerEditorialChapter } from '../components/homepage/SpykerEditorialChapter';
-import { SpykerInteractiveGallery } from '../components/homepage/SpykerInteractiveGallery';
-import { SpykerManifestoVideo } from '../components/homepage/SpykerManifestoVideo';
-import { HomepageSectionRenderer } from '../components/homepage/HomepageSectionRenderer';
-import { AnimatedContent } from '../components/motion/AnimatedContent';
 import { Seo } from '../components/common/Seo';
-import { useIntroEntry } from '../components/intro/IntroContext';
+import { StoreDataState } from '../components/common/StoreDataState';
+import { SeriviaHomeLayout } from '../components/serivia/SeriviaHomeLayout';
 
 export const Home: React.FC = () => {
-  const introEntry = useIntroEntry();
-  const configQuery = useQuery({
-    queryKey: ['homepage', 'config'],
-    queryFn: () => homepageApi.getHomepageConfig(),
-    staleTime: 60_000,
-  });
-
   const productsQuery = useQuery({
     queryKey: ['store', 'products'],
     queryFn: () => publicApi.getProducts(),
@@ -33,52 +18,37 @@ export const Home: React.FC = () => {
     staleTime: 60_000,
   });
 
-  const isLoading = configQuery.isLoading || productsQuery.isLoading || categoriesQuery.isLoading;
-  const error = configQuery.error || productsQuery.error || categoriesQuery.error;
+  const genresQuery = useQuery({
+    queryKey: ['store', 'genres'],
+    queryFn: () => publicApi.getGenres(),
+    staleTime: 60_000,
+  });
+
+  const isLoading = productsQuery.isLoading || categoriesQuery.isLoading || genresQuery.isLoading;
+  const error = productsQuery.error || categoriesQuery.error || genresQuery.error;
 
   if (isLoading || error) {
     return (
-      <StoreDataState
-        loading={isLoading}
-        error={error || null}
-        retry={() => {
-          configQuery.refetch();
-          productsQuery.refetch();
-          categoriesQuery.refetch();
-        }}
-      />
+      <div className="min-h-screen bg-[#09090e]">
+        <StoreDataState
+          loading={isLoading}
+          error={error || null}
+          retry={() => {
+            productsQuery.refetch();
+            categoriesQuery.refetch();
+            genresQuery.refetch();
+          }}
+        />
+      </div>
     );
   }
 
-  const config = configQuery.data;
   const products = productsQuery.data || [];
   const categories = categoriesQuery.data || [];
-
-  if (!config) {
-    return (
-      <StoreDataState
-        error={new Error('Unable to load homepage configuration.')}
-        retry={() => configQuery.refetch()}
-      />
-    );
-  }
-
-  // Catalogue sections managed by Admin Homepage Builder
-  const isPublished = config.status === 'published';
-  const catalogueSections = [...config.sections]
-    .filter(
-      (section) =>
-        section.enabled &&
-        (section.type === 'productRail' ||
-         section.type === 'categoryGrid' ||
-         section.type === 'campaign' ||
-         section.type === 'newsletter' ||
-         (isPublished && section.type !== 'hero' && section.type !== 'editorial'))
-    )
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const genres = genresQuery.data || [];
 
   return (
-    <main data-intro-ready className="min-h-screen bg-[#06080b] text-white antialiased selection:bg-white selection:text-black">
+    <>
       <Seo
         title="DVDs Zone — Your World of Entertainment | Buy Physical DVDs UK"
         description="Shop definitive DVD box sets, restored British cinema and rare collector editions. Free UK delivery on all orders. Royal Mail Tracked 24 dispatch from London. The Mandalorian, Star Wars, The Beatles & more."
@@ -104,38 +74,11 @@ export const Home: React.FC = () => {
           },
         }}
       />
-
-      {/* 00: Monumental Dutch Coachbuilder Hero */}
-      <SpykerHero />
-
-      {/* Interactive Cinematic Scroll Expand Transition */}
-      <SpykerScrollExpandSection />
-
-      {/* Chapter 01: Architectural 12-Column Asymmetric Editorial Layout */}
-      <SpykerEditorialChapter />
-
-      {/* Chapter 02: Interactive Accordion Vault (Displaying real store DVDs) */}
-      <SpykerInteractiveGallery products={products} />
-
-      {/* Chapter 03: Cinema Manifesto (2.39:1 Anamorphic Player HUD & 3 Pillars) */}
-      <SpykerManifestoVideo />
-
-      {/* Curated Dynamic Catalogue Sections (Product Rails, Category Grids, Vault Dispatch) */}
-      {catalogueSections.map((section, index) => {
-        const renderedSection = (
-          <HomepageSectionRenderer
-            section={section}
-            products={products}
-            categories={categories}
-          />
-        );
-
-        return (
-          <AnimatedContent key={section.id} disabled={introEntry && section.type === 'hero'} delay={Math.min(index * 0.03, 0.12)} distance={28}>
-            {renderedSection}
-          </AnimatedContent>
-        );
-      })}
-    </main>
+      <SeriviaHomeLayout
+        products={products}
+        categories={categories}
+        genres={genres}
+      />
+    </>
   );
 };

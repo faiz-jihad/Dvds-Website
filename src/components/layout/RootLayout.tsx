@@ -11,7 +11,7 @@ import { ToastContainer } from '../common/Toast';
 import { publicApi } from '../../lib/publicApi';
 import { useCartStore } from '../../stores/useCartStore';
 import { StoreDataState } from '../common/StoreDataState';
-import { IntroLoader } from '../intro/IntroLoader';
+
 
 export const RootLayout: React.FC = () => {
   const { pathname } = useLocation();
@@ -46,14 +46,15 @@ export const RootLayout: React.FC = () => {
     document.documentElement.toggleAttribute('data-home-entry', pathname === '/');
   }, [pathname]);
 
-  return (
-    <IntroLoader home={pathname === '/'}>
-    <div className="flex flex-col min-h-screen bg-white text-dark overflow-x-clip w-full max-w-[100vw]">
-      {/* Top Announcements */}
-      <AnnouncementBar />
+  const isHome = pathname === '/';
 
-      {/* Main Sticky Navbar */}
-      <Navbar />
+  return (
+    <div className={`flex flex-col min-h-screen ${isHome ? 'bg-[#09090e]' : 'bg-white'} text-dark overflow-x-clip w-full max-w-[100vw]`}>
+      {/* Top Announcements — hidden on home (Serivia layout has its own nav) */}
+      {!isHome && <AnnouncementBar />}
+
+      {/* Main Sticky Navbar — hidden on home */}
+      {!isHome && <Navbar />}
 
       {/* Primary Page Content */}
       <main className="flex-1">
@@ -70,21 +71,20 @@ export const RootLayout: React.FC = () => {
             }}
           />
         ) : (
-          <React.Suspense fallback={<div className={pathname === '/' ? 'min-h-screen bg-[#050505]' : 'min-h-[40vh]'} role="status"><span className="sr-only">Loading page</span></div>}>
+          <React.Suspense fallback={<div className={isHome ? 'min-h-screen bg-[#09090e]' : 'min-h-[40vh]'} role="status"><span className="sr-only">Loading page</span></div>}>
             <Outlet />
           </React.Suspense>
         )}
       </main>
 
-      {/* Clean European UK Footer */}
-      <Footer />
+      {/* Footer — hidden on home (Serivia layout is self-contained) */}
+      {!isHome && <Footer />}
 
-      {/* Interactive Overlays & Drawers */}
+      {/* Interactive Overlays & Drawers — always active for cart/search */}
       <CartDrawer />
       <SearchOverlay />
       <MobileNavDrawer />
       <ToastContainer />
     </div>
-    </IntroLoader>
   );
 };
