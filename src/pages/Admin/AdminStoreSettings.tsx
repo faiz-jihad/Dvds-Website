@@ -422,7 +422,7 @@ export const AdminStoreSettings: React.FC = () => {
                       {selectedDealProduct.title}
                     </div>
                     <div className="text-gray-500">
-                      Standard Price: <span className="line-through">{formatGBP(selectedDealProduct.price)}</span> ➔{' '}
+                      Standard Price: <span className="line-through">{formatGBP(selectedDealProduct.price)}</span> &rarr;{' '}
                       <strong className="text-brand-red font-mono text-sm">{formatGBP(settings.deal_discount_price)}</strong>
                     </div>
                     <div className="text-gray-400 font-mono text-[11px]">

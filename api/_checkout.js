@@ -112,7 +112,7 @@ export function paymentMethods(settings) {
   return {
     card: backend && settings.payment_card_enabled !== false && Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
     paypal: backend && settings.payment_paypal_enabled !== false && Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET && process.env.PAYPAL_WEBHOOK_ID),
-    bank_transfer: backend && settings.payment_bank_transfer_enabled === true && Boolean(settings.bank_name?.trim() && settings.bank_account_name?.trim() && /^\d{6}$/.test(String(settings.bank_sort_code || '').replace(/\D/g, '')) && /^\d{8}$/.test(String(settings.bank_account_number || '').trim())),
+    bank_transfer: backend && settings.payment_bank_transfer_enabled === true && Boolean(settings.bank_name?.trim() && settings.bank_account_name?.trim() && ((settings.bank_sort_code && /^\d{6}$/.test(String(settings.bank_sort_code).replace(/\D/g, '')) && /^\d{8}$/.test(String(settings.bank_account_number || '').trim())) || (settings.bank_account_number?.trim() || settings.bank_iban?.trim()))),
   };
 }
 export function calculateQuote(items, products, settings, promo, promoCode, deliveryTier, now = Date.now(), country = 'GB') {

@@ -11,6 +11,7 @@ import {
   Lock,
   MapPin,
   Plus,
+  ShieldCheck,
   Truck,
   User,
   Wallet,
@@ -868,6 +869,15 @@ export const CheckoutPage: React.FC = () => {
                     autoComplete="shipping postal-code"
                     required={rules.postalRequired}
                     maxLength={32}
+                    placeholder={
+                      address.country === "GB"
+                        ? "e.g. SW1A 1AA"
+                        : address.country === "US"
+                          ? "e.g. 90210"
+                          : address.country === "ID"
+                            ? "e.g. 10110"
+                            : "Enter postal code"
+                    }
                     value={address.postcode}
                     onChange={(e) => updateAddress("postcode", e.target.value)}
                   />
@@ -1014,10 +1024,15 @@ export const CheckoutPage: React.FC = () => {
                             <span className="inline-block text-[11px] font-medium px-2 py-1 rounded bg-gray-100 text-gray-600">
                               {available
                                 ? option.id === "bank_transfer"
-                                  ? quote?.bank_name
+                                  ? quote?.bank_name || option.badge
                                   : option.badge
                                 : "Temporarily unavailable"}
                             </span>
+                            {available && (
+                              <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                ACTIVE
+                              </span>
+                            )}
                             {option.id === "card" &&
                               available &&
                               applePaySupported && (
@@ -1242,24 +1257,55 @@ export const CheckoutPage: React.FC = () => {
                 !quote?.methods[method] ||
                 Boolean(attempt)
               }
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-blue text-white px-4 py-4 mt-6 text-sm font-semibold hover:brightness-95 disabled:opacity-45 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-between gap-3 rounded-xl bg-brand-blue text-white px-5 py-4 mt-6 text-sm font-semibold hover:brightness-95 disabled:opacity-45 disabled:cursor-not-allowed shadow-md transition-all active:scale-[0.99]"
             >
-              {busy
-                ? "Please wait..."
-                : quoteQuery.isFetching
-                  ? "Updating total..."
-                  : method === "bank_transfer"
-                    ? "Place order - pay by bank transfer"
+              <div className="flex items-center gap-2 truncate">
+                <span>
+                  {busy
+                    ? "Please wait..."
+                    : quoteQuery.isFetching
+                      ? "Updating total..."
+                      : method === "bank_transfer"
+                        ? "Place order - pay by bank transfer"
+                        : method === "paypal"
+                          ? "Continue with PayPal"
+                          : "Continue to secure payment"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/25">
+                  {method === "bank_transfer"
+                    ? "Direct Bank"
                     : method === "paypal"
-                      ? "Continue with PayPal"
-                      : "Continue to secure payment"}
-              <ArrowRight size={16} className="shrink-0" />
+                      ? "PayPal"
+                      : "256-bit SSL"}
+                </span>
+                <ArrowRight size={16} className="shrink-0" />
+              </div>
             </button>
-            <p className="text-xs leading-relaxed text-gray-500 mt-4 text-center">
+            <p className="text-xs leading-relaxed text-gray-500 mt-3 text-center">
               {method === "bank_transfer"
                 ? "Your order will await payment confirmation before dispatch."
                 : "You will review and complete payment with your selected provider."}
             </p>
+            {/* Trust & Security Badges Strip */}
+            <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-gray-100 text-center">
+              <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-gray-50 text-[11px] text-gray-600">
+                <Lock size={14} className="text-brand-blue mb-1" />
+                <span className="font-semibold text-gray-800">SSL 256-Bit</span>
+                <span className="text-[9px] text-gray-400">Encrypted</span>
+              </div>
+              <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-gray-50 text-[11px] text-gray-600">
+                <Building2 size={14} className="text-brand-blue mb-1" />
+                <span className="font-semibold text-gray-800">Direct Bank</span>
+                <span className="text-[9px] text-gray-400">Manual Verification</span>
+              </div>
+              <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-gray-50 text-[11px] text-gray-600">
+                <ShieldCheck size={14} className="text-emerald-600 mb-1" />
+                <span className="font-semibold text-gray-800">100% Vault</span>
+                <span className="text-[9px] text-gray-400">Authentic DVDs</span>
+              </div>
+            </div>
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-5 pt-5 border-t border-gray-100">
               <Truck size={15} /> Delivery to {countryName(address.country)}
             </div>

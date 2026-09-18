@@ -83,7 +83,7 @@ export const NewsletterSection: React.FC<NewsletterSectionProps> = ({ data }) =>
             </div>
 
             <p className="text-[11px] font-mono text-white/40 tracking-wider">
-              {data.disclaimer || '✓ UK GDPR Compliant. Dispatched infrequently. Unsubscribe in one click.'}
+              {data.disclaimer || 'UK GDPR Compliant. Dispatched infrequently. Unsubscribe in one click.'}
             </p>
           </form>
         )}

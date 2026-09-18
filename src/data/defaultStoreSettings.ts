@@ -60,11 +60,11 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   bank_account_name: 'DVDs Zone Ltd',
   payment_card_enabled: true,
   payment_paypal_enabled: true,
-  payment_bank_transfer_enabled: false,
-  bank_sort_code: '',
-  bank_account_number: '',
-  bank_iban: '',
+  payment_bank_transfer_enabled: true,
+  bank_sort_code: '20-00-00',
+  bank_account_number: '12345678',
+  bank_iban: 'GB29BARC20000012345678',
   bank_payment_instructions:
-    'Please transfer the exact total to our Barclays account using your Order Reference as the payment description. Your items are held in reserve and dispatched immediately upon receipt confirmation.',
+    'Please transfer the exact total to our Barclays account using your Order Reference as the payment description. After transferring, please upload your transfer receipt (max 2MB) on the order confirmation page.',
   updated_at: new Date().toISOString(),
 };

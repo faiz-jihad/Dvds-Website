@@ -4,7 +4,7 @@ Platform e-commerce physical media premium berbasis React 19, TypeScript, Vite, 
 
 ---
 
-## 🚀 Fitur Utama & Operasional
+## Fitur Utama & Operasional
 
 ### 1. Storefront & Editorial Media Fisik
 - **Katalog & Navigasi Sinematik**: Eksplorasi katalog berdasarkan format (DVD, Blu-ray, 4K UHD), dekade, kategori, dan genre.
@@ -50,7 +50,7 @@ Platform e-commerce physical media premium berbasis React 19, TypeScript, Vite, 
 
 ---
 
-## 🎨 Arah Desain & UX
+## Arah Desain & UX
 
 Antarmuka storefront didesain dengan estetika editorial fisik modern yang terinspirasi oleh standar kuratorial media fisik kelas dunia ([Criterion Collection](https://www.criterion.com/shop), [BFI Shop](https://shop.bfi.org.uk/), [Arrow Films UK](https://www.arrowfilms.com/c/specialist/arrow-exclusives/), dan [A24 Shop](https://shop.a24films.com/)):
 - Tipografi tajam dan hierarki visual yang elegan.
@@ -59,7 +59,7 @@ Antarmuka storefront didesain dengan estetika editorial fisik modern yang terins
 
 ---
 
-## 🛠️ Menjalankan Aplikasi Secara Lokal
+## Menjalankan Aplikasi Secara Lokal
 
 ### Prasyarat
 - Node.js versi 18+ (atau v20+ disarankan)
@@ -91,7 +91,7 @@ npm run build
 
 ---
 
-## ⚙️ Konfigurasi Environment (.env)
+## Konfigurasi Environment (.env)
 
 Salin `.env.example` menjadi `.env` lalu lengkapi variabel berikut:
 
@@ -104,7 +104,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 ---
 
-## 🗄️ Menyiapkan Supabase Database
+## Menyiapkan Supabase Database
 
 1. Terapkan seluruh migration database secara berurutan:
    ```bash
@@ -128,7 +128,7 @@ Lihat panduan lengkap di [docs/ADMIN_VERIFICATION.md](docs/ADMIN_VERIFICATION.md
 
 ---
 
-## 💳 Menyiapkan Stripe & Edge Functions
+## Menyiapkan Stripe & Edge Functions
 
 1. Konfigurasikan secret di Supabase:
    ```bash
@@ -156,7 +156,7 @@ Lihat panduan lengkap di [docs/PAYMENT_GATEWAY_SETUP.md](docs/PAYMENT_GATEWAY_SE
 
 ---
 
-## 🔒 Batas Keamanan Sistem
+## Batas Keamanan Sistem
 
 1. **Integritas Transaksi**: Browser tidak dapat membuat pesanan atau mengubah status transaksi secara langsung; seluruh pembuatan pesanan divalidasi oleh Edge Function berbasis service-role.
 2. **Kalkulasi Harga Server-Side**: Harga akhir, diskon promo, ongkos kirim, dan stok dihitung ulang secara independen di server database.

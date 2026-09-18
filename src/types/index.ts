@@ -99,7 +99,12 @@ export interface Order {
   checkout_session_id?: string | null;
   delivery_tier?: 'standard' | 'express';
   delivery_name?: string;
-  bank_details?: Pick<StoreSettings, 'bank_name' | 'bank_account_name' | 'bank_sort_code' | 'bank_account_number' | 'bank_iban' | 'bank_payment_instructions'> | null;
+  bank_details?: (Pick<StoreSettings, 'bank_name' | 'bank_account_name' | 'bank_sort_code' | 'bank_account_number' | 'bank_iban' | 'bank_payment_instructions'> & {
+    payment_proof_url?: string | null;
+    payment_proof_filename?: string | null;
+    payment_proof_filesize?: number | null;
+    payment_proof_uploaded_at?: string | null;
+  }) | null;
   payment_review_required?: boolean;
   refunded_amount?: number;
   id: string;

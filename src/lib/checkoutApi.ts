@@ -92,4 +92,7 @@ export const checkoutApi = {
     await post('cancel-checkout', { orderId }, orderId);
     if (currentCheckoutAttempt()?.orderId === orderId) forgetCheckoutAttempt();
   },
+  async uploadPaymentProof(orderId: string, proof: { fileName: string; fileSize: number; dataUrl: string }) {
+    return post<{ success: boolean; uploadedAt: string }>('upload-payment-proof', { orderId, proof }, orderId);
+  },
 };

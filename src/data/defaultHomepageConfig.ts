@@ -285,7 +285,7 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
         description: 'Occasional notices on rare catalog arrivals, out-of-print restorations, and exclusive collector discount codes.',
         placeholder: 'Enter your email address...',
         buttonText: 'Subscribe',
-        disclaimer: '✓ UK GDPR Compliant. No spam ever. Unsubscribe with one click.',
+        disclaimer: 'UK GDPR Compliant. No spam ever. Unsubscribe with one click.',
       },
     },
   ],

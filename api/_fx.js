@@ -48,6 +48,6 @@ export function convertQuote(quote, currency, fx) {
   return { ...quote, items, currency, subtotal: subtotal / scale, discount_amount: discount / scale,
     shipping_amount: shipping / scale, total_amount: (subtotal - discount + shipping) / scale, delivery,
     exchange_rate: fx.rate, exchange_rate_date: fx.date, base_total_amount: quote.total_amount,
-    methods: { ...quote.methods, bank_transfer: currency === 'GBP' && quote.country === 'GB' && quote.methods.bank_transfer,
+    methods: { ...quote.methods, bank_transfer: Boolean(quote.methods.bank_transfer),
       paypal: currency !== 'IDR' && quote.methods.paypal } };
 }

@@ -5,10 +5,12 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'dark';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  badge?: React.ReactNode;
+  badgeText?: string;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', isLoading, disabled, children, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', isLoading, disabled, children, badge, badgeText, ...props }, ref) => {
     const baseStyles = 'inline-flex items-center justify-center font-medium tracking-tight transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none active:scale-[0.98]';
 
     const variants = {
@@ -40,6 +42,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </svg>
         )}
         {children}
+        {badgeText && (
+          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-white/20 text-current border border-white/25">
+            {badgeText}
+          </span>
+        )}
+        {badge && <span className="ml-2 inline-flex items-center">{badge}</span>}
       </button>
     );
   }

@@ -250,6 +250,7 @@ export const ProductDetail: React.FC = () => {
                     size="lg"
                     disabled={product.stock_quantity <= 0}
                     onClick={handleAddToBasket}
+                    badgeText={product.stock_quantity > 0 ? "FAST DISPATCH" : "SOLD OUT"}
                     className="flex-1 text-sm font-semibold"
                   >
                     {isAdded ? (

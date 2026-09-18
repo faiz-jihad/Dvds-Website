@@ -213,6 +213,7 @@ export const CartDrawer: React.FC = () => {
                       variant="primary"
                       size="lg"
                       className="w-full justify-between"
+                      badgeText="100% SECURE"
                       onClick={handleCheckout}
                     >
                       <span>{customer ? 'Proceed to Checkout' : 'Sign in to Checkout'}</span>
