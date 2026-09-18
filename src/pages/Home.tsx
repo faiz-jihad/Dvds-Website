@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { publicApi } from "../lib/publicApi";
 import { Seo } from "../components/common/Seo";
 import { StoreDataState } from "../components/common/StoreDataState";
-import { SeriviaHomeLayout } from "../components/serivia/SeriviaHomeLayout";
+import { AzDarkLandingLayout } from "../components/landing/AzDarkLandingLayout";
 
 export const Home: React.FC = () => {
   const productsQuery = useQuery({
@@ -33,7 +33,7 @@ export const Home: React.FC = () => {
 
   if (isLoading || error) {
     return (
-      <div className="min-h-[50vh] bg-white flex items-center justify-center">
+      <div className="min-h-[50vh] bg-[#07090E] flex items-center justify-center text-white">
         <StoreDataState
           loading={isLoading}
           error={error || null}
@@ -54,15 +54,15 @@ export const Home: React.FC = () => {
   return (
     <>
       <Seo
-        title="DVDs Zone — Your World of Entertainment | Buy Physical DVDs UK"
-        description="Shop definitive DVD box sets, restored British cinema and rare collector editions. Free UK delivery on all orders. Royal Mail Tracked 24 dispatch from London. The Mandalorian, Star Wars, The Beatles & more."
+        title="AZ Rayan DVDs — Official UK Physical Cinema & Box Set Vault"
+        description="Shop definitive DVD box sets, restored British cinema and rare collector editions. Free UK delivery on all orders. Royal Mail Tracked 24 dispatch from London."
         canonicalPath="/"
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
-        siteName="DVDs Zone"
+        siteName="AZ Rayan DVDs"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          name: "Physical DVD Vault & Collector Editions",
+          name: "AZ Rayan DVDs - Physical DVD Vault & Collector Editions",
           description:
             "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",
           url: "https://dvdszone.co.uk/",
@@ -78,7 +78,7 @@ export const Home: React.FC = () => {
           },
         }}
       />
-      <SeriviaHomeLayout
+      <AzDarkLandingLayout
         products={products}
         categories={categories}
         genres={genres}

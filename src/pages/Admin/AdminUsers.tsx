@@ -251,6 +251,7 @@ export const AdminUsers: React.FC = () => {
             </p>
           </div>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-left border-collapse">
               <thead>
@@ -369,6 +370,7 @@ export const AdminUsers: React.FC = () => {
             pageSizeOptions={[10, 25, 50, 100]}
             itemLabel="users"
           />
+          </>
         )}
       </div>
 

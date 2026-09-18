@@ -93,6 +93,14 @@ export interface OrderItem {
   unit_price: number;
   total_price: number;
   cover_image_url?: string;
+  product_snapshot?: {
+    cover_image_url?: string;
+    [key: string]: any;
+  };
+  product?: {
+    cover_image_url?: string;
+    [key: string]: any;
+  };
 }
 
 export interface Order {

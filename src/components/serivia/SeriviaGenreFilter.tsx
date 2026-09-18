@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Sparkles, Flame, Package, Disc, Tag } from 'lucide-react';
 import { Category, Genre, Product } from '../../types';
 import { cn } from '../../lib/formatters';
 
@@ -22,30 +22,60 @@ export const SeriviaGenreFilter: React.FC<SeriviaGenreFilterProps> = ({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Core filters
-  const staticPills = [
-    { id: 'all', label: 'All Titles' },
-    { id: 'trending', label: 'Trending' },
-    { id: 'new', label: 'New Releases' },
-    { id: 'sale', label: 'Special Offers' },
-    { id: 'box_set', label: 'Box Sets' },
-  ];
+  // Dynamically compute all filter pills based entirely on store data
+  const allPills = useMemo(() => {
+    const pills: { id: string; label: string; icon?: React.ComponentType<{ size?: number; className?: string }> }[] = [
+      { id: 'all', label: 'All Titles' },
+    ];
 
-  // Dynamic Genres & Categories
-  const genrePills = genres.slice(0, 10).map((g) => ({
-    id: `genre:${g.slug}`,
-    label: g.name,
-  }));
+    // Only add Trending if store has best sellers or featured titles
+    if (products.some((p) => p.is_best_seller || p.is_featured)) {
+      pills.push({ id: 'trending', label: 'Top Chart', icon: Flame });
+    }
 
-  const categoryPills = categories
-    .filter((c) => c.is_active)
-    .slice(0, 6)
-    .map((c) => ({
-      id: `cat:${c.slug}`,
-      label: c.name,
-    }));
+    // Only add New Arrivals if store has new releases
+    if (products.some((p) => p.is_new_release)) {
+      pills.push({ id: 'new', label: 'New Arrivals', icon: Sparkles });
+    }
 
-  const allPills = [...staticPills, ...genrePills, ...categoryPills];
+    // Only add Special Offers if store has discounted items
+    if (products.some((p) => p.compare_at_price && p.compare_at_price > p.price)) {
+      pills.push({ id: 'sale', label: 'Special Offers', icon: Tag });
+    }
+
+    // Dynamic Formats: extract unique formats actually in the products catalogue
+    const uniqueFormats = Array.from(
+      new Set(products.map((p) => p.format).filter(Boolean))
+    );
+    uniqueFormats.forEach((fmt) => {
+      const isBox = fmt.toLowerCase().includes('box');
+      pills.push({
+        id: isBox ? 'box_set' : `format:${fmt.toLowerCase()}`,
+        label: fmt,
+        icon: isBox ? Package : Disc,
+      });
+    });
+
+    // Dynamic Categories: all active categories from DB
+    categories
+      .filter((c) => c.is_active)
+      .forEach((c) => {
+        pills.push({
+          id: `cat:${c.slug}`,
+          label: c.name,
+        });
+      });
+
+    // Dynamic Genres: all genres from DB
+    genres.forEach((g) => {
+      pills.push({
+        id: `genre:${g.slug}`,
+        label: g.name,
+      });
+    });
+
+    return pills;
+  }, [products, categories, genres]);
 
   const updateScrollState = () => {
     if (!scrollRef.current) return;
@@ -60,19 +90,20 @@ export const SeriviaGenreFilter: React.FC<SeriviaGenreFilterProps> = ({
 
   const scroll = (dir: 'left' | 'right') => {
     scrollRef.current?.scrollBy({
-      left: dir === 'left' ? -240 : 240,
+      left: dir === 'left' ? -260 : 260,
       behavior: 'smooth',
     });
-    setTimeout(updateScrollState, 250);
+    setTimeout(updateScrollState, 260);
   };
 
   return (
-    <div className="relative flex items-center gap-1.5 w-full select-none py-1">
+    <div className="relative w-full select-none py-1 group/filter">
       {/* Desktop Left Scroll Button */}
       <button
         onClick={() => scroll('left')}
+        disabled={!canScrollLeft}
         className={cn(
-          'hidden md:flex shrink-0 w-8 h-8 rounded-full bg-white hover:bg-gray-100 border border-gray-200 items-center justify-center text-gray-600 hover:text-dark transition-all shadow-xs cursor-pointer',
+          'hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 hover:bg-white border border-gray-200 items-center justify-center text-gray-700 shadow-md transition-all cursor-pointer active:scale-90',
           !canScrollLeft && 'opacity-0 pointer-events-none'
         )}
         aria-label="Scroll left filters"
@@ -80,27 +111,29 @@ export const SeriviaGenreFilter: React.FC<SeriviaGenreFilterProps> = ({
         <ChevronLeft size={16} />
       </button>
 
-      {/* Horizontal Pills Container */}
+      {/* Smooth Horizontal Chip Strip for BOTH Mobile & Desktop */}
       <div
         ref={scrollRef}
         onScroll={updateScrollState}
-        className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth w-full px-0.5"
+        className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-3.5 px-3.5 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-1"
       >
         {allPills.map((pill) => {
           const active = activeFilter === pill.id;
+          const Icon = pill.icon;
+
           return (
             <button
               key={pill.id}
               onClick={() => onFilterChange(pill.id)}
               className={cn(
-                'shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 whitespace-nowrap border active:scale-95 cursor-pointer',
+                'shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-xs font-bold transition-all duration-200 border cursor-pointer active:scale-95',
                 active
-                  ? 'bg-dark text-white border-dark shadow-md'
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100 hover:text-dark hover:border-gray-300'
+                  ? 'bg-dark text-white border-dark shadow-md ring-2 ring-dark/20'
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-dark hover:border-gray-300 shadow-2xs'
               )}
             >
-              {pill.id === 'trending' && <Sparkles size={11} className="inline mr-1 text-brand-blue" />}
-              {pill.label}
+              {Icon && <Icon size={12} className={active ? 'text-white' : 'text-gray-400'} />}
+              <span>{pill.label}</span>
             </button>
           );
         })}
@@ -109,8 +142,9 @@ export const SeriviaGenreFilter: React.FC<SeriviaGenreFilterProps> = ({
       {/* Desktop Right Scroll Button */}
       <button
         onClick={() => scroll('right')}
+        disabled={!canScrollRight}
         className={cn(
-          'hidden md:flex shrink-0 w-8 h-8 rounded-full bg-white hover:bg-gray-100 border border-gray-200 items-center justify-center text-gray-600 hover:text-dark transition-all shadow-xs cursor-pointer',
+          'hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 hover:bg-white border border-gray-200 items-center justify-center text-gray-700 shadow-md transition-all cursor-pointer active:scale-90',
           !canScrollRight && 'opacity-0 pointer-events-none'
         )}
         aria-label="Scroll right filters"

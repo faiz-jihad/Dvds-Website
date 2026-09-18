@@ -73,8 +73,8 @@ export const AccountLayout: React.FC = () => {
                 </div>
               )}
 
-              {/* Scrollable tabs on mobile, stacked on desktop */}
-              <div className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0">
+              {/* Responsive tabs: 2x2 grid on mobile fitting one screen width without horizontal slider, vertical list on desktop */}
+              <div className="grid grid-cols-2 lg:flex lg:flex-col gap-1.5">
                 {links.map((link) => (
                   <NavLink
                     key={link.label}
@@ -82,15 +82,15 @@ export const AccountLayout: React.FC = () => {
                     end={link.end}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors shrink-0',
+                        'flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors text-center sm:text-left',
                         isActive
                           ? 'bg-brand-blue text-white shadow-xs'
-                          : 'text-gray-600 hover:text-dark hover:bg-gray-50'
+                          : 'text-gray-600 hover:text-dark hover:bg-gray-50 bg-gray-50/60 lg:bg-transparent border border-gray-100 lg:border-transparent'
                       )
                     }
                   >
                     <link.icon className="w-4 h-4 shrink-0" />
-                    <span>{link.label}</span>
+                    <span className="truncate">{link.label}</span>
                   </NavLink>
                 ))}
               </div>

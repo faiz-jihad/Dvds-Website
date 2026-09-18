@@ -350,25 +350,59 @@ export const OrderSuccessPage: React.FC = () => {
         </aside>
       </div>
       <OrderReceiptModal isOpen={receiptOpen} onClose={() => setReceiptOpen(false)} order={order} />
-      <div className="flex flex-wrap justify-center items-center gap-5 mt-8 text-sm">
-        <button onClick={() => setReceiptOpen(true)} className="inline-flex items-center gap-1.5 text-brand-blue underline font-medium">
-          View / print receipt
+      <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-3.5 mt-8">
+        <button
+          type="button"
+          onClick={() => setReceiptOpen(true)}
+          className="inline-flex items-center justify-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 text-gray-700 hover:text-dark text-xs sm:text-sm font-semibold shadow-2xs active:scale-95 transition-all cursor-pointer"
+        >
+          <FileText size={15} className="text-gray-400" />
+          <span>View / Print Receipt</span>
         </button>
-        <button onClick={() => query.refetch()} disabled={query.isFetching} className="inline-flex gap-2 items-center text-brand-blue font-medium disabled:opacity-50">
-          <RefreshCw size={15} className={query.isFetching ? 'animate-spin' : ''} />
-          Refresh status
+
+        <button
+          type="button"
+          onClick={() => query.refetch()}
+          disabled={query.isFetching}
+          className="inline-flex items-center justify-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 text-gray-700 hover:text-dark text-xs sm:text-sm font-semibold shadow-2xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={query.isFetching ? 'animate-spin text-brand-blue' : 'text-gray-400'} />
+          <span>{query.isFetching ? 'Refreshing...' : 'Refresh Status'}</span>
         </button>
-        {!paid && !closed && !partiallyRefunded && pendingUrl && <a className="text-brand-blue underline font-medium" href={pendingUrl}>Resume payment</a>}
-        {!paid && !closed && !partiallyRefunded && <button disabled={cancelling} onClick={cancel} className="text-gray-500 underline disabled:opacity-50">{cancelling ? 'Cancelling...' : 'Cancel unpaid order'}</button>}
-        <Link to={closed ? '/cart' : '/shop'} className="inline-flex items-center gap-2 rounded-xl bg-brand-blue text-white px-5 py-3 font-semibold shadow-xs hover:brightness-95 transition-all">
-          <span>{closed ? 'Return to basket' : 'Continue shopping'}</span>
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white border border-white/25 uppercase">
-            STORE
-          </span>
-          <ArrowRight size={16} />
+
+        {!paid && !closed && !partiallyRefunded && pendingUrl && (
+          <a
+            href={pendingUrl}
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-blue/20 active:scale-95 transition-all cursor-pointer"
+          >
+            <span>Resume Payment</span>
+          </a>
+        )}
+
+        {!paid && !closed && !partiallyRefunded && (
+          <button
+            type="button"
+            disabled={cancelling}
+            onClick={cancel}
+            className="inline-flex items-center justify-center h-11 px-3 text-xs font-semibold text-gray-400 hover:text-brand-red transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {cancelling ? 'Cancelling...' : 'Cancel Order'}
+          </button>
+        )}
+
+        <Link
+          to={closed ? '/cart' : '/shop'}
+          className="inline-flex items-center justify-center gap-2 h-11 px-5 sm:px-6 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-blue/20 active:scale-95 transition-all cursor-pointer group"
+        >
+          <span>{closed ? 'Return to Basket' : 'Continue Shopping'}</span>
+          <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
-      {!closed && <p className="text-xs text-gray-400 text-center mt-5">This page refreshes automatically while your order is being processed.</p>}
+      {!closed && (
+        <p className="text-xs text-gray-400 text-center mt-5">
+          This page refreshes automatically while your order is being processed.
+        </p>
+      )}
     </div>
   </div>;
 };
