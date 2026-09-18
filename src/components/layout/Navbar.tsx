@@ -278,9 +278,10 @@ export const Navbar: React.FC = () => {
                       Curated Archive Genres
                     </span>
                   </div>
-                  <div className="space-y-0.5">
                     {GENRE_NAV_ITEMS.map((item) => {
-                      const isActive = isCurrentGenre(item);
+                      const isActive = item.slug
+                        ? location.pathname === '/shop' && location.search.includes(`genre=${item.slug}`)
+                        : location.pathname === '/shop' && location.search.includes('category=tv-box-sets');
                       const targetHref = item.href || `/shop?genre=${item.slug}`;
 
                       return (

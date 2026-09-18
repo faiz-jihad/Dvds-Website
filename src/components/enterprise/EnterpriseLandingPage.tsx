@@ -239,7 +239,8 @@ export const EnterpriseLandingPage: React.FC<EnterpriseLandingPageProps> = ({
 
                 {/* Overview / Tagline */}
                 <p className="text-sm sm:text-base text-gray-300 font-normal leading-relaxed line-clamp-3 mb-6 max-w-xl">
-                  {activeHeroProduct.overview ||
+                  {activeHeroProduct.short_description ||
+                    activeHeroProduct.description ||
                     'Definitive physical collector release with restored master transfer, uncompressed sound, and archival bonus features. Direct dispatch from London vault.'}
                 </p>
 
