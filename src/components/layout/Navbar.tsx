@@ -110,23 +110,27 @@ export const Navbar: React.FC = () => {
 
   // Click outside detection for dropdowns
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (
         accountMenuRef.current &&
-        !accountMenuRef.current.contains(event.target as HTMLElement)
+        !accountMenuRef.current.contains(event.target as Node)
       ) {
         setAccountDropdownOpen(false);
       }
       if (
         genresMenuRef.current &&
-        !genresMenuRef.current.contains(event.target as HTMLElement)
+        !genresMenuRef.current.contains(event.target as Node)
       ) {
         setGenresDropdownOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   // Global keyboard shortcuts: '⌘K' or '/' opens search, 'Escape' closes menus
@@ -170,7 +174,7 @@ export const Navbar: React.FC = () => {
     <header
       data-intro-nav
       className={cn(
-        "sticky top-0 z-40 w-full max-w-full overflow-x-hidden transition-all duration-200 bg-white border-b",
+        "sticky top-0 z-40 w-full max-w-full transition-all duration-200 bg-white border-b",
         isScrolled
           ? "border-gray-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] py-2 sm:py-2.5"
           : "border-gray-100 py-3 sm:py-3.5",
@@ -405,16 +409,16 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Customer Profile Dropdown */}
-          <div ref={accountMenuRef} className="relative hidden md:block">
+          <div ref={accountMenuRef} className="relative">
             <button
               type="button"
-              onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
+              onClick={() => setAccountDropdownOpen((prev) => !prev)}
               aria-expanded={accountDropdownOpen}
               aria-controls="mobile-safe-account-menu"
               className={cn(
                 "h-10 w-10 shrink-0 rounded-full transition-colors cursor-pointer flex items-center justify-center gap-1",
                 accountDropdownOpen
-                  ? "bg-gray-100 text-dark"
+                  ? "bg-gray-100 text-dark ring-2 ring-brand-blue/20"
                   : "text-gray-700 hover:text-dark hover:bg-gray-100",
               )}
               aria-label="Account options"
@@ -433,7 +437,7 @@ export const Navbar: React.FC = () => {
             {accountDropdownOpen && (
               <div
                 id="mobile-safe-account-menu"
-                className="absolute right-0 top-full mt-2 w-[min(18rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden bg-white border border-gray-200 rounded-xl shadow-lg p-2 text-gray-800 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                className="absolute right-0 top-full mt-2 w-[min(19rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] bg-white border border-gray-200 rounded-2xl shadow-2xl p-2.5 text-gray-800 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
               >
                 {isAuthenticated && customer ? (
                   <>

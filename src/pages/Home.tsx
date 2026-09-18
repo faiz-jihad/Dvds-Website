@@ -1,35 +1,39 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { publicApi } from '../lib/publicApi';
-import { Seo } from '../components/common/Seo';
-import { StoreDataState } from '../components/common/StoreDataState';
-import { SeriviaHomeLayout } from '../components/serivia/SeriviaHomeLayout';
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { publicApi } from "../lib/publicApi";
+import { Seo } from "../components/common/Seo";
+import { StoreDataState } from "../components/common/StoreDataState";
+import { SeriviaHomeLayout } from "../components/serivia/SeriviaHomeLayout";
 
 export const Home: React.FC = () => {
   const productsQuery = useQuery({
-    queryKey: ['store', 'products'],
+    queryKey: ["store", "products"],
     queryFn: () => publicApi.getProducts(),
     staleTime: 60_000,
   });
 
   const categoriesQuery = useQuery({
-    queryKey: ['store', 'categories'],
+    queryKey: ["store", "categories"],
     queryFn: () => publicApi.getCategories(),
     staleTime: 60_000,
   });
 
   const genresQuery = useQuery({
-    queryKey: ['store', 'genres'],
+    queryKey: ["store", "genres"],
     queryFn: () => publicApi.getGenres(),
     staleTime: 60_000,
   });
 
-  const isLoading = productsQuery.isLoading || categoriesQuery.isLoading || genresQuery.isLoading;
-  const error = productsQuery.error || categoriesQuery.error || genresQuery.error;
+  const isLoading =
+    productsQuery.isLoading ||
+    categoriesQuery.isLoading ||
+    genresQuery.isLoading;
+  const error =
+    productsQuery.error || categoriesQuery.error || genresQuery.error;
 
   if (isLoading || error) {
     return (
-      <div className="min-h-screen bg-[#09090e]">
+      <div className="min-h-[50vh] bg-white flex items-center justify-center">
         <StoreDataState
           loading={isLoading}
           error={error || null}
@@ -56,16 +60,16 @@ export const Home: React.FC = () => {
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
         siteName="DVDs Zone"
         jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          name: 'Physical DVD Vault & Collector Editions',
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Physical DVD Vault & Collector Editions",
           description:
-            'Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.',
-          url: 'https://dvdszone.co.uk/',
+            "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",
+          url: "https://dvdszone.co.uk/",
           mainEntity: {
-            '@type': 'ItemList',
+            "@type": "ItemList",
             itemListElement: products.slice(0, 11).map((prod, idx) => ({
-              '@type': 'ListItem',
+              "@type": "ListItem",
               position: idx + 1,
               name: prod.title,
               url: `https://dvdszone.co.uk/product/${prod.slug}`,

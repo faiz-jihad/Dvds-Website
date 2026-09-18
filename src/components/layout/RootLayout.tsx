@@ -49,12 +49,12 @@ export const RootLayout: React.FC = () => {
   const isHome = pathname === '/';
 
   return (
-    <div className={`flex flex-col min-h-screen ${isHome ? 'bg-[#09090e]' : 'bg-white'} text-dark overflow-x-clip w-full max-w-[100vw]`}>
-      {/* Top Announcements — hidden on home (Serivia layout has its own nav) */}
-      {!isHome && <AnnouncementBar />}
+    <div className="flex flex-col min-h-screen bg-white text-dark overflow-x-clip w-full max-w-[100vw]">
+      {/* Top Announcements — Royal Mail delivery ticker & dispatch guarantees */}
+      <AnnouncementBar />
 
-      {/* Main Sticky Navbar — hidden on home */}
-      {!isHome && <Navbar />}
+      {/* Main Sticky Enterprise Navbar */}
+      <Navbar />
 
       {/* Primary Page Content */}
       <main className="flex-1">
@@ -71,14 +71,15 @@ export const RootLayout: React.FC = () => {
             }}
           />
         ) : (
-          <React.Suspense fallback={<div className={isHome ? 'min-h-screen bg-[#09090e]' : 'min-h-[40vh]'} role="status"><span className="sr-only">Loading page</span></div>}>
+          <React.Suspense fallback={<div className="min-h-[50vh] flex items-center justify-center" role="status"><span className="sr-only">Loading page</span></div>}>
             <Outlet />
           </React.Suspense>
         )}
       </main>
 
-      {/* Footer — hidden on home (Serivia layout is self-contained) */}
-      {!isHome && <Footer />}
+      {/* Official Enterprise Footer with Companies House, Barclays Bank, & Trust Strips */}
+      <Footer />
+
 
       {/* Interactive Overlays & Drawers — always active for cart/search */}
       <CartDrawer />

@@ -94,7 +94,7 @@ export const OrderSuccessPage: React.FC = () => {
 
     // Max 2MB: 2 * 1024 * 1024 = 2,097,152 bytes
     if (file.size > 2 * 1024 * 1024) {
-      setProofError('Ukuran file melebihi batas 2MB. Silakan unggah bukti pembayaran maksimal 2MB.');
+      setProofError('File size exceeds 2MB limit. Please upload payment proof under 2MB.');
       e.target.value = '';
       setProofFile(null);
       setProofPreview(null);
@@ -145,7 +145,7 @@ export const OrderSuccessPage: React.FC = () => {
       };
       reader.readAsDataURL(proofFile);
     } catch (err) {
-      setProofError(err instanceof Error ? err.message : 'Gagal mengunggah bukti pembayaran.');
+      setProofError(err instanceof Error ? err.message : 'Failed to upload payment proof.');
       setUploadingProof(false);
     }
   };
@@ -195,20 +195,20 @@ export const OrderSuccessPage: React.FC = () => {
           <p className="text-xs sm:text-sm leading-relaxed text-blue-900 bg-blue-50/70 border border-blue-100 rounded-xl p-4 mt-5">{bank.bank_payment_instructions || 'Include your payment reference so our team can match the transfer to your order. Upload your proof of transfer below once sent.'}</p>
         </> : <p className="text-sm text-amber-800 mt-4">Bank details are not available for this order. Please contact the store and quote your order reference before transferring.</p>}
 
-        {/* Upload Bukti Pembayaran Section */}
+        {/* Upload Payment Proof Section */}
         <div className="mt-7 pt-6 border-t border-gray-100">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div>
               <h3 className="text-sm sm:text-base font-bold text-dark flex items-center gap-2">
                 <UploadCloud size={18} className="text-brand-blue" />
-                Upload Bukti Pembayaran (Payment Proof)
+                Upload Payment Proof
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
-                Format gambar JPG, PNG, WEBP atau dokumen PDF (Maksimal 2MB).
+                JPG, PNG, WEBP images or PDF document (Maximum 2MB).
               </p>
             </div>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-brand-blue border border-blue-200 uppercase">
-              Maks. 2MB
+              Max. 2MB
             </span>
           </div>
 
@@ -216,8 +216,8 @@ export const OrderSuccessPage: React.FC = () => {
             <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-start gap-2">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
               <div>
-                <strong className="font-semibold block">Bukti Pembayaran Berhasil Diunggah!</strong>
-                <span>Tim kami sedang memverifikasi transfer Anda. Status pesanan akan otomatis diperbarui begitu pembayaran terkonfirmasi.</span>
+                <strong className="font-semibold block">Payment Proof Uploaded Successfully!</strong>
+                <span>Our team is verifying your transfer. Your order status will automatically update once confirmed.</span>
               </div>
             </div>
           )}
@@ -233,7 +233,7 @@ export const OrderSuccessPage: React.FC = () => {
             <div className="p-4 bg-emerald-50/50 border border-emerald-200 rounded-xl flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 {proof.dataUrl.startsWith('data:image/') ? (
-                  <img src={proof.dataUrl} alt="Bukti Transfer" className="w-14 h-14 object-cover rounded-lg border border-emerald-200 shrink-0" />
+                  <img src={proof.dataUrl} alt="Payment Proof" className="w-14 h-14 object-cover rounded-lg border border-emerald-200 shrink-0" />
                 ) : (
                   <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
                     <FileText size={22} />
@@ -242,15 +242,15 @@ export const OrderSuccessPage: React.FC = () => {
                 <div className="min-w-0 text-xs">
                   <p className="font-semibold text-dark truncate">{proof.fileName}</p>
                   <p className="text-gray-500 mt-0.5">
-                    {(proof.fileSize / 1024).toFixed(1)} KB • Diunggah {formatDateUK(proof.uploadedAt)}
+                    {(proof.fileSize / 1024).toFixed(1)} KB • Uploaded {formatDateUK(proof.uploadedAt)}
                   </p>
                   <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-emerald-700">
-                    <Check size={12} /> Bukti Tersimpan &amp; Siap Diverifikasi
+                    <Check size={12} /> Proof Saved &amp; Ready for Verification
                   </span>
                 </div>
               </div>
               <label className="cursor-pointer px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-dark shadow-xs transition-colors">
-                Ganti Bukti
+                Replace File
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -265,10 +265,10 @@ export const OrderSuccessPage: React.FC = () => {
                 <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 hover:border-brand-blue rounded-2xl bg-gray-50/50 hover:bg-blue-50/30 transition-all cursor-pointer group text-center">
                   <UploadCloud size={32} className="text-gray-400 group-hover:text-brand-blue mb-2 transition-colors" />
                   <span className="text-xs sm:text-sm font-semibold text-dark">
-                    Pilih foto struk / file bukti transfer bank
+                    Select receipt photo or bank transfer proof
                   </span>
                   <span className="text-[11px] text-gray-500 mt-1">
-                    Klik untuk memilih file dari galeri atau berkas (Maksimal 2MB)
+                    Click to choose a file or image (Maximum 2MB)
                   </span>
                   <input
                     type="file"
@@ -291,7 +291,7 @@ export const OrderSuccessPage: React.FC = () => {
                       <div className="min-w-0">
                         <p className="font-semibold text-dark truncate">{proofFile.name}</p>
                         <p className="text-gray-500 mt-0.5">
-                          {(proofFile.size / 1024).toFixed(1)} KB (Batas maks. 2048 KB)
+                          {(proofFile.size / 1024).toFixed(1)} KB (Max limit 2048 KB)
                         </p>
                       </div>
                     </div>
@@ -303,7 +303,7 @@ export const OrderSuccessPage: React.FC = () => {
                         setProofError('');
                       }}
                       className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-white transition-colors"
-                      title="Batalkan"
+                      title="Cancel"
                     >
                       <X size={16} />
                     </button>
@@ -317,11 +317,11 @@ export const OrderSuccessPage: React.FC = () => {
                   >
                     {uploadingProof ? (
                       <>
-                        <RefreshCw size={14} className="animate-spin" /> Mengunggah...
+                        <RefreshCw size={14} className="animate-spin" /> Uploading...
                       </>
                     ) : (
                       <>
-                        <UploadCloud size={14} /> Kirim &amp; Konfirmasi Bukti Transfer
+                        <UploadCloud size={14} /> Submit &amp; Confirm Payment Proof
                       </>
                     )}
                   </button>

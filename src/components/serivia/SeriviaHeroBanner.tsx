@@ -51,10 +51,10 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
     goto((activeIndex + 1) % featured.length);
   }, [activeIndex, featured.length, goto]);
 
-  // Auto-advance every 6s unless user interacts
+  // Auto-advance every 7s unless user interacts
   useEffect(() => {
     if (featured.length <= 1) return;
-    const timer = setTimeout(next, 6500);
+    const timer = setTimeout(next, 7000);
     return () => clearTimeout(timer);
   }, [activeIndex, featured.length, next]);
 
@@ -94,21 +94,21 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
   const handleToggleFav = (e: React.MouseEvent) => {
     e.preventDefault();
     const added = toggleFavourite(product.id);
-    addToast(added ? 'Added to favourites' : 'Removed from favourites', 'info');
+    addToast(added ? `"${product.title}" saved to favourites` : 'Removed from favourites', 'info');
   };
 
-  const formatBadge = product.format === 'Box Set' ? 'Box Set' : product.format || 'DVD';
+  const formatBadge = product.format === 'Box Set' ? 'Collector Box Set' : product.format || '4K Ultra HD';
 
   return (
     <section
-      className="relative flex gap-4 h-[360px] sm:h-[400px] lg:h-[440px] select-none"
+      className="relative flex gap-4 h-[370px] sm:h-[410px] lg:h-[450px] select-none"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       aria-label="Featured titles showcase"
     >
       {/* Main Hero Showcase Card */}
-      <div className="relative flex-1 rounded-2xl sm:rounded-3xl overflow-hidden bg-[#0d0f14] border border-white/[0.08] shadow-2xl group">
+      <div className="relative flex-1 rounded-2xl sm:rounded-3xl overflow-hidden bg-[#0d0f14] border border-gray-800 shadow-2xl group">
         {/* Background Poster / Backdrop Image */}
         <div
           className={cn(
@@ -122,33 +122,33 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
           />
           {/* Multi-layered cinematic gradient shadows */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#09090e] via-[#09090e]/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#09090e]/80 via-[#09090e]/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c10] via-[#0a0c10]/65 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0c10]/85 via-[#0a0c10]/35 to-transparent" />
         </div>
 
-        {/* Top Badges (Protected from colliding with dots on mobile) */}
+        {/* Top Badges (Brand Blue + Clean Badges) */}
         <div className="absolute top-3.5 left-3.5 sm:top-5 sm:left-5 flex flex-wrap items-center gap-1.5 z-10 max-w-[65%] sm:max-w-[75%]">
-          {/* Format Badge */}
-          <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-[#f5c518] text-black shadow-md flex items-center gap-1">
+          {/* Format Badge (Brand Blue) */}
+          <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-brand-blue text-white shadow-md flex items-center gap-1">
             <Disc size={11} />
             {formatBadge}
           </span>
 
           {/* Release Year */}
-          <span className="text-[10px] sm:text-xs font-semibold px-2 sm:px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white/90">
+          <span className="text-[10px] sm:text-xs font-semibold px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white/90">
             {product.release_year}
           </span>
 
-          {/* First Genre (if available) */}
+          {/* First Genre */}
           {product.genres?.[0]?.name && (
-            <span className="hidden min-[420px]:inline-block text-[10px] sm:text-xs font-medium px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white/80">
+            <span className="hidden min-[420px]:inline-block text-[10px] sm:text-xs font-medium px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white/80">
               {product.genres[0].name}
             </span>
           )}
 
-          {/* Runtime (desktop) */}
+          {/* Runtime */}
           {product.runtime_minutes && (
-            <span className="hidden sm:inline-block text-[10px] sm:text-xs font-medium px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white/70">
+            <span className="hidden sm:inline-block text-[10px] sm:text-xs font-medium px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white/70">
               {formatRuntime(product.runtime_minutes)}
             </span>
           )}
@@ -156,14 +156,14 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
 
         {/* Slide Pagination Dots (Top Right) */}
         {featured.length > 1 && (
-          <div className="absolute top-3.5 right-3.5 sm:top-5 sm:right-5 flex items-center gap-1.5 z-20 bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-full">
+          <div className="absolute top-3.5 right-3.5 sm:top-5 sm:right-5 flex items-center gap-1.5 z-20 bg-black/50 backdrop-blur-md border border-white/10 px-2.5 py-1.5 rounded-full">
             {featured.map((_, i) => (
               <button
                 key={i}
                 onClick={() => goto(i)}
                 className={cn(
-                  'h-1.5 rounded-full transition-all duration-300',
-                  i === activeIndex ? 'bg-[#f5c518] w-5' : 'bg-white/30 hover:bg-white/70 w-1.5'
+                  'h-1.5 rounded-full transition-all duration-300 cursor-pointer',
+                  i === activeIndex ? 'bg-brand-blue w-6' : 'bg-white/30 hover:bg-white/70 w-1.5'
                 )}
                 aria-label={`Go to slide ${i + 1}`}
               />
@@ -172,17 +172,17 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
         )}
 
         {/* Bottom Details & Action Bar */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-7 z-10 flex flex-col justify-end">
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8 z-10 flex flex-col justify-end">
           {/* Movie Title */}
-          <h2 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight mb-2 drop-shadow-md line-clamp-2 max-w-2xl tracking-tight">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-2 drop-shadow-md line-clamp-2 max-w-2xl tracking-tight">
             {product.title}
           </h2>
 
           {/* Meta Info: Rating, Price, Stock status */}
-          <div className="flex items-center gap-2.5 sm:gap-3 mb-3.5 sm:mb-4">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-4">
             {product.imdb_rating && (
-              <span className="flex items-center gap-1 text-[#f5c518] text-xs sm:text-sm font-bold bg-[#f5c518]/15 px-2 py-0.5 rounded-md border border-[#f5c518]/30">
-                <Star size={12} fill="#f5c518" />
+              <span className="flex items-center gap-1 text-amber-400 text-xs sm:text-sm font-black bg-amber-400/10 px-2.5 py-0.5 rounded-md border border-amber-400/25">
+                <Star size={12} fill="#fbbf24" />
                 {product.imdb_rating.toFixed(1)} IMDb
               </span>
             )}
@@ -190,7 +190,7 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
               {product.age_rating || 'All Ages'}
             </span>
             <span className="text-white/30">&bull;</span>
-            <span className="text-base sm:text-xl font-extrabold text-white tracking-tight">
+            <span className="text-lg sm:text-2xl font-extrabold text-white tracking-tight">
               {formatGBP(product.price)}
             </span>
             {product.compare_at_price && product.compare_at_price > product.price && (
@@ -205,19 +205,19 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
             {/* Quick View Button */}
             <Link
               to={`/product/${product.slug}`}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-black hover:bg-white/90 active:scale-95 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition-all shadow-lg"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-dark hover:bg-gray-100 active:scale-95 rounded-xl px-5 py-3 text-xs sm:text-sm font-extrabold transition-all shadow-lg cursor-pointer"
             >
-              <Play size={14} fill="black" />
+              <Play size={14} fill="currentColor" />
               <span>Quick View</span>
             </Link>
 
-            {/* Add to Basket Button */}
+            {/* Add to Basket Button (Brand Blue) */}
             <button
               onClick={handleAddToCart}
               disabled={product.stock_quantity === 0}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#f5c518] hover:bg-[#f5c518]/90 disabled:opacity-40 text-black active:scale-95 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition-all shadow-lg shadow-[#f5c518]/20"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-brand-blue hover:bg-brand-blue-hover disabled:opacity-40 text-white active:scale-95 rounded-xl px-5 py-3 text-xs sm:text-sm font-extrabold transition-all shadow-lg shadow-brand-blue/30 cursor-pointer disabled:cursor-not-allowed"
             >
-              <ShoppingCart size={14} />
+              <ShoppingCart size={15} />
               <span>{product.stock_quantity === 0 ? 'Sold Out' : 'Add to Basket'}</span>
             </button>
 
@@ -225,15 +225,15 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
             <button
               onClick={handleToggleFav}
               className={cn(
-                'w-10 h-10 rounded-xl border flex items-center justify-center transition-all active:scale-90 shrink-0',
+                'w-11 h-11 rounded-xl border flex items-center justify-center transition-all active:scale-90 shrink-0 cursor-pointer',
                 favourite
-                  ? 'bg-[#f5c518]/20 border-[#f5c518]/50 text-[#f5c518]'
-                  : 'bg-black/50 border-white/15 text-white/70 hover:text-white hover:bg-black/70'
+                  ? 'bg-brand-red border-brand-red text-white'
+                  : 'bg-black/50 border-white/20 text-white/80 hover:text-white hover:bg-black/70'
               )}
               aria-label={favourite ? 'Remove from favourites' : 'Save to favourites'}
               title={favourite ? 'Saved in Favourites' : 'Add to Favourites'}
             >
-              <Heart size={16} fill={favourite ? '#f5c518' : 'none'} />
+              <Heart size={17} fill={favourite ? 'white' : 'none'} />
             </button>
           </div>
         </div>
@@ -243,14 +243,14 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
           <>
             <button
               onClick={prev}
-              className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur border border-white/15 items-center justify-center text-white/70 hover:text-white hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100 shadow-xl"
+              className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur border border-white/15 items-center justify-center text-white/70 hover:text-white hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100 shadow-xl cursor-pointer"
               aria-label="Previous featured movie"
             >
               <ChevronLeft size={20} />
             </button>
             <button
               onClick={next}
-              className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur border border-white/15 items-center justify-center text-white/70 hover:text-white hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100 shadow-xl"
+              className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur border border-white/15 items-center justify-center text-white/70 hover:text-white hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100 shadow-xl cursor-pointer"
               aria-label="Next featured movie"
             >
               <ChevronRight size={20} />
@@ -263,7 +263,7 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
       {featured.length > 1 && (
         <button
           onClick={next}
-          className="hidden lg:flex flex-col w-[150px] shrink-0 rounded-3xl overflow-hidden bg-[#0d0f14] border border-white/[0.08] hover:border-[#f5c518]/40 transition-all group relative text-left"
+          className="hidden lg:flex flex-col w-[150px] shrink-0 rounded-3xl overflow-hidden bg-[#0d0f14] border border-gray-800 hover:border-brand-blue/50 transition-all group relative text-left cursor-pointer"
           aria-label="Next title thumbnail"
         >
           <img
@@ -272,11 +272,11 @@ export const SeriviaHeroBanner: React.FC<SeriviaHeroBannerProps> = ({ products }
             className="w-full flex-1 object-cover scale-100 group-hover:scale-108 transition-transform duration-500 ease-out"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#09090e] via-transparent to-transparent" />
-          <div className="absolute top-3 left-3 bg-black/60 backdrop-blur px-2 py-0.5 rounded text-[9px] font-bold text-[#f5c518] uppercase">
+          <div className="absolute top-3 left-3 bg-brand-blue px-2 py-0.5 rounded-full text-[9px] font-extrabold text-white uppercase shadow-xs">
             Up Next
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-3 bg-[#0d0f14]/90 backdrop-blur-sm border-t border-white/[0.06]">
-            <p className="text-white font-semibold text-xs leading-tight line-clamp-2 group-hover:text-[#f5c518] transition-colors">
+            <p className="text-white font-semibold text-xs leading-tight line-clamp-2 group-hover:text-brand-blue transition-colors">
               {nextProduct.title}
             </p>
             <p className="text-white/40 text-[10px] mt-0.5">

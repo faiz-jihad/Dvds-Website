@@ -22,6 +22,7 @@ import { Profile, UserRole } from '../../types';
 import { useAdminAuth } from '../../auth/AdminAuth';
 import { useUiStore } from '../../stores/useUiStore';
 import { formatDateUK } from '../../lib/formatters';
+import { AdminPagination, useAdminPagination } from '../../components/admin/AdminPagination';
 
 export const AdminUsers: React.FC = () => {
   const queryClient = useQueryClient();
@@ -87,6 +88,15 @@ export const AdminUsers: React.FC = () => {
       return matchesRole && matchesSearch;
     });
   }, [users, roleFilter, searchQuery]);
+
+  const {
+    currentPage,
+    pageSize,
+    setCurrentPage,
+    setPageSize,
+    paginatedItems: paginatedUsers,
+    totalItems: totalUsersCount,
+  } = useAdminPagination(filteredUsers, 25);
 
   // Statistics
   const stats = useMemo(() => {
@@ -253,7 +263,7 @@ export const AdminUsers: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs">
-                {filteredUsers.map((u) => {
+                {paginatedUsers.map((u) => {
                   const isCurrent = u.id === currentAdmin?.id;
                   const isUpdating = updatingUserId === u.id;
 
@@ -350,6 +360,15 @@ export const AdminUsers: React.FC = () => {
               </tbody>
             </table>
           </div>
+          <AdminPagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalItems={totalUsersCount}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[10, 25, 50, 100]}
+            itemLabel="users"
+          />
         )}
       </div>
 

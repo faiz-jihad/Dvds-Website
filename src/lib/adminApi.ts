@@ -4,6 +4,14 @@ import { adminSchemaChecks, AdminSchemaScope } from './adminSchema';
 import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
 import { CURRENCIES, validateShippingZones } from '../../shared/commerce.js';
 
+export interface ActivityActor {
+  id: string;
+  full_name: string | null;
+  email: string;
+  role: string;
+  avatar_url?: string | null;
+}
+
 export interface InventoryMovement {
   id: string;
   product_id: string;
@@ -14,6 +22,7 @@ export interface InventoryMovement {
   actor_id: string | null;
   created_at: string;
   product?: { id: string; title: string; sku: string };
+  actor?: ActivityActor | null;
 }
 
 export interface OrderStatusHistory {
@@ -27,6 +36,7 @@ export interface OrderStatusHistory {
   actor_id: string | null;
   created_at: string;
   order?: { id: string; order_number: string };
+  actor?: ActivityActor | null;
 }
 
 export interface AdminAuditEntry {
@@ -38,6 +48,7 @@ export interface AdminAuditEntry {
   before_data: Record<string, unknown> | null;
   after_data: Record<string, unknown> | null;
   created_at: string;
+  actor?: ActivityActor | null;
 }
 
 export interface ContactMessage {
@@ -260,6 +271,37 @@ export const adminApi = {
     return normalizeOrder(data);
   },
 
+  async cancelOrder(orderId: string, reason: string, markPaymentFailed: boolean = true): Promise<Order> {
+    const trimmedReason = reason.trim();
+    if (trimmedReason.length < 3) {
+      throw new AdminBackendError('A cancellation reason of at least 3 characters is required.');
+    }
+    const { error } = await client().rpc('transition_order_status', {
+      p_order_id: orderId,
+      p_status: 'cancelled',
+      p_fulfilment_status: 'unfulfilled',
+      p_carrier: null,
+      p_tracking_number: null,
+      p_note: trimmedReason,
+    });
+    if (error) fail(error, 'Order could not be cancelled.');
+
+    if (markPaymentFailed) {
+      try {
+        await client().from('orders').update({
+          payment_status: 'failed',
+          updated_at: new Date().toISOString(),
+        }).eq('id', orderId);
+      } catch {
+        // Non-blocking if RLS or column prevents direct update
+      }
+    }
+
+    const { data, error: readError } = await client().from('orders').select('*, items:order_items(*)').eq('id', orderId).single();
+    if (readError || !data) fail(readError, 'Order was cancelled but could not be reloaded. Refresh the orders list.');
+    return normalizeOrder(data);
+  },
+
   async adjustStock(productId: string, delta: number, reason: string): Promise<Product> {
     if (!Number.isInteger(delta) || delta === 0 || reason.trim().length < 3) {
       throw new AdminBackendError('Enter a non-zero whole-number adjustment and a reason of at least 3 characters.');
@@ -369,7 +411,7 @@ export const adminApi = {
     orders: OrderStatusHistory[];
     audit: AdminAuditEntry[];
   }> {
-    const [inventoryResult, orderResult, auditResult] = await Promise.all([
+    const [inventoryResult, orderResult, auditResult, profilesResult] = await Promise.all([
       client()
         .from('inventory_movements')
         .select('*, product:products(id,title,sku)')
@@ -385,14 +427,31 @@ export const adminApi = {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100),
+      client()
+        .from('profiles')
+        .select('id, full_name, email, role, avatar_url')
+        .limit(250),
     ]);
     if (inventoryResult.error) fail(inventoryResult.error, 'Stock movements could not be loaded.');
     if (orderResult.error) fail(orderResult.error, 'Order status logs could not be loaded.');
     if (auditResult.error) fail(auditResult.error, 'Admin audit logs could not be loaded.');
+
+    const profileMap = new Map<string, ActivityActor>();
+    if (!profilesResult.error && profilesResult.data) {
+      profilesResult.data.forEach((p: any) => {
+        profileMap.set(p.id, p as ActivityActor);
+      });
+    }
+
+    const attachActor = <T extends { actor_id: string | null }>(item: T) => ({
+      ...item,
+      actor: item.actor_id ? profileMap.get(item.actor_id) || null : null,
+    });
+
     return {
-      inventory: (inventoryResult.data || []) as InventoryMovement[],
-      orders: (orderResult.data || []) as OrderStatusHistory[],
-      audit: (auditResult.data || []) as AdminAuditEntry[],
+      inventory: (inventoryResult.data || []).map(attachActor) as InventoryMovement[],
+      orders: (orderResult.data || []).map(attachActor) as OrderStatusHistory[],
+      audit: (auditResult.data || []).map(attachActor) as AdminAuditEntry[],
     };
   },
 

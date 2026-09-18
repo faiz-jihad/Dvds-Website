@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingCart, Star, Package, Disc } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Package, Loader2, CheckCircle2, ArrowUp } from 'lucide-react';
 import { Product } from '../../types';
 import { useCartStore } from '../../stores/useCartStore';
 import { useFavouritesStore } from '../../stores/useFavouritesStore';
@@ -10,6 +10,8 @@ import { formatGBP, cn } from '../../lib/formatters';
 interface SeriviaMovieGridProps {
   products: Product[];
   loading?: boolean;
+  initialBatchSize?: number;
+  incrementSize?: number;
 }
 
 const MovieCard: React.FC<{ product: Product }> = ({ product }) => {
@@ -38,12 +40,12 @@ const MovieCard: React.FC<{ product: Product }> = ({ product }) => {
   const formatBadge = product.format === 'Box Set' ? 'Box Set' : product.format || 'DVD';
 
   return (
-    <div className="group relative flex flex-col select-none">
+    <div className="group relative flex flex-col select-none bg-white rounded-2xl border border-gray-200/80 hover:border-gray-300 hover:shadow-xl transition-all duration-300 p-2 sm:p-2.5">
       {/* Poster Container */}
-      <div className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#0d0f14] border border-white/[0.07] group-hover:border-[#f5c518]/50 transition-all duration-300 shadow-xl">
+      <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-gray-100 shadow-xs">
         <Link
           to={`/product/${product.slug}`}
-          className="block w-full h-full"
+          className="block w-full h-full cursor-pointer"
           aria-label={`View ${product.title}`}
         >
           <img
@@ -60,16 +62,16 @@ const MovieCard: React.FC<{ product: Product }> = ({ product }) => {
         {/* Top Badges (New, Sale, Format) */}
         <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none z-10">
           {product.is_new_release && (
-            <span className="text-[9px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#f5c518] text-black shadow">
+            <span className="text-[9px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-blue text-white shadow">
               New
             </span>
           )}
           {product.compare_at_price && product.compare_at_price > product.price && (
-            <span className="text-[9px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-red-600 text-white shadow">
+            <span className="text-[9px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-red text-white shadow">
               Sale
             </span>
           )}
-          <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md border border-white/15 text-white/90 shadow">
+          <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/75 backdrop-blur-sm text-white shadow">
             {formatBadge}
           </span>
         </div>
@@ -78,15 +80,15 @@ const MovieCard: React.FC<{ product: Product }> = ({ product }) => {
         <button
           onClick={handleFav}
           className={cn(
-            'absolute top-2 right-2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border transition-all active:scale-90 shadow-md',
+            'absolute top-2 right-2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border transition-all active:scale-90 shadow-md cursor-pointer',
             favourite
-              ? 'bg-[#f5c518] border-[#f5c518] text-black'
-              : 'bg-black/60 backdrop-blur-md border-white/20 text-white/75 hover:text-white hover:bg-black/80'
+              ? 'bg-brand-red border-brand-red text-white'
+              : 'bg-white/90 hover:bg-white text-gray-500 hover:text-brand-red border-gray-200'
           )}
           aria-label={favourite ? 'Remove from favourites' : 'Save to favourites'}
           title={favourite ? 'Saved in Favourites' : 'Add to Favourites'}
         >
-          <Heart size={13} fill={favourite ? 'black' : 'none'} />
+          <Heart size={13} fill={favourite ? 'white' : 'none'} />
         </button>
 
         {/* Desktop Hover Quick Action Overlay */}
@@ -97,10 +99,10 @@ const MovieCard: React.FC<{ product: Product }> = ({ product }) => {
               onClick={handleCart}
               disabled={outOfStock}
               className={cn(
-                'w-full flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all shadow-lg active:scale-95',
+                'w-full flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all shadow-lg active:scale-95 cursor-pointer disabled:cursor-not-allowed',
                 outOfStock
-                  ? 'bg-white/10 text-white/30 cursor-not-allowed'
-                  : 'bg-[#f5c518] hover:bg-[#f5c518]/90 text-black shadow-[#f5c518]/25'
+                  ? 'bg-white/10 text-white/30'
+                  : 'bg-brand-blue hover:bg-brand-blue-hover text-white shadow-brand-blue/30'
               )}
             >
               <ShoppingCart size={13} />
@@ -108,7 +110,7 @@ const MovieCard: React.FC<{ product: Product }> = ({ product }) => {
             </button>
             <Link
               to={`/product/${product.slug}`}
-              className="w-full flex items-center justify-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold bg-white/15 hover:bg-white/25 text-white transition-all active:scale-95"
+              className="w-full flex items-center justify-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold bg-white/20 hover:bg-white/30 text-white transition-all active:scale-95 cursor-pointer"
             >
               Details
             </Link>
@@ -117,7 +119,7 @@ const MovieCard: React.FC<{ product: Product }> = ({ product }) => {
 
         {/* Out of Stock Overlay */}
         {outOfStock && (
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-center gap-1 bg-black/85 backdrop-blur-md rounded-lg py-1 text-[10px] font-bold text-white/60 pointer-events-none">
+          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-center gap-1 bg-black/85 backdrop-blur-md rounded-lg py-1 text-[10px] font-bold text-white/70 pointer-events-none">
             <Package size={11} />
             Sold Out
           </div>
@@ -125,9 +127,9 @@ const MovieCard: React.FC<{ product: Product }> = ({ product }) => {
 
         {/* IMDb Rating Badge (Bottom Right) */}
         {product.imdb_rating && !outOfStock && (
-          <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/80 backdrop-blur-md rounded-md px-1.5 py-0.5 border border-white/10 pointer-events-none">
-            <Star size={9} fill="#f5c518" className="text-[#f5c518]" />
-            <span className="text-[10px] font-extrabold text-[#f5c518]">
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/80 backdrop-blur-xs rounded px-1.5 py-0.5 border border-white/10 pointer-events-none text-white">
+            <Star size={9} fill="#fbbf24" className="text-amber-400" />
+            <span className="text-[10px] font-black text-white">
               {product.imdb_rating.toFixed(1)}
             </span>
           </div>
@@ -139,37 +141,38 @@ const MovieCard: React.FC<{ product: Product }> = ({ product }) => {
         <div>
           <Link
             to={`/product/${product.slug}`}
-            className="text-xs sm:text-sm font-bold text-white/90 group-hover:text-[#f5c518] transition-colors leading-snug line-clamp-1"
+            className="text-xs sm:text-sm font-bold text-dark hover:text-brand-blue transition-colors leading-snug line-clamp-1 cursor-pointer"
+            title={product.title}
           >
             {product.title}
           </Link>
-          <p className="text-[10px] sm:text-[11px] text-white/40 mt-0.5">
+          <p className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5">
             {product.release_year} &bull; {product.genres?.[0]?.name || product.format}
           </p>
         </div>
 
         {/* Price and Mobile 1-Tap Add to Basket Button */}
-        <div className="flex items-center justify-between mt-2 pt-1 border-t border-white/[0.05]">
+        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-gray-100">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-xs sm:text-sm font-extrabold text-white">
+            <span className="text-xs sm:text-sm font-extrabold text-dark">
               {formatGBP(product.price)}
             </span>
             {product.compare_at_price && product.compare_at_price > product.price && (
-              <span className="text-[10px] text-white/30 line-through">
+              <span className="text-[10px] text-gray-400 line-through">
                 {formatGBP(product.compare_at_price)}
               </span>
             )}
           </div>
 
-          {/* Quick-add button visible on mobile (and desktop as extra convenience) */}
+          {/* Quick-add button */}
           <button
             onClick={handleCart}
             disabled={outOfStock}
             className={cn(
-              'w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all active:scale-90 shadow-sm shrink-0',
+              'w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all active:scale-90 shadow-xs shrink-0 cursor-pointer disabled:cursor-not-allowed',
               outOfStock
-                ? 'bg-white/5 text-white/20 cursor-not-allowed'
-                : 'bg-[#f5c518] hover:bg-[#f5c518]/90 text-black shadow-[#f5c518]/20'
+                ? 'bg-gray-100 text-gray-400'
+                : 'bg-dark hover:bg-brand-blue text-white'
             )}
             aria-label={`Add ${product.title} to basket`}
             title="Add to Basket"
@@ -183,17 +186,61 @@ const MovieCard: React.FC<{ product: Product }> = ({ product }) => {
 };
 
 const SkeletonCard: React.FC = () => (
-  <div className="flex flex-col animate-pulse">
-    <div className="aspect-[2/3] rounded-2xl bg-white/[0.05] border border-white/[0.05]" />
+  <div className="flex flex-col animate-pulse bg-white p-2.5 rounded-2xl border border-gray-200">
+    <div className="aspect-[2/3] rounded-xl bg-gray-100" />
     <div className="mt-2.5 space-y-2">
-      <div className="h-3.5 rounded bg-white/[0.07] w-3/4" />
-      <div className="h-2.5 rounded bg-white/[0.05] w-1/2" />
-      <div className="h-4 rounded bg-white/[0.06] w-1/3" />
+      <div className="h-3.5 rounded bg-gray-200 w-3/4" />
+      <div className="h-2.5 rounded bg-gray-100 w-1/2" />
+      <div className="h-4 rounded bg-gray-200 w-1/3" />
     </div>
   </div>
 );
 
-export const SeriviaMovieGrid: React.FC<SeriviaMovieGridProps> = ({ products, loading }) => {
+export const SeriviaMovieGrid: React.FC<SeriviaMovieGridProps> = ({
+  products,
+  loading,
+  initialBatchSize = 12,
+  incrementSize = 12,
+}) => {
+  const [displayLimit, setDisplayLimit] = useState(initialBatchSize);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset display limit when the product collection or active filter changes
+  useEffect(() => {
+    setDisplayLimit(initialBatchSize);
+    setIsLoadingMore(false);
+  }, [products, initialBatchSize]);
+
+  // Infinite scroll trigger: load the next batch when the user scrolls near the sentinel
+  useEffect(() => {
+    if (displayLimit >= products.length) return;
+
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !isLoadingMore) {
+          setIsLoadingMore(true);
+          setTimeout(() => {
+            setDisplayLimit((prev) => Math.min(prev + incrementSize, products.length));
+            setIsLoadingMore(false);
+          }, 250);
+        }
+      },
+      {
+        root: null,
+        rootMargin: '250px 0px',
+        threshold: 0.05,
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [displayLimit, products.length, incrementSize, isLoadingMore]);
+
   if (loading) {
     return (
       <div className="grid grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
@@ -206,21 +253,77 @@ export const SeriviaMovieGrid: React.FC<SeriviaMovieGridProps> = ({ products, lo
 
   if (!products.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-3xl bg-white/[0.02] border border-white/[0.06] my-6">
-        <Package size={40} className="text-[#f5c518]/40 mb-3" />
-        <h3 className="text-white font-bold text-base">No titles found</h3>
-        <p className="text-white/40 text-xs mt-1 max-w-sm">
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl bg-white border border-gray-200 my-4 shadow-xs">
+        <Package size={40} className="text-gray-300 mb-3" />
+        <h3 className="text-dark font-bold text-base">No titles found</h3>
+        <p className="text-gray-500 text-xs mt-1 max-w-sm">
           No items match this filter. Try selecting another category, genre, or browse all editions.
         </p>
       </div>
     );
   }
 
+  const visibleProducts = products.slice(0, displayLimit);
+  const hasMore = displayLimit < products.length;
+
   return (
-    <div className="grid grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-      {products.map((product) => (
-        <MovieCard key={product.id} product={product} />
-      ))}
+    <div className="space-y-6">
+      {/* Responsive Cards Grid */}
+      <div className="grid grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+        {visibleProducts.map((product) => (
+          <MovieCard key={product.id} product={product} />
+        ))}
+      </div>
+
+      {/* Progressive Scroll Loading Sentinel / Feedback */}
+      {hasMore && (
+        <div
+          ref={sentinelRef}
+          className="pt-4 pb-8 flex flex-col items-center justify-center gap-2.5"
+        >
+          {isLoadingMore ? (
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white border border-gray-200 shadow-xs text-xs font-semibold text-gray-700 animate-in fade-in duration-200">
+              <Loader2 className="w-4 h-4 animate-spin text-brand-blue" />
+              <span>Loading more titles...</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setIsLoadingMore(true);
+                setTimeout(() => {
+                  setDisplayLimit((prev) => Math.min(prev + incrementSize, products.length));
+                  setIsLoadingMore(false);
+                }, 200);
+              }}
+              className="px-5 py-2.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 text-xs font-bold text-dark hover:text-brand-blue transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-95"
+            >
+              <span>Load More Titles</span>
+              <span className="text-[11px] font-normal text-gray-400">
+                ({visibleProducts.length} of {products.length})
+              </span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* End of Catalogue Notice */}
+      {!hasMore && products.length > initialBatchSize && (
+        <div className="pt-6 pb-4 border-t border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-xs text-gray-500">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+            <span>
+              Showing all <strong className="text-dark font-semibold">{products.length}</strong> titles in this catalogue
+            </span>
+          </div>
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="inline-flex items-center gap-1 font-bold text-brand-blue hover:text-brand-blue-hover transition-colors cursor-pointer"
+          >
+            <span>Back to top</span>
+            <ArrowUp size={13} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

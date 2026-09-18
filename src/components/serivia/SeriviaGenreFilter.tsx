@@ -27,7 +27,7 @@ export const SeriviaGenreFilter: React.FC<SeriviaGenreFilterProps> = ({
     { id: 'all', label: 'All Titles' },
     { id: 'trending', label: 'Trending' },
     { id: 'new', label: 'New Releases' },
-    { id: 'sale', label: 'On Sale' },
+    { id: 'sale', label: 'Special Offers' },
     { id: 'box_set', label: 'Box Sets' },
   ];
 
@@ -72,7 +72,7 @@ export const SeriviaGenreFilter: React.FC<SeriviaGenreFilterProps> = ({
       <button
         onClick={() => scroll('left')}
         className={cn(
-          'hidden md:flex shrink-0 w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.15] border border-white/[0.08] items-center justify-center text-white/70 hover:text-white transition-all shadow-md',
+          'hidden md:flex shrink-0 w-8 h-8 rounded-full bg-white hover:bg-gray-100 border border-gray-200 items-center justify-center text-gray-600 hover:text-dark transition-all shadow-xs cursor-pointer',
           !canScrollLeft && 'opacity-0 pointer-events-none'
         )}
         aria-label="Scroll left filters"
@@ -93,13 +93,13 @@ export const SeriviaGenreFilter: React.FC<SeriviaGenreFilterProps> = ({
               key={pill.id}
               onClick={() => onFilterChange(pill.id)}
               className={cn(
-                'shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap border active:scale-95',
+                'shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 whitespace-nowrap border active:scale-95 cursor-pointer',
                 active
-                  ? 'bg-[#f5c518] text-black border-[#f5c518] shadow-lg shadow-[#f5c518]/25 font-bold'
-                  : 'bg-white/[0.05] text-white/70 border-white/[0.08] hover:bg-white/[0.1] hover:text-white hover:border-white/20'
+                  ? 'bg-dark text-white border-dark shadow-md'
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100 hover:text-dark hover:border-gray-300'
               )}
             >
-              {pill.id === 'trending' && <Sparkles size={11} className="inline mr-1 -mt-0.5" />}
+              {pill.id === 'trending' && <Sparkles size={11} className="inline mr-1 text-brand-blue" />}
               {pill.label}
             </button>
           );
@@ -110,7 +110,7 @@ export const SeriviaGenreFilter: React.FC<SeriviaGenreFilterProps> = ({
       <button
         onClick={() => scroll('right')}
         className={cn(
-          'hidden md:flex shrink-0 w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.15] border border-white/[0.08] items-center justify-center text-white/70 hover:text-white transition-all shadow-md',
+          'hidden md:flex shrink-0 w-8 h-8 rounded-full bg-white hover:bg-gray-100 border border-gray-200 items-center justify-center text-gray-600 hover:text-dark transition-all shadow-xs cursor-pointer',
           !canScrollRight && 'opacity-0 pointer-events-none'
         )}
         aria-label="Scroll right filters"

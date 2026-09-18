@@ -9,6 +9,7 @@ import { Modal } from '../../components/common/Modal';
 import { useUiStore } from '../../stores/useUiStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { AdminDataState } from '../../components/admin/AdminDataState';
+import { AdminPagination, useAdminPagination } from '../../components/admin/AdminPagination';
 
 export const AdminInventory: React.FC = () => {
   const queryClient = useQueryClient();
@@ -86,6 +87,15 @@ export const AdminInventory: React.FC = () => {
   const threshold = settingsQuery.data.low_stock_threshold;
   const filtered = products.filter((product) => product.title.toLowerCase().includes(search.toLowerCase()) || product.sku.toLowerCase().includes(search.toLowerCase()));
 
+  const {
+    currentPage,
+    pageSize,
+    setCurrentPage,
+    setPageSize,
+    paginatedItems: paginatedProducts,
+    totalItems: totalFilteredCount,
+  } = useAdminPagination(filtered, 25);
+
   return (
     <div className="max-w-6xl space-y-6">
       <div>
@@ -99,22 +109,32 @@ export const AdminInventory: React.FC = () => {
       </div>
 
       {products.length === 0 ? <AdminDataState empty emptyTitle="No inventory records" emptyDescription="Create a product before recording warehouse stock." /> : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-xs">
-          <table className="w-full min-w-[720px] text-left text-xs">
-            <thead className="border-b border-gray-200 bg-gray-50 font-semibold text-gray-700"><tr><th className="p-3.5">Film</th><th className="p-3.5">SKU</th><th className="p-3.5">Format</th><th className="p-3.5">Current stock</th><th className="p-3.5">Health</th><th className="p-3.5 text-right">Action</th></tr></thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50/70">
-                  <td className="p-3.5 font-semibold text-dark">{product.title}</td>
-                  <td className="p-3.5 font-mono text-gray-500">{product.sku}</td>
-                  <td className="p-3.5 font-mono">{product.format}</td>
-                  <td className="p-3.5 font-mono text-sm font-bold text-dark">{product.stock_quantity}</td>
-                  <td className="p-3.5">{product.stock_quantity <= threshold ? <span className="inline-flex items-center gap-1.5 rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-800"><AlertTriangle className="h-3 w-3" />Low stock</span> : <span className="inline-flex items-center gap-1.5 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-800"><Check className="h-3 w-3" />Healthy</span>}</td>
-                  <td className="p-3.5 text-right"><Button size="sm" variant="secondary" onClick={() => setSelectedProduct(product)}><SlidersHorizontal className="mr-1 h-3.5 w-3.5" />Adjust</Button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-xs">
+              <thead className="border-b border-gray-200 bg-gray-50 font-semibold text-gray-700"><tr><th className="p-3.5">Film</th><th className="p-3.5">SKU</th><th className="p-3.5">Format</th><th className="p-3.5">Current stock</th><th className="p-3.5">Health</th><th className="p-3.5 text-right">Action</th></tr></thead>
+              <tbody className="divide-y divide-gray-100">
+                {paginatedProducts.map((product) => (
+                  <tr key={product.id} className="hover:bg-gray-50/70">
+                    <td className="p-3.5 font-semibold text-dark">{product.title}</td>
+                    <td className="p-3.5 font-mono text-gray-500">{product.sku}</td>
+                    <td className="p-3.5 font-mono">{product.format}</td>
+                    <td className="p-3.5 font-mono text-sm font-bold text-dark">{product.stock_quantity}</td>
+                    <td className="p-3.5">{product.stock_quantity <= threshold ? <span className="inline-flex items-center gap-1.5 rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-800"><AlertTriangle className="h-3 w-3" />Low stock</span> : <span className="inline-flex items-center gap-1.5 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-800"><Check className="h-3 w-3" />Healthy</span>}</td>
+                    <td className="p-3.5 text-right"><Button size="sm" variant="secondary" onClick={() => setSelectedProduct(product)}><SlidersHorizontal className="mr-1 h-3.5 w-3.5" />Adjust</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <AdminPagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalItems={totalFilteredCount}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="titles"
+          />
         </div>
       )}
 

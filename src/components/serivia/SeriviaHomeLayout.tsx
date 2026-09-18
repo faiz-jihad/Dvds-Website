@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { SeriviaSidebar, SeriviaMobileDrawer } from './SeriviaSidebar';
-import { SeriviaTopNav } from './SeriviaTopNav';
 import { SeriviaHeroBanner } from './SeriviaHeroBanner';
 import { SeriviaGenreFilter } from './SeriviaGenreFilter';
 import { SeriviaMovieGrid } from './SeriviaMovieGrid';
@@ -61,31 +60,27 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
     const active = products.filter((p) => p.status === 'active');
     switch (activeFilter) {
       case 'trending':
-        return active
-          .filter((p) => p.is_best_seller || p.is_featured)
-          .slice(0, 48);
+        return active.filter((p) => p.is_best_seller || p.is_featured);
       case 'new':
-        return active.filter((p) => p.is_new_release).slice(0, 48);
+        return active.filter((p) => p.is_new_release);
       case 'sale':
-        return active
-          .filter((p) => p.compare_at_price && p.compare_at_price > p.price)
-          .slice(0, 48);
+        return active.filter((p) => p.compare_at_price && p.compare_at_price > p.price);
       case 'box_set':
-        return active.filter((p) => p.format === 'Box Set').slice(0, 48);
+        return active.filter((p) => p.format?.toLowerCase().includes('box'));
       default:
+        if (activeFilter.startsWith('format:')) {
+          const fmt = activeFilter.replace('format:', '').toLowerCase();
+          return active.filter((p) => p.format?.toLowerCase().includes(fmt));
+        }
         if (activeFilter.startsWith('genre:')) {
           const slug = activeFilter.replace('genre:', '');
-          return active
-            .filter((p) => p.genres?.some((g) => g.slug === slug))
-            .slice(0, 48);
+          return active.filter((p) => p.genres?.some((g) => g.slug === slug));
         }
         if (activeFilter.startsWith('cat:')) {
           const slug = activeFilter.replace('cat:', '');
-          return active
-            .filter((p) => p.category?.slug === slug)
-            .slice(0, 48);
+          return active.filter((p) => p.category?.slug === slug);
         }
-        return active.slice(0, 60);
+        return active;
     }
   }, [products, activeFilter]);
 
@@ -96,6 +91,9 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
     if (activeFilter === 'new') return 'New Arrivals';
     if (activeFilter === 'sale') return 'Special Offers & Sale';
     if (activeFilter === 'box_set') return 'Definitive Box Sets';
+    if (activeFilter === 'format:4k') return '4K Ultra HD Editions';
+    if (activeFilter === 'format:blu-ray') return 'Blu-ray Disc Cinema';
+    if (activeFilter === 'format:dvd') return 'Standard DVD Editions';
     if (activeFilter.startsWith('genre:')) {
       const g = genres.find((item) => `genre:${item.slug}` === activeFilter);
       return g ? `${g.name} Movies` : 'Genre Collection';
@@ -108,26 +106,21 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
   }, [activeFilter, genres, categories]);
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#09090e] text-white overflow-hidden select-none">
-      {/* Top Navigation */}
-      <SeriviaTopNav
-        onOpenMobileMenu={() => setMobileMenuOpen(true)}
-        activeType={activeFilter}
-        onSelectType={setActiveFilter}
-      />
-
+    <div className="flex flex-col min-h-[calc(100vh-65px)] bg-[#F8F9FA] text-dark select-none">
       {/* Main Body Area: Desktop Sidebar + Content */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 relative">
         {/* Left Sidebar (Desktop Only) */}
-        <div className="relative hidden md:block shrink-0 z-10">
+        <div className="relative hidden md:block shrink-0 z-10 sticky top-[65px] h-[calc(100vh-65px)]">
           <SeriviaSidebar
             recentProducts={recentProducts}
             collapsed={sidebarCollapsed}
             onToggle={() => setSidebarCollapsed((v) => !v)}
+            activeFilter={activeFilter}
+            onSelectFilter={setActiveFilter}
           />
         </div>
 
-        {/* Mobile Slide-out Drawer */}
+        {/* Mobile Slide-out Drawer with Brand Logo */}
         <SeriviaMobileDrawer
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
@@ -138,9 +131,9 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
           onSelectFilter={setActiveFilter}
         />
 
-        {/* Main Scrollable Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden relative overscroll-contain">
-          <div className="px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6 max-w-[1680px] mx-auto">
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-x-hidden min-w-0">
+          <div className="px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6 max-w-[1680px]">
             {/* Featured Hero Banner Carousel */}
             <SeriviaHeroBanner products={featuredProducts} />
 
@@ -157,18 +150,18 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
             <div>
               <div className="flex items-center justify-between mb-3.5 sm:mb-4 px-0.5">
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-4 rounded-full bg-[#f5c518]" />
-                  <h2 className="text-sm sm:text-base font-extrabold text-white tracking-tight">
+                  <div className="w-1.5 h-4 rounded-full bg-brand-blue" />
+                  <h2 className="text-sm sm:text-base font-extrabold text-dark tracking-tight">
                     {filterTitle}
                   </h2>
-                  <span className="text-[11px] font-semibold text-white/40">
+                  <span className="text-[11px] font-semibold text-gray-500">
                     ({filteredProducts.length})
                   </span>
                 </div>
 
                 <Link
                   to={`/shop${activeFilter !== 'all' ? `?filter=${activeFilter}` : ''}`}
-                  className="flex items-center gap-1 text-xs font-semibold text-white/50 hover:text-[#f5c518] transition-colors group"
+                  className="flex items-center gap-1 text-xs font-bold text-brand-blue hover:text-brand-blue-hover transition-colors group cursor-pointer"
                 >
                   <span>View All</span>
                   <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
@@ -180,25 +173,28 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
             </div>
 
             {/* Bottom spacer on mobile so navigation bar never obstructs content */}
-            <div className="pb-24 md:pb-8" />
+            <div className="pb-20 md:pb-6" />
           </div>
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation Bar (No emojis, sleek Lucide icons & live counters) */}
+      {/* Mobile Bottom Navigation Bar (Matching brand theme) */}
       <nav
         aria-label="Mobile Navigation"
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#0d0f14]/95 backdrop-blur-xl border-t border-white/[0.08] flex items-center justify-around px-2 py-1.5 safe-area-inset-bottom shadow-2xl"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-200 flex items-center justify-around px-2 py-1.5 safe-area-inset-bottom shadow-2xl text-gray-500"
       >
         {/* Home */}
         <Link
           to="/"
-          onClick={() => setActiveFilter('all')}
+          onClick={() => {
+            setActiveFilter('all');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           className={cn(
-            'flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors',
+            'flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer',
             pathname === '/' && activeFilter === 'all'
-              ? 'text-[#f5c518]'
-              : 'text-white/50 hover:text-white'
+              ? 'text-brand-blue font-bold'
+              : 'text-gray-500 hover:text-dark'
           )}
         >
           <Home size={18} />
@@ -209,30 +205,30 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
         <Link
           to="/shop"
           className={cn(
-            'flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors',
+            'flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer',
             pathname.startsWith('/shop')
-              ? 'text-[#f5c518]'
-              : 'text-white/50 hover:text-white'
+              ? 'text-brand-blue font-bold'
+              : 'text-gray-500 hover:text-dark'
           )}
         >
           <Film size={18} />
           <span>Browse</span>
         </Link>
 
-        {/* Favourites with Badge */}
+        {/* Favourites with Red Badge */}
         <Link
           to="/favourites"
           className={cn(
-            'relative flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors',
+            'relative flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer',
             pathname.startsWith('/favourites')
-              ? 'text-[#f5c518]'
-              : 'text-white/50 hover:text-white'
+              ? 'text-brand-blue font-bold'
+              : 'text-gray-500 hover:text-dark'
           )}
         >
           <div className="relative">
             <Heart size={18} />
             {favourites.length > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-[15px] h-[15px] rounded-full bg-[#f5c518] text-black text-[9px] font-extrabold flex items-center justify-center px-0.5 leading-none">
+              <span className="absolute -top-1.5 -right-2.5 min-w-[15px] h-[15px] rounded-full bg-brand-red text-white text-[9px] font-extrabold flex items-center justify-center px-0.5 leading-none shadow">
                 {favourites.length}
               </span>
             )}
@@ -240,16 +236,16 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
           <span>Saved</span>
         </Link>
 
-        {/* Basket with Badge */}
+        {/* Basket with Blue Badge */}
         <button
           type="button"
           onClick={openCartDrawer}
-          className="relative flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold text-white/50 hover:text-white transition-colors"
+          className="relative flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold text-gray-500 hover:text-dark transition-colors cursor-pointer active:scale-95"
         >
           <div className="relative">
             <ShoppingBag size={18} />
             {cartCount > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-[15px] h-[15px] rounded-full bg-[#f5c518] text-black text-[9px] font-extrabold flex items-center justify-center px-0.5 leading-none shadow">
+              <span className="absolute -top-1.5 -right-2.5 min-w-[15px] h-[15px] rounded-full bg-brand-blue text-white text-[9px] font-extrabold flex items-center justify-center px-0.5 leading-none shadow">
                 {cartCount > 99 ? '99+' : cartCount}
               </span>
             )}
@@ -262,8 +258,8 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
           type="button"
           onClick={() => setMobileMenuOpen(true)}
           className={cn(
-            'flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors',
-            mobileMenuOpen ? 'text-[#f5c518]' : 'text-white/50 hover:text-white'
+            'flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer active:scale-95',
+            mobileMenuOpen ? 'text-brand-blue font-bold' : 'text-gray-500 hover:text-dark'
           )}
         >
           <Menu size={18} />

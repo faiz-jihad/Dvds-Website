@@ -5,113 +5,127 @@ import {
   Heart,
   Clock,
   TrendingUp,
-  Settings,
-  HelpCircle,
   Play,
   ChevronLeft,
   ChevronRight,
   X,
-  Film,
   Package,
   ShieldCheck,
+  User,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '../../lib/formatters';
 import { useFavouritesStore } from '../../stores/useFavouritesStore';
+import { useCustomerAuth } from '../../auth/CustomerAuth';
 import { Product, Category, Genre } from '../../types';
 
 interface SeriviaSidebarProps {
   recentProducts?: Product[];
   collapsed?: boolean;
   onToggle?: () => void;
+  activeFilter?: string;
+  onSelectFilter?: (filter: string) => void;
 }
 
 const NAV_ITEMS = [
-  { label: 'Home', href: '/', icon: Home },
-  { label: 'Favourites', href: '/favourites', icon: Heart },
-  { label: 'Coming Soon', href: '/shop?filter=new', icon: Clock },
-  { label: 'Trending', href: '/shop?filter=trending', icon: TrendingUp },
-  { label: 'Box Sets', href: '/shop?format=box-set', icon: Package },
-];
-
-const BOTTOM_NAV = [
-  { label: 'Settings', href: '/account/profile', icon: Settings },
-  { label: 'Support & FAQs', href: '/contact', icon: HelpCircle },
+  { label: 'Home', href: '/', filter: 'all', icon: Home },
+  { label: 'Favourites', href: '/favourites', filter: '', icon: Heart },
+  { label: 'Coming Soon', href: '/shop?filter=new', filter: 'new', icon: Clock },
+  { label: 'Trending', href: '/shop?filter=trending', filter: 'trending', icon: TrendingUp },
+  { label: 'Box Sets', href: '/shop?format=box-set', filter: 'box_set', icon: Package },
 ];
 
 export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
   recentProducts = [],
   collapsed = false,
   onToggle,
+  activeFilter = 'all',
+  onSelectFilter,
 }) => {
   const { pathname } = useLocation();
   const favourites = useFavouritesStore((s) => s.favourites);
 
-  const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    return pathname.startsWith(href.split('?')[0]);
+  const isActive = (item: typeof NAV_ITEMS[0]) => {
+    if (pathname === '/' && onSelectFilter) {
+      if (item.filter) return activeFilter === item.filter;
+      return false;
+    }
+    if (item.href === '/') return pathname === '/';
+    return pathname.startsWith(item.href.split('?')[0]);
+  };
+
+  const handleNavClick = (e: React.MouseEvent, item: typeof NAV_ITEMS[0]) => {
+    if (pathname === '/' && item.filter && onSelectFilter) {
+      e.preventDefault();
+      onSelectFilter(item.filter);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
     <aside
       className={cn(
-        'flex flex-col h-full bg-[#0d0f14] border-r border-white/[0.08] transition-all duration-300 select-none relative',
-        collapsed ? 'w-[68px]' : 'w-[220px]'
+        'flex flex-col h-full bg-white border-r border-gray-200 transition-all duration-300 select-none relative',
+        collapsed ? 'w-[72px]' : 'w-[230px]'
       )}
     >
       {/* Collapse/Expand Toggle Button */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-6 z-20 w-6 h-6 rounded-full bg-[#181a24] border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-[#f5c518]/50 transition-all shadow-lg"
+        className="absolute -right-3 top-4 z-20 w-6 h-6 rounded-full bg-white border border-gray-300 flex items-center justify-center text-gray-500 hover:text-dark hover:border-brand-blue transition-all shadow-md cursor-pointer"
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
 
       {/* Main Navigation */}
-      <nav className="flex-1 px-3 pt-6 pb-2 flex flex-col gap-1 overflow-y-auto no-scrollbar">
+      <nav className="flex-1 px-3 pt-4 pb-2 flex flex-col gap-1 overflow-y-auto no-scrollbar">
         <div className="space-y-1">
-          {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
-            const active = isActive(href);
-            const isFavourites = label === 'Favourites';
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item);
+            const isFavourites = item.label === 'Favourites';
+            const Icon = item.icon;
             return (
               <Link
-                key={href}
-                to={href}
+                key={item.label}
+                to={item.href}
+                onClick={(e) => handleNavClick(e, item)}
                 className={cn(
-                  'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-200',
+                  'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer',
                   active
-                    ? 'bg-[#f5c518]/15 text-[#f5c518] shadow-sm'
-                    : 'text-white/60 hover:bg-white/[0.06] hover:text-white'
+                    ? 'bg-brand-blue/10 text-brand-blue font-bold shadow-xs'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-dark'
                 )}
-                title={collapsed ? label : undefined}
+                title={collapsed ? item.label : undefined}
               >
                 <div className="relative shrink-0 flex items-center justify-center">
                   <Icon
                     size={17}
                     className={cn(
                       'transition-colors',
-                      active ? 'text-[#f5c518]' : 'text-white/50 group-hover:text-white'
+                      active ? 'text-brand-blue' : 'text-gray-400 group-hover:text-dark'
                     )}
                   />
                   {isFavourites && favourites.length > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] rounded-full bg-[#f5c518] text-black text-[8px] font-extrabold flex items-center justify-center px-0.5 leading-none">
+                    <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] rounded-full bg-brand-red text-white text-[8px] font-extrabold flex items-center justify-center px-0.5 leading-none shadow">
                       {Math.min(favourites.length, 99)}
                     </span>
                   )}
                 </div>
-                {!collapsed && <span className="truncate">{label}</span>}
+                {!collapsed && <span className="truncate">{item.label}</span>}
               </Link>
             );
           })}
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-white/[0.06] my-3" />
+        <div className="h-px bg-gray-100 my-3" />
 
         {/* Recent Vault Highlights (Desktop Expanded) */}
         {!collapsed && recentProducts.length > 0 && (
           <div className="mt-1">
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#f5c518]/70 px-3 mb-2.5">
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand-blue px-3 mb-2.5">
               Vault Highlights
             </p>
             <div className="flex flex-col gap-2">
@@ -119,26 +133,26 @@ export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
                 <Link
                   key={product.id}
                   to={`/product/${product.slug}`}
-                  className="group flex items-center gap-2.5 rounded-xl p-2 bg-white/[0.02] hover:bg-white/[0.07] border border-white/[0.04] hover:border-white/10 transition-all"
+                  className="group flex items-center gap-2.5 rounded-xl p-2 bg-gray-50 hover:bg-gray-100 border border-gray-200/70 hover:border-brand-blue/30 transition-all cursor-pointer"
                 >
-                  <div className="relative w-10 h-14 shrink-0 rounded-lg overflow-hidden bg-white/5 shadow">
+                  <div className="relative w-10 h-14 shrink-0 rounded-lg overflow-hidden bg-gray-200 shadow-xs">
                     <img
                       src={product.cover_image_url}
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Play size={10} className="text-white fill-white" />
                     </div>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold text-white/85 leading-tight truncate group-hover:text-white">
+                    <p className="text-[11px] font-semibold text-dark leading-tight truncate group-hover:text-brand-blue">
                       {product.title}
                     </p>
-                    <p className="text-[10px] text-white/40 mt-1">
+                    <p className="text-[10px] text-gray-500 mt-1">
                       {product.release_year} &bull;{' '}
-                      <span className="text-[#f5c518] font-medium">
+                      <span className="text-amber-500 font-bold">
                         {product.imdb_rating ? `${product.imdb_rating.toFixed(1)} ★` : product.format}
                       </span>
                     </p>
@@ -149,22 +163,6 @@ export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
           </div>
         )}
       </nav>
-
-      {/* Bottom Links */}
-      <div className="px-3 pb-5 flex flex-col gap-1 shrink-0">
-        <div className="h-px bg-white/[0.06] mb-2" />
-        {BOTTOM_NAV.map(({ label, href, icon: Icon }) => (
-          <Link
-            key={href}
-            to={href}
-            className="flex items-center gap-3 rounded-xl px-3 py-2 text-xs text-white/45 hover:text-white hover:bg-white/[0.05] transition-all"
-            title={collapsed ? label : undefined}
-          >
-            <Icon size={15} className="shrink-0" />
-            {!collapsed && <span className="truncate">{label}</span>}
-          </Link>
-        ))}
-      </div>
     </aside>
   );
 };
@@ -190,40 +188,53 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
   onSelectFilter,
 }) => {
   const favourites = useFavouritesStore((s) => s.favourites);
+  const { customer, isAuthenticated, logout } = useCustomerAuth();
   const { pathname } = useLocation();
 
   if (!isOpen) return null;
 
-  const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    return pathname.startsWith(href.split('?')[0]);
+  const isActive = (item: typeof NAV_ITEMS[0]) => {
+    if (pathname === '/' && onSelectFilter && item.filter) {
+      return activeFilter === item.filter;
+    }
+    if (item.href === '/') return pathname === '/';
+    return pathname.startsWith(item.href.split('?')[0]);
+  };
+
+  const handleMobileNavClick = (e: React.MouseEvent, item: typeof NAV_ITEMS[0]) => {
+    if (pathname === '/' && item.filter && onSelectFilter) {
+      e.preventDefault();
+      onSelectFilter(item.filter);
+      onClose();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      onClose();
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 md:hidden flex">
+    <div className="fixed inset-0 z-50 md:hidden flex animate-in fade-in duration-200">
       {/* Dark Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
         aria-hidden="true"
       />
 
       {/* Slide-out Drawer Panel */}
-      <div className="relative w-[280px] max-w-[85vw] h-full bg-[#0d0f14] border-r border-white/10 flex flex-col z-10 overflow-y-auto no-scrollbar shadow-2xl">
-        {/* Drawer Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-white/[0.08]">
-          <Link to="/" onClick={onClose} className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#f5c518] to-amber-500 flex items-center justify-center shadow-md">
-              <Film size={16} className="text-black" />
-            </div>
-            <div>
-              <span className="font-extrabold text-sm text-white tracking-tight">DVDs Zone</span>
-              <p className="text-[9px] text-[#f5c518] font-bold uppercase">Collector Vault</p>
-            </div>
+      <div className="relative w-[285px] max-w-[85vw] h-full bg-white text-dark border-r border-gray-200 flex flex-col z-10 overflow-y-auto no-scrollbar shadow-2xl animate-in slide-in-from-left duration-250">
+        {/* Drawer Header with Official Logo */}
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100">
+          <Link to="/" onClick={onClose} className="flex items-center gap-2">
+            <img
+              src="/brand/logo-transparent.png"
+              alt="DVDs Zone"
+              className="h-8 w-auto max-w-[130px] object-contain"
+            />
           </Link>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] flex items-center justify-center text-white/60 hover:text-white"
+            className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-dark cursor-pointer active:scale-95"
             aria-label="Close menu"
           >
             <X size={16} />
@@ -231,31 +242,32 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
         </div>
 
         {/* Main Links */}
-        <div className="px-3 py-3 space-y-1 border-b border-white/[0.08]">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 px-3 py-1">
-            Menu
+        <div className="px-3 py-3 space-y-1 border-b border-gray-100">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-3 py-1">
+            Menu Navigation
           </p>
-          {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
-            const active = isActive(href);
-            const isFavourites = label === 'Favourites';
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item);
+            const isFavourites = item.label === 'Favourites';
+            const Icon = item.icon;
             return (
               <Link
-                key={href}
-                to={href}
-                onClick={onClose}
+                key={item.label}
+                to={item.href}
+                onClick={(e) => handleMobileNavClick(e, item)}
                 className={cn(
-                  'flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition-colors',
+                  'flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition-colors cursor-pointer',
                   active
-                    ? 'bg-[#f5c518]/15 text-[#f5c518]'
-                    : 'text-white/70 hover:bg-white/[0.06] hover:text-white'
+                    ? 'bg-brand-blue/10 text-brand-blue font-bold'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-dark'
                 )}
               >
                 <div className="flex items-center gap-3">
                   <Icon size={16} />
-                  <span>{label}</span>
+                  <span>{item.label}</span>
                 </div>
                 {isFavourites && favourites.length > 0 && (
-                  <span className="min-w-[18px] h-[18px] rounded-full bg-[#f5c518] text-black text-[10px] font-extrabold flex items-center justify-center px-1">
+                  <span className="min-w-[18px] h-[18px] rounded-full bg-brand-red text-white text-[10px] font-extrabold flex items-center justify-center px-1 shadow">
                     {favourites.length}
                   </span>
                 )}
@@ -266,9 +278,9 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
 
         {/* Categories / Genres Quick Selection */}
         {(genres.length > 0 || categories.length > 0) && (
-          <div className="px-3 py-3 border-b border-white/[0.08]">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 px-3 py-1">
-              Top Genres & Formats
+          <div className="px-3 py-3 border-b border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-3 py-1">
+              Popular Genres & Editions
             </p>
             <div className="flex flex-wrap gap-1.5 px-1 py-1">
               {genres.slice(0, 6).map((genre) => (
@@ -279,10 +291,10 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
                     onClose();
                   }}
                   className={cn(
-                    'text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors',
+                    'text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors cursor-pointer',
                     activeFilter === `genre:${genre.slug}`
-                      ? 'bg-[#f5c518] text-black border-[#f5c518]'
-                      : 'bg-white/[0.04] text-white/65 border-white/[0.06] hover:text-white'
+                      ? 'bg-brand-blue text-white border-brand-blue font-bold shadow-xs'
+                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                   )}
                 >
                   {genre.name}
@@ -296,10 +308,10 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
                     onClose();
                   }}
                   className={cn(
-                    'text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors',
+                    'text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors cursor-pointer',
                     activeFilter === `cat:${cat.slug}`
-                      ? 'bg-[#f5c518] text-black border-[#f5c518]'
-                      : 'bg-white/[0.04] text-white/65 border-white/[0.06] hover:text-white'
+                      ? 'bg-brand-blue text-white border-brand-blue font-bold shadow-xs'
+                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                   )}
                 >
                   {cat.name}
@@ -311,8 +323,8 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
 
         {/* Vault Highlights (Mobile) */}
         {recentProducts.length > 0 && (
-          <div className="px-3 py-3 border-b border-white/[0.08]">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#f5c518]/70 px-3 py-1">
+          <div className="px-3 py-3 border-b border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-brand-blue px-3 py-1">
               Featured Titles
             </p>
             <div className="space-y-2 mt-1">
@@ -321,21 +333,21 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
                   key={product.id}
                   to={`/product/${product.slug}`}
                   onClick={onClose}
-                  className="flex items-center gap-2.5 p-1.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] transition-colors"
+                  className="flex items-center gap-2.5 p-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-150 transition-colors cursor-pointer"
                 >
                   <img
                     src={product.cover_image_url}
                     alt={product.title}
-                    className="w-9 h-12 rounded-md object-cover shrink-0"
+                    className="w-9 h-12 rounded-md object-cover shrink-0 shadow-xs"
                     loading="lazy"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold text-white/90 truncate">
+                    <p className="text-[11px] font-semibold text-dark truncate">
                       {product.title}
                     </p>
-                    <p className="text-[10px] text-white/40">
+                    <p className="text-[10px] text-gray-500">
                       {product.release_year} &bull;{' '}
-                      <span className="text-[#f5c518]">
+                      <span className="text-amber-500 font-bold">
                         {product.imdb_rating ? `${product.imdb_rating.toFixed(1)} ★` : product.format}
                       </span>
                     </p>
@@ -346,22 +358,64 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
           </div>
         )}
 
-        {/* Bottom Support & Guarantee */}
-        <div className="mt-auto px-3 py-4 space-y-2 bg-[#090b10]">
-          {BOTTOM_NAV.map(({ label, href, icon: Icon }) => (
-            <Link
-              key={href}
-              to={href}
-              onClick={onClose}
-              className="flex items-center gap-3 rounded-xl px-3 py-2 text-xs text-white/50 hover:text-white hover:bg-white/[0.05] transition-colors"
-            >
-              <Icon size={15} />
-              <span>{label}</span>
-            </Link>
-          ))}
+        {/* Customer Account Access (Mobile) */}
+        <div className="px-3 py-3 border-b border-gray-100 bg-gray-50/50">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-3 py-1">
+            Account
+          </p>
+          {isAuthenticated && customer ? (
+            <div className="space-y-1 mt-1">
+              <div className="px-3 py-1.5">
+                <p className="text-xs font-bold text-dark truncate">
+                  {customer.full_name || customer.email}
+                </p>
+                <p className="text-[10px] text-gray-400 truncate">{customer.email}</p>
+              </div>
+              <Link
+                to="/account/orders"
+                onClick={onClose}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 hover:text-dark transition-colors"
+              >
+                <Package size={15} className="text-gray-400" />
+                <span>My Orders &amp; Tracking</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  logout();
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+              >
+                <LogOut size={15} />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 px-1 pt-1">
+              <Link
+                to="/login"
+                onClick={onClose}
+                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-brand-blue text-white text-xs font-bold shadow-xs hover:bg-brand-blue-hover transition-colors"
+              >
+                <LogIn size={13} />
+                <span>Sign In</span>
+              </Link>
+              <Link
+                to="/register"
+                onClick={onClose}
+                className="flex items-center justify-center py-2 px-3 rounded-xl border border-gray-200 bg-white text-dark text-xs font-bold shadow-xs hover:bg-gray-50 transition-colors"
+              >
+                <span>Register</span>
+              </Link>
+            </div>
+          )}
+        </div>
 
-          <div className="pt-2 border-t border-white/[0.06] flex items-center gap-2 px-3 text-[10px] text-white/40">
-            <ShieldCheck size={14} className="text-[#f5c518] shrink-0" />
+        {/* Bottom Dispatch Guarantee */}
+        <div className="mt-auto px-4 py-3.5 bg-gray-50 border-t border-gray-150">
+          <div className="flex items-center gap-2 text-[10px] font-medium text-gray-500">
+            <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
             <span>Royal Mail Tracked 24 Dispatch</span>
           </div>
         </div>

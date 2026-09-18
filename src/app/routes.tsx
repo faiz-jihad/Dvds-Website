@@ -64,7 +64,6 @@ const AdminStoreSettings = lazyWithRetry(() => import('../pages/Admin/AdminStore
 const AdminActivity = lazyWithRetry(() => import('../pages/Admin/AdminActivity'), 'AdminActivity');
 const AdminTaxonomy = lazyWithRetry(() => import('../pages/Admin/AdminTaxonomy'), 'AdminTaxonomy');
 const AdminSupport = lazyWithRetry(() => import('../pages/Admin/AdminSupport'), 'AdminSupport');
-const AdminHomepage = lazyWithRetry(() => import('../pages/Admin/AdminHomepage'), 'AdminHomepage');
 const AdminLogin = lazyWithRetry(() => import('../pages/Admin/AdminLogin'), 'AdminLogin');
 const AdminUsers = lazyWithRetry(() => import('../pages/Admin/AdminUsers'), 'AdminUsers');
 const LoginPage = lazyWithRetry(() => import('../pages/Auth/LoginPage'), 'LoginPage');
@@ -143,7 +142,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <AdminDashboard /> },
-      { path: 'homepage', element: <AdminHomepage /> },
+      { path: 'homepage', element: <Navigate to="/admin" replace /> },
       { path: 'products', element: <AdminProducts /> },
       { path: 'orders', element: <AdminOrders /> },
       { path: 'inventory', element: <AdminInventory /> },
