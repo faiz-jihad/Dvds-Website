@@ -560,12 +560,13 @@ export const AdminActivity: React.FC = () => {
   );
 };
 
-const Cell: React.FC<React.PropsWithChildren<{ mono?: boolean; className?: string }>> = ({
+const Cell: React.FC<React.PropsWithChildren<{ mono?: boolean; className?: string; title?: string }>> = ({
   children,
   mono,
   className = '',
+  title,
 }) => (
-  <td className={`p-3.5 align-middle text-xs text-gray-600 ${mono ? 'font-mono' : ''} ${className}`}>
+  <td title={title} className={`p-3.5 align-middle text-xs text-gray-600 ${mono ? 'font-mono' : ''} ${className}`}>
     {children}
   </td>
 );

@@ -370,7 +370,7 @@ export const AdminProducts: React.FC = () => {
   // Completion check per tab
   const tabCompleted: Record<FormTab, boolean> = {
     essentials: Boolean(title.trim() && sku.trim() && coverImageUrl.trim()),
-    media: Boolean(format && ageRating && regionCode.trim() && language.trim() && subtitles.trim() && releaseYear && runtimeMinutes),
+    media: Boolean(format && ageRating && language.trim() && subtitles.trim() && releaseYear && runtimeMinutes),
     pricing: Boolean(price && Number(price) > 0 && (editingProduct || (stockQuantity && Number(stockQuantity) >= 0))),
     publishing: Boolean(status),
   };
@@ -453,11 +453,6 @@ export const AdminProducts: React.FC = () => {
       addToast('Please select the BBFC age rating in Media Specs.', 'error');
       return;
     }
-    if (!regionCode.trim()) {
-      setActiveTab('media');
-      addToast('Please specify the region code in Media Specs.', 'error');
-      return;
-    }
     const parsedYear = Number(releaseYear);
     if (!releaseYear.trim() || !Number.isInteger(parsedYear) || parsedYear < 1888) {
       setActiveTab('media');
@@ -536,7 +531,7 @@ export const AdminProducts: React.FC = () => {
         release_year: parsedYear,
         runtime_minutes: parsedRuntime,
         age_rating: ageRating as AgeRating,
-        region_code: regionCode,
+        region_code: regionCode || 'Region 2',
         language,
         subtitles,
         condition,
@@ -1116,8 +1111,8 @@ export const AdminProducts: React.FC = () => {
           {/* ── TAB 2: MEDIA INFO ───────────────────────────────── */}
           {activeTab === 'media' && (
             <div className="space-y-5">
-              {/* Format, BBFC Rating, Region */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Format, BBFC Rating */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <FieldLabel label="Media Format" required />
                   <StyledSelect value={format} onChange={(v) => setFormat(v as DvdFormat)}>
@@ -1136,21 +1131,6 @@ export const AdminProducts: React.FC = () => {
                     <option value="15">15 — Suitable for 15+</option>
                     <option value="18">18 — Adults Only</option>
                   </StyledSelect>
-                </div>
-                <div>
-                  <FieldLabel label="Region Code" required />
-                  <input
-                    type="text"
-                    value={regionCode}
-                    onChange={(e) => setRegionCode(e.target.value)}
-                    placeholder="2 (UK/Europe)"
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                  />
-                  <QuickChips
-                    options={['2 (UK/Europe)', '0 (All Region)', 'B (Blu-ray UK)']}
-                    current={regionCode}
-                    onSelect={setRegionCode}
-                  />
                 </div>
               </div>
 
@@ -1482,7 +1462,6 @@ export const AdminProducts: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-1.5 mb-1">
                       <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[9px] font-bold uppercase">{format || 'DVD'}</span>
                       {ageRating && <BbfcBadge rating={ageRating as AgeRating} size="xs" />}
-                      <span className="text-[10px] text-gray-400 font-mono">{regionCode}</span>
                     </div>
                     <h4 className="text-xs font-bold text-dark truncate">{title || 'Untitled Film'}</h4>
                     <p className="text-[11px] text-gray-500 font-mono mt-0.5">SKU: {sku || 'DVD-XXXX-000'}</p>
