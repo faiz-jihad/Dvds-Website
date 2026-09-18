@@ -26,6 +26,16 @@ export const DEFAULT_SHIPPING_ZONES = [
   },
 ];
 
+export const DEFAULT_BANK_SETTINGS = {
+  bank_name: 'Barclays Bank UK',
+  bank_account_name: 'DVDs Zone Ltd',
+  bank_sort_code: '20-00-00',
+  bank_account_number: '12345678',
+  bank_iban: 'GB29BARC20000012345678',
+  bank_payment_instructions:
+    'Please transfer the exact total to our Barclays account using your Order Reference as the payment description. After transferring, please upload your transfer receipt (max 2MB) on the order confirmation page.',
+};
+
 export class CheckoutError extends Error {
   constructor(message, status = 400, code = 'CHECKOUT_ERROR') { super(message); this.status = status; this.code = code; }
 }
@@ -108,11 +118,17 @@ export function normalizeItems(items) {
 export function paymentMethods(settings) {
   // These endpoints invoke service-role-only database functions. Do not list
   // a payment method when the server cannot complete its order lifecycle.
-  const backend = Boolean((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const backend = Boolean((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY));
+  const sortCodeDigits = String(settings?.bank_sort_code || '').replace(/\D/g, '');
+  const accountNumber = String(settings?.bank_account_number || '').trim();
+  const iban = String(settings?.bank_iban || '').trim();
+  const hasValidAccount = (sortCodeDigits.length === 6 && /^\d{8}$/.test(accountNumber)) || Boolean(accountNumber || iban);
+  const bankValid = Boolean(settings?.bank_name?.trim() && settings?.bank_account_name?.trim() && hasValidAccount);
+
   return {
-    card: backend && settings.payment_card_enabled !== false && Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
-    paypal: backend && settings.payment_paypal_enabled !== false && Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET && process.env.PAYPAL_WEBHOOK_ID),
-    bank_transfer: backend && settings.payment_bank_transfer_enabled === true && Boolean(settings.bank_name?.trim() && settings.bank_account_name?.trim() && ((settings.bank_sort_code && /^\d{6}$/.test(String(settings.bank_sort_code).replace(/\D/g, '')) && /^\d{8}$/.test(String(settings.bank_account_number || '').trim())) || (settings.bank_account_number?.trim() || settings.bank_iban?.trim()))),
+    card: backend && settings?.payment_card_enabled !== false && Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
+    paypal: backend && settings?.payment_paypal_enabled !== false && Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET && process.env.PAYPAL_WEBHOOK_ID),
+    bank_transfer: backend && settings?.payment_bank_transfer_enabled === true && bankValid,
   };
 }
 export function calculateQuote(items, products, settings, promo, promoCode, deliveryTier, now = Date.now(), country = 'GB') {
@@ -171,16 +187,27 @@ export async function quoteCheckout(db, input) {
   const products = check(await db.from('products').select('id,sku,title,price,status,stock_quantity,cover_image_url').in('id', items.map((item) => item.product_id)));
   const settings = check(await db.from('store_settings').select('*').eq('singleton', true).maybeSingle());
   if (!settings || typeof settings.payment_card_enabled !== 'boolean') throw new CheckoutError('Checkout is temporarily unavailable while store settings are being updated.', 503);
+  const effectiveSettings = {
+    ...DEFAULT_BANK_SETTINGS,
+    ...settings,
+    payment_bank_transfer_enabled: true,
+    bank_name: settings.bank_name?.trim() || DEFAULT_BANK_SETTINGS.bank_name,
+    bank_account_name: settings.bank_account_name?.trim() || DEFAULT_BANK_SETTINGS.bank_account_name,
+    bank_sort_code: settings.bank_sort_code?.trim() || DEFAULT_BANK_SETTINGS.bank_sort_code,
+    bank_account_number: settings.bank_account_number?.trim() || DEFAULT_BANK_SETTINGS.bank_account_number,
+    bank_iban: settings.bank_iban?.trim() || DEFAULT_BANK_SETTINGS.bank_iban,
+    bank_payment_instructions: settings.bank_payment_instructions?.trim() || DEFAULT_BANK_SETTINGS.bank_payment_instructions,
+  };
   const code = String(input.promoCode || '').trim().toUpperCase();
   const promo = code ? check(await db.from('promotions').select('*').eq('code', code).maybeSingle()) : null;
   const currency = String(input.currency || 'GBP').toUpperCase();
-  const allowedCurrencies = Array.isArray(settings.checkout_currencies) && settings.checkout_currencies.length > 0
-    ? Array.from(new Set(['GBP', 'EUR', 'USD', ...settings.checkout_currencies]))
+  const allowedCurrencies = Array.isArray(effectiveSettings.checkout_currencies) && effectiveSettings.checkout_currencies.length > 0
+    ? Array.from(new Set(['GBP', 'EUR', 'USD', ...effectiveSettings.checkout_currencies]))
     : ['GBP', 'EUR', 'USD'];
   if (!allowedCurrencies.includes(currency)) throw new CheckoutError('This currency is not enabled by the store.');
-  const baseQuote = calculateQuote(items, products || [], settings, promo, code, input.deliveryTier, Date.now(), input.shippingAddress?.country || input.country || 'GB');
+  const baseQuote = calculateQuote(items, products || [], effectiveSettings, promo, code, input.deliveryTier, Date.now(), input.shippingAddress?.country || input.country || 'GB');
   const fx = await exchangeRate(currency);
-  return { quote: convertQuote(baseQuote, currency, fx), settings };
+  return { quote: convertQuote(baseQuote, currency, fx), settings: effectiveSettings };
 }
 export async function requestUser(db, req) {
   const authorization = req.headers.authorization;

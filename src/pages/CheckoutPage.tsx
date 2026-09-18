@@ -990,7 +990,7 @@ export const CheckoutPage: React.FC = () => {
               </p>
               <div className="space-y-3">
                 {methods.map((option) => {
-                  const available = Boolean(quote?.methods[option.id]);
+                  const available = option.id === "bank_transfer" ? true : Boolean(quote?.methods[option.id]);
                   const selected = available && method === option.id;
                   const Icon = option.icon;
                   return (
@@ -1254,7 +1254,7 @@ export const CheckoutPage: React.FC = () => {
                 busy ||
                 quoteQuery.isFetching ||
                 quoteQuery.isError ||
-                !quote?.methods[method] ||
+                (method !== "bank_transfer" && !quote?.methods[method]) ||
                 Boolean(attempt)
               }
               className="w-full flex items-center justify-between gap-3 rounded-xl bg-brand-blue text-white px-5 py-4 mt-6 text-sm font-semibold hover:brightness-95 disabled:opacity-45 disabled:cursor-not-allowed shadow-md transition-all active:scale-[0.99]"
