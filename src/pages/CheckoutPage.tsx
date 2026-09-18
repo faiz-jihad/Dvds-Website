@@ -11,7 +11,6 @@ import {
   Lock,
   MapPin,
   Plus,
-  ShieldCheck,
   Truck,
   User,
   Wallet,
@@ -1288,24 +1287,6 @@ export const CheckoutPage: React.FC = () => {
                 ? "Your order will await payment confirmation before dispatch."
                 : "You will review and complete payment with your selected provider."}
             </p>
-            {/* Trust & Security Badges Strip */}
-            <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-gray-100 text-center">
-              <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-gray-50 text-[11px] text-gray-600">
-                <Lock size={14} className="text-brand-blue mb-1" />
-                <span className="font-semibold text-gray-800">SSL 256-Bit</span>
-                <span className="text-[9px] text-gray-400">Encrypted</span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-gray-50 text-[11px] text-gray-600">
-                <Building2 size={14} className="text-brand-blue mb-1" />
-                <span className="font-semibold text-gray-800">Direct Bank</span>
-                <span className="text-[9px] text-gray-400">Manual Verification</span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-gray-50 text-[11px] text-gray-600">
-                <ShieldCheck size={14} className="text-emerald-600 mb-1" />
-                <span className="font-semibold text-gray-800">100% Vault</span>
-                <span className="text-[9px] text-gray-400">Authentic DVDs</span>
-              </div>
-            </div>
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-5 pt-5 border-t border-gray-100">
               <Truck size={15} /> Delivery to {countryName(address.country)}
             </div>
