@@ -183,10 +183,10 @@ export const Navbar: React.FC = () => {
       <div className="max-w-container mx-auto flex min-w-0 max-w-full items-center justify-between gap-1 px-2 sm:gap-4 sm:px-4 lg:px-8">
         {/* LEFT: Mobile Menu Trigger + Brand Logo */}
         <div className="flex min-w-0 max-w-full items-center gap-1 shrink-0">
-          {/* Mobile menu trigger */}
+          {/* Mobile menu trigger (hidden on mobile; mobile uses bottom navigation bar) */}
           <button
             onClick={openMobileNav}
-            className="xl:hidden h-10 w-10 shrink-0 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className="hidden md:flex xl:hidden h-10 w-10 shrink-0 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors cursor-pointer items-center justify-center"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
@@ -206,157 +206,157 @@ export const Navbar: React.FC = () => {
           </Link>
         </div>
 
-        {/* CENTER: Primary Navigation Links (Desktop) */}
-        <nav className="hidden xl:flex items-center gap-1 xl:gap-2 text-[13.5px] font-medium text-gray-700">
-          <Link
-            to="/shop"
-            className={cn(
-              "px-3 py-1.5 rounded-lg transition-all whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-dark/10",
-              isShopActive
-                ? "text-dark font-bold bg-gray-100 shadow-2xs"
-                : "text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium",
-            )}
-          >
-            Shop
-          </Link>
-
-          <Link
-            to="/shop?filter=new"
-            className={cn(
-              "px-3 py-1.5 rounded-lg transition-all whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-dark/10",
-              isNewActive
-                ? "text-dark font-bold bg-gray-100 shadow-2xs"
-                : "text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium",
-            )}
-          >
-            New Releases
-          </Link>
-
-          <Link
-            to="/shop?filter=bestseller"
-            className={cn(
-              "px-3 py-1.5 rounded-lg transition-all whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-dark/10",
-              isBestsellerActive
-                ? "text-dark font-bold bg-gray-100 shadow-2xs"
-                : "text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium",
-            )}
-          >
-            Best Sellers
-          </Link>
-
-          {/* Interactive Genres Dropdown Menu */}
-          <div ref={genresMenuRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setGenresDropdownOpen(!genresDropdownOpen)}
-              aria-expanded={genresDropdownOpen}
-              aria-controls="desktop-genres-menu"
+        {/* CENTER: Primary Navigation Links (Desktop - shown on interior pages where there is no home sidebar) */}
+        {location.pathname !== '/' && (
+          <nav className="hidden xl:flex items-center gap-1 xl:gap-2 text-[13.5px] font-medium text-gray-700">
+            <Link
+              to="/shop"
               className={cn(
-                "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-dark/10",
-                genresDropdownOpen || isGenresActive
+                "px-3 py-1.5 rounded-lg transition-all whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-dark/10",
+                isShopActive
                   ? "text-dark font-bold bg-gray-100 shadow-2xs"
                   : "text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium",
               )}
             >
-              <span>Genres</span>
-              <ChevronDown
+              Shop
+            </Link>
+
+            <Link
+              to="/shop?filter=new"
+              className={cn(
+                "px-3 py-1.5 rounded-lg transition-all whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-dark/10",
+                isNewActive
+                  ? "text-dark font-bold bg-gray-100 shadow-2xs"
+                  : "text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium",
+              )}
+            >
+              New Releases
+            </Link>
+
+            <Link
+              to="/shop?filter=bestseller"
+              className={cn(
+                "px-3 py-1.5 rounded-lg transition-all whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-dark/10",
+                isBestsellerActive
+                  ? "text-dark font-bold bg-gray-100 shadow-2xs"
+                  : "text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium",
+              )}
+            >
+              Best Sellers
+            </Link>
+
+            {/* Interactive Genres Dropdown Menu */}
+            <div ref={genresMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setGenresDropdownOpen(!genresDropdownOpen)}
+                aria-expanded={genresDropdownOpen}
+                aria-controls="desktop-genres-menu"
                 className={cn(
-                  "w-3.5 h-3.5 text-gray-400 transition-transform duration-200",
-                  genresDropdownOpen && "rotate-180 text-dark",
+                  "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-dark/10",
+                  genresDropdownOpen || isGenresActive
+                    ? "text-dark font-bold bg-gray-100 shadow-2xs"
+                    : "text-gray-600 hover:text-dark hover:bg-gray-100/70 font-medium",
                 )}
-              />
-            </button>
-
-            {genresDropdownOpen && (
-              <div
-                id="desktop-genres-menu"
-                className="absolute left-0 top-full mt-2 w-[min(20rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden bg-white border border-gray-200 rounded-2xl shadow-xl p-2.5 text-dark z-50 animate-in fade-in slide-in-from-top-2 duration-150"
               >
-                <div className="px-3 py-2 border-b border-gray-100 mb-1">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400">
-                    Curated Archive Genres
-                  </span>
-                </div>
-                <div className="space-y-0.5">
-                  {GENRE_NAV_ITEMS.map((item) => {
-                    const isActive = item.slug
-                      ? location.pathname === "/shop" &&
-                        location.search.includes(`genre=${item.slug}`)
-                      : location.pathname === "/shop" &&
-                        location.search.includes("category=tv-box-sets");
-                    return (
-                      <Link
-                        key={item.name}
-                        to={item.href || `/shop?genre=${item.slug}`}
-                        onClick={() => setGenresDropdownOpen(false)}
-                        className={cn(
-                          "flex flex-col px-3 py-2 rounded-xl transition group outline-none",
-                          isActive
-                            ? "bg-gray-100 text-dark font-bold"
-                            : "hover:bg-gray-50",
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={cn(
-                              "text-xs",
-                              isActive
-                                ? "font-bold text-dark"
-                                : "font-medium text-gray-700 group-hover:text-dark",
-                            )}
-                          >
-                            {item.name}
-                          </span>
-                          <ArrowRight
-                            className={cn(
-                              "w-3.5 h-3.5 transition-all",
-                              isActive
-                                ? "text-dark translate-x-0.5"
-                                : "text-gray-300 group-hover:text-dark group-hover:translate-x-0.5",
-                            )}
-                          />
-                        </div>
-                        <span className="text-[11px] text-gray-400 mt-0.5 font-normal">
-                          {item.desc}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-                <div className="mt-1 pt-2 border-t border-gray-100 px-3 py-1 text-center">
-                  <Link
-                    to="/shop"
-                    onClick={() => setGenresDropdownOpen(false)}
-                    className="text-xs font-bold text-dark hover:underline inline-flex items-center gap-1"
-                  >
-                    <span>Browse Complete Catalogue</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
+                <span>Genres</span>
+                <ChevronDown
+                  className={cn(
+                    "w-3.5 h-3.5 text-gray-400 transition-transform duration-200",
+                    genresDropdownOpen && "rotate-180 text-dark",
+                  )}
+                />
+              </button>
 
-          {/* Prominent Special Offers Link */}
-          <Link
-            to="/shop?filter=sale"
-            className={cn(
-              "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-red-200",
-              isSaleActive
-                ? "text-brand-red font-bold bg-red-50/90 border border-red-200/80 shadow-2xs"
-                : "text-gray-700 hover:text-brand-red hover:bg-red-50/50 font-medium",
-            )}
-          >
-            <Tag className="w-3.5 h-3.5 text-brand-red shrink-0" />
-            <span>Special Offers</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider bg-brand-red text-white shadow-2xs">
-              Sale
-            </span>
-          </Link>
-        </nav>
+              {genresDropdownOpen && (
+                <div
+                  id="desktop-genres-menu"
+                  className="absolute left-0 top-full mt-2 w-[min(20rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden bg-white border border-gray-200 rounded-2xl shadow-xl p-2.5 text-dark z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                >
+                  <div className="px-3 py-2 border-b border-gray-100 mb-1">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400">
+                      Curated Archive Genres
+                    </span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {GENRE_NAV_ITEMS.map((item) => {
+                      const isActive = item.slug
+                        ? location.pathname === '/shop' && location.search.includes(`genre=${item.slug}`)
+                        : location.pathname === '/shop' && location.search.includes('category=tv-box-sets');
+                      const targetHref = item.href || `/shop?genre=${item.slug}`;
+
+                      return (
+                        <Link
+                          key={item.name}
+                          to={targetHref}
+                          onClick={() => setGenresDropdownOpen(false)}
+                          className={cn(
+                            "flex flex-col px-3 py-2 rounded-xl transition-all group",
+                            isActive
+                              ? "bg-gray-100 font-bold text-dark"
+                              : "text-gray-700 hover:bg-gray-50 hover:text-dark",
+                          )}
+                        >
+                          <div className="flex items-center justify-between text-xs font-semibold">
+                            <span>{item.name}</span>
+                            <ArrowRight
+                              className={cn(
+                                "w-3.5 h-3.5 transition-all",
+                                isActive
+                                  ? "text-dark translate-x-0.5"
+                                  : "text-gray-300 group-hover:text-dark group-hover:translate-x-0.5",
+                              )}
+                            />
+                          </div>
+                          <span className="text-[11px] text-gray-400 mt-0.5 font-normal">
+                            {item.desc}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-1 pt-2 border-t border-gray-100 px-3 py-1 text-center">
+                    <Link
+                      to="/shop"
+                      onClick={() => setGenresDropdownOpen(false)}
+                      className="text-xs font-bold text-dark hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>Browse Complete Catalogue</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Prominent Special Offers Link */}
+            <Link
+              to="/shop?filter=sale"
+              className={cn(
+                "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-red-200",
+                isSaleActive
+                  ? "text-brand-red font-bold bg-red-50/90 border border-red-200/80 shadow-2xs"
+                  : "text-gray-700 hover:text-brand-red hover:bg-red-50/50 font-medium",
+              )}
+            >
+              <Tag className="w-3.5 h-3.5 text-brand-red shrink-0" />
+              <span>Special Offers</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider bg-brand-red text-white shadow-2xs">
+                Sale
+              </span>
+            </Link>
+          </nav>
+        )}
 
         {/* SEARCH AFFORDANCE: Clean, interactive retail search bar */}
-        <div className="hidden 2xl:flex flex-1 min-w-0 max-w-xs mx-2">
+        <div
+          className={cn(
+            "min-w-0 transition-all",
+            location.pathname === '/'
+              ? "hidden md:flex flex-1 max-w-xl mx-4 sm:mx-6"
+              : "hidden 2xl:flex flex-1 max-w-xs mx-2",
+          )}
+        >
           <button
             type="button"
             onClick={openSearch}
@@ -377,11 +377,14 @@ export const Navbar: React.FC = () => {
 
         {/* RIGHT: Search, Account, Basket (desktop extras stay out of the compact header) */}
         <div className="flex min-w-0 max-w-full items-center gap-0.5 shrink-0">
-          {/* Search Trigger */}
+          {/* Search Trigger (hidden on mobile; on desktop hidden when search bar is visible) */}
           <button
             type="button"
             onClick={openSearch}
-            className="h-10 w-10 shrink-0 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+            className={cn(
+              "h-10 w-10 shrink-0 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-full transition-colors cursor-pointer items-center justify-center",
+              location.pathname === '/' ? "hidden" : "hidden sm:flex 2xl:hidden",
+            )}
             aria-label="Search catalogue"
             title="Search films"
           >
@@ -403,13 +406,13 @@ export const Navbar: React.FC = () => {
             )}
           </Link>
 
-          {/* Customer Notifications Menu (desktop only; mobile access is in the drawer) */}
-          <div className="hidden xl:block">
+          {/* Customer Notifications Menu */}
+          <div className="block">
             <CustomerNotificationMenu />
           </div>
 
           {/* Customer Profile Dropdown */}
-          <div ref={accountMenuRef} className="relative">
+          <div ref={accountMenuRef} className="sm:relative">
             <button
               type="button"
               onClick={() => setAccountDropdownOpen((prev) => !prev)}
@@ -437,7 +440,7 @@ export const Navbar: React.FC = () => {
             {accountDropdownOpen && (
               <div
                 id="mobile-safe-account-menu"
-                className="absolute right-0 top-full mt-2 w-[min(19rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] bg-white border border-gray-200 rounded-2xl shadow-2xl p-2.5 text-gray-800 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                className="absolute top-full mt-1.5 inset-x-2 sm:inset-x-auto sm:right-0 sm:mt-2 w-auto sm:w-[320px] max-w-[calc(100vw-1rem)] bg-white border border-gray-200 rounded-2xl shadow-2xl p-2.5 text-gray-800 z-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-[calc(100vh-80px)] overflow-y-auto"
               >
                 {isAuthenticated && customer ? (
                   <>
@@ -637,24 +640,7 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          {/* Shopping Basket: Clean round icon with top badge on mobile, capsule on tablet/desktop */}
-          {/* Mobile Cart Icon (< sm) */}
-          <button
-            type="button"
-            onClick={openCartDrawer}
-            className="sm:hidden relative h-10 w-10 shrink-0 text-gray-700 hover:text-brand-blue hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-            aria-label="Open shopping basket"
-            title="Shopping Basket"
-          >
-            <ShoppingBag className="w-5 h-5 text-gray-800" />
-            {itemCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-1 bg-brand-blue text-white text-[10px] font-bold rounded-full flex items-center justify-center font-mono shadow-xs">
-                {itemCount}
-              </span>
-            )}
-          </button>
-
-          {/* Desktop/Tablet Cart Capsule (sm+) */}
+          {/* Desktop/Tablet Cart Capsule (sm+; hidden on mobile, mobile cart is in the bottom bar) */}
           <button
             type="button"
             onClick={openCartDrawer}

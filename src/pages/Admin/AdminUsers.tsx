@@ -252,7 +252,7 @@ export const AdminUsers: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+          <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-left border-collapse">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/70 text-[11px] font-mono uppercase tracking-wider text-gray-500">

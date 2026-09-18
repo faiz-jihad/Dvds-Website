@@ -36,7 +36,6 @@ export const AdminNotificationMenu: React.FC = () => {
   const clearAll = useNotificationStore((state) => state.clearAll);
   const permission = useNotificationStore((state) => state.permission);
   const requestPermission = useNotificationStore((state) => state.requestPermission);
-  const sendTestNotification = useNotificationStore((state) => state.sendTestNotification);
 
   // Close when clicking outside
   useEffect(() => {
@@ -283,15 +282,6 @@ export const AdminNotificationMenu: React.FC = () => {
               <span>Real-time Sync Active</span>
             </span>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => sendTestNotification('admin')}
-                className="font-semibold text-slate-600 hover:text-slate-900 hover:underline cursor-pointer"
-                title="Trigger a test alert with sound and toast"
-              >
-                Test Alert
-              </button>
-              <span>•</span>
               <button
                 type="button"
                 onClick={() => {

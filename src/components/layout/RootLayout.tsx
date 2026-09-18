@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, Link } from 'react-router-dom';
 import { AnnouncementBar } from './AnnouncementBar';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
@@ -10,8 +10,10 @@ import { MobileNavDrawer } from './MobileNavDrawer';
 import { ToastContainer } from '../common/Toast';
 import { publicApi } from '../../lib/publicApi';
 import { useCartStore } from '../../stores/useCartStore';
+import { useUiStore } from '../../stores/useUiStore';
+import { useFavouritesStore } from '../../stores/useFavouritesStore';
 import { StoreDataState } from '../common/StoreDataState';
-
+import { Home, Film, Heart, ShoppingBag, Menu, Search } from 'lucide-react';
 
 export const RootLayout: React.FC = () => {
   const { pathname } = useLocation();
@@ -47,14 +49,15 @@ export const RootLayout: React.FC = () => {
   }, [pathname]);
 
   const isHome = pathname === '/';
+  const { openCartDrawer, openMobileNav, isMobileNavOpen, openSearch } = useUiStore();
+  const cartCount = useCartStore((s) => s.getItemCount());
+  const favourites = useFavouritesStore((s) => s.favourites);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white text-dark overflow-x-clip w-full max-w-[100vw]">
-      {/* Top Announcements — Royal Mail delivery ticker & dispatch guarantees */}
-      <AnnouncementBar />
-
-      {/* Main Sticky Enterprise Navbar */}
-      <Navbar />
+    <div className={`flex flex-col min-h-screen ${isHome ? 'bg-[#07090E] text-white' : 'bg-white text-dark'} overflow-x-clip w-full max-w-[100vw]`}>
+      {/* Top Announcements & Main Navbar — rendered for interior pages */}
+      {!isHome && <AnnouncementBar />}
+      {!isHome && <Navbar />}
 
       {/* Primary Page Content */}
       <main className="flex-1">
@@ -71,21 +74,111 @@ export const RootLayout: React.FC = () => {
             }}
           />
         ) : (
-          <React.Suspense fallback={<div className="min-h-[50vh] flex items-center justify-center" role="status"><span className="sr-only">Loading page</span></div>}>
+          <React.Suspense fallback={<div className={`min-h-[50vh] flex items-center justify-center ${isHome ? 'bg-[#07090E]' : ''}`} role="status"><span className="sr-only">Loading page</span></div>}>
             <Outlet />
           </React.Suspense>
         )}
       </main>
 
-      {/* Official Enterprise Footer with Companies House, Barclays Bank, & Trust Strips */}
-      <Footer />
-
+      {/* Official Enterprise Footer for interior pages */}
+      {!isHome && <Footer />}
 
       {/* Interactive Overlays & Drawers — always active for cart/search */}
       <CartDrawer />
       <SearchOverlay />
       <MobileNavDrawer />
       <ToastContainer />
+
+      {/* Floating Action Search Button (WhatsApp style floating button on mobile) */}
+      {!paymentRoute && (
+        <button
+          type="button"
+          onClick={openSearch}
+          aria-label="Search catalogue"
+          title="Search films & box sets"
+          className="md:hidden fixed bottom-[72px] right-4 z-40 w-12 h-12 rounded-full bg-brand-blue hover:bg-brand-blue-hover text-white shadow-lg shadow-brand-blue/35 border-2 border-white flex items-center justify-center cursor-pointer active:scale-90 transition-all duration-200 group"
+        >
+          <Search size={21} className="group-hover:scale-110 transition-transform text-white stroke-[2.5]" />
+          <span className="sr-only">Search catalogue</span>
+        </button>
+      )}
+
+      {/* Global Mobile Bottom Navigation Bar — hidden on payment/checkout routes */}
+      {!paymentRoute && (
+        <nav
+          aria-label="Mobile Navigation"
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-200 flex items-center justify-around px-2 py-1.5 shadow-2xl text-gray-500"
+        >
+          {/* Home */}
+          <Link
+            to="/"
+            className={`flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${
+              isHome ? 'text-brand-blue font-bold' : 'text-gray-500 hover:text-dark'
+            }`}
+          >
+            <Home size={18} />
+            <span>Home</span>
+          </Link>
+
+          {/* Browse / Catalogue */}
+          <Link
+            to="/shop"
+            className={`flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${
+              pathname.startsWith('/shop') ? 'text-brand-blue font-bold' : 'text-gray-500 hover:text-dark'
+            }`}
+          >
+            <Film size={18} />
+            <span>Browse</span>
+          </Link>
+
+          {/* Favourites with Red Badge */}
+          <Link
+            to="/favourites"
+            className={`relative flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${
+              pathname.startsWith('/favourites') ? 'text-brand-blue font-bold' : 'text-gray-500 hover:text-dark'
+            }`}
+          >
+            <div className="relative">
+              <Heart size={18} />
+              {favourites.length > 0 && (
+                <span className="absolute -top-1.5 -right-2.5 min-w-[15px] h-[15px] rounded-full bg-brand-red text-white text-[9px] font-extrabold flex items-center justify-center px-0.5 leading-none shadow">
+                  {favourites.length}
+                </span>
+              )}
+            </div>
+            <span>Saved</span>
+          </Link>
+
+          {/* Basket with Blue Badge */}
+          <button
+            type="button"
+            onClick={openCartDrawer}
+            className="relative flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold text-gray-500 hover:text-dark transition-colors cursor-pointer active:scale-95"
+          >
+            <div className="relative">
+              <ShoppingBag size={18} />
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2.5 min-w-[15px] h-[15px] rounded-full bg-brand-blue text-white text-[9px] font-extrabold flex items-center justify-center px-0.5 leading-none shadow">
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
+            </div>
+            <span>Basket</span>
+          </button>
+
+          {/* Menu — opens global MobileNavDrawer */}
+          <button
+            type="button"
+            onClick={openMobileNav}
+            className={`flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer active:scale-95 ${
+              isMobileNavOpen ? 'text-brand-blue font-bold' : 'text-gray-500 hover:text-dark'
+            }`}
+          >
+            <Menu size={18} />
+            <span>Menu</span>
+          </button>
+        </nav>
+      )}
     </div>
   );
 };

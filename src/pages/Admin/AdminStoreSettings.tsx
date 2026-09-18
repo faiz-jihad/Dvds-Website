@@ -397,23 +397,6 @@ export const AdminStoreSettings: React.FC = () => {
                   placeholder="e.g. New Releases"
                 />
               </div>
-
-              {/* Live Preview of Hero Headline */}
-              <div className="mt-4 p-5 rounded-md bg-[#111111] text-white border border-neutral-800">
-                <div className="text-[10px] font-mono uppercase text-neutral-400 mb-2">
-                  Live Typography Preview
-                </div>
-                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/10 text-white text-[10px] font-semibold mb-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-blue" />
-                  <span>{settings.hero_badge_text}</span>
-                </div>
-                <h3 className="font-display font-extrabold text-3xl sm:text-4xl leading-tight">
-                  {settings.hero_headline_line1} <span className="text-brand-blue">{settings.hero_headline_highlight}</span>
-                </h3>
-                <p className="mt-2 text-xs text-neutral-400 line-clamp-2 max-w-xl">
-                  {settings.hero_subheadline}
-                </p>
-              </div>
             </div>
           </div>
         )}

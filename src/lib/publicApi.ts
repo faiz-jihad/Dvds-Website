@@ -127,10 +127,47 @@ export const publicApi = {
     const sb = requireClient();
     const { data: auth, error: authError } = await sb.auth.getUser();
     if (authError || !auth?.user) throw new Error('Sign in to view your order history.');
-    const { data, error } = await sb.from('orders').select('*, items:order_items(*)')
-      .eq('user_id', auth.user.id).order('created_at', { ascending: false });
-    if (error) throw new Error('Your orders could not be loaded. Please retry.');
-    return data || [];
+
+    let rawOrders: any[] = [];
+    // Attempt to join product to get latest cover image and details
+    const joined = await sb
+      .from('orders')
+      .select('*, items:order_items(*, product:products(cover_image_url))')
+      .eq('user_id', auth.user.id)
+      .order('created_at', { ascending: false });
+
+    if (!joined.error && joined.data) {
+      rawOrders = joined.data;
+    } else {
+      // Fallback query if nested relation fails
+      const fallback = await sb
+        .from('orders')
+        .select('*, items:order_items(*)')
+        .eq('user_id', auth.user.id)
+        .order('created_at', { ascending: false });
+      if (fallback.error) throw new Error('Your orders could not be loaded. Please retry.');
+      rawOrders = fallback.data || [];
+    }
+
+    return rawOrders.map((order: any) => ({
+      ...order,
+      subtotal: Number(order.subtotal || 0),
+      shipping_amount: Number(order.shipping_amount || 0),
+      discount_amount: Number(order.discount_amount || 0),
+      total_amount: Number(order.total_amount || 0),
+      refunded_amount: Number(order.refunded_amount || 0),
+      shipping_address: order.shipping_address || {},
+      items: (order.items || []).map((item: any) => ({
+        ...item,
+        unit_price: Number(item.unit_price || 0),
+        total_price: Number(item.total_price || 0),
+        cover_image_url:
+          item.cover_image_url ||
+          item.product_snapshot?.cover_image_url ||
+          item.product?.cover_image_url ||
+          undefined,
+      })),
+    })) as Order[];
   },
 
   async getMyProfile(): Promise<Profile> {

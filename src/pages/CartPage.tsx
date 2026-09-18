@@ -218,8 +218,7 @@ export const CartPage: React.FC = () => {
               <Button
                 variant="primary"
                 size="lg"
-                className="w-full justify-between"
-                badgeText="100% SECURE"
+                className="w-full justify-center gap-2"
                 onClick={() => {
                   if (!customer) {
                     navigate('/login?redirect=/checkout', { state: { from: '/checkout' } });

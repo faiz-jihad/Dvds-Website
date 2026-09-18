@@ -7,13 +7,18 @@ import {
   Building2,
   Check,
   CheckCircle2,
+  Clock,
   CreditCard,
+  ExternalLink,
+  FileText,
   Lock,
   MapPin,
   Plus,
+  RefreshCw,
   Truck,
   User,
   Wallet,
+  X,
 } from "lucide-react";
 import { useCartStore } from "../stores/useCartStore";
 import { checkoutApi, currentCheckoutAttempt } from "../lib/checkoutApi";
@@ -63,7 +68,7 @@ const methods = [
     icon: Building2,
     description: "Transfer directly to our company bank account.",
     detail:
-      "Place your order to receive bank details and a unique reference. Dispatch starts after payment is confirmed.",
+      "Place your order to receive bank details and a unique reference. Shipping begins after payment is confirmed.",
     badge: "Manual confirmation",
   },
 ];
@@ -536,9 +541,9 @@ export const CheckoutPage: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <Link
           to="/cart"
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-brand-blue"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-600 bg-white border border-gray-200 hover:border-gray-300 hover:text-dark transition-all shadow-2xs"
         >
-          <ArrowLeft size={16} /> Back to basket
+          <ArrowLeft size={14} /> <span>Back to basket</span>
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-4 mt-6 mb-8">
           <div>
@@ -558,52 +563,65 @@ export const CheckoutPage: React.FC = () => {
         </div>
         {attempt && (
           <section
-            className="rounded-2xl border border-blue-200 bg-blue-50 p-5 mb-6"
+            className="rounded-2xl border border-blue-200/90 bg-blue-50/70 p-5 sm:p-6 mb-6 shadow-xs"
             aria-label="Existing checkout"
           >
-            <h2 className="font-semibold">
-              You have an order awaiting payment
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Continue your existing order, or cancel it to release the reserved
-              items and change your checkout.
-            </p>
-            <div className="flex flex-wrap gap-4 mt-4 text-sm font-semibold">
-              {attempt.orderId && (
-                <Link
-                  className="text-brand-blue underline"
-                  to={`/order-success/${attempt.orderId}`}
-                >
-                  View order status
-                </Link>
-              )}
-              {attempt.url && (
-                <a className="text-brand-blue underline" href={attempt.url}>
-                  Resume payment
-                </a>
-              )}
-              {!attempt.url && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={retryAttempt}
-                  className="text-brand-blue underline disabled:opacity-50"
-                >
-                  Retry saved checkout
-                </button>
-              )}
-              {attempt.orderId && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={cancelAttempt}
-                  className="text-gray-700 underline disabled:opacity-50"
-                >
-                  {busy
-                    ? "Please wait..."
-                    : "Cancel this order and edit checkout"}
-                </button>
-              )}
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 border border-blue-200 text-brand-blue flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                <Clock size={19} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-bold text-base text-dark">
+                  You have an order awaiting payment
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed">
+                  Continue your existing order, or cancel it to release the reserved
+                  items and change your checkout.
+                </p>
+
+                <div className="flex flex-wrap items-center gap-2.5 mt-4">
+                  {attempt.url && (
+                    <a
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-brand-blue hover:bg-brand-blue-hover text-white border border-brand-blue shadow-xs transition-all cursor-pointer"
+                      href={attempt.url}
+                    >
+                      <span>Resume Payment</span>
+                      <ExternalLink size={13} />
+                    </a>
+                  )}
+                  {attempt.orderId && (
+                    <Link
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white text-dark border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-2xs transition-all cursor-pointer"
+                      to={`/order-success/${attempt.orderId}`}
+                    >
+                      <FileText size={13} className="text-gray-500" />
+                      <span>View Order Status</span>
+                    </Link>
+                  )}
+                  {!attempt.url && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={retryAttempt}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-brand-blue hover:bg-brand-blue-hover text-white border border-brand-blue shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw size={13} className={busy ? "animate-spin" : ""} />
+                      <span>Retry Saved Checkout</span>
+                    </button>
+                  )}
+                  {attempt.orderId && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={cancelAttempt}
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-red-600 border border-red-200 hover:bg-red-50 hover:border-red-300 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <X size={14} />
+                      <span>{busy ? "Please wait..." : "Cancel Order & Edit"}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </section>
         )}
@@ -638,9 +656,10 @@ export const CheckoutPage: React.FC = () => {
                     <Link
                       to="/account/addresses"
                       target="_blank"
-                      className="text-xs text-brand-blue hover:underline"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-brand-blue bg-white border border-blue-200 hover:bg-blue-50 transition-colors shadow-2xs"
                     >
-                      Manage addresses ↗
+                      <span>Manage addresses</span>
+                      <ExternalLink size={11} />
                     </Link>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -739,7 +758,7 @@ export const CheckoutPage: React.FC = () => {
                 </span>
                 <Link
                   to="/login?redirect=/checkout"
-                  className="text-brand-blue hover:underline font-medium"
+                  className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold text-brand-blue bg-white border border-blue-200 hover:bg-blue-50 transition-colors shadow-2xs"
                 >
                   Switch account
                 </Link>
@@ -759,7 +778,7 @@ export const CheckoutPage: React.FC = () => {
                       );
                       if (current) applySavedAddress(current);
                     }}
-                    className="underline text-brand-blue font-medium ml-2 shrink-0"
+                    className="px-2.5 py-1 rounded-lg text-xs font-semibold text-brand-blue bg-white border border-blue-200 hover:bg-blue-50 transition-colors ml-2 shrink-0 shadow-2xs cursor-pointer"
                   >
                     Reset
                   </button>
@@ -1154,7 +1173,7 @@ export const CheckoutPage: React.FC = () => {
                 type="button"
                 disabled={busy || Boolean(attempt)}
                 onClick={() => setPromo(promoDraft.trim().toUpperCase())}
-                className="text-sm font-medium border border-gray-200 rounded-lg px-3 disabled:opacity-50"
+                className="text-xs font-bold border border-gray-300 bg-white hover:bg-gray-50 text-dark rounded-lg px-4 py-2 transition-colors disabled:opacity-50 cursor-pointer shadow-2xs shrink-0"
               >
                 Apply
               </button>
@@ -1167,9 +1186,10 @@ export const CheckoutPage: React.FC = () => {
                   setPromo("");
                   setPromoDraft("");
                 }}
-                className="text-xs text-brand-blue underline mb-3"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg px-2.5 py-1 mb-3 transition-colors cursor-pointer shadow-2xs"
               >
-                Remove {promo}
+                <X size={12} />
+                <span>Remove {promo}</span>
               </button>
             )}
             {quoteQuery.isError && (
@@ -1181,9 +1201,10 @@ export const CheckoutPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => quoteQuery.refetch()}
-                  className="block underline mt-2"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-800 bg-white border border-red-300 hover:bg-red-50 rounded-lg px-3 py-1.5 mt-2 transition-colors cursor-pointer shadow-2xs"
                 >
-                  Refresh basket total
+                  <RefreshCw size={12} />
+                  <span>Refresh basket total</span>
                 </button>
               </div>
             )}
@@ -1256,35 +1277,24 @@ export const CheckoutPage: React.FC = () => {
                 (method !== "bank_transfer" && !quote?.methods[method]) ||
                 Boolean(attempt)
               }
-              className="w-full flex items-center justify-between gap-3 rounded-xl bg-brand-blue text-white px-5 py-4 mt-6 text-sm font-semibold hover:brightness-95 disabled:opacity-45 disabled:cursor-not-allowed shadow-md transition-all active:scale-[0.99]"
+              className="w-full flex items-center justify-center gap-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white border-2 border-brand-blue hover:border-brand-blue-hover px-5 py-4 mt-6 text-sm font-bold shadow-md transition-all active:scale-[0.99] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
             >
-              <div className="flex items-center gap-2 truncate">
-                <span>
-                  {busy
-                    ? "Please wait..."
-                    : quoteQuery.isFetching
-                      ? "Updating total..."
-                      : method === "bank_transfer"
-                        ? "Place order - pay by bank transfer"
-                        : method === "paypal"
-                          ? "Continue with PayPal"
-                          : "Continue to secure payment"}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/25">
-                  {method === "bank_transfer"
-                    ? "Direct Bank"
-                    : method === "paypal"
-                      ? "PayPal"
-                      : "256-bit SSL"}
-                </span>
-                <ArrowRight size={16} className="shrink-0" />
-              </div>
+              <span>
+                {busy
+                  ? "Please wait..."
+                  : quoteQuery.isFetching
+                    ? "Updating total..."
+                    : method === "bank_transfer"
+                      ? "Place Order — Pay by Bank Transfer"
+                      : method === "paypal"
+                        ? "Continue with PayPal"
+                        : "Continue to Secure Payment"}
+              </span>
+              <ArrowRight size={17} className="shrink-0" />
             </button>
             <p className="text-xs leading-relaxed text-gray-500 mt-3 text-center">
               {method === "bank_transfer"
-                ? "Your order will await payment confirmation before dispatch."
+                ? "Your order will await payment confirmation before shipping."
                 : "You will review and complete payment with your selected provider."}
             </p>
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-5 pt-5 border-t border-gray-100">

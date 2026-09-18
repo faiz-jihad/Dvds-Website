@@ -32,20 +32,21 @@ export const CustomerNotificationMenu: React.FC = () => {
   const clearNotification = useNotificationStore((state) => state.clearNotification);
   const permission = useNotificationStore((state) => state.permission);
   const requestPermission = useNotificationStore((state) => state.requestPermission);
-  const sendTestNotification = useNotificationStore((state) => state.sendTestNotification);
 
   // Close when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [isOpen]);
 
@@ -81,12 +82,13 @@ export const CustomerNotificationMenu: React.FC = () => {
   };
 
   return (
-    <div className="relative" ref={menuRef}>
-      {/* Customer Bell Trigger */}
+    <div ref={menuRef} className="sm:relative">
+      {/* Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Customer notifications"
+        aria-expanded={isOpen}
         className="relative min-h-11 min-w-11 p-2 text-dark hover:text-brand-blue hover:bg-gray-50 rounded-md transition-colors flex items-center justify-center"
       >
         <Bell className="w-5 h-5" />
@@ -99,7 +101,7 @@ export const CustomerNotificationMenu: React.FC = () => {
 
       {/* Customer Notification Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 sm:right-auto sm:-left-32 md:-left-48 mt-2 w-[310px] sm:w-[360px] rounded-xl border border-gray-200 bg-white text-dark shadow-xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
+        <div className="absolute top-full mt-1.5 inset-x-2 sm:inset-x-auto sm:right-0 sm:mt-2 w-auto sm:w-[360px] max-w-[calc(100vw-1rem)] rounded-xl border border-gray-200 bg-white text-dark shadow-xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150 max-h-[calc(100vh-80px)] flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-4 py-3">
             <div className="flex items-center gap-2">
@@ -206,14 +208,7 @@ export const CustomerNotificationMenu: React.FC = () => {
 
           {/* Footer */}
           <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/80 px-4 py-2.5 text-[11px] text-gray-500">
-            <button
-              type="button"
-              onClick={() => sendTestNotification('customer')}
-              className="font-semibold text-gray-600 hover:text-dark hover:underline cursor-pointer"
-              title="Test notification chime and toast"
-            >
-              Test Alert
-            </button>
+            <span className="text-[11px] text-gray-500 font-medium">Order updates &amp; alerts</span>
             <button
               type="button"
               onClick={() => {

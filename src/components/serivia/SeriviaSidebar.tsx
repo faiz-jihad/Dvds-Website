@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   Home,
   Heart,
@@ -14,14 +14,17 @@ import {
   User,
   LogIn,
   LogOut,
-} from 'lucide-react';
-import { cn } from '../../lib/formatters';
-import { useFavouritesStore } from '../../stores/useFavouritesStore';
-import { useCustomerAuth } from '../../auth/CustomerAuth';
-import { Product, Category, Genre } from '../../types';
+  Disc,
+} from "lucide-react";
+import { cn } from "../../lib/formatters";
+import { useFavouritesStore } from "../../stores/useFavouritesStore";
+import { useCustomerAuth } from "../../auth/CustomerAuth";
+import { Product, Category, Genre } from "../../types";
 
 interface SeriviaSidebarProps {
   recentProducts?: Product[];
+  categories?: Category[];
+  genres?: Genre[];
   collapsed?: boolean;
   onToggle?: () => void;
   activeFilter?: string;
@@ -29,52 +32,75 @@ interface SeriviaSidebarProps {
 }
 
 const NAV_ITEMS = [
-  { label: 'Home', href: '/', filter: 'all', icon: Home },
-  { label: 'Favourites', href: '/favourites', filter: '', icon: Heart },
-  { label: 'Coming Soon', href: '/shop?filter=new', filter: 'new', icon: Clock },
-  { label: 'Trending', href: '/shop?filter=trending', filter: 'trending', icon: TrendingUp },
-  { label: 'Box Sets', href: '/shop?format=box-set', filter: 'box_set', icon: Package },
+  { label: "Home", href: "/", filter: "all", icon: Home },
+  {
+    label: "Top 10 Chart",
+    href: "/shop?filter=trending",
+    filter: "trending",
+    icon: TrendingUp,
+  },
+  {
+    label: "New Arrivals",
+    href: "/shop?filter=new",
+    filter: "new",
+    icon: Clock,
+  },
+  {
+    label: "4K Ultra HD",
+    href: "/shop?format=4k",
+    filter: "format:4k",
+    icon: Disc,
+  },
+  {
+    label: "Box Sets",
+    href: "/shop?format=box-set",
+    filter: "box_set",
+    icon: Package,
+  },
+  { label: "Favourites", href: "/favourites", filter: "", icon: Heart },
 ];
 
 export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
   recentProducts = [],
+  categories = [],
+  genres = [],
   collapsed = false,
   onToggle,
-  activeFilter = 'all',
+  activeFilter = "all",
   onSelectFilter,
 }) => {
   const { pathname } = useLocation();
   const favourites = useFavouritesStore((s) => s.favourites);
 
-  const isActive = (item: typeof NAV_ITEMS[0]) => {
-    if (pathname === '/' && onSelectFilter) {
+  const isActive = (item: (typeof NAV_ITEMS)[0]) => {
+    if (pathname === "/" && onSelectFilter) {
       if (item.filter) return activeFilter === item.filter;
       return false;
     }
-    if (item.href === '/') return pathname === '/';
-    return pathname.startsWith(item.href.split('?')[0]);
+    if (item.href === "/") return pathname === "/";
+    return pathname.startsWith(item.href.split("?")[0]);
   };
 
-  const handleNavClick = (e: React.MouseEvent, item: typeof NAV_ITEMS[0]) => {
-    if (pathname === '/' && item.filter && onSelectFilter) {
+  const handleNavClick = (e: React.MouseEvent, item: (typeof NAV_ITEMS)[0]) => {
+    if (pathname === "/" && item.filter && onSelectFilter) {
       e.preventDefault();
       onSelectFilter(item.filter);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   return (
     <aside
       className={cn(
-        'flex flex-col h-full bg-white border-r border-gray-200 transition-all duration-300 select-none relative',
-        collapsed ? 'w-[72px]' : 'w-[230px]'
+        "flex flex-col h-full bg-white border-r border-gray-200 transition-all duration-300 select-none relative",
+        collapsed ? "w-[72px]" : "w-[230px]",
       )}
     >
       {/* Collapse/Expand Toggle Button */}
       <button
         onClick={onToggle}
         className="absolute -right-3 top-4 z-20 w-6 h-6 rounded-full bg-white border border-gray-300 flex items-center justify-center text-gray-500 hover:text-dark hover:border-brand-blue transition-all shadow-md cursor-pointer"
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
@@ -84,7 +110,7 @@ export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
         <div className="space-y-1">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item);
-            const isFavourites = item.label === 'Favourites';
+            const isFavourites = item.label === "Favourites";
             const Icon = item.icon;
             return (
               <Link
@@ -92,10 +118,10 @@ export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
                 to={item.href}
                 onClick={(e) => handleNavClick(e, item)}
                 className={cn(
-                  'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer',
+                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer",
                   active
-                    ? 'bg-brand-blue/10 text-brand-blue font-bold shadow-xs'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-dark'
+                    ? "bg-brand-blue/10 text-brand-blue font-bold shadow-xs"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-dark",
                 )}
                 title={collapsed ? item.label : undefined}
               >
@@ -103,8 +129,10 @@ export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
                   <Icon
                     size={17}
                     className={cn(
-                      'transition-colors',
-                      active ? 'text-brand-blue' : 'text-gray-400 group-hover:text-dark'
+                      "transition-colors",
+                      active
+                        ? "text-brand-blue"
+                        : "text-gray-400 group-hover:text-dark",
                     )}
                   />
                   {isFavourites && favourites.length > 0 && (
@@ -118,6 +146,34 @@ export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
             );
           })}
         </div>
+
+        {/* Dynamic Genres Section (Expanded Desktop) */}
+        {!collapsed && genres.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 px-3 mb-2">
+              Genres &amp; Themes
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {genres.map((g) => {
+                const isGenreActive = activeFilter === `genre:${g.slug}`;
+                return (
+                  <button
+                    key={g.id}
+                    onClick={() => onSelectFilter?.(`genre:${g.slug}`)}
+                    className={cn(
+                      "w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer truncate",
+                      isGenreActive
+                        ? "bg-brand-blue/10 text-brand-blue font-bold"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-dark"
+                    )}
+                  >
+                    {g.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Divider */}
         <div className="h-px bg-gray-100 my-3" />
@@ -151,14 +207,31 @@ export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
                       {product.title}
                     </p>
                     <p className="text-[10px] text-gray-500 mt-1">
-                      {product.release_year} &bull;{' '}
+                      {product.release_year} &bull;{" "}
                       <span className="text-amber-500 font-bold">
-                        {product.imdb_rating ? `${product.imdb_rating.toFixed(1)} ★` : product.format}
+                        {product.imdb_rating
+                          ? `${product.imdb_rating.toFixed(1)} ★`
+                          : product.format}
                       </span>
                     </p>
                   </div>
                 </Link>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Official Store Guarantee (Expanded Desktop) */}
+        {!collapsed && (
+          <div className="mt-auto pt-3 border-t border-gray-100 px-2 pb-2">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-dark">
+                <ShieldCheck size={14} className="text-brand-blue shrink-0" />
+                <span>Official UK Store</span>
+              </div>
+              <p className="text-[10px] text-gray-500 mt-1 leading-normal">
+                Certified physical editions &amp; collector box sets.
+              </p>
             </div>
           </div>
         )}
@@ -193,20 +266,23 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
 
   if (!isOpen) return null;
 
-  const isActive = (item: typeof NAV_ITEMS[0]) => {
-    if (pathname === '/' && onSelectFilter && item.filter) {
+  const isActive = (item: (typeof NAV_ITEMS)[0]) => {
+    if (pathname === "/" && onSelectFilter && item.filter) {
       return activeFilter === item.filter;
     }
-    if (item.href === '/') return pathname === '/';
-    return pathname.startsWith(item.href.split('?')[0]);
+    if (item.href === "/") return pathname === "/";
+    return pathname.startsWith(item.href.split("?")[0]);
   };
 
-  const handleMobileNavClick = (e: React.MouseEvent, item: typeof NAV_ITEMS[0]) => {
-    if (pathname === '/' && item.filter && onSelectFilter) {
+  const handleMobileNavClick = (
+    e: React.MouseEvent,
+    item: (typeof NAV_ITEMS)[0],
+  ) => {
+    if (pathname === "/" && item.filter && onSelectFilter) {
       e.preventDefault();
       onSelectFilter(item.filter);
       onClose();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       onClose();
     }
@@ -248,7 +324,7 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
           </p>
           {NAV_ITEMS.map((item) => {
             const active = isActive(item);
-            const isFavourites = item.label === 'Favourites';
+            const isFavourites = item.label === "Favourites";
             const Icon = item.icon;
             return (
               <Link
@@ -256,10 +332,10 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
                 to={item.href}
                 onClick={(e) => handleMobileNavClick(e, item)}
                 className={cn(
-                  'flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition-colors cursor-pointer',
+                  "flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition-colors cursor-pointer",
                   active
-                    ? 'bg-brand-blue/10 text-brand-blue font-bold'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-dark'
+                    ? "bg-brand-blue/10 text-brand-blue font-bold"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-dark",
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -291,10 +367,10 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
                     onClose();
                   }}
                   className={cn(
-                    'text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors cursor-pointer',
+                    "text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors cursor-pointer",
                     activeFilter === `genre:${genre.slug}`
-                      ? 'bg-brand-blue text-white border-brand-blue font-bold shadow-xs'
-                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                      ? "bg-brand-blue text-white border-brand-blue font-bold shadow-xs"
+                      : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100",
                   )}
                 >
                   {genre.name}
@@ -308,10 +384,10 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
                     onClose();
                   }}
                   className={cn(
-                    'text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors cursor-pointer',
+                    "text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors cursor-pointer",
                     activeFilter === `cat:${cat.slug}`
-                      ? 'bg-brand-blue text-white border-brand-blue font-bold shadow-xs'
-                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                      ? "bg-brand-blue text-white border-brand-blue font-bold shadow-xs"
+                      : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100",
                   )}
                 >
                   {cat.name}
@@ -346,9 +422,11 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
                       {product.title}
                     </p>
                     <p className="text-[10px] text-gray-500">
-                      {product.release_year} &bull;{' '}
+                      {product.release_year} &bull;{" "}
                       <span className="text-amber-500 font-bold">
-                        {product.imdb_rating ? `${product.imdb_rating.toFixed(1)} ★` : product.format}
+                        {product.imdb_rating
+                          ? `${product.imdb_rating.toFixed(1)} ★`
+                          : product.format}
                       </span>
                     </p>
                   </div>
@@ -369,7 +447,9 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
                 <p className="text-xs font-bold text-dark truncate">
                   {customer.full_name || customer.email}
                 </p>
-                <p className="text-[10px] text-gray-400 truncate">{customer.email}</p>
+                <p className="text-[10px] text-gray-400 truncate">
+                  {customer.email}
+                </p>
               </div>
               <Link
                 to="/account/orders"

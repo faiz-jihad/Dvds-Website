@@ -398,7 +398,7 @@ export const AdminPromotions: React.FC = () => {
                           ) : (
                             <span className="text-[11px] text-gray-400 font-mono">No expiration date</span>
                           )}
-                          {isScheduled && (
+                          {isScheduled && promotion.starts_at && (
                             <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-semibold block w-fit">
                               Starts {new Date(promotion.starts_at!).toLocaleDateString('en-GB')}
                             </span>

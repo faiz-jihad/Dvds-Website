@@ -250,16 +250,17 @@ export const ProductDetail: React.FC = () => {
                     size="lg"
                     disabled={product.stock_quantity <= 0}
                     onClick={handleAddToBasket}
-                    badgeText={product.stock_quantity > 0 ? "FAST DISPATCH" : "SOLD OUT"}
-                    className="flex-1 text-sm font-semibold"
+                    className="flex-1 text-sm font-bold justify-center"
                   >
-                    {isAdded ? (
-                      <span className="flex items-center gap-2">
+                    {product.stock_quantity <= 0 ? (
+                      <span>Sold Out</span>
+                    ) : isAdded ? (
+                      <span className="flex items-center justify-center gap-2">
                         <Check className="w-4 h-4 stroke-[2.5]" />
                         Added to Basket
                       </span>
                     ) : (
-                      <span className="flex items-center gap-2">
+                      <span className="flex items-center justify-center gap-2">
                         <ShoppingBag className="w-4 h-4" />
                         Add to Basket
                       </span>

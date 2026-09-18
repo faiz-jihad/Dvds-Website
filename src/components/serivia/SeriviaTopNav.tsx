@@ -93,14 +93,7 @@ export const SeriviaTopNav: React.FC<SeriviaTopNavProps> = ({
     <header className="sticky top-0 z-30 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-2.5 bg-[#0d0f14]/95 backdrop-blur-xl border-b border-white/[0.08] select-none">
       {/* Left: Hamburger (mobile) + Brand Logo */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Mobile menu trigger */}
-        <button
-          onClick={onOpenMobileMenu}
-          className="md:hidden w-9 h-9 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] flex items-center justify-center text-white/80 active:scale-95 transition-all"
-          aria-label="Open mobile menu"
-        >
-          <Menu size={18} />
-        </button>
+
 
         {/* Official Brand Logo */}
         <Link
