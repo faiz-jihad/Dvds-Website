@@ -5,6 +5,7 @@ import { Product } from '../../types';
 import { useCartStore } from '../../stores/useCartStore';
 import { useFavouritesStore } from '../../stores/useFavouritesStore';
 import { useUiStore } from '../../stores/useUiStore';
+import { useThemeStore } from '../../stores/useThemeStore';
 import { formatGBP, cn } from '../../lib/formatters';
 
 interface AzDvdMovieCardProps {
@@ -16,6 +17,8 @@ export const AzDvdMovieCard: React.FC<AzDvdMovieCardProps> = ({ product, classNa
   const addItem = useCartStore((s) => s.addItem);
   const { openCartDrawer, addToast } = useUiStore();
   const { toggleFavourite, isFavourite } = useFavouritesStore();
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === 'dark';
   const favourite = isFavourite(product.id);
   const outOfStock = product.stock_quantity === 0;
 
@@ -44,12 +47,20 @@ export const AzDvdMovieCard: React.FC<AzDvdMovieCardProps> = ({ product, classNa
   return (
     <div
       className={cn(
-        'group relative flex flex-col justify-between select-none bg-[#0D121D] rounded-2xl border border-white/10 hover:border-brand-blue/50 hover:shadow-2xl hover:shadow-brand-blue/10 transition-all duration-300 p-2 sm:p-2.5 hover:-translate-y-1.5',
+        'group relative flex flex-col justify-between select-none rounded-2xl border transition-all duration-300 p-2 sm:p-2.5 hover:-translate-y-1.5',
+        isDark
+          ? 'bg-[#0D121D] border-white/10 text-white hover:border-brand-blue/50 hover:shadow-2xl hover:shadow-brand-blue/10'
+          : 'bg-white border-gray-200 text-gray-900 shadow-xs hover:border-brand-blue/50 hover:shadow-xl',
         className
       )}
     >
       {/* ── 1. Poster Artwork Area with Physical DVD Case Styling ── */}
-      <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-[#161D2C] shadow-md border border-white/5">
+      <div
+        className={cn(
+          'relative aspect-[2/3] w-full rounded-xl overflow-hidden shadow-md border',
+          isDark ? 'bg-[#161D2C] border-white/5' : 'bg-gray-100 border-gray-200/80'
+        )}
+      >
         <Link
           to={`/product/${product.slug}`}
           className="block w-full h-full cursor-pointer"
@@ -133,15 +144,15 @@ export const AzDvdMovieCard: React.FC<AzDvdMovieCardProps> = ({ product, classNa
       <div className="pt-2 sm:pt-2.5 flex flex-col justify-between flex-1">
         <div>
           {/* Year, Rating, Genre */}
-          <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium mb-1">
+          <div className={cn('flex items-center gap-1.5 text-[10px] font-medium mb-1', isDark ? 'text-gray-400' : 'text-gray-500')}>
             <span>{product.release_year}</span>
             <span>&bull;</span>
             <span className="truncate">{product.genres?.[0]?.name || product.format}</span>
             {product.imdb_rating && (
               <>
                 <span>&bull;</span>
-                <span className="flex items-center gap-0.5 text-amber-400 font-bold">
-                  <Star size={9} fill="#fbbf24" />
+                <span className="flex items-center gap-0.5 text-amber-500 font-bold">
+                  <Star size={9} fill="#f59e0b" />
                   {product.imdb_rating.toFixed(1)}
                 </span>
               </>
@@ -151,7 +162,10 @@ export const AzDvdMovieCard: React.FC<AzDvdMovieCardProps> = ({ product, classNa
           {/* Title */}
           <Link
             to={`/product/${product.slug}`}
-            className="block text-xs sm:text-sm font-bold text-white leading-snug line-clamp-2 hover:text-brand-blue transition-colors cursor-pointer"
+            className={cn(
+              'block text-xs sm:text-sm font-bold leading-snug line-clamp-2 hover:text-brand-blue transition-colors cursor-pointer',
+              isDark ? 'text-white' : 'text-gray-900'
+            )}
             title={product.title}
           >
             {product.title}
@@ -159,13 +173,13 @@ export const AzDvdMovieCard: React.FC<AzDvdMovieCardProps> = ({ product, classNa
         </div>
 
         {/* Price & Physical Store Stock Indicator */}
-        <div className="mt-2 pt-1.5 border-t border-white/5 flex items-center justify-between gap-1.5">
+        <div className={cn('mt-2 pt-1.5 border-t flex items-center justify-between gap-1.5', isDark ? 'border-white/5' : 'border-gray-100')}>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-xs sm:text-sm font-black text-white font-mono">
+            <span className={cn('text-xs sm:text-sm font-black font-mono', isDark ? 'text-white' : 'text-gray-900')}>
               {formatGBP(product.price)}
             </span>
             {hasDiscount && (
-              <span className="text-[10px] text-gray-500 line-through font-mono">
+              <span className="text-[10px] text-gray-400 line-through font-mono">
                 {formatGBP(product.compare_at_price!)}
               </span>
             )}

@@ -9,7 +9,6 @@ import {
   Heart,
   User,
   Truck,
-  Shield,
   LogIn,
   LogOut,
   Bell,
@@ -377,14 +376,6 @@ export const MobileNavDrawer: React.FC = () => {
                     Active
                   </span>
                 )}
-              </Link>
-              <Link
-                to="/admin"
-                onClick={closeMobileNav}
-                className="flex items-center gap-2.5 px-3 py-2 text-gray-400 hover:text-dark font-mono text-[10px] tracking-wider uppercase transition-colors"
-              >
-                <Shield className="w-3.5 h-3.5 text-gray-400" />
-                <span>Store Admin Backoffice</span>
               </Link>
             </div>
           </motion.div>

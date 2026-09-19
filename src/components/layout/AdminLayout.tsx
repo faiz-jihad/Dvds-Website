@@ -234,8 +234,8 @@ export const AdminLayout: React.FC = () => {
           <Link to="/admin" className="flex items-center gap-3 group">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 shadow-xs ring-1 ring-slate-900/10 transition-transform group-hover:scale-105 overflow-hidden p-1">
               <img
-                src="/brand/logo.png"
-                alt="Logo"
+                src="/brand/logo-dark-theme.png"
+                alt="DVDs Zone"
                 className="h-full w-full object-contain"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";

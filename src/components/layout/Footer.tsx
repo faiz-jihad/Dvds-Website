@@ -56,7 +56,7 @@ export const Footer: React.FC = () => {
           <div className="lg:col-span-3">
             <Link to="/" className="inline-block mb-6 group">
               <img
-                src="/brand/logo.png"
+                src="/brand/logo-dark-theme.png"
                 alt="DVDs Zone"
                 className="h-12 sm:h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
               />

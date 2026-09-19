@@ -1,14 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Package, ArrowRight, Disc, ShieldCheck, Sparkles } from 'lucide-react';
+import { Package, ArrowRight, Disc, ShieldCheck } from 'lucide-react';
 import { Product } from '../../types';
-import { formatGBP } from '../../lib/formatters';
+import { useThemeStore } from '../../stores/useThemeStore';
+import { formatGBP, cn } from '../../lib/formatters';
 
 interface AzCuratedCollectionBannerProps {
   products: Product[];
 }
 
 export const AzCuratedCollectionBanner: React.FC<AzCuratedCollectionBannerProps> = ({ products }) => {
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === 'dark';
+
   // Find up to 4 box set or collector edition products
   const boxSets = products
     .filter((p) => p.format?.toLowerCase().includes('box') || p.format === '4K UHD' || p.is_best_seller)
@@ -17,7 +21,14 @@ export const AzCuratedCollectionBanner: React.FC<AzCuratedCollectionBannerProps>
   if (boxSets.length === 0) return null;
 
   return (
-    <section className="relative w-full rounded-3xl overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#0B0F19] to-[#07090E] border border-white/10 shadow-2xl p-6 sm:p-10 lg:p-12 my-6 select-none">
+    <section
+      className={cn(
+        'relative w-full rounded-3xl overflow-hidden border p-6 sm:p-10 lg:p-12 my-6 select-none transition-colors',
+        isDark
+          ? 'bg-gradient-to-br from-[#0F172A] via-[#0B0F19] to-[#07090E] border-white/10 shadow-2xl'
+          : 'bg-gradient-to-br from-blue-50/70 via-slate-50 to-white border-gray-200 shadow-xl'
+      )}
+    >
       {/* Subtle Background Glow Elements */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-brand-red/10 rounded-full blur-3xl pointer-events-none" />
@@ -25,28 +36,27 @@ export const AzCuratedCollectionBanner: React.FC<AzCuratedCollectionBannerProps>
       <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
         {/* Left Editorial Narrative */}
         <div className="flex-1 max-w-xl text-center lg:text-left">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-blue/20 border border-brand-blue/30 text-brand-blue text-xs font-bold uppercase tracking-wider mb-3">
-            <Sparkles size={13} />
-            <span>Curated Collector Showcase</span>
+          <div className="text-[11px] sm:text-xs font-black uppercase tracking-[0.2em] text-brand-blue mb-2.5">
+            Curated Collector Showcase
           </div>
 
-          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight mb-3">
+          <h2 className={cn('text-2xl sm:text-4xl font-black tracking-tight leading-tight mb-3', isDark ? 'text-white' : 'text-gray-900')}>
             The Definitive Box Set &amp; Prestige Media Vault
           </h2>
 
-          <p className="text-sm sm:text-base text-gray-300 leading-relaxed mb-6">
+          <p className={cn('text-sm sm:text-base leading-relaxed mb-6', isDark ? 'text-gray-300' : 'text-gray-600')}>
             Own the complete sagas, definitive multi-season box sets, and restored cinema anthologies.
             Every edition features official disc artwork, original bonus materials, and sealed packaging
             dispatched directly from London via Royal Mail Tracked 24.
           </p>
 
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mb-6">
-            <div className="flex items-center gap-2 text-xs font-semibold text-gray-300">
+            <div className={cn('flex items-center gap-2 text-xs font-semibold', isDark ? 'text-gray-300' : 'text-gray-700')}>
               <Disc size={15} className="text-brand-blue" />
               <span>Multi-Disc Editions</span>
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-gray-300">
-              <ShieldCheck size={15} className="text-emerald-400" />
+            <div className={cn('flex items-center gap-2 text-xs font-semibold', isDark ? 'text-gray-300' : 'text-gray-700')}>
+              <ShieldCheck size={15} className="text-emerald-500" />
               <span>Certified UK Region 2</span>
             </div>
           </div>

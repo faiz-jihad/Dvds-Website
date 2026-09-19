@@ -1,27 +1,32 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, Filter } from 'lucide-react';
-import { Product, Category, Genre } from '../../types';
-import { AzDarkLandingNav } from './AzDarkLandingNav';
+import { Product, Category, Genre, StoreSettings } from '../../types';
+import { useThemeStore } from '../../stores/useThemeStore';
 import { AzCinematicHero } from './AzCinematicHero';
 import { AzCategoryChips } from './AzCategoryChips';
 import { AzMovieShelfRow } from './AzMovieShelfRow';
 import { AzDvdMovieCard } from './AzDvdMovieCard';
 import { AzCuratedCollectionBanner } from './AzCuratedCollectionBanner';
-import { AzDarkLandingFooter } from './AzDarkLandingFooter';
+import { AzDirectorSpotlightBanner } from './AzDirectorSpotlightBanner';
+import { cn } from '../../lib/formatters';
 
 interface AzDarkLandingLayoutProps {
   products: Product[];
   categories: Category[];
   genres: Genre[];
+  settings?: StoreSettings | null;
 }
 
 export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
   products,
   categories,
   genres,
+  settings,
 }) => {
   const [activeFilter, setActiveFilter] = useState('all');
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === 'dark';
 
   // Active products pool
   const active = useMemo(() => products.filter((p) => p.status === 'active'), [products]);
@@ -110,12 +115,9 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
   }, [activeFilter, genres]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#07090E] text-white select-none">
-      {/* ── 1. Top Navigation Bar ── */}
-      <AzDarkLandingNav />
-
-      {/* ── 2. Cinematic Hero Movie Section + Automatic Slider ── */}
-      <AzCinematicHero products={featured} />
+    <div className="flex-1 min-w-0 flex flex-col select-none">
+      {/* ── 1. Cinematic Hero Movie Section + Automatic Slider ── */}
+      <AzCinematicHero products={featured} settings={settings} />
 
       {/* ── 3. Movie Category Section Chips ── */}
       <AzCategoryChips
@@ -131,13 +133,18 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
         {/* If a specific filter is chosen, show a full grid of matching titles */}
         {activeFilter !== 'all' ? (
           <div className="space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+            <div className={cn('flex items-center justify-between pb-4 border-b', isDark ? 'border-white/10' : 'border-gray-200')}>
               <div className="flex items-center gap-3">
                 <span className="w-2.5 h-2.5 rounded-full bg-brand-blue animate-pulse" />
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                <h2 className={cn('text-xl sm:text-2xl font-black tracking-tight', isDark ? 'text-white' : 'text-gray-900')}>
                   {filterTitle}
                 </h2>
-                <span className="text-xs font-bold text-gray-400 bg-white/10 px-2.5 py-0.5 rounded-full">
+                <span
+                  className={cn(
+                    'text-xs font-bold px-2.5 py-0.5 rounded-full',
+                    isDark ? 'text-gray-400 bg-white/10' : 'text-gray-600 bg-gray-100'
+                  )}
+                >
                   {filteredProducts.length} titles
                 </span>
               </div>
@@ -145,7 +152,12 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveFilter('all')}
-                className="text-xs font-bold text-gray-400 hover:text-white px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                className={cn(
+                  'text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer',
+                  isDark
+                    ? 'text-gray-400 hover:text-white bg-white/5 hover:bg-white/10'
+                    : 'text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200'
+                )}
               >
                 Clear Filter
               </button>
@@ -158,7 +170,7 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="py-16 text-center text-gray-400 space-y-3">
+              <div className={cn('py-16 text-center space-y-3', isDark ? 'text-gray-400' : 'text-gray-600')}>
                 <p className="text-base font-bold">No physical editions match this filter.</p>
                 <button
                   type="button"
@@ -178,18 +190,19 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
               <AzMovieShelfRow
                 badge="TOP 10 CHART"
                 title="Trending Now &amp; Best Sellers"
-                subtitle="The most popular physical DVD &amp; Blu-ray releases this week"
                 products={shelfTrending}
                 viewAllHref="/shop?filter=trending"
               />
             )}
+
+            {/* ── Director Spotlight Showcase Module (Configured in Storefront Settings) ── */}
+            <AzDirectorSpotlightBanner settings={settings || null} products={active} />
 
             {/* Shelf 2: Fresh From The Vault */}
             {shelfNewReleases.length > 0 && (
               <AzMovieShelfRow
                 badge="NEW ARRIVALS"
                 title="Fresh From The Vault"
-                subtitle="Newly catalogued physical pressings and restocked collector prints"
                 products={shelfNewReleases}
                 viewAllHref="/shop?filter=new"
               />
@@ -200,7 +213,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
               <AzMovieShelfRow
                 badge="CRITIC'S VAULT"
                 title="Critically Acclaimed Masterpieces"
-                subtitle="Award-winning physical cinema certified 7.5+ on IMDb"
                 products={shelfCriticallyAcclaimed}
                 viewAllHref="/shop"
               />
@@ -214,7 +226,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
               <AzMovieShelfRow
                 badge="TELEVISION SAGAS"
                 title="Complete TV Series Box Sets"
-                subtitle="Full seasons, multi-disc television box sets, and commemorative series"
                 products={shelfTvSeries}
                 viewAllHref="/shop?format=box-set"
               />
@@ -226,7 +237,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 key={genre.id}
                 badge="GENRE ARCHIVE"
                 title={`${genre.name} Cinema`}
-                subtitle={`Explore curated physical editions in ${genre.name}`}
                 products={gProducts}
                 viewAllHref={`/shop?genre=${genre.slug}`}
               />
@@ -237,7 +247,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
               <AzMovieShelfRow
                 badge="CLEARANCE SALE"
                 title="Special Offers &amp; Limited Discs"
-                subtitle="Discounted physical releases with limited warehouse stock"
                 products={shelfSale}
                 viewAllHref="/shop?filter=sale"
               />
@@ -245,9 +254,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
           </div>
         )}
       </main>
-
-      {/* ── 6. Clean Dark Footer ── */}
-      <AzDarkLandingFooter />
     </div>
   );
 };

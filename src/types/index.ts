@@ -188,6 +188,15 @@ export interface FinancialStats {
   recentOrders: Order[];
 }
 
+export interface HeroTrailerItem {
+  product_id: string;
+  youtube_url: string;
+  start_minutes?: number;
+  start_seconds?: number;
+  end_minutes?: number;
+  end_seconds?: number;
+}
+
 export interface StoreSettings {
   payment_card_enabled?: boolean;
   payment_paypal_enabled?: boolean;
@@ -208,6 +217,15 @@ export interface StoreSettings {
   hero_cta_primary: string;
   hero_cta_secondary: string;
   hero_bg_image: string;
+  hero_youtube_enabled?: boolean;
+  hero_youtube_url?: string;
+  hero_youtube_mute?: boolean;
+  hero_youtube_loop?: boolean;
+  hero_youtube_start_minutes?: number;
+  hero_youtube_start_seconds?: number;
+  hero_youtube_end_minutes?: number;
+  hero_youtube_end_seconds?: number;
+  hero_trailers?: HeroTrailerItem[];
 
   // Announcement Bar
   announcement_left: string;

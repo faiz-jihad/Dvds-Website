@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Product } from '../../types';
+import { useThemeStore } from '../../stores/useThemeStore';
+import { cn } from '../../lib/formatters';
 import { AzDvdMovieCard } from './AzDvdMovieCard';
 
 interface AzMovieShelfRowProps {
@@ -22,6 +24,8 @@ export const AzMovieShelfRow: React.FC<AzMovieShelfRowProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === 'dark';
 
   const updateScrollState = () => {
     if (!scrollRef.current) return;
@@ -51,11 +55,11 @@ export const AzMovieShelfRow: React.FC<AzMovieShelfRowProps> = ({
               {badge}
             </span>
           )}
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
+          <h2 className={cn('text-xl sm:text-2xl font-black tracking-tight truncate', isDark ? 'text-white' : 'text-gray-900')}>
             {title}
           </h2>
           {subtitle && (
-            <p className="text-xs sm:text-sm text-gray-400 mt-0.5 truncate max-w-2xl">
+            <p className={cn('text-xs sm:text-sm mt-0.5 truncate max-w-2xl', isDark ? 'text-gray-400' : 'text-gray-600')}>
               {subtitle}
             </p>
           )}
@@ -68,7 +72,12 @@ export const AzMovieShelfRow: React.FC<AzMovieShelfRowProps> = ({
               type="button"
               onClick={() => scroll('left')}
               disabled={!canScrollLeft}
-              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none border border-white/10 text-white flex items-center justify-center transition-colors cursor-pointer"
+              className={cn(
+                'w-8 h-8 rounded-full disabled:opacity-30 disabled:pointer-events-none border flex items-center justify-center transition-colors cursor-pointer',
+                isDark
+                  ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                  : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700'
+              )}
               aria-label={`Scroll ${title} left`}
             >
               <ChevronLeft size={16} />
@@ -77,7 +86,12 @@ export const AzMovieShelfRow: React.FC<AzMovieShelfRowProps> = ({
               type="button"
               onClick={() => scroll('right')}
               disabled={!canScrollRight}
-              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none border border-white/10 text-white flex items-center justify-center transition-colors cursor-pointer"
+              className={cn(
+                'w-8 h-8 rounded-full disabled:opacity-30 disabled:pointer-events-none border flex items-center justify-center transition-colors cursor-pointer',
+                isDark
+                  ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                  : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700'
+              )}
               aria-label={`Scroll ${title} right`}
             >
               <ChevronRight size={16} />
