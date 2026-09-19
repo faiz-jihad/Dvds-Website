@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Outlet, useLocation, Link } from 'react-router-dom';
-import { AnnouncementBar } from './AnnouncementBar';
 import { Navbar } from './Navbar';
-import { Footer } from './Footer';
+import { AzPublicSidebar } from '../landing/AzPublicSidebar';
+import { AzDarkLandingFooter } from '../landing/AzDarkLandingFooter';
 import { CartDrawer } from '../commerce/CartDrawer';
 import { SearchOverlay } from '../commerce/SearchOverlay';
 import { MobileNavDrawer } from './MobileNavDrawer';
@@ -12,8 +12,10 @@ import { publicApi } from '../../lib/publicApi';
 import { useCartStore } from '../../stores/useCartStore';
 import { useUiStore } from '../../stores/useUiStore';
 import { useFavouritesStore } from '../../stores/useFavouritesStore';
+import { useThemeStore } from '../../stores/useThemeStore';
 import { StoreDataState } from '../common/StoreDataState';
 import { Home, Film, Heart, ShoppingBag, Menu, Search } from 'lucide-react';
+import { cn } from '../../lib/formatters';
 
 export const RootLayout: React.FC = () => {
   const { pathname } = useLocation();
@@ -27,6 +29,9 @@ export const RootLayout: React.FC = () => {
   const genresQuery = useQuery({ queryKey: ['store', 'genres'], queryFn: publicApi.getGenres, staleTime: 30_000, refetchInterval: 60_000 });
   const operationalLoading = settingsQuery.isLoading || promotionsQuery.isLoading || productsQuery.isLoading || categoriesQuery.isLoading || genresQuery.isLoading;
   const operationalError = settingsQuery.error || promotionsQuery.error || productsQuery.error || categoriesQuery.error || genresQuery.error;
+
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     if (settingsQuery.data && !promotionsQuery.isLoading) {
@@ -54,36 +59,52 @@ export const RootLayout: React.FC = () => {
   const favourites = useFavouritesStore((s) => s.favourites);
 
   return (
-    <div className={`flex flex-col min-h-screen ${isHome ? 'bg-[#07090E] text-white' : 'bg-white text-dark'} overflow-x-clip w-full max-w-[100vw]`}>
-      {/* Top Announcements & Main Navbar — rendered for interior pages */}
-      {!isHome && <AnnouncementBar />}
-      {!isHome && <Navbar />}
+    <div
+      className={cn(
+        'flex flex-col min-h-screen overflow-x-clip w-full max-w-[100vw] transition-colors duration-200',
+        isDark ? 'bg-[#07090E] text-white' : 'bg-[#F9FAFB] text-gray-900'
+      )}
+    >
+      {/* ── Top Unified Navbar (Item 1, 4, 5, 6, 7) — rendered across all storefront pages ── */}
+      {!paymentRoute && <Navbar />}
 
-      {/* Primary Page Content */}
-      <main className="flex-1">
-        {!paymentRoute && (operationalLoading || operationalError) ? (
-          <StoreDataState
-            loading={operationalLoading}
-            error={operationalError || null}
-            retry={() => {
-              settingsQuery.refetch();
-              promotionsQuery.refetch();
-              productsQuery.refetch();
-              categoriesQuery.refetch();
-              genresQuery.refetch();
-            }}
-          />
-        ) : (
-          <React.Suspense fallback={<div className={`min-h-[50vh] flex items-center justify-center ${isHome ? 'bg-[#07090E]' : ''}`} role="status"><span className="sr-only">Loading page</span></div>}>
-            <Outlet />
-          </React.Suspense>
-        )}
-      </main>
+      {/* ── Main Layout: Persistent Sidebar (Item 7) + Content Area ── */}
+      <div className="flex flex-1 min-w-0 relative">
+        {!paymentRoute && <AzPublicSidebar fallbackProducts={productsQuery.data || []} />}
 
-      {/* Official Enterprise Footer for interior pages */}
-      {!isHome && <Footer />}
+        <main className="flex-1 min-w-0 flex flex-col">
+          {!paymentRoute && (operationalLoading || operationalError) ? (
+            <div className="flex-1 flex items-center justify-center p-6">
+              <StoreDataState
+                loading={operationalLoading}
+                error={operationalError || null}
+                retry={() => {
+                  settingsQuery.refetch();
+                  promotionsQuery.refetch();
+                  productsQuery.refetch();
+                  categoriesQuery.refetch();
+                  genresQuery.refetch();
+                }}
+              />
+            </div>
+          ) : (
+            <React.Suspense
+              fallback={
+                <div className="min-h-[50vh] flex items-center justify-center" role="status">
+                  <span className="sr-only">Loading page</span>
+                </div>
+              }
+            >
+              <Outlet />
+            </React.Suspense>
+          )}
 
-      {/* Interactive Overlays & Drawers — always active for cart/search */}
+          {/* Unified Footer */}
+          {!paymentRoute && <AzDarkLandingFooter />}
+        </main>
+      </div>
+
+      {/* Interactive Overlays & Drawers */}
       <CartDrawer />
       <SearchOverlay />
       <MobileNavDrawer />
@@ -103,18 +124,26 @@ export const RootLayout: React.FC = () => {
         </button>
       )}
 
-      {/* Global Mobile Bottom Navigation Bar — hidden on payment/checkout routes */}
+      {/* Global Mobile Bottom Navigation Bar */}
       {!paymentRoute && (
         <nav
           aria-label="Mobile Navigation"
-          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-200 flex items-center justify-around px-2 py-1.5 shadow-2xl text-gray-500"
+          className={cn(
+            'md:hidden fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl border-t flex items-center justify-around px-2 py-1.5 shadow-2xl transition-colors',
+            isDark
+              ? 'bg-[#07090E]/95 border-white/10 text-gray-400'
+              : 'bg-white/95 border-gray-200 text-gray-500'
+          )}
         >
           {/* Home */}
           <Link
             to="/"
-            className={`flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${
-              isHome ? 'text-brand-blue font-bold' : 'text-gray-500 hover:text-dark'
-            }`}
+            className={cn(
+              'flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer',
+              isHome
+                ? 'text-brand-blue font-bold'
+                : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-dark'
+            )}
           >
             <Home size={18} />
             <span>Home</span>
@@ -123,9 +152,12 @@ export const RootLayout: React.FC = () => {
           {/* Browse / Catalogue */}
           <Link
             to="/shop"
-            className={`flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${
-              pathname.startsWith('/shop') ? 'text-brand-blue font-bold' : 'text-gray-500 hover:text-dark'
-            }`}
+            className={cn(
+              'flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer',
+              pathname.startsWith('/shop')
+                ? 'text-brand-blue font-bold'
+                : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-dark'
+            )}
           >
             <Film size={18} />
             <span>Browse</span>
@@ -134,9 +166,12 @@ export const RootLayout: React.FC = () => {
           {/* Favourites with Red Badge */}
           <Link
             to="/favourites"
-            className={`relative flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${
-              pathname.startsWith('/favourites') ? 'text-brand-blue font-bold' : 'text-gray-500 hover:text-dark'
-            }`}
+            className={cn(
+              'relative flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer',
+              pathname.startsWith('/favourites')
+                ? 'text-brand-blue font-bold'
+                : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-dark'
+            )}
           >
             <div className="relative">
               <Heart size={18} />
@@ -153,7 +188,10 @@ export const RootLayout: React.FC = () => {
           <button
             type="button"
             onClick={openCartDrawer}
-            className="relative flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold text-gray-500 hover:text-dark transition-colors cursor-pointer active:scale-95"
+            className={cn(
+              'relative flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer active:scale-95',
+              isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-dark'
+            )}
           >
             <div className="relative">
               <ShoppingBag size={18} />
@@ -170,9 +208,12 @@ export const RootLayout: React.FC = () => {
           <button
             type="button"
             onClick={openMobileNav}
-            className={`flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer active:scale-95 ${
-              isMobileNavOpen ? 'text-brand-blue font-bold' : 'text-gray-500 hover:text-dark'
-            }`}
+            className={cn(
+              'flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors cursor-pointer active:scale-95',
+              isMobileNavOpen
+                ? 'text-brand-blue font-bold'
+                : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-dark'
+            )}
           >
             <Menu size={18} />
             <span>Menu</span>
@@ -182,3 +223,5 @@ export const RootLayout: React.FC = () => {
     </div>
   );
 };
+
+export default RootLayout;

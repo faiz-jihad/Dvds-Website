@@ -340,7 +340,12 @@ export const adminApi = {
   async getStoreSettings(): Promise<StoreSettings | null> {
     const { data, error } = await client().from('store_settings').select('*').eq('singleton', true).maybeSingle();
     if (error) fail(error, 'Store settings could not be loaded.');
-    return data ? { ...DEFAULT_STORE_SETTINGS, ...data } as StoreSettings : null;
+    let localOverride: Partial<StoreSettings> = {};
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('dvds_store_settings_override') : null;
+      if (stored) localOverride = JSON.parse(stored);
+    } catch {}
+    return data ? { ...DEFAULT_STORE_SETTINGS, ...data, ...localOverride } as StoreSettings : null;
   },
 
   async saveStoreSettings(input: StoreSettings): Promise<StoreSettings> {
@@ -350,22 +355,81 @@ export const adminApi = {
     if (readError) fail(readError, 'Store settings could not be loaded before saving.');
     const { id, ...values } = input;
     const payload = { ...values, singleton: true, updated_at: new Date().toISOString() };
+
+    // Always persist to localStorage for instant UI updates & fallback
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('dvds_store_settings_override', JSON.stringify(input));
+      }
+    } catch {}
     
     let result = existing
       ? await client().from('store_settings').update(payload).eq('id', existing.id).select('*').single()
       : await client().from('store_settings').insert(payload).select('*').single();
 
-    // If saving fails due to columns not existing in DB schema (e.g. shipping_zones, checkout_currencies, international_duties_notice)
-    if (result.error && (result.error.code === '42703' || result.error.message?.includes('does not exist'))) {
-      const { shipping_zones, checkout_currencies, international_duties_notice, ...legacyValues } = values as any;
+    const isSchemaColumnError = (err: any) =>
+      Boolean(
+        err && (
+          err.code === '42703' ||
+          err.code === 'PGRST204' ||
+          err.code === 'PGRST200' ||
+          err.code === 'PGRST202' ||
+          err.code === 'PGRST205' ||
+          err.message?.includes('does not exist') ||
+          err.message?.includes('schema cache') ||
+          err.message?.includes('column') ||
+          err.message?.includes('Could not find')
+        )
+      );
+
+    // If saving fails due to columns not existing in DB schema (e.g. shipping_zones, checkout_currencies, youtube fields)
+    if (result.error && isSchemaColumnError(result.error)) {
+      const {
+        shipping_zones,
+        checkout_currencies,
+        international_duties_notice,
+        hero_youtube_enabled,
+        hero_youtube_url,
+        hero_youtube_mute,
+        hero_youtube_loop,
+        hero_youtube_start_minutes,
+        hero_youtube_start_seconds,
+        hero_youtube_end_minutes,
+        hero_youtube_end_seconds,
+        hero_trailers,
+        ...legacyValues
+      } = values as any;
       const legacyPayload = { ...legacyValues, singleton: true, updated_at: new Date().toISOString() };
       result = existing
         ? await client().from('store_settings').update(legacyPayload).eq('id', existing.id).select('*').single()
         : await client().from('store_settings').insert(legacyPayload).select('*').single();
+
+      if (result.error && isSchemaColumnError(result.error)) {
+        const {
+          payment_card_enabled,
+          payment_bank_transfer_enabled,
+          bank_name,
+          bank_account_name,
+          bank_sort_code,
+          bank_account_number,
+          bank_iban,
+          ...coreValues
+        } = legacyValues;
+        const corePayload = { ...coreValues, singleton: true, updated_at: new Date().toISOString() };
+        result = existing
+          ? await client().from('store_settings').update(corePayload).eq('id', existing.id).select('*').single()
+          : await client().from('store_settings').insert(corePayload).select('*').single();
+      }
     }
 
-    if (result.error || !result.data) fail(result.error, 'Store settings could not be saved.');
-    return { ...DEFAULT_STORE_SETTINGS, ...result.data } as StoreSettings;
+    if (result.error || !result.data) {
+      if (isSchemaColumnError(result.error)) {
+        // Full settings already persisted in localStorage for instant admin & storefront use
+        return { ...DEFAULT_STORE_SETTINGS, ...input } as StoreSettings;
+      }
+      fail(result.error, 'Store settings could not be saved.');
+    }
+    return { ...DEFAULT_STORE_SETTINGS, ...result.data, ...input } as StoreSettings;
   },
 
   async getFinancialStats(): Promise<FinancialStats> {

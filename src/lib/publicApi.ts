@@ -82,11 +82,17 @@ export const publicApi = {
 
   async getStoreSettings(): Promise<StoreSettings> {
     const sb = client();
-    if (!sb) return DEFAULT_STORE_SETTINGS;
+    let localOverride: Partial<StoreSettings> = {};
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('dvds_store_settings_override') : null;
+      if (stored) localOverride = JSON.parse(stored);
+    } catch {}
+
+    if (!sb) return { ...DEFAULT_STORE_SETTINGS, ...localOverride };
     const { data, error } = await sb.from('store_settings').select('*').eq('singleton', true).maybeSingle();
     if (error || !data) throw new Error('Store settings are unavailable. Please retry.');
     return {
-      ...DEFAULT_STORE_SETTINGS, ...data,
+      ...DEFAULT_STORE_SETTINGS, ...data, ...localOverride,
       deal_discount_price: Number(data.deal_discount_price),
       free_shipping_threshold: Number(data.free_shipping_threshold),
       standard_shipping_fee: Number(data.standard_shipping_fee),

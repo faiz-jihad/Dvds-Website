@@ -17,7 +17,7 @@ interface CartState {
   applyPromo: (code: string) => { success: boolean; message: string };
   removePromo: () => void;
   setOperationalPricing: (threshold: number, shippingRate: number, promotions: Promotion[]) => void;
-  syncCatalogue: (products: Product[], settings: StoreSettings) => void;
+  syncCatalogue: (products: Product[], settings?: StoreSettings) => void;
   getSubtotal: () => number;
   getShippingFee: () => number;
   getDiscountAmount: () => number;
@@ -62,18 +62,13 @@ export const useCartStore = create<CartState>()(
           fixedDiscount: stillValid && current.type === 'fixed_amount' ? Number(current.value) : 0,
         };
       }),
-      syncCatalogue: (products, settings) => set((state) => {
+      syncCatalogue: (products) => set((state) => {
         const productsById = new Map(products.map((product) => [product.id, product]));
-        const dealEndsAt = settings.deal_ends_at ? Date.parse(settings.deal_ends_at) : 0;
-        const dealLive = settings.deal_is_active && Date.now() < dealEndsAt && settings.deal_discount_price > 0;
         return {
           items: state.items.flatMap((item) => {
             const product = productsById.get(item.product_id);
             if (!product || product.status !== 'active' || product.stock_quantity <= 0) return [];
-            const unitPrice = dealLive && product.id === settings.deal_product_id
-              ? Math.min(product.price, settings.deal_discount_price)
-              : product.price;
-            return [{ ...item, product, unit_price: unitPrice, quantity: Math.min(item.quantity, product.stock_quantity) }];
+            return [{ ...item, product, unit_price: product.price, quantity: Math.min(item.quantity, product.stock_quantity) }];
           }),
         };
       }),

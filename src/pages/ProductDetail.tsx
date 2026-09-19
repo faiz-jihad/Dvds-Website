@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Truck, ShieldCheck, Check, ArrowLeft, Disc, Clock } from 'lucide-react';
@@ -13,6 +13,7 @@ import { DvdSpecsTable } from '../components/product/DvdSpecsTable';
 import { ProductCard } from '../components/product/ProductCard';
 import { useCartStore } from '../stores/useCartStore';
 import { useFavouritesStore } from '../stores/useFavouritesStore';
+import { useLastSeenStore } from '../stores/useLastSeenStore';
 import { useUiStore } from '../stores/useUiStore';
 import { StoreDataState } from '../components/common/StoreDataState';
 import { Seo } from '../components/common/Seo';
@@ -20,6 +21,7 @@ import { Seo } from '../components/common/Seo';
 export const ProductDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const recordView = useLastSeenStore((state) => state.recordView);
 
   const productQuery = useQuery({ queryKey: ['store', 'product', slug], queryFn: () => publicApi.getProductBySlug(slug || ''), enabled: Boolean(slug) });
   const productsQuery = useQuery({ queryKey: ['store', 'products'], queryFn: () => publicApi.getProducts() });
@@ -27,6 +29,12 @@ export const ProductDetail: React.FC = () => {
   const product = productQuery.data;
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      recordView(product);
+    }
+  }, [product, recordView]);
 
   const addItem = useCartStore((state) => state.addItem);
   const openCartDrawer = useUiStore((state) => state.openCartDrawer);

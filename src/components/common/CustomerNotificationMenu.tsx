@@ -11,12 +11,15 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useNotificationStore, AppNotification } from '../../stores/useNotificationStore';
+import { useThemeStore } from '../../stores/useThemeStore';
 import { cn } from '../../lib/formatters';
 
 export const CustomerNotificationMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const theme = useThemeStore((state) => state.theme);
+  const isDark = theme === 'dark';
 
   const allNotifications = useNotificationStore((state) => state.notifications);
   const notifications = useMemo(
@@ -63,9 +66,9 @@ export const CustomerNotificationMenu: React.FC = () => {
       case 'order':
         return <Package className="h-4 w-4 text-brand-blue" />;
       case 'promo':
-        return <Tag className="h-4 w-4 text-emerald-600" />;
+        return <Tag className="h-4 w-4 text-emerald-500" />;
       default:
-        return <Info className="h-4 w-4 text-gray-500" />;
+        return <Info className="h-4 w-4 text-gray-400" />;
     }
   };
 
@@ -82,18 +85,23 @@ export const CustomerNotificationMenu: React.FC = () => {
   };
 
   return (
-    <div ref={menuRef} className="sm:relative">
-      {/* Trigger Button */}
+    <div ref={menuRef} className="relative">
+      {/* Trigger Button matching Navbar pill design */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Customer notifications"
         aria-expanded={isOpen}
-        className="relative min-h-11 min-w-11 p-2 text-dark hover:text-brand-blue hover:bg-gray-50 rounded-md transition-colors flex items-center justify-center"
+        className={cn(
+          'relative w-9 h-9 sm:w-11 sm:h-11 rounded-full border flex items-center justify-center transition-colors cursor-pointer',
+          isDark
+            ? 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-300 hover:text-white'
+            : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700 hover:text-gray-900 shadow-2xs'
+        )}
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-blue px-1 text-[10px] font-bold text-white shadow-xs">
+          <span className="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-blue px-1 text-[10px] font-bold text-white shadow-xs">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -101,15 +109,27 @@ export const CustomerNotificationMenu: React.FC = () => {
 
       {/* Customer Notification Dropdown Panel */}
       {isOpen && (
-        <div className="absolute top-full mt-1.5 inset-x-2 sm:inset-x-auto sm:right-0 sm:mt-2 w-auto sm:w-[360px] max-w-[calc(100vw-1rem)] rounded-xl border border-gray-200 bg-white text-dark shadow-xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150 max-h-[calc(100vh-80px)] flex flex-col">
+        <div
+          className={cn(
+            'fixed sm:absolute top-[64px] sm:top-full mt-2 left-3 right-3 sm:left-auto sm:right-0 w-auto sm:w-[360px] rounded-2xl border shadow-2xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150 max-h-[calc(100vh-90px)] flex flex-col',
+            isDark
+              ? 'bg-[#0E131F] border-white/15 text-white'
+              : 'bg-white border-gray-200 text-gray-900'
+          )}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-4 py-3">
+          <div
+            className={cn(
+              'flex items-center justify-between border-b px-4 py-3',
+              isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-100 bg-gray-50/80'
+            )}
+          >
             <div className="flex items-center gap-2">
-              <h3 className="font-display font-bold text-xs uppercase tracking-wider text-dark">
+              <h3 className={cn('font-display font-bold text-xs uppercase tracking-wider', isDark ? 'text-white' : 'text-gray-900')}>
                 Notifications
               </h3>
               {unreadCount > 0 && (
-                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-brand-blue border border-blue-100">
+                <span className="rounded-full bg-brand-blue/15 px-2 py-0.5 text-[10px] font-bold text-brand-blue border border-brand-blue/30">
                   {unreadCount} new
                 </span>
               )}
@@ -118,7 +138,7 @@ export const CustomerNotificationMenu: React.FC = () => {
               <button
                 type="button"
                 onClick={() => markAllAsRead('customer')}
-                className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-gray-500 hover:text-brand-blue transition-colors"
+                className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-gray-400 hover:text-brand-blue transition-colors cursor-pointer"
               >
                 <CheckCheck className="h-3 w-3" />
                 <span>Mark all read</span>
@@ -126,17 +146,22 @@ export const CustomerNotificationMenu: React.FC = () => {
             )}
           </div>
 
-          {/* Native Push Permission Prompt for Customers */}
+          {/* Native Push Permission Prompt */}
           {permission !== 'granted' && (
-            <div className="border-b border-blue-100 bg-brand-blue-soft/50 px-4 py-2 flex items-center justify-between gap-3 text-xs text-gray-700">
+            <div
+              className={cn(
+                'border-b px-4 py-2 flex items-center justify-between gap-3 text-xs',
+                isDark ? 'border-white/10 bg-brand-blue/10 text-gray-300' : 'border-blue-100 bg-brand-blue-soft/50 text-gray-700'
+              )}
+            >
               <div className="flex items-center gap-1.5">
                 <Radio className="h-3.5 w-3.5 text-brand-blue shrink-0 animate-pulse" />
-                <span className="text-[11px]">Enable push notifications for live order tracking</span>
+                <span className="text-[11px]">Enable live order updates</span>
               </div>
               <button
                 type="button"
                 onClick={() => requestPermission()}
-                className="shrink-0 rounded bg-brand-blue px-2 py-0.5 text-[10px] font-bold text-white hover:bg-blue-600 transition-colors"
+                className="shrink-0 rounded bg-brand-blue px-2 py-0.5 text-[10px] font-bold text-white hover:bg-brand-blue-hover transition-colors cursor-pointer"
               >
                 Enable
               </button>
@@ -144,12 +169,17 @@ export const CustomerNotificationMenu: React.FC = () => {
           )}
 
           {/* Notification List */}
-          <div className="max-h-[340px] overflow-y-auto divide-y divide-gray-100 overscroll-contain">
+          <div
+            className={cn(
+              'max-h-[320px] overflow-y-auto divide-y overscroll-contain',
+              isDark ? 'divide-white/5' : 'divide-gray-100'
+            )}
+          >
             {notifications.length === 0 ? (
               <div className="py-10 text-center text-gray-400">
-                <Bell className="mx-auto h-7 w-7 text-gray-300 mb-2" />
-                <p className="text-xs font-medium text-gray-600">No new notifications</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">Order updates and special offers will appear here</p>
+                <Bell className="mx-auto h-7 w-7 opacity-40 mb-2" />
+                <p className={cn('text-xs font-medium', isDark ? 'text-gray-300' : 'text-gray-600')}>No new notifications</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Order updates and alerts will appear here</p>
               </div>
             ) : (
               notifications.map((notif) => (
@@ -158,23 +188,42 @@ export const CustomerNotificationMenu: React.FC = () => {
                   onClick={() => handleItemClick(notif)}
                   className={cn(
                     'group relative flex items-start gap-3 p-3.5 transition-colors cursor-pointer text-left',
-                    notif.read ? 'bg-white hover:bg-gray-50' : 'bg-blue-50/40 hover:bg-blue-50/70'
+                    notif.read
+                      ? isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
+                      : isDark ? 'bg-brand-blue/10 hover:bg-brand-blue/15' : 'bg-blue-50/50 hover:bg-blue-50/80'
                   )}
                 >
-                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 border border-gray-200/60">
+                  <div
+                    className={cn(
+                      'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border',
+                      isDark ? 'bg-white/5 border-white/10' : 'bg-gray-100 border-gray-200'
+                    )}
+                  >
                     {getItemIcon(notif.type)}
                   </div>
 
-                  <div className="flex-1 min-w-0 pr-3">
+                  <div className="flex-1 min-w-0 pr-2">
                     <div className="flex items-center gap-1.5">
-                      <span className={cn('text-xs font-semibold truncate', notif.read ? 'text-gray-700' : 'text-dark font-bold')}>
+                      <span
+                        className={cn(
+                          'text-xs font-semibold truncate',
+                          notif.read
+                            ? isDark ? 'text-gray-300' : 'text-gray-700'
+                            : isDark ? 'text-white font-bold' : 'text-dark font-bold'
+                        )}
+                      >
                         {notif.title}
                       </span>
                       {!notif.read && (
                         <span className="h-1.5 w-1.5 rounded-full bg-brand-blue shrink-0" />
                       )}
                     </div>
-                    <p className="text-[11.5px] leading-relaxed text-gray-600 line-clamp-2 mt-0.5">
+                    <p
+                      className={cn(
+                        'text-[11px] leading-relaxed line-clamp-2 mt-0.5',
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      )}
+                    >
                       {notif.message}
                     </p>
                     <div className="mt-1 flex items-center gap-2 text-[10px] text-gray-400">
@@ -196,7 +245,7 @@ export const CustomerNotificationMenu: React.FC = () => {
                       e.stopPropagation();
                       clearNotification(notif.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-opacity rounded"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-opacity rounded cursor-pointer"
                     title="Dismiss"
                   >
                     <X className="h-3 w-3" />
@@ -207,8 +256,13 @@ export const CustomerNotificationMenu: React.FC = () => {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/80 px-4 py-2.5 text-[11px] text-gray-500">
-            <span className="text-[11px] text-gray-500 font-medium">Order updates &amp; alerts</span>
+          <div
+            className={cn(
+              'flex items-center justify-between border-t px-4 py-2.5 text-[11px]',
+              isDark ? 'border-white/10 bg-white/[0.03] text-gray-400' : 'border-gray-100 bg-gray-50/80 text-gray-500'
+            )}
+          >
+            <span className="text-[11px]">Order updates &amp; alerts</span>
             <button
               type="button"
               onClick={() => {
