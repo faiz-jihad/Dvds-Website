@@ -162,11 +162,9 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
   fallbackImageUrl,
 }) => {
   const [cycle, setCycle] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const [posterFaded, setPosterFaded] = useState(false);
   const duration = endSec > startSec ? endSec - startSec : 0;
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const revealTimerRef = useRef<any>(null);
 
   // Send postMessage helper to YouTube Iframe
   const sendCommand = useCallback((func: string, args: any[] = []) => {
@@ -177,6 +175,11 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
       );
     } catch {}
   }, []);
+
+  // Cover the video with poster on film change until actively playing
+  useEffect(() => {
+    setPosterFaded(false);
+  }, [videoId, currentId, cycle]);
 
   // Handle Mute/Unmute dynamically without destroying the iframe
   useEffect(() => {
@@ -200,14 +203,9 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
     return () => clearTimeout(timer);
   }, [isLoop, duration, cycle, currentId, videoId, startSec, sendCommand]);
 
-  // Reset states when film or video changes
-  useEffect(() => {
-    setIsPlaying(false);
-    setHasError(false);
-    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-  }, [videoId, currentId]);
-
-  // Listen to YouTube API postMessage for state changes, loop, and error detection
+  // Listen to YouTube API postMessage:
+  // - ONLY reveal video (fade poster) when playerState === 1 (actively playing)
+  // - If paused (playerState === 2), IMMEDIATELY re-cover with poster to hide pause button & auto-resume
   useEffect(() => {
     const handleMessage = (e: MessageEvent) => {
       try {
@@ -219,61 +217,44 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
               ? data.info
               : undefined;
 
-        if (playerState === 1) {
-          // Video is playing frames
-          setIsPlaying(true);
-          setHasError(false);
-          if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+        if (playerState === 1 || (data?.info?.currentTime > 0 && playerState !== 2)) {
+          // Actively playing frames -> fade out cover poster smoothly
+          setPosterFaded(true);
         } else if (playerState === 2) {
-          // 2 = paused -> auto-resume immediately (do NOT hide iframe so mobile video doesn't get stuck)
+          // Paused -> IMMEDIATELY re-cover with poster so YouTube pause button is NEVER visible
+          setPosterFaded(false);
           sendCommand('playVideo');
         } else if (playerState === 0) {
-          // Video ended -> restart loop smoothly
+          // Video ended -> re-cover and restart loop smoothly
+          setPosterFaded(false);
           if (isLoop) {
             sendCommand('seekTo', [startSec, true]);
             sendCommand('playVideo');
             setCycle((c) => c + 1);
           }
-        } else if (
-          data?.event === 'onError' ||
-          (data?.event === 'infoDelivery' && data?.info?.errorCode)
-        ) {
-          // Real YouTube error
-          setHasError(true);
         }
       } catch {}
     };
 
     window.addEventListener('message', handleMessage);
-    return () => {
-      window.removeEventListener('message', handleMessage);
-      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-    };
+    return () => window.removeEventListener('message', handleMessage);
   }, [isLoop, startSec, sendCommand]);
 
-  // Mobile gesture kickstart: mobile browsers require a user interaction to start/unblock video playback
+  // Mobile gesture kickstart & tab resume: ensures playback starts and stays active without ever pausing
   useEffect(() => {
-    const unlockMobilePlayback = () => {
+    const handleResume = () => {
       sendCommand('playVideo');
-      setIsPlaying(true);
     };
-    window.addEventListener('touchstart', unlockMobilePlayback, { passive: true, once: true });
-    window.addEventListener('scroll', unlockMobilePlayback, { passive: true, once: true });
+    document.addEventListener('visibilitychange', handleResume);
+    window.addEventListener('touchstart', handleResume, { passive: true, once: true });
+    window.addEventListener('scroll', handleResume, { passive: true, once: true });
+    window.addEventListener('click', handleResume, { passive: true, once: true });
     return () => {
-      window.removeEventListener('touchstart', unlockMobilePlayback);
-      window.removeEventListener('scroll', unlockMobilePlayback);
+      document.removeEventListener('visibilitychange', handleResume);
+      window.removeEventListener('touchstart', handleResume);
+      window.removeEventListener('scroll', handleResume);
+      window.removeEventListener('click', handleResume);
     };
-  }, [sendCommand]);
-
-  // Resume video immediately when user returns to this browser tab
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && iframeRef.current?.contentWindow) {
-        sendCommand('playVideo');
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [sendCommand]);
 
   // Removed &origin= because raw IP/local network domains (e.g. 192.168.x.x on mobile) cause YouTube API security blocks
@@ -282,12 +263,44 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
 
   return (
     <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
-      {/* Background Fallback Poster: Always present underneath so there is never a blank/black flash */}
+      {/* 1. YouTube Iframe Video: Active at z-[1] */}
+      <iframe
+        ref={iframeRef}
+        key={`${currentId}-${videoId}-${startSec}`}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] scale-[1.25] sm:w-[max(135%,200vh)] sm:h-[max(135%,65vw)] sm:scale-[1.3] origin-center pointer-events-none select-none opacity-100 z-[1]"
+        style={{ pointerEvents: 'none', touchAction: 'none' }}
+        tabIndex={-1}
+        aria-hidden="true"
+        src={embedUrl}
+        title="Featured Cinema Trailer"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        loading="eager"
+        referrerPolicy="strict-origin-when-cross-origin"
+        onLoad={() => {
+          try {
+            iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'listening' }), '*');
+            iframeRef.current?.contentWindow?.postMessage(
+              JSON.stringify({ event: 'command', func: 'addEventListener', args: ['onStateChange'] }),
+              '*'
+            );
+          } catch {}
+          sendCommand('mute');
+          sendCommand('playVideo');
+          setTimeout(() => sendCommand('playVideo'), 300);
+          setTimeout(() => sendCommand('playVideo'), 800);
+          if (!isMuted) {
+            sendCommand('unMute');
+            sendCommand('setVolume', [100]);
+          }
+        }}
+      />
+
+      {/* 2. Cover Poster: Sits in front of iframe at z-[2] to 100% mask initial buffer/pause icon, then dissolves away only when playing */}
       {fallbackImageUrl && (
         <div
           className={cn(
-            'absolute inset-0 transition-opacity duration-700 ease-out z-0',
-            isPlaying && !hasError ? 'opacity-0' : 'opacity-100'
+            'absolute inset-0 z-[2] transition-opacity duration-700 ease-out pointer-events-none',
+            posterFaded ? 'opacity-0' : 'opacity-100'
           )}
         >
           <img
@@ -296,44 +309,6 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
             className="w-full h-full object-cover object-center lg:object-right-top scale-105"
           />
         </div>
-      )}
-
-      {/* YouTube Iframe Video */}
-      {!hasError && (
-        <iframe
-          ref={iframeRef}
-          key={`${currentId}-${videoId}-${startSec}`}
-          className={cn(
-            'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] scale-[1.25] sm:w-[max(135%,200vh)] sm:h-[max(135%,65vw)] sm:scale-[1.3] origin-center pointer-events-none select-none transition-opacity duration-700 ease-out z-[1]',
-            isPlaying ? 'opacity-100' : 'opacity-0'
-          )}
-          style={{ pointerEvents: 'none', touchAction: 'none' }}
-          tabIndex={-1}
-          aria-hidden="true"
-          src={embedUrl}
-          title="Featured Cinema Trailer"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          loading="eager"
-          referrerPolicy="strict-origin-when-cross-origin"
-          onError={() => setHasError(true)}
-          onLoad={() => {
-            sendCommand('listening');
-            sendCommand('mute');
-            sendCommand('playVideo');
-            if (isMuted) {
-              sendCommand('mute');
-            } else {
-              sendCommand('unMute');
-              sendCommand('setVolume', [100]);
-            }
-
-            // Fallback reveal timer: guarantees mobile reveals smoothly after video buffers
-            if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-            revealTimerRef.current = setTimeout(() => {
-              setIsPlaying(true);
-            }, 1200);
-          }}
-        />
       )}
 
       {/* Top crop guard gradient: blends to the active theme color */}
@@ -356,12 +331,17 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
         )}
       />
 
-      {/* Click-shield overlay: intercepts pointer clicks on desktop without blocking mobile touches */}
+      {/* Click/Touch shield overlay: intercepts ALL clicks/touches so YouTube can NEVER be paused by user */}
       <div
-        className="absolute inset-0 z-[7] bg-transparent cursor-default pointer-events-auto select-none"
-        style={{ touchAction: 'pan-y' }}
+        className="absolute inset-0 z-[10] bg-transparent cursor-default pointer-events-auto select-none"
+        style={{ touchAction: 'pan-y', WebkitTapHighlightColor: 'transparent' }}
         onClick={(e) => {
           e.preventDefault();
+          e.stopPropagation();
+          sendCommand('playVideo');
+        }}
+        onTouchStart={() => {
+          sendCommand('playVideo');
         }}
         aria-hidden="true"
       />
@@ -611,8 +591,11 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
         {/* Interaction shield: blocks clicks on desktop without blocking mobile touches/swipes */}
         <div
           className="absolute inset-0 z-[8] bg-transparent select-none cursor-default pointer-events-auto"
-          style={{ touchAction: 'pan-y' }}
-          onClick={(e) => e.preventDefault()}
+          style={{ touchAction: 'pan-y', WebkitTapHighlightColor: 'transparent' }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
           aria-hidden="true"
         />
 

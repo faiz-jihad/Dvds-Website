@@ -43,7 +43,6 @@ interface AdminHeroVideoPlayerProps {
 
 const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, startSec, endSec }) => {
   const [cycle, setCycle] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
   const duration = endSec > startSec ? endSec - startSec : 0;
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -55,11 +54,6 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
       );
     } catch {}
   }, []);
-
-  // Reset isPlaying when video changes
-  useEffect(() => {
-    setIsPlaying(false);
-  }, [videoId, cycle]);
 
   // Loop timer for custom segment timing (minutes:seconds)
   useEffect(() => {
@@ -84,9 +78,7 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
               ? data.info
               : undefined;
 
-        if (playerState === 1) {
-          setIsPlaying(true);
-        } else if (playerState === 2) {
+        if (playerState === 2) {
           sendCommand('playVideo');
         } else if (playerState === 0) {
           sendCommand('seekTo', [startSec, true]);
@@ -115,9 +107,7 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
       <iframe
         ref={iframeRef}
         key={`${videoId}-${startSec}-${cycle}`}
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-[max(120%,190%)] h-[max(120%,62%)] scale-[1.25] origin-center aspect-video pointer-events-none select-none transition-opacity duration-500 ${
-          isPlaying ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-[max(120%,190%)] h-[max(120%,62%)] scale-[1.25] origin-center aspect-video pointer-events-none select-none opacity-100"
         style={{ pointerEvents: 'none', touchAction: 'none' }}
         tabIndex={-1}
         aria-hidden="true"
@@ -129,9 +119,6 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
           sendCommand('listening');
           sendCommand('mute');
           sendCommand('playVideo');
-          setTimeout(() => {
-            setIsPlaying(true);
-          }, 1200);
         }}
       />
       {/* Top crop guard gradient */}
@@ -139,8 +126,15 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
       {/* Click-shield overlay: intercepts all user interactions so YouTube player never pauses or displays play/pause icon */}
       <div
         className="absolute inset-0 z-20 bg-transparent cursor-default pointer-events-auto select-none"
-        style={{ touchAction: 'pan-y' }}
-        onClick={(e) => e.preventDefault()}
+        style={{ touchAction: 'pan-y', WebkitTapHighlightColor: 'transparent' }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          sendCommand('playVideo');
+        }}
+        onTouchStart={() => {
+          sendCommand('playVideo');
+        }}
         aria-hidden="true"
       />
     </div>
