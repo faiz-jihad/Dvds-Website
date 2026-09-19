@@ -85,11 +85,8 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
               : undefined;
 
         if (playerState === 1) {
-          // Strictly only reveal when actively playing frames
           setIsPlaying(true);
         } else if (playerState === 2) {
-          // If paused, hide iframe so pause icon never renders, and auto-resume immediately
-          setIsPlaying(false);
           sendCommand('playVideo');
         } else if (playerState === 0) {
           sendCommand('seekTo', [startSec, true]);
@@ -113,8 +110,6 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [sendCommand]);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-
   return (
     <div className="absolute inset-0 overflow-hidden select-none bg-[#07090E]">
       <iframe
@@ -126,13 +121,17 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
         style={{ pointerEvents: 'none', touchAction: 'none' }}
         tabIndex={-1}
         aria-hidden="true"
-        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&origin=${encodeURIComponent(origin)}`}
+        referrerPolicy="strict-origin-when-cross-origin"
+        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1`}
         title="Admin YouTube Preview"
         allow="autoplay; encrypted-media; picture-in-picture"
         onLoad={() => {
           sendCommand('listening');
-          sendCommand('playVideo');
           sendCommand('mute');
+          sendCommand('playVideo');
+          setTimeout(() => {
+            setIsPlaying(true);
+          }, 1200);
         }}
       />
       {/* Top crop guard gradient */}
@@ -141,12 +140,7 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
       <div
         className="absolute inset-0 z-20 bg-transparent cursor-default pointer-events-auto select-none"
         style={{ touchAction: 'pan-y' }}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
+        onClick={(e) => e.preventDefault()}
         aria-hidden="true"
       />
     </div>

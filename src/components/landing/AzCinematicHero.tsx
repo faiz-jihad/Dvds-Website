@@ -220,15 +220,12 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
               : undefined;
 
         if (playerState === 1) {
-          // STRICT: Only reveal video when it is ACTUALLY PLAYING frames!
-          // This guarantees the YouTube pause/play HUD is 100% impossible to ever be seen!
+          // Video is playing frames
           setIsPlaying(true);
           setHasError(false);
           if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
         } else if (playerState === 2) {
-          // 2 = paused -> instantly hide iframe back to backdrop poster so pause icon never renders!
-          setIsPlaying(false);
-          // Auto-resume immediately
+          // 2 = paused -> auto-resume immediately (do NOT hide iframe so mobile video doesn't get stuck)
           sendCommand('playVideo');
         } else if (playerState === 0) {
           // Video ended -> restart loop smoothly
@@ -241,7 +238,7 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
           data?.event === 'onError' ||
           (data?.event === 'infoDelivery' && data?.info?.errorCode)
         ) {
-          // YouTube error (embedding restricted, video deleted/private)
+          // Real YouTube error
           setHasError(true);
         }
       } catch {}
@@ -254,6 +251,20 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
     };
   }, [isLoop, startSec, sendCommand]);
 
+  // Mobile gesture kickstart: mobile browsers require a user interaction to start/unblock video playback
+  useEffect(() => {
+    const unlockMobilePlayback = () => {
+      sendCommand('playVideo');
+      setIsPlaying(true);
+    };
+    window.addEventListener('touchstart', unlockMobilePlayback, { passive: true, once: true });
+    window.addEventListener('scroll', unlockMobilePlayback, { passive: true, once: true });
+    return () => {
+      window.removeEventListener('touchstart', unlockMobilePlayback);
+      window.removeEventListener('scroll', unlockMobilePlayback);
+    };
+  }, [sendCommand]);
+
   // Resume video immediately when user returns to this browser tab
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -265,10 +276,9 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [sendCommand]);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const originParam = origin ? `&origin=${encodeURIComponent(origin)}` : '';
-  // Removed &loop=1&playlist=${videoId} to prevent YouTube from entering Playlist mode (which renders |<< and >>| navigation overlays)
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&cc_load_policy=0${originParam}`;
+  // Removed &origin= because raw IP/local network domains (e.g. 192.168.x.x on mobile) cause YouTube API security blocks
+  // Removed &playlist= to avoid playlist UI
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&cc_load_policy=0`;
 
   return (
     <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
@@ -304,9 +314,11 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
           title="Featured Cinema Trailer"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           loading="eager"
+          referrerPolicy="strict-origin-when-cross-origin"
           onError={() => setHasError(true)}
           onLoad={() => {
             sendCommand('listening');
+            sendCommand('mute');
             sendCommand('playVideo');
             if (isMuted) {
               sendCommand('mute');
@@ -315,13 +327,11 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
               sendCommand('setVolume', [100]);
             }
 
-            // Safety timeout: if YouTube takes longer than 7s, remain on poster
+            // Fallback reveal timer: guarantees mobile reveals smoothly after video buffers
             if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
             revealTimerRef.current = setTimeout(() => {
-              if (!isPlaying) {
-                setHasError(true);
-              }
-            }, 7000);
+              setIsPlaying(true);
+            }, 1200);
           }}
         />
       )}
@@ -346,16 +356,13 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
         )}
       />
 
-      {/* Click-shield overlay: intercepts pointer events */}
+      {/* Click-shield overlay: intercepts pointer clicks on desktop without blocking mobile touches */}
       <div
         className="absolute inset-0 z-[7] bg-transparent cursor-default pointer-events-auto select-none"
         style={{ touchAction: 'pan-y' }}
         onClick={(e) => {
           e.preventDefault();
-          e.stopPropagation();
         }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
         aria-hidden="true"
       />
     </div>
@@ -601,16 +608,11 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
           <div className="hidden sm:block absolute inset-0 bg-radial from-transparent via-[#07090E]/40 to-[#07090E] pointer-events-none z-[4]" />
         )}
 
-        {/* Interaction shield: completely absorbs taps & clicks so YouTube iframe never pauses or displays pause HUD */}
+        {/* Interaction shield: blocks clicks on desktop without blocking mobile touches/swipes */}
         <div
           className="absolute inset-0 z-[8] bg-transparent select-none cursor-default pointer-events-auto"
           style={{ touchAction: 'pan-y' }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
+          onClick={(e) => e.preventDefault()}
           aria-hidden="true"
         />
 
