@@ -232,7 +232,7 @@ export const AdminLayout: React.FC = () => {
         {/* Brand Header */}
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 px-5">
           <Link to="/admin" className="flex items-center gap-3 group">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 shadow-xs ring-1 ring-slate-900/10 transition-transform group-hover:scale-105 overflow-hidden p-1">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs ring-1 ring-slate-200 transition-transform group-hover:scale-105 overflow-hidden p-1">
               <img
                 src="/brand/logo.png"
                 alt="Logo"

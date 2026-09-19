@@ -1,5 +1,5 @@
 import { formatMoney, countryName } from "../../../shared/commerce.js";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -23,6 +23,7 @@ import { publicApi } from "../../lib/publicApi";
 import { formatGBP, formatDateUK, cn } from "../../lib/formatters";
 import { StoreDataState } from "../../components/common/StoreDataState";
 import { Button } from "../../components/common/Button";
+import { Pagination } from "../../components/common/Pagination";
 import { OrderReceiptModal } from "../../components/orders/OrderReceiptModal";
 import { OrderStatusStepper } from "../../components/orders/OrderStatusStepper";
 import { useCartStore } from "../../stores/useCartStore";
@@ -59,6 +60,9 @@ export const OrdersPage: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const ordersTopRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedReceiptOrder, setSelectedReceiptOrder] =
     useState<Order | null>(null);
@@ -67,6 +71,11 @@ export const OrdersPage: React.FC = () => {
   >(null);
 
   const orders = ordersQuery.data || [];
+
+  // Reset pagination to first page whenever filter tab or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery]);
 
   // Filter & Search computation
   const filteredOrders = useMemo(() => {
@@ -102,6 +111,21 @@ export const OrdersPage: React.FC = () => {
       return true;
     });
   }, [orders, activeTab, searchQuery]);
+
+  // Paginated slice of filtered orders
+  const paginatedOrders = useMemo(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+    const safePage = Math.min(Math.max(1, currentPage), totalPages);
+    const start = (safePage - 1) * pageSize;
+    return filteredOrders.slice(start, start + pageSize);
+  }, [filteredOrders, currentPage, pageSize]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    if (ordersTopRef.current) {
+      ordersTopRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   // Quick stats
   const stats = useMemo(() => {
@@ -329,7 +353,8 @@ export const OrdersPage: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {filteredOrders.map((order) => {
+          <div ref={ordersTopRef} className="scroll-mt-6" />
+          {paginatedOrders.map((order) => {
             const items = order.items || [];
             const isDelivered = order.status === "delivered";
             const isDispatched = order.status === "dispatched";
@@ -681,6 +706,19 @@ export const OrdersPage: React.FC = () => {
               </div>
             );
           })}
+
+          {/* Orders Pagination Controls */}
+          {filteredOrders.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalItems={filteredOrders.length}
+              onPageChange={handlePageChange}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[5, 10, 20]}
+              itemLabel="orders"
+            />
+          )}
         </div>
       )}
 

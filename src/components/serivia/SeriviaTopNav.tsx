@@ -95,24 +95,24 @@ export const SeriviaTopNav: React.FC<SeriviaTopNavProps> = ({
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
 
-        {/* Official Brand Logo */}
         <Link
           to="/"
           onClick={() => onSelectType?.('all')}
           className="flex items-center gap-2 group focus:outline-none shrink-0"
           aria-label="DVDs Zone Home"
         >
-          <img
-            src="/brand/logo-transparent.png"
-            alt="DVDs Zone"
-            className="h-8 sm:h-9 md:h-10 w-auto max-w-[130px] sm:max-w-[170px] object-contain transition-transform duration-200 group-hover:scale-[1.03] drop-shadow-md"
-            onError={(e) => {
-              // Fallback text if logo image is unavailable
-              e.currentTarget.style.display = 'none';
-              const fallback = document.getElementById('logo-text-fallback');
-              if (fallback) fallback.style.display = 'flex';
-            }}
-          />
+          <div className="inline-flex items-center justify-center bg-white px-2 py-0.5 rounded-lg shadow-xs border border-white/20 transition-transform duration-200 group-hover:scale-[1.03]">
+            <img
+              src="/brand/logo-transparent.png"
+              alt="DVDs Zone"
+              className="h-7 sm:h-8 md:h-9 w-auto max-w-[120px] sm:max-w-[155px] object-contain"
+              onError={(e) => {
+                e.currentTarget.parentElement!.style.display = 'none';
+                const fallback = document.getElementById('logo-text-fallback');
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+          </div>
           <div id="logo-text-fallback" className="hidden flex-col">
             <span className="font-extrabold text-sm sm:text-base text-white tracking-tight leading-none">
               DVDs Zone

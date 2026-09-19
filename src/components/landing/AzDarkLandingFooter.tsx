@@ -44,11 +44,13 @@ export const AzDarkLandingFooter: React.FC = () => {
           {/* Brand Col */}
           <div className="col-span-2 md:col-span-1 space-y-3">
             <Link to="/" className="inline-block">
-              <img
-                src="/brand/logo-transparent.png"
-                alt="AZ Rayan DVDs"
-                className="h-8 w-auto object-contain"
-              />
+              <div className="inline-flex items-center justify-center bg-white px-2.5 py-1 rounded-lg shadow-xs border border-white/20">
+                <img
+                  src="/brand/logo-transparent.png"
+                  alt="DVDs Zone"
+                  className="h-7 w-auto object-contain"
+                />
+              </div>
             </Link>
             <p className="text-xs text-gray-400 leading-relaxed max-w-xs">
               AZ Rayan DVDs is the UK's premier independent retailer for restored physical cinema, definitive television box sets, and rare disc editions.

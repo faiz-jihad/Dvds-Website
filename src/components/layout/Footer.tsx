@@ -55,11 +55,13 @@ export const Footer: React.FC = () => {
           {/* Column 1: Brand Logo & Primary Callouts */}
           <div className="lg:col-span-3">
             <Link to="/" className="inline-block mb-6 group">
-              <img
-                src="/brand/logo.png"
-                alt="DVDs Zone"
-                className="h-12 sm:h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-              />
+              <div className="inline-flex items-center justify-center bg-white px-3 py-1.5 rounded-xl shadow-xs transition-transform duration-200 group-hover:scale-105 border border-white/20">
+                <img
+                  src="/brand/logo-transparent.png"
+                  alt="DVDs Zone"
+                  className="h-8 sm:h-9 w-auto object-contain"
+                />
+              </div>
             </Link>
             <ul className="space-y-3.5 font-sans font-black text-[12px] sm:text-[13px] tracking-wider uppercase text-white">
               <li>

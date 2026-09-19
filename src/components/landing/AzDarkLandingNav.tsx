@@ -63,12 +63,14 @@ export const AzDarkLandingNav: React.FC = () => {
             <Menu size={20} />
           </button>
 
-          <Link to="/" className="flex items-center gap-2.5 group py-1" title="AZ Rayan DVDs - Home">
-            <img
-              src="/brand/logo-transparent.png"
-              alt="AZ Rayan DVDs"
-              className="h-8 sm:h-9 w-auto max-w-[130px] sm:max-w-[155px] object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-            />
+          <Link to="/" className="flex items-center gap-2.5 group py-1" title="DVDs Zone - Home">
+            <div className="inline-flex items-center justify-center bg-white px-2 py-0.5 rounded-lg shadow-xs border border-white/20 transition-transform duration-300 group-hover:scale-[1.02]">
+              <img
+                src="/brand/logo-transparent.png"
+                alt="DVDs Zone"
+                className="h-7 sm:h-8 w-auto max-w-[120px] sm:max-w-[145px] object-contain"
+              />
+            </div>
           </Link>
         </div>
 
