@@ -135,7 +135,7 @@ export const SeriviaMovieGrid: React.FC<SeriviaMovieGridProps> = ({
       {!hasMore && products.length > initialBatchSize && (
         <div className="pt-6 pb-4 border-t border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-xs text-gray-500">
           <div className="flex items-center gap-2">
-            <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+            <CheckCircle2 size={15} className="text-brand-blue shrink-0" />
             <span>
               Showing all <strong className="text-dark font-semibold">{products.length}</strong> titles in this catalogue
             </span>

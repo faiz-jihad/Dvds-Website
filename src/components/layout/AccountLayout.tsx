@@ -16,23 +16,23 @@ export const AccountLayout: React.FC = () => {
   ];
 
   return (
-    <div className="bg-gray-50/70 min-h-screen py-6 sm:py-10">
+    <div className="bg-[#F8FAFC] dark:bg-[#07090E] min-h-screen py-6 sm:py-10 text-dark dark:text-white transition-colors duration-200">
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
-        <div className="pb-6 mb-8 border-b border-gray-200 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="pb-6 mb-8 border-b border-gray-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
               Customer Portal
             </span>
-            <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-dark tracking-tight mt-1">
+            <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-dark dark:text-white tracking-tight mt-1">
               My Account
             </h1>
           </div>
 
           {/* Quick status on top right */}
           {isAuthenticated && customer ? (
-            <div className="text-xs text-gray-500 sm:text-right">
-              <span className="font-semibold text-dark">{customer.full_name || customer.email}</span>
-              <span className="block text-[11px] text-gray-400 capitalize">{customer.role} Account</span>
+            <div className="text-xs text-gray-500 dark:text-gray-400 sm:text-right">
+              <span className="font-semibold text-dark dark:text-white">{customer.full_name || customer.email}</span>
+              <span className="block text-[11px] text-gray-400 dark:text-gray-500 capitalize">{customer.role} Account</span>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -46,7 +46,7 @@ export const AccountLayout: React.FC = () => {
               </Link>
               <Link
                 to="/register"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-dark text-xs font-semibold hover:bg-gray-50 transition shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] text-dark dark:text-white text-xs font-semibold hover:bg-gray-50 dark:hover:bg-white/10 transition shadow-xs"
               >
                 <span>Register</span>
               </Link>
@@ -57,18 +57,18 @@ export const AccountLayout: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* Account Navigation: Horizontal tabs on mobile, vertical card on desktop */}
           <aside className="lg:col-span-3">
-            <nav className="bg-white rounded-xl p-2 sm:p-3 border border-gray-200 shadow-xs">
+            <nav className="bg-white dark:bg-[#0E131F] rounded-xl p-2 sm:p-3 border border-gray-200 dark:border-white/10 shadow-xs">
               {/* User profile brief badge when logged in (desktop) */}
               {isAuthenticated && customer && (
-                <div className="hidden lg:flex p-3 mb-2 bg-gray-50 rounded-lg border border-gray-100 items-center gap-3">
+                <div className="hidden lg:flex p-3 mb-2 bg-gray-50 dark:bg-[#141A26] rounded-lg border border-gray-100 dark:border-white/10 items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs shrink-0">
                     {(customer.full_name || customer.email).charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-dark truncate">
+                    <p className="text-xs font-bold text-dark dark:text-white truncate">
                       {customer.full_name || 'Customer'}
                     </p>
-                    <p className="text-[11px] text-gray-400 truncate font-mono">{customer.email}</p>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate font-mono">{customer.email}</p>
                   </div>
                 </div>
               )}
@@ -85,7 +85,7 @@ export const AccountLayout: React.FC = () => {
                         'flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors text-center sm:text-left',
                         isActive
                           ? 'bg-brand-blue text-white shadow-xs'
-                          : 'text-gray-600 hover:text-dark hover:bg-gray-50 bg-gray-50/60 lg:bg-transparent border border-gray-100 lg:border-transparent'
+                          : 'text-gray-600 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/10 bg-gray-50/60 dark:bg-white/5 lg:bg-transparent border border-gray-100 dark:border-white/5 lg:border-transparent'
                       )
                     }
                   >
@@ -97,19 +97,19 @@ export const AccountLayout: React.FC = () => {
 
               {/* Sidebar Action: Sign Out or Sign In Prompt */}
               {isAuthenticated ? (
-                <div className="hidden lg:block pt-2 mt-2 border-t border-gray-100">
+                <div className="hidden lg:block pt-2 mt-2 border-t border-gray-100 dark:border-white/10">
                   <button
                     type="button"
                     onClick={() => logout()}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sign Out</span>
                   </button>
                 </div>
               ) : (
-                <div className="hidden lg:block pt-3 mt-3 border-t border-gray-100 text-center">
-                  <p className="text-[11px] text-gray-500 mb-2">Sign in to sync saved items</p>
+                <div className="hidden lg:block pt-3 mt-3 border-t border-gray-100 dark:border-white/10 text-center">
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2">Sign in to sync saved items</p>
                   <Link
                     to="/login"
                     state={{ from: location.pathname }}
@@ -123,13 +123,13 @@ export const AccountLayout: React.FC = () => {
           </aside>
 
           {/* Account Main Content Area */}
-          <main className="min-w-0 lg:col-span-9 bg-white rounded-lg p-4 sm:p-8 border border-gray-200 shadow-xs">
+          <main className="min-w-0 lg:col-span-9 bg-white dark:bg-[#0E131F] rounded-lg p-4 sm:p-8 border border-gray-200 dark:border-white/10 shadow-xs text-dark dark:text-white">
             {!isLoading && !isAuthenticated ? (
               <div className="py-12 px-6 text-center max-w-md mx-auto">
-                <h2 className="font-display text-2xl font-bold text-dark tracking-tight">
+                <h2 className="font-display text-2xl font-bold text-dark dark:text-white tracking-tight">
                   Sign in to your account
                 </h2>
-                <p className="mt-2 text-xs sm:text-sm text-gray-500 leading-relaxed">
+                <p className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                   Sign in to view and manage your profile, track Royal Mail orders, and access saved addresses.
                 </p>
                 <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -143,9 +143,9 @@ export const AccountLayout: React.FC = () => {
                   </Link>
                   <Link
                     to="/register"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-dark text-xs font-semibold transition-colors shadow-xs"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] hover:bg-gray-50 dark:hover:bg-white/10 text-dark dark:text-white text-xs font-semibold transition-colors shadow-xs"
                   >
-                    <UserPlus className="w-4 h-4 text-gray-500" />
+                    <UserPlus className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                     <span>Create Account</span>
                   </Link>
                 </div>

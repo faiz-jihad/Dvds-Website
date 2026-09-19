@@ -14,6 +14,8 @@ import {
   ChevronRight,
   Sparkles,
   Film,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { cn } from '../../lib/formatters';
 import { useFavouritesStore } from '../../stores/useFavouritesStore';
@@ -38,7 +40,7 @@ export const AzPublicSidebar: React.FC<AzPublicSidebarProps> = ({
   const [collapsed, setCollapsed] = useState(false);
   const favourites = useFavouritesStore((s) => s.favourites);
   const { lastSeenProducts, recordView } = useLastSeenStore();
-  const theme = useThemeStore((s) => s.theme);
+  const { theme, toggleTheme } = useThemeStore();
   const isDark = theme === 'dark';
 
   // If fallbackProducts is not provided (e.g. on interior pages), fetch products
@@ -258,6 +260,35 @@ export const AzPublicSidebar: React.FC<AzPublicSidebarProps> = ({
               </Link>
             );
           })}
+
+          {/* Direct Theme Switcher Button */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className={cn(
+              'group flex w-full items-center gap-3.5 rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-200 cursor-pointer',
+              isDark
+                ? 'text-gray-400 hover:text-white hover:bg-white/5'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100',
+              collapsed && 'justify-center px-2'
+            )}
+            title={collapsed ? (isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme') : undefined}
+            aria-label="Toggle color theme"
+          >
+            {isDark ? (
+              <Sun size={18} className="shrink-0 text-amber-400 transition-colors" />
+            ) : (
+              <Moon size={18} className="shrink-0 text-brand-blue transition-colors" />
+            )}
+            {!collapsed && (
+              <div className="flex flex-1 items-center justify-between min-w-0">
+                <span className="truncate">{isDark ? 'Light Theme' : 'Dark Theme'}</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-gray-400 font-semibold">
+                  {theme}
+                </span>
+              </div>
+            )}
+          </button>
         </nav>
 
         {/* Divider */}

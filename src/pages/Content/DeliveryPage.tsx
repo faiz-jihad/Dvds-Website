@@ -12,7 +12,7 @@ export const DeliveryPage: React.FC = () => {
   }
   const settings = settingsQuery.data;
   return (
-    <div className="bg-white min-h-screen py-8 sm:py-16">
+    <div className="bg-[#F8FAFC] dark:bg-[#07090E] min-h-screen py-8 sm:py-16 text-dark dark:text-white transition-colors">
       <Seo
         title="Delivery & Dispatch Information — DVDs Zone | UK DVD Store"
         description="DVDs Zone dispatches all orders with Royal Mail Tracked 24 from London. Free UK delivery on every order. International shipping available. Same-day dispatch on orders before 3pm."
@@ -24,38 +24,38 @@ export const DeliveryPage: React.FC = () => {
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
             DISPATCH INFORMATION
           </span>
-          <h1 className="font-display font-extrabold text-2xl sm:text-4xl md:text-5xl text-dark tracking-tight mt-1 mb-3">
+          <h1 className="font-display font-extrabold text-2xl sm:text-4xl md:text-5xl text-dark dark:text-white tracking-tight mt-1 mb-3">
             UK Delivery &amp; Rates
           </h1>
-          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
             All orders qualify for 100% Free Standard Delivery across the whole United Kingdom. Dispatched safely in custom bubble-lined media envelopes from {settings.warehouse_location}.
           </p>
         </div>
 
         {/* Tiers Table */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-white dark:bg-[#0E131F] shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left min-w-[340px]">
-            <thead className="bg-gray-50 border-b border-gray-200 font-display font-semibold text-dark uppercase tracking-wider">
+            <thead className="bg-gray-50 dark:bg-[#141A26] border-b border-gray-200 dark:border-white/10 font-display font-semibold text-dark dark:text-white uppercase tracking-wider">
               <tr>
                 <th className="p-4">Service Tier</th>
                 <th className="p-4">Delivery Window</th>
                 <th className="p-4 text-right">Cost (GBP)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-white/5">
               <tr>
-                <td className="p-4 font-semibold text-dark">
+                <td className="p-4 font-semibold text-dark dark:text-white">
                   {settings.standard_shipping_name}
                 </td>
-                <td className="p-4 text-gray-600">{settings.standard_shipping_eta}</td>
-                <td className="p-4 text-right font-mono font-bold text-dark">
+                <td className="p-4 text-gray-600 dark:text-gray-300">{settings.standard_shipping_eta}</td>
+                <td className="p-4 text-right font-mono font-bold text-dark dark:text-white">
                   {settings.standard_shipping_fee === 0 || settings.free_shipping_threshold <= 0 ? (
-                    <span className="text-emerald-700 font-extrabold text-sm uppercase">FREE (All Orders)</span>
+                    <span className="text-brand-blue dark:text-blue-400 font-extrabold text-sm uppercase">FREE (All Orders)</span>
                   ) : (
                     <>
                       {formatGBP(settings.standard_shipping_fee)}{' '}
-                      <span className="text-emerald-600 text-[11px] block">
+                      <span className="text-brand-blue dark:text-blue-400 text-[11px] block">
                         (FREE over {formatGBP(settings.free_shipping_threshold)})
                       </span>
                     </>
@@ -63,19 +63,19 @@ export const DeliveryPage: React.FC = () => {
                 </td>
               </tr>
               <tr>
-                <td className="p-4 font-semibold text-dark">
+                <td className="p-4 font-semibold text-dark dark:text-white">
                   {settings.express_shipping_name}
                 </td>
-                <td className="p-4 text-gray-600">{settings.express_shipping_eta}</td>
-                <td className="p-4 text-right font-mono font-bold text-dark">{formatGBP(settings.express_shipping_fee)}</td>
+                <td className="p-4 text-gray-600 dark:text-gray-300">{settings.express_shipping_eta}</td>
+                <td className="p-4 text-right font-mono font-bold text-dark dark:text-white">{formatGBP(settings.express_shipping_fee)}</td>
               </tr>
             </tbody>
           </table>
           </div>
         </div>
 
-        <div className="space-y-4 text-xs text-gray-700 leading-relaxed">
-          <h3 className="font-display font-bold text-base text-dark">Packaging Standards</h3>
+        <div className="space-y-4 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+          <h3 className="font-display font-bold text-base text-dark dark:text-white">Packaging Standards</h3>
           <p>
             We recognize that collectors value pristine slipcases and uncracked jewel cases. Our packaging uses reinforced corner protection and moisture-resistant sealing to ensure your films arrive in showroom condition.
           </p>

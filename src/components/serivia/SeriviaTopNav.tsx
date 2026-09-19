@@ -337,7 +337,7 @@ export const SeriviaTopNav: React.FC<SeriviaTopNavProps> = ({
               className="flex items-center gap-1.5 sm:gap-2 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] rounded-xl px-2.5 sm:px-3 py-1.5 transition-all cursor-pointer"
               title="Your Account"
             >
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#f5c518] to-amber-500 flex items-center justify-center text-black text-[10px] font-extrabold shrink-0 shadow">
+              <div className="w-6 h-6 rounded-full bg-brand-blue flex items-center justify-center text-white text-[10px] font-extrabold shrink-0 shadow">
                 {(customer.full_name?.[0] || customer.email?.[0] || 'U').toUpperCase()}
               </div>
               <span className="hidden sm:block text-xs font-semibold text-white/80 max-w-[85px] truncate">
@@ -404,7 +404,7 @@ export const SeriviaTopNav: React.FC<SeriviaTopNavProps> = ({
         ) : (
           <Link
             to="/account/login"
-            className="flex items-center gap-1.5 bg-gradient-to-r from-[#f5c518] to-amber-500 hover:opacity-90 text-black font-extrabold rounded-xl px-3 sm:px-3.5 py-1.5 text-xs shadow-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 bg-brand-blue hover:bg-brand-blue-hover text-white font-extrabold rounded-xl px-3 sm:px-3.5 py-1.5 text-xs shadow-md shadow-brand-blue/20 transition-all active:scale-95"
           >
             <User size={13} />
             <span>Sign In</span>

@@ -56,7 +56,7 @@ export const AzCuratedCollectionBanner: React.FC<AzCuratedCollectionBannerProps>
               <span>Multi-Disc Editions</span>
             </div>
             <div className={cn('flex items-center gap-2 text-xs font-semibold', isDark ? 'text-gray-300' : 'text-gray-700')}>
-              <ShieldCheck size={15} className="text-emerald-500" />
+              <ShieldCheck size={15} className="text-brand-blue" />
               <span>Certified UK Region 2</span>
             </div>
           </div>

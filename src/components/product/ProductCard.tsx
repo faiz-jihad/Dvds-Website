@@ -53,7 +53,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
   return (
     <div className={cn('group flex flex-col relative', className)}>
       {/* DVD Cover Container with Perspective & Subtle Lift */}
-      <div className="relative aspect-dvd w-full overflow-hidden rounded-sm bg-gray-100 border border-gray-200/80 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-dvd-hover">
+      <div className="relative aspect-dvd w-full overflow-hidden rounded-sm bg-gray-100 dark:bg-[#141A26] border border-gray-200/80 dark:border-white/10 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-dvd-hover">
         <Link to={`/product/${product.slug}`} className="block w-full h-full">
           <img
             src={product.cover_image_url}
@@ -107,7 +107,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
               product.stock_quantity <= 0
                 ? 'bg-gray-400 text-white cursor-not-allowed'
                 : isAdded
-                ? 'bg-emerald-600 text-white'
+                ? 'bg-brand-blue-hover text-white'
                 : 'bg-brand-blue text-white hover:bg-brand-blue-hover shadow-md'
             )}
           >
@@ -130,26 +130,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
 
       {/* Metadata */}
       <div className="pt-3 pb-1 flex flex-col flex-grow">
-        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
           <div className="flex items-center gap-1.5 min-w-0">
             <BbfcBadge rating={product.age_rating} size="xs" />
             <span className="font-mono uppercase tracking-wider">{product.format}</span>
             {product.region_code && (
               <>
-                <span className="text-gray-300 font-mono text-[10px]">•</span>
+                <span className="text-gray-300 dark:text-gray-600 font-mono text-[10px]">•</span>
                 <span className="font-mono text-[10px] text-gray-400 uppercase truncate">{product.region_code}</span>
               </>
             )}
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <ImdbBadge product={product} size="xs" />
-            <span className="text-gray-300 font-mono text-[10px]">•</span>
+            <span className="text-gray-300 dark:text-gray-600 font-mono text-[10px]">•</span>
             <span className="font-mono text-[11px] text-gray-400">{product.release_year}</span>
           </div>
         </div>
 
         <Link to={`/product/${product.slug}`}>
-          <h3 className="font-display font-semibold text-sm text-dark line-clamp-1 group-hover:text-brand-blue transition-colors">
+          <h3 className="font-display font-semibold text-sm text-dark dark:text-white line-clamp-1 group-hover:text-brand-blue dark:group-hover:text-blue-400 transition-colors">
             {product.title}
           </h3>
         </Link>
@@ -162,7 +162,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
 
         {/* Price display with strict British currency & Red sale price */}
         <div className="mt-1.5 flex items-baseline gap-2">
-          <span className={cn('font-bold text-sm tracking-tight', hasDiscount ? 'text-brand-red' : 'text-dark')}>
+          <span className={cn('font-bold text-sm tracking-tight', hasDiscount ? 'text-brand-red dark:text-red-400' : 'text-dark dark:text-white')}>
             {formatGBP(product.price)}
           </span>
           {hasDiscount && (

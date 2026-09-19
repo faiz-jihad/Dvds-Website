@@ -9,16 +9,12 @@ export interface UserAvatarProps {
 }
 
 const AVATAR_COLORS = [
-  'bg-blue-600 text-white',
-  'bg-emerald-600 text-white',
-  'bg-indigo-600 text-white',
-  'bg-violet-600 text-white',
-  'bg-rose-600 text-white',
-  'bg-amber-600 text-white',
-  'bg-cyan-600 text-white',
-  'bg-teal-600 text-white',
-  'bg-purple-600 text-white',
-  'bg-sky-600 text-white',
+  'bg-brand-blue text-white',
+  'bg-slate-700 text-white',
+  'bg-brand-red text-white',
+  'bg-slate-800 text-white',
+  'bg-blue-700 text-white',
+  'bg-slate-900 text-white',
 ];
 
 export function getInitials(name?: string | null, email?: string | null): string {

@@ -66,7 +66,7 @@ export const CustomerNotificationMenu: React.FC = () => {
       case 'order':
         return <Package className="h-4 w-4 text-brand-blue" />;
       case 'promo':
-        return <Tag className="h-4 w-4 text-emerald-500" />;
+        return <Tag className="h-4 w-4 text-brand-red" />;
       default:
         return <Info className="h-4 w-4 text-gray-400" />;
     }

@@ -33,10 +33,10 @@ export const StoreDataState: React.FC<{
   if (isAuthError) {
     return (
       <div className="mx-auto flex min-h-[40vh] max-w-md flex-col items-center justify-center px-6 py-10 text-center" role="alert">
-        <h2 className="font-display text-2xl font-bold text-dark tracking-tight">
+        <h2 className="font-display text-2xl font-bold text-dark dark:text-white tracking-tight">
           Sign In Required
         </h2>
-        <p className="mt-2 text-xs sm:text-sm text-gray-500 leading-relaxed max-w-sm">
+        <p className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-sm">
           Please sign in to access your personal profile details, order history, and saved addresses.
         </p>
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
@@ -50,9 +50,9 @@ export const StoreDataState: React.FC<{
           </Link>
           <Link
             to="/register"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-dark text-xs font-semibold transition-colors shadow-xs"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] hover:bg-gray-50 dark:hover:bg-[#1A2234] text-dark dark:text-white text-xs font-semibold transition-colors shadow-xs"
           >
-            <UserPlus className="w-4 h-4 text-gray-500" />
+            <UserPlus className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             <span>Create Account</span>
           </Link>
         </div>
@@ -62,11 +62,11 @@ export const StoreDataState: React.FC<{
 
   return (
     <div className="mx-auto flex min-h-[45vh] max-w-xl flex-col items-center justify-center px-6 text-center" role="alert">
-      <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-amber-700">
+      <div className="rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 p-3 text-amber-700 dark:text-amber-400">
         <AlertTriangle className="h-6 w-6" />
       </div>
-      <h2 className="mt-4 font-display text-2xl font-bold text-dark">Data temporarily unavailable</h2>
-      <p className="mt-2 text-sm leading-relaxed text-gray-500">{errorMessage}</p>
+      <h2 className="mt-4 font-display text-2xl font-bold text-dark dark:text-white">Data temporarily unavailable</h2>
+      <p className="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{errorMessage}</p>
       {retry && (
         <Button variant="secondary" className="mt-6" onClick={retry}>
           <RefreshCw className="h-4 w-4" /> Try again

@@ -163,7 +163,7 @@ export const Shop: React.FC = () => {
   }
 
   return (
-    <div className="bg-white min-h-screen py-6 sm:py-10">
+    <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
       <Seo
         title={`${pageTitle} — DVDs Zone | Buy Physical DVDs UK`}
         description={`${pageDescription} Free UK delivery. Royal Mail Tracked dispatch from London.`}
@@ -191,15 +191,15 @@ export const Shop: React.FC = () => {
       />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Editorial Page Header */}
-        <div className="pb-8 mb-6 border-b border-gray-100 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="pb-8 mb-6 border-b border-gray-200 dark:border-white/10 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-brand-blue font-semibold">
+            <span className="text-xs font-mono uppercase tracking-widest text-brand-blue dark:text-blue-400 font-semibold">
               {pageEyebrow}
             </span>
-            <h1 className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-dark tracking-tight mt-1">
+            <h1 className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-dark dark:text-white tracking-tight mt-1">
               {pageTitle}
             </h1>
-            <p className="text-sm text-gray-500 mt-1 max-w-lg">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-lg">
               {pageDescription} ({filteredProducts.length} editions found)
             </p>
           </div>
@@ -208,18 +208,18 @@ export const Shop: React.FC = () => {
           <div className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-2 md:flex md:w-auto md:gap-3">
             <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="md:hidden flex min-h-11 items-center gap-2 px-3.5 py-2 bg-gray-100 text-dark rounded-md text-xs font-semibold"
+              className="md:hidden flex min-h-11 items-center gap-2 px-3.5 py-2 bg-gray-100 dark:bg-[#141A26] text-dark dark:text-white border border-gray-200 dark:border-white/10 rounded-md text-xs font-semibold"
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span>Filters</span>
             </button>
 
             <div className="flex min-w-0 items-center gap-2 text-xs">
-              <span className="text-gray-500 hidden sm:inline">Sort:</span>
+              <span className="text-gray-500 dark:text-gray-400 hidden sm:inline">Sort:</span>
               <select
                 value={sort}
                 onChange={(e) => updateFilter('sort', e.target.value)}
-                className="min-h-11 min-w-0 w-full bg-gray-50 border border-gray-200 rounded-md px-2 py-2 text-xs font-medium text-dark focus:outline-none focus:border-brand-blue sm:px-3 md:w-auto"
+                className="min-h-11 min-w-0 w-full bg-white dark:bg-[#141A26] border border-gray-200 dark:border-white/15 rounded-md px-2 py-2 text-xs font-medium text-dark dark:text-white focus:outline-none focus:border-brand-blue sm:px-3 md:w-auto"
               >
                 <option value="featured">Featured Curations</option>
                 <option value="newest">Newly Added</option>
@@ -250,50 +250,50 @@ export const Shop: React.FC = () => {
               <button
                 type="button"
                 onClick={() => updateFilter('genre', 'all')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-dark border border-gray-200 font-medium transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#141A26] hover:bg-gray-100 dark:hover:bg-white/10 text-dark dark:text-white border border-gray-200 dark:border-white/10 font-medium transition cursor-pointer"
                 title="Remove genre filter"
               >
                 <span>Genre: {activeGenre.name}</span>
-                <X className="w-3.5 h-3.5 text-gray-500" />
+                <X className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </button>
             )}
             {activeCategory && (
               <button
                 type="button"
                 onClick={() => updateFilter('category', 'all')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-dark border border-gray-200 font-medium transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#141A26] hover:bg-gray-100 dark:hover:bg-white/10 text-dark dark:text-white border border-gray-200 dark:border-white/10 font-medium transition cursor-pointer"
                 title="Remove category filter"
               >
                 <span>Category: {activeCategory.name}</span>
-                <X className="w-3.5 h-3.5 text-gray-500" />
+                <X className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </button>
             )}
             {selectedFormat !== 'all' && (
               <button
                 type="button"
                 onClick={() => updateFilter('format', 'all')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-dark border border-gray-200 font-medium transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#141A26] hover:bg-gray-100 dark:hover:bg-white/10 text-dark dark:text-white border border-gray-200 dark:border-white/10 font-medium transition cursor-pointer"
                 title="Remove format filter"
               >
                 <span>Format: {selectedFormat}</span>
-                <X className="w-3.5 h-3.5 text-gray-500" />
+                <X className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </button>
             )}
             {selectedRating !== 'all' && (
               <button
                 type="button"
                 onClick={() => updateFilter('rating', 'all')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-dark border border-gray-200 font-medium transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#141A26] hover:bg-gray-100 dark:hover:bg-white/10 text-dark dark:text-white border border-gray-200 dark:border-white/10 font-medium transition cursor-pointer"
                 title="Remove rating filter"
               >
                 <span>BBFC: {selectedRating}</span>
-                <X className="w-3.5 h-3.5 text-gray-500" />
+                <X className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </button>
             )}
             <button
               type="button"
               onClick={resetFilters}
-              className="text-xs text-gray-500 hover:text-dark underline cursor-pointer ml-1 font-medium transition-colors"
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-dark dark:hover:text-white underline cursor-pointer ml-1 font-medium transition-colors"
             >
               Clear all
             </button>
@@ -301,8 +301,8 @@ export const Shop: React.FC = () => {
         )}
 
         {showMobileFilters && (
-          <aside className="mb-7 rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-xs md:hidden">
-            <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
+          <aside className="mb-7 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-4 shadow-xs md:hidden">
+            <div className="mb-4 flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-brand-blue" />
                 <span className="font-display text-sm font-bold text-dark">Catalogue filters</span>
@@ -407,8 +407,8 @@ export const Shop: React.FC = () => {
                 onClick={() => updateFilter('filter', isSpecialOffers ? 'all' : 'sale')}
                 className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all cursor-pointer ${
                   isSpecialOffers
-                    ? 'bg-red-50 text-brand-red border-red-200 shadow-xs font-bold'
-                    : 'bg-white hover:bg-red-50/50 text-gray-700 hover:text-brand-red border-gray-200'
+                    ? 'bg-red-50 dark:bg-red-950/40 text-brand-red border-red-200 dark:border-red-800/40 shadow-xs font-bold'
+                    : 'bg-white dark:bg-[#0E131F] hover:bg-red-50/50 dark:hover:bg-red-950/20 text-gray-700 dark:text-gray-300 hover:text-brand-red border-gray-200 dark:border-white/10'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -418,7 +418,7 @@ export const Shop: React.FC = () => {
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                   isSpecialOffers
                     ? 'bg-brand-red text-white'
-                    : 'bg-red-50 text-brand-red border border-red-200'
+                    : 'bg-red-50 dark:bg-red-950/40 text-brand-red border border-red-200 dark:border-red-800/40'
                 }`}>
                   {saleCount} Deals
                 </span>
@@ -428,14 +428,14 @@ export const Shop: React.FC = () => {
             {/* Curated Film Genres Filter */}
             <div>
               <div className="flex items-center justify-between mb-2.5">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
                   Film Genres
                 </h4>
                 {selectedGenre !== 'all' && (
                   <button
                     type="button"
                     onClick={() => updateFilter('genre', 'all')}
-                    className="text-[11px] text-brand-blue hover:underline cursor-pointer"
+                    className="text-[11px] text-brand-blue dark:text-blue-400 hover:underline cursor-pointer"
                   >
                     Clear
                   </button>
@@ -447,13 +447,13 @@ export const Shop: React.FC = () => {
                   onClick={() => updateFilter('genre', 'all')}
                   className={`flex items-center justify-between w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
                     selectedGenre === 'all'
-                      ? 'bg-gray-100 text-dark font-bold'
-                      : 'text-gray-600 hover:text-dark hover:bg-gray-50'
+                      ? 'bg-gray-100 dark:bg-white/10 text-dark dark:text-white font-bold'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
                   }`}
                 >
                   <span>All Film Genres</span>
                   <span className={`text-[10px] font-mono shrink-0 px-1.5 py-0.2 rounded ${
-                    selectedGenre === 'all' ? 'bg-dark text-white' : 'text-gray-400'
+                    selectedGenre === 'all' ? 'bg-dark dark:bg-white/20 text-white' : 'text-gray-400 dark:text-gray-500'
                   }`}>
                     {allProducts.filter((p) => p.status === 'active').length}
                   </span>
@@ -468,14 +468,14 @@ export const Shop: React.FC = () => {
                       onClick={() => updateFilter('genre', isSelected ? 'all' : g.slug)}
                       className={`flex items-center justify-between w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
                         isSelected
-                          ? 'bg-gray-100 text-dark font-bold'
-                          : 'text-gray-600 hover:text-dark hover:bg-gray-50'
+                          ? 'bg-gray-100 dark:bg-white/10 text-dark dark:text-white font-bold'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
                       }`}
                     >
                       <span className="truncate pr-2">{g.name}</span>
                       {count > 0 && (
                         <span className={`text-[10px] font-mono shrink-0 px-1.5 py-0.2 rounded ${
-                          isSelected ? 'bg-dark text-white' : 'text-gray-400'
+                          isSelected ? 'bg-dark dark:bg-white/20 text-white' : 'text-gray-400 dark:text-gray-500'
                         }`}>
                           {count}
                         </span>
@@ -488,14 +488,14 @@ export const Shop: React.FC = () => {
 
             {/* Category Filter */}
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700 mb-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-3">
                 Category
               </h4>
               <div className="space-y-1 text-xs">
                 <button
                   onClick={() => updateFilter('category', 'all')}
                   className={`block w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
-                    selectedCategory === 'all' ? 'font-bold text-dark bg-gray-100' : 'text-gray-600 hover:text-dark hover:bg-gray-50'
+                    selectedCategory === 'all' ? 'font-bold text-dark dark:text-white bg-gray-100 dark:bg-white/10' : 'text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
                   }`}
                 >
                   All Categories
@@ -505,7 +505,7 @@ export const Shop: React.FC = () => {
                     key={c.id}
                     onClick={() => updateFilter('category', c.slug)}
                     className={`block w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
-                      selectedCategory === c.slug ? 'font-bold text-dark bg-gray-100' : 'text-gray-600 hover:text-dark hover:bg-gray-50'
+                      selectedCategory === c.slug ? 'font-bold text-dark dark:text-white bg-gray-100 dark:bg-white/10' : 'text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
                     }`}
                   >
                     {c.name}
@@ -516,7 +516,7 @@ export const Shop: React.FC = () => {
 
             {/* Format Filter */}
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700 mb-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-3">
                 Media Format
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -526,8 +526,8 @@ export const Shop: React.FC = () => {
                     onClick={() => updateFilter('format', fmt)}
                     className={`text-xs px-2.5 py-1.5 rounded-sm border font-medium transition-colors cursor-pointer ${
                       selectedFormat === fmt
-                        ? 'bg-dark text-white border-dark font-bold'
-                        : 'bg-white text-dark border-gray-200 hover:border-dark'
+                        ? 'bg-dark dark:bg-brand-blue text-white border-dark dark:border-brand-blue font-bold'
+                        : 'bg-white dark:bg-[#0E131F] text-dark dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-dark dark:hover:border-white/30'
                     }`}
                   >
                     {fmt === 'all' ? 'All Formats' : fmt}
@@ -538,7 +538,7 @@ export const Shop: React.FC = () => {
 
             {/* BBFC Age Rating Filter */}
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700 mb-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-3">
                 BBFC Age Rating
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -548,8 +548,8 @@ export const Shop: React.FC = () => {
                     onClick={() => updateFilter('rating', rating)}
                     className={`text-xs px-2.5 py-1 rounded-sm border font-mono transition-colors ${
                       selectedRating === rating
-                        ? 'bg-dark text-white border-dark'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-dark'
+                        ? 'bg-dark dark:bg-brand-blue text-white border-dark dark:border-brand-blue'
+                        : 'bg-white dark:bg-[#0E131F] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-dark dark:hover:border-white/30'
                     }`}
                   >
                     {rating === 'all' ? 'Any' : rating}
@@ -561,8 +561,8 @@ export const Shop: React.FC = () => {
             {/* Price Range Slider */}
             <div>
               <div className="flex justify-between items-center mb-2 text-xs">
-                <span className="font-semibold uppercase tracking-wider text-gray-700">Max Price</span>
-                <span className="font-mono font-bold text-dark">{formatGBP(maxPrice ?? catalogueMaxPrice)}</span>
+                <span className="font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">Max Price</span>
+                <span className="font-mono font-bold text-dark dark:text-white">{formatGBP(maxPrice ?? catalogueMaxPrice)}</span>
               </div>
               <input
                 type="range"
@@ -573,7 +573,7 @@ export const Shop: React.FC = () => {
                 onChange={(e) => setMaxPrice(Number(e.target.value))}
                 className="w-full accent-brand-blue cursor-pointer"
               />
-              <div className="flex justify-between text-[11px] text-gray-400 mt-1 font-mono">
+              <div className="flex justify-between text-[11px] text-gray-400 dark:text-gray-500 mt-1 font-mono">
                 <span>{formatGBP(catalogueMinPrice)}</span>
                 <span>{formatGBP(catalogueMaxPrice)}</span>
               </div>
@@ -583,11 +583,11 @@ export const Shop: React.FC = () => {
           {/* Right Main Grid */}
           <main className="col-span-1 md:col-span-9">
             {filteredProducts.length === 0 ? (
-              <div className="py-20 text-center bg-gray-50 rounded-sm border border-gray-100 p-8">
-                <p className="font-display font-bold text-lg text-dark mb-1">
+              <div className="py-20 text-center bg-white dark:bg-[#0E131F] rounded-lg border border-gray-200 dark:border-white/10 p-8 shadow-xs">
+                <p className="font-display font-bold text-lg text-dark dark:text-white mb-1">
                   No DVD titles match these filters
                 </p>
-                <p className="text-xs text-gray-500 mb-6">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
                   Try adjusting your price range or clearing category filters.
                 </p>
                 <Button variant="secondary" size="sm" onClick={resetFilters}>

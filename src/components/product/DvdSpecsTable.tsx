@@ -46,23 +46,23 @@ export const DvdSpecsTable: React.FC<DvdSpecsTableProps> = ({ product }) => {
   ];
 
   return (
-    <div className="w-full border border-gray-200 rounded-md overflow-hidden bg-white">
-      <div className="flex flex-col items-start gap-1 bg-gray-50 px-4 py-3 border-b border-gray-200 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
-        <h4 className="font-display font-semibold text-xs uppercase tracking-wider text-dark">
+    <div className="w-full border border-gray-200 dark:border-white/10 rounded-md overflow-hidden bg-white dark:bg-[#0E131F]">
+      <div className="flex flex-col items-start gap-1 bg-gray-50 dark:bg-[#141A26] px-4 py-3 border-b border-gray-200 dark:border-white/10 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
+        <h4 className="font-display font-semibold text-xs uppercase tracking-wider text-dark dark:text-white">
           Physical Disc Specifications
         </h4>
-        <span className="text-[11px] font-mono text-gray-500">OFFICIAL PAL EDITION</span>
+        <span className="text-[11px] font-mono text-gray-500 dark:text-gray-400">OFFICIAL PAL EDITION</span>
       </div>
-      <dl className="divide-y divide-gray-100 text-xs">
+      <dl className="divide-y divide-gray-100 dark:divide-white/10 text-xs">
         {specs.map((item, index) => (
           <div
             key={item.label}
             className={`grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-4 sm:gap-0 sm:py-2.5 ${
-              index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+              index % 2 === 0 ? 'bg-white dark:bg-[#0E131F]' : 'bg-gray-50/50 dark:bg-[#141A26]/40'
             }`}
           >
-            <dt className="text-gray-500 font-medium">{item.label}</dt>
-            <dd className="min-w-0 break-words text-dark font-normal sm:col-span-3">{item.value}</dd>
+            <dt className="text-gray-500 dark:text-gray-400 font-medium">{item.label}</dt>
+            <dd className="min-w-0 break-words text-dark dark:text-gray-200 font-normal sm:col-span-3">{item.value}</dd>
           </div>
         ))}
       </dl>

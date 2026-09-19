@@ -16,8 +16,7 @@ CREATE OR REPLACE FUNCTION public.create_global_checkout_order(
 DECLARE v_result JSONB; v_currency TEXT := p_order->>'currency'; v_rate NUMERIC := (p_order->>'exchange_rate')::NUMERIC;
 BEGIN
   IF v_currency IS NULL OR v_currency NOT IN ('GBP','USD','EUR','CAD','AUD','NZD','CHF','SGD','HKD','JPY','IDR') OR v_rate IS NULL OR v_rate <= 0 THEN RAISE EXCEPTION 'Invalid order currency or exchange rate'; END IF;
-  IF v_currency = 'GBP' AND v_rate <> 1 THEN RAISE EXCEPTION 'Invalid GBP exchange rate'; END IF;
-  IF p_order->>'payment_method' = 'bank_transfer' AND (v_currency <> 'GBP' OR p_order->'shipping_address'->>'country' NOT IN ('GB','UK','United Kingdom')) THEN RAISE EXCEPTION 'Bank transfer is available for UK GBP orders only'; END IF;
+  -- Allow bank transfer in any supported currency
   IF (p_order->>'total_amount')::NUMERIC <> (p_order->>'subtotal')::NUMERIC + (p_order->>'shipping_amount')::NUMERIC - (p_order->>'discount_amount')::NUMERIC
     OR (p_order->>'subtotal')::NUMERIC <> (SELECT sum((item->>'total_price')::NUMERIC) FROM jsonb_array_elements(p_items) item)
     OR EXISTS (SELECT 1 FROM jsonb_array_elements(p_items) item WHERE (item->>'total_price')::NUMERIC <> (item->>'unit_price')::NUMERIC * (item->>'quantity')::INT)

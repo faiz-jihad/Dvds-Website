@@ -22,13 +22,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-4 max-w-md mx-auto">
-      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-5">
+      <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-400 dark:text-gray-300 mb-5">
         {icon || <Disc className="w-8 h-8 stroke-[1.5]" />}
       </div>
-      <h3 className="font-display font-bold text-xl text-dark tracking-tight mb-2">
+      <h3 className="font-display font-bold text-xl text-dark dark:text-white tracking-tight mb-2">
         {title}
       </h3>
-      <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+      <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 leading-relaxed">
         {description}
       </p>
       {actionText && actionHref && (

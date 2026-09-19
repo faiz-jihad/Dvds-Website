@@ -17,7 +17,7 @@ export const Badge: React.FC<BadgeProps> = ({
     new: 'bg-brand-blue text-white font-bold',
     sale: 'bg-brand-red text-white font-bold',
     'best-seller': 'bg-dark text-white',
-    'low-stock': 'bg-amber-600 text-white',
+    'low-stock': 'bg-brand-red text-white font-bold',
     format: 'bg-gray-100 text-dark border border-gray-200 font-medium',
     neutral: 'bg-gray-100 text-gray-700',
     age: 'border border-gray-400 text-dark font-mono text-[10px] w-6 h-6 rounded-full p-0 flex items-center justify-center',

@@ -188,8 +188,8 @@ export const AzDvdMovieCard: React.FC<AzDvdMovieCardProps> = ({ product, classNa
           {/* Stock availability indicator */}
           <div className="flex items-center gap-1">
             {!outOfStock ? (
-              <span className="text-[9px] font-semibold text-emerald-400 flex items-center gap-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[9px] font-semibold text-brand-blue dark:text-blue-400 flex items-center gap-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-blue animate-pulse" />
                 <span className="hidden min-[380px]:inline">In Stock</span>
               </span>
             ) : (

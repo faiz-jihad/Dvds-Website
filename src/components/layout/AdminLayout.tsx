@@ -24,6 +24,8 @@ import {
   ChevronRight,
   ChevronDown,
   Shield,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { cn } from "../../lib/formatters";
 import { useAdminAuth } from "../../auth/AdminAuth";
@@ -36,6 +38,7 @@ import { AdminDataState } from "../admin/AdminDataState";
 import { AdminNotificationMenu } from "../admin/AdminNotificationMenu";
 import { UserAvatar } from "../common/UserAvatar";
 import { useUiStore } from "../../stores/useUiStore";
+import { useThemeStore } from "../../stores/useThemeStore";
 
 interface NavItem {
   label: string;
@@ -107,6 +110,8 @@ function useBreadcrumb() {
 export const AdminLayout: React.FC = () => {
   const { user, logout } = useAdminAuth();
   const { isConnected: wsConnected } = useRealtimeStatus();
+  const { theme, toggleTheme, setTheme } = useThemeStore();
+  const isDark = theme === "dark";
   const navigate = useNavigate();
   const breadcrumbs = useBreadcrumb();
   const { pathname } = useLocation();
@@ -187,8 +192,8 @@ export const AdminLayout: React.FC = () => {
                     cn(
                       "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] transition-all duration-150",
                       isActive
-                        ? "bg-slate-900 text-white font-semibold shadow-xs"
-                        : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium",
+                        ? "bg-slate-900 text-white dark:bg-brand-blue dark:text-white font-semibold shadow-xs"
+                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-medium",
                     )
                   }
                 >
@@ -199,7 +204,7 @@ export const AdminLayout: React.FC = () => {
                           "h-4 w-4 shrink-0 transition-colors",
                           isActive
                             ? "text-white"
-                            : "text-slate-400 group-hover:text-slate-700",
+                            : "text-slate-400 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200",
                         )}
                       />
                       <span className="flex-1 truncate">{item.label}</span>
@@ -209,7 +214,7 @@ export const AdminLayout: React.FC = () => {
                             "rounded-full px-2 py-0.5 text-[10px] font-bold",
                             isActive
                               ? "bg-white/20 text-white"
-                              : "bg-slate-100 text-slate-600 border border-slate-200/60",
+                              : "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-white/10",
                           )}
                         >
                           {item.badge}
@@ -226,15 +231,15 @@ export const AdminLayout: React.FC = () => {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 font-sans text-slate-900 antialiased">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#07090E] font-sans text-slate-900 dark:text-white antialiased">
       {/* ── Clean White Desktop Sidebar ─────────────────────────────────── */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200/80 bg-white md:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#0E131F] md:flex">
         {/* Brand Header */}
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 px-5">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 dark:border-white/10 px-5">
           <Link to="/admin" className="flex items-center gap-3 group">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs ring-1 ring-slate-200 transition-transform group-hover:scale-105 overflow-hidden p-1">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-white/10 shadow-xs ring-1 ring-slate-200 dark:ring-white/15 transition-transform group-hover:scale-105 overflow-hidden p-1">
               <img
-                src="/brand/logo-dark-theme.png"
+                src={isDark ? "/brand/logo-dark-theme.png" : "/brand/logo.png"}
                 alt="DVDs Zone"
                 className="h-full w-full object-contain"
                 onError={(e) => {
@@ -244,14 +249,14 @@ export const AdminLayout: React.FC = () => {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="truncate text-sm font-bold text-slate-900 tracking-tight">
+                <p className="truncate text-sm font-bold text-slate-900 dark:text-white tracking-tight">
                   DVDs Zone
                 </p>
-                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-600 border border-slate-200/60">
+                <span className="rounded bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-white/10">
                   UK
                 </span>
               </div>
-              <p className="text-[11px] font-medium text-slate-400">
+              <p className="text-[11px] font-medium text-slate-400 dark:text-slate-400">
                 Admin Console
               </p>
             </div>
@@ -262,21 +267,21 @@ export const AdminLayout: React.FC = () => {
         <SidebarNav />
 
         {/* Bottom User Strip */}
-        <div className="border-t border-slate-100 p-3 bg-slate-50/40">
-          <div className="flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white p-2.5 shadow-2xs">
+        <div className="border-t border-slate-100 dark:border-white/10 p-3 bg-slate-50/40 dark:bg-black/20">
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-[#131826] p-2.5 shadow-2xs">
             <UserAvatar size="sm" name={user?.fullName} email={user?.email} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-bold text-slate-900">
+              <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
                 {user?.fullName || "Admin User"}
               </p>
-              <p className="truncate text-[11px] text-slate-400 font-medium">
+              <p className="truncate text-[11px] text-slate-400 dark:text-slate-400 font-medium">
                 {user?.email}
               </p>
             </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
               title="Sign out"
               aria-label="Sign out"
             >
@@ -289,13 +294,13 @@ export const AdminLayout: React.FC = () => {
       {/* ── Main Area (Clean White Header + Content) ──────────────────── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Clean White Top Header Bar */}
-        <header className="relative z-30 flex h-16 min-w-0 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 sm:px-6">
+        <header className="relative z-30 flex h-16 min-w-0 shrink-0 items-center justify-between border-b border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#0E131F] px-4 sm:px-6">
           {/* Left: mobile menu trigger + breadcrumbs */}
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 md:hidden cursor-pointer"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white md:hidden cursor-pointer"
               aria-label="Open navigation menu"
             >
               <Menu className="h-5 w-5" />
@@ -309,16 +314,16 @@ export const AdminLayout: React.FC = () => {
               {breadcrumbs.map((crumb, i) => (
                 <React.Fragment key={crumb.href}>
                   {i > 0 && (
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300 dark:text-slate-600" />
                   )}
                   {i === breadcrumbs.length - 1 ? (
-                    <span className="max-w-[34vw] truncate text-xs sm:text-sm font-bold text-slate-900">
+                    <span className="max-w-[34vw] truncate text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                       {crumb.label}
                     </span>
                   ) : (
                     <Link
                       to={crumb.href}
-                      className="max-w-[22vw] truncate text-xs sm:text-sm font-medium text-slate-400 transition-colors hover:text-slate-800"
+                      className="max-w-[22vw] truncate text-xs sm:text-sm font-medium text-slate-400 dark:text-slate-400 transition-colors hover:text-slate-800 dark:hover:text-slate-200"
                     >
                       {crumb.label}
                     </Link>
@@ -331,31 +336,31 @@ export const AdminLayout: React.FC = () => {
           {/* Right: Live status, View store, Notifications, User profile */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Live Sync Status */}
-            <div className="hidden items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 text-xs text-slate-600 lg:flex shadow-2xs">
+            <div className="hidden items-center gap-2 rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300 lg:flex shadow-2xs">
               <span className="relative flex h-2 w-2">
                 {wsConnected && (
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-blue opacity-75" />
                 )}
                 <span
                   className={cn(
                     "relative inline-flex h-2 w-2 rounded-full",
-                    wsConnected ? "bg-emerald-500" : "bg-slate-400",
+                    wsConnected ? "bg-brand-blue" : "bg-slate-400",
                   )}
                 />
               </span>
-              <span className="text-[11px] font-medium text-slate-600">
+              <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {wsConnected ? "Live Sync Active" : "Live Sync Paused"}
               </span>
             </div>
 
-            <div className="mx-0.5 hidden h-4 w-px bg-slate-200 lg:block" />
+            <div className="mx-0.5 hidden h-4 w-px bg-slate-200 dark:bg-white/10 lg:block" />
 
             {/* View Storefront */}
             <Link
               to="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 sm:flex"
+              className="hidden items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#131826] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-2xs transition-all hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white sm:flex"
             >
               <span>View Storefront</span>
               <ArrowUpRight className="h-3.5 w-3.5 text-slate-400" />
@@ -364,23 +369,39 @@ export const AdminLayout: React.FC = () => {
             {/* Clean White Store Notifications Dropdown */}
             <AdminNotificationMenu />
 
+            {/* Header Theme Switcher */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-xl border transition-all cursor-pointer shadow-2xs",
+                isDark
+                  ? "bg-white/5 hover:bg-white/10 border-white/10 text-brand-blue hover:text-blue-300"
+                  : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900"
+              )}
+              title={isDark ? "Switch to Light theme" : "Switch to Dark theme"}
+              aria-label="Toggle color theme"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+
             {/* Interactive Admin User Profile Dropdown */}
-            <div className="relative border-l border-slate-200 pl-2 sm:pl-3" ref={userMenuRef}>
+            <div className="relative border-l border-slate-200 dark:border-white/10 pl-2 sm:pl-3" ref={userMenuRef}>
               <button
                 type="button"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 className={cn(
                   "flex items-center gap-2 rounded-xl p-1.5 transition-all duration-150 cursor-pointer border",
                   userDropdownOpen
-                    ? "bg-slate-100 border-slate-300 shadow-xs"
-                    : "border-transparent hover:border-slate-200 hover:bg-slate-50"
+                    ? "bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20 shadow-xs"
+                    : "border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5"
                 )}
                 aria-expanded={userDropdownOpen}
                 aria-label="Admin user menu"
               >
                 <UserAvatar size="sm" name={user?.fullName} email={user?.email} />
                 <div className="hidden flex-col text-left md:flex min-w-0">
-                  <span className="max-w-[120px] truncate text-xs font-bold text-slate-900 leading-tight">
+                  <span className="max-w-[120px] truncate text-xs font-bold text-slate-900 dark:text-white leading-tight">
                     {user?.fullName || "Admin"}
                   </span>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -390,27 +411,63 @@ export const AdminLayout: React.FC = () => {
                 <ChevronDown
                   className={cn(
                     "h-3.5 w-3.5 text-slate-400 transition-transform duration-200",
-                    userDropdownOpen && "rotate-180 text-slate-800"
+                    userDropdownOpen && "rotate-180 text-slate-800 dark:text-slate-200"
                   )}
                 />
               </button>
 
               {/* Account Dropdown Menu Popover */}
               {userDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200/90 bg-white p-2 text-slate-900 shadow-xl z-50 animate-in fade-in-0 zoom-in-95 duration-150">
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0E131F] p-2 text-slate-900 dark:text-white shadow-xl z-50 animate-in fade-in-0 zoom-in-95 duration-150">
                   {/* User info header */}
-                  <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-100 mb-1">
-                    <p className="font-bold text-xs text-slate-900 truncate">
+                  <div className="p-3 bg-slate-50/80 dark:bg-[#131826] rounded-xl border border-slate-100 dark:border-white/10 mb-1">
+                    <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
                       {user?.fullName || "Admin User"}
                     </p>
-                    <p className="text-[11px] text-slate-500 truncate mt-0.5 font-medium">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">
                       {user?.email}
                     </p>
                     <div className="mt-2 flex items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200/70 text-slate-700 uppercase tracking-wide">
-                        <Shield className="h-3 w-3 text-slate-500" />
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200/70 dark:bg-white/10 text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                        <Shield className="h-3 w-3 text-slate-500 dark:text-slate-400" />
                         {user?.role === "admin" ? "Administrator" : "Store Staff"}
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Appearance Theme Selector */}
+                  <div className="p-2 my-1 rounded-xl bg-slate-50/80 dark:bg-white/[0.04] border border-slate-100 dark:border-white/10">
+                    <div className="flex items-center justify-between mb-1.5 px-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Appearance</span>
+                      <span className="text-[10px] font-mono text-slate-400">{isDark ? "Dark" : "Light"}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 p-0.5 rounded-lg bg-slate-200/60 dark:bg-black/40 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setTheme("dark")}
+                        className={cn(
+                          "flex items-center justify-center gap-1.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer",
+                          isDark
+                            ? "bg-brand-blue text-white shadow-xs font-bold"
+                            : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                        )}
+                      >
+                        <Moon className="h-3 w-3" />
+                        <span>Dark</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTheme("light")}
+                        className={cn(
+                          "flex items-center justify-center gap-1.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer",
+                          !isDark
+                            ? "bg-white text-slate-900 shadow-xs font-bold"
+                            : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                        )}
+                      >
+                        <Sun className="h-3 w-3" />
+                        <span>Light</span>
+                      </button>
                     </div>
                   </div>
 
@@ -421,7 +478,7 @@ export const AdminLayout: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center justify-between rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors"
+                      className="flex items-center justify-between rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-medium transition-colors"
                     >
                       <div className="flex items-center gap-2.5">
                         <ArrowUpRight className="h-4 w-4 text-slate-400" />
@@ -433,7 +490,7 @@ export const AdminLayout: React.FC = () => {
                     <Link
                       to="/admin/settings"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors"
+                      className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-medium transition-colors"
                     >
                       <Sliders className="h-4 w-4 text-slate-400" />
                       <span>Store Settings</span>
@@ -442,7 +499,7 @@ export const AdminLayout: React.FC = () => {
                     <Link
                       to="/admin/orders"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors"
+                      className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-medium transition-colors"
                     >
                       <ShoppingCart className="h-4 w-4 text-slate-400" />
                       <span>Customer Orders</span>
@@ -451,7 +508,7 @@ export const AdminLayout: React.FC = () => {
                     <Link
                       to="/admin/activity"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors"
+                      className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-medium transition-colors"
                     >
                       <ClipboardList className="h-4 w-4 text-slate-400" />
                       <span>Audit Activity Log</span>
@@ -461,7 +518,7 @@ export const AdminLayout: React.FC = () => {
                       <Link
                         to="/admin/users"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors"
+                        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-medium transition-colors"
                       >
                         <Users className="h-4 w-4 text-slate-400" />
                         <span>Users &amp; Permissions</span>
@@ -470,14 +527,14 @@ export const AdminLayout: React.FC = () => {
                   </div>
 
                   {/* Sign Out Button */}
-                  <div className="pt-1 mt-1 border-t border-slate-100">
+                  <div className="pt-1 mt-1 border-t border-slate-100 dark:border-white/10">
                     <button
                       type="button"
                       onClick={() => {
                         setUserDropdownOpen(false);
                         handleLogout();
                       }}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-left"
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer text-left"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Sign Out</span>
@@ -490,7 +547,7 @@ export const AdminLayout: React.FC = () => {
         </header>
 
         {/* Content Viewport */}
-        <main className="flex-1 overflow-y-auto bg-[#f8fafc] p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#07090E] p-4 sm:p-6 lg:p-8">
           {schemaQuery.error &&
           (schemaQuery.error as any)?.code === "BACKEND_NOT_CONFIGURED" ? (
             <AdminDataState
@@ -501,9 +558,9 @@ export const AdminLayout: React.FC = () => {
           ) : (
             <>
               {schemaQuery.error && !dismissedSchemaWarning && (
-                <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-900 shadow-2xs">
+                <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-brand-red/30 dark:border-brand-red/40 bg-brand-red-soft dark:bg-brand-red/10 p-4 text-xs text-brand-red dark:text-red-300 shadow-2xs">
                   <div className="flex items-center gap-2.5">
-                    <span className="flex h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                    <span className="flex h-2 w-2 rounded-full bg-brand-red shrink-0" />
                     <span>
                       Notice: Some optional database schema items are pending
                       migration. Store features are running smoothly with
@@ -513,7 +570,7 @@ export const AdminLayout: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setDismissedSchemaWarning(true)}
-                    className="shrink-0 rounded-md px-2.5 py-1 font-semibold text-amber-800 hover:bg-amber-100 transition-colors"
+                    className="shrink-0 rounded-md px-2.5 py-1 font-semibold text-brand-red dark:text-red-300 hover:bg-brand-red/20 transition-colors"
                   >
                     Dismiss
                   </button>
@@ -525,20 +582,20 @@ export const AdminLayout: React.FC = () => {
         </main>
       </div>
 
-      {/* ── Clean White Mobile Drawer ─────────────────────────────────── */}
+      {/* ── Responsive Mobile Drawer ─────────────────────────────────── */}
       {mobileNavOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           {/* Backdrop */}
           <button
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs"
             onClick={() => setMobileNavOpen(false)}
             aria-label="Close navigation"
           />
 
           {/* Drawer panel */}
-          <aside className="absolute inset-y-0 left-0 flex w-[min(86vw,22rem)] max-w-full flex-col border-r border-slate-200 bg-white shadow-2xl">
+          <aside className="absolute inset-y-0 left-0 flex w-[min(86vw,22rem)] max-w-full flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E131F] shadow-2xl">
             {/* Drawer header */}
-            <div className="flex h-16 items-center justify-between border-b border-slate-100 px-5">
+            <div className="flex h-16 items-center justify-between border-b border-slate-100 dark:border-white/10 px-5">
               <div className="flex items-center gap-3">
                 <UserAvatar
                   size="sm"
@@ -546,17 +603,17 @@ export const AdminLayout: React.FC = () => {
                   email={user?.email}
                 />
                 <div>
-                  <p className="text-sm font-bold text-slate-900">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
                     {user?.fullName || "Admin"}
                   </p>
-                  <p className="text-[11px] text-slate-400 font-medium">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-400 font-medium">
                     {user?.email}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setMobileNavOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-900"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -566,12 +623,25 @@ export const AdminLayout: React.FC = () => {
             <SidebarNav onLinkClick={() => setMobileNavOpen(false)} />
 
             {/* Drawer footer */}
-            <div className="border-t border-slate-100 p-4 space-y-2 bg-slate-50/50">
+            <div className="border-t border-slate-100 dark:border-white/10 p-4 space-y-2 bg-slate-50/50 dark:bg-[#0A0D14]">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="flex w-full items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#131826] px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-2xs"
+              >
+                <span className="flex items-center gap-2">
+                  {isDark ? <Sun className="h-4 w-4 text-brand-blue" /> : <Moon className="h-4 w-4 text-brand-blue" />}
+                  <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
+                </span>
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                  {theme}
+                </span>
+              </button>
               <Link
                 to="/"
                 target="_blank"
                 onClick={() => setMobileNavOpen(false)}
-                className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-2xs"
+                className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#131826] py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-2xs"
               >
                 View Storefront
                 <ArrowUpRight className="h-3.5 w-3.5 text-slate-400" />
@@ -579,7 +649,7 @@ export const AdminLayout: React.FC = () => {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-colors"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Sign Out

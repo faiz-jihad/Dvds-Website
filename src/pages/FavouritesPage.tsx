@@ -21,17 +21,17 @@ export const FavouritesPage: React.FC = () => {
   }
 
   return (
-    <div className="bg-white min-h-screen py-6 sm:py-10">
+    <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
       <Seo title="My Wishlist — DVDs Zone" description="Your saved DVD wishlist." noIndex siteName="DVDs Zone" />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
-        <div className="pb-6 mb-8 border-b border-gray-100">
-          <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
+        <div className="pb-6 mb-8 border-b border-gray-200 dark:border-white/10">
+          <span className="text-xs font-mono uppercase tracking-widest text-brand-blue dark:text-blue-400">
             Saved Films
           </span>
-          <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-dark tracking-tight mt-1">
+          <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-dark dark:text-white tracking-tight mt-1">
             Your Wishlist ({favProducts.length})
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Keep track of titles you wish to add to your home physical media library.
           </p>
         </div>

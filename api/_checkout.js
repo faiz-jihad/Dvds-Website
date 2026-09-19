@@ -231,10 +231,78 @@ export function validAccess(order, token) {
   const actual = Buffer.from(hash(token)); const expected = Buffer.from(order.checkout_access_hash);
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
+const ORDER_EXPIRY_MS = 20 * 60 * 1000; // 20 minutes
+
+export async function expireOrderIfOutdated(db, order) {
+  if (
+    !order ||
+    ['paid', 'refunded', 'partially_refunded'].includes(order.payment_status) ||
+    order.status === 'cancelled'
+  ) {
+    return order;
+  }
+  const createdAt = new Date(order.created_at).getTime();
+  if (Number.isFinite(createdAt) && Date.now() - createdAt >= ORDER_EXPIRY_MS) {
+    try {
+      await db.rpc('release_order_inventory', { p_order_id: order.id }).catch(() => {});
+      const expireRpc = await db.rpc('expire_checkout_order', {
+        p_order_id: order.id,
+        p_provider_order_id: order.checkout_session_id || null,
+      });
+      if (expireRpc?.error) {
+        await db.from('orders').update({
+          payment_status: 'failed',
+          status: 'cancelled',
+          updated_at: new Date().toISOString(),
+        }).eq('id', order.id);
+      }
+      await db.from('order_status_history').insert({
+        order_id: order.id,
+        previous_status: order.status,
+        new_status: 'cancelled',
+        note: 'Order automatically cancelled: unpaid after 20 minutes.',
+      }).catch(() => {});
+      if (order.checkout_session_id && order.payment_provider === 'stripe') {
+        try {
+          const stripe = stripeClient();
+          await stripe.checkout.sessions.expire(order.checkout_session_id);
+        } catch { /* session may already be closed */ }
+      }
+      const refreshed = check(await db.from('orders').select('*, items:order_items(*)').eq('id', order.id).maybeSingle());
+      if (refreshed) return refreshed;
+    } catch (err) {
+      console.error('[expireOrderIfOutdated] Error:', err);
+    }
+  }
+  return order;
+}
+
+export async function sweepExpiredOrders(db) {
+  try {
+    const cutoff = new Date(Date.now() - ORDER_EXPIRY_MS).toISOString();
+    const { data: stale } = await db.from('orders')
+      .select('id, created_at, checkout_session_id, payment_provider, status, payment_status')
+      .in('payment_status', ['pending', 'awaiting_payment'])
+      .neq('status', 'cancelled')
+      .lt('created_at', cutoff)
+      .limit(10);
+    if (stale?.length) {
+      for (const item of stale) {
+        await expireOrderIfOutdated(db, item).catch(() => {});
+      }
+    }
+  } catch { /* best-effort background sweep */ }
+}
+
 export async function loadOrder(db, id) {
   if (!entityId.test(id || '')) throw new CheckoutError('Invalid order reference.', 400);
-  const order = check(await db.from('orders').select('*, items:order_items(*)').eq('id', id).maybeSingle());
+  let order = check(await db.from('orders').select('*, items:order_items(*)').eq('id', id).maybeSingle());
   if (!order) throw new CheckoutError('Order not found.', 404);
+  if (order.currency === 'GBP' && Number(order.total_amount) >= 5000 && !order.payment_reference?.startsWith('ch_') && !order.payment_reference?.startsWith('pi_')) {
+    order.currency = 'IDR';
+    await db.from('orders').update({ currency: 'IDR' }).eq('id', order.id);
+  }
+  order = await expireOrderIfOutdated(db, order);
   return order;
 }
 export async function authorizeOrder(db, req, order) {
@@ -250,6 +318,7 @@ export function publicOrder(order) {
 }
 export async function initializeOrder(db, req, method) {
   const input = req.body || {};
+  sweepExpiredOrders(db).catch(() => {});
   if (!uuid.test(input.requestId || '') || !uuid.test(input.accessToken || '')) throw new CheckoutError('Please refresh checkout and try again.');
   const email = String(input.customerEmail || '').trim().toLowerCase();
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new CheckoutError('Enter a valid email address.');
@@ -284,6 +353,18 @@ export async function initializeOrder(db, req, method) {
   }
   if (data?.error) throw new CheckoutError(data.error.code === 'P0001' ? data.error.message : 'Your order could not be created. Please try again.', data.error.code === 'P0001' ? 409 : 503, data.error.code === 'P0001' ? 'STOCK_CHANGED' : 'DATABASE_ERROR');
   const order = await loadOrder(db, data.data.id);
+  if (quote.currency && order.currency !== quote.currency) {
+    await db.from('orders').update({
+      currency: quote.currency,
+      exchange_rate: quote.exchange_rate || 1,
+      exchange_rate_date: quote.exchange_rate_date || null,
+      base_total_amount: quote.base_total_amount || quote.total_amount,
+    }).eq('id', order.id);
+    order.currency = quote.currency;
+    order.exchange_rate = quote.exchange_rate || 1;
+    order.exchange_rate_date = quote.exchange_rate_date || null;
+    order.base_total_amount = quote.base_total_amount || quote.total_amount;
+  }
   req.checkoutOrder = order;
   return order;
 }

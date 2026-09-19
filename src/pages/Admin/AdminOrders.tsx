@@ -93,8 +93,8 @@ function getOrderStatusBadge(status: OrderStatus) {
     case 'delivered':
       return {
         label: 'Delivered',
-        dot: 'bg-emerald-500',
-        badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        dot: 'bg-brand-blue',
+        badge: 'bg-blue-50 text-brand-blue border-blue-200',
       };
     case 'dispatched':
       return {
@@ -105,26 +105,26 @@ function getOrderStatusBadge(status: OrderStatus) {
     case 'processing':
       return {
         label: 'Processing',
-        dot: 'bg-indigo-500',
-        badge: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+        dot: 'bg-brand-blue',
+        badge: 'bg-blue-50 text-brand-blue border-blue-200',
       };
     case 'cancelled':
       return {
         label: 'Cancelled',
-        dot: 'bg-rose-500',
-        badge: 'bg-rose-50 text-rose-700 border-rose-200',
+        dot: 'bg-brand-red',
+        badge: 'bg-brand-red-soft text-brand-red border-brand-red/30',
       };
     case 'refunded':
       return {
         label: 'Refunded',
-        dot: 'bg-purple-500',
-        badge: 'bg-purple-50 text-purple-700 border-purple-200',
+        dot: 'bg-brand-red',
+        badge: 'bg-brand-red-soft text-brand-red border-brand-red/30',
       };
     default:
       return {
         label: status ? status.replace('_', ' ').toUpperCase() : 'PENDING',
-        dot: 'bg-amber-500',
-        badge: 'bg-amber-50 text-amber-700 border-amber-200',
+        dot: 'bg-gray-400',
+        badge: 'bg-gray-100 text-gray-700 border-gray-200',
       };
   }
 }
@@ -134,26 +134,26 @@ function getPaymentStatusBadge(status: string) {
     case 'paid':
       return {
         label: 'PAID',
-        dot: 'bg-emerald-500',
-        badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        dot: 'bg-brand-blue',
+        badge: 'bg-blue-50 text-brand-blue border-blue-200',
       };
     case 'awaiting_payment':
       return {
         label: 'AWAITING PAYMENT',
-        dot: 'bg-amber-500',
-        badge: 'bg-amber-50 text-amber-800 border-amber-200',
+        dot: 'bg-brand-red',
+        badge: 'bg-brand-red-soft text-brand-red border-brand-red/30',
       };
     case 'failed':
       return {
         label: 'FAILED',
-        dot: 'bg-rose-500',
-        badge: 'bg-rose-50 text-rose-700 border-rose-200',
+        dot: 'bg-brand-red',
+        badge: 'bg-brand-red-soft text-brand-red border-brand-red/30',
       };
     default:
       return {
         label: status ? status.replace('_', ' ').toUpperCase() : 'UNPAID',
         dot: 'bg-gray-400',
-        badge: 'bg-gray-50 text-gray-700 border-gray-200',
+        badge: 'bg-gray-100 text-gray-700 border-gray-200',
       };
   }
 }
@@ -461,16 +461,16 @@ export const AdminOrders: React.FC = () => {
           className={cn(
             'p-4 rounded-2xl border text-left transition-all cursor-pointer shadow-xs',
             paymentFilter === 'awaiting_payment'
-              ? 'bg-amber-50/40 border-amber-400/50 ring-2 ring-amber-400/10'
+              ? 'bg-brand-red-soft/40 border-brand-red/40 ring-2 ring-brand-red/10'
               : 'bg-white border-gray-200 hover:border-gray-300'
           )}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Awaiting Payment</span>
-            <AlertCircle size={16} className="text-amber-600" />
+            <span className="text-xs font-bold text-brand-red uppercase tracking-wider">Awaiting Payment</span>
+            <AlertCircle size={16} className="text-brand-red" />
           </div>
-          <p className="text-2xl font-extrabold text-amber-900 mt-2 font-display">{awaitingPaymentOrders.length}</p>
-          <p className="text-[11px] text-amber-700 mt-0.5">Bank transfers to verify</p>
+          <p className="text-2xl font-extrabold text-brand-red mt-2 font-display">{awaitingPaymentOrders.length}</p>
+          <p className="text-[11px] text-brand-red/80 mt-0.5">Bank transfers to verify</p>
         </button>
 
         <button
@@ -899,8 +899,8 @@ export const AdminOrders: React.FC = () => {
             </div>
 
             {selectedOrder.payment_review_required && (
-              <div role="alert" className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs">
-                <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+              <div role="alert" className="rounded-2xl border border-brand-red/30 bg-brand-red-soft p-4 text-xs text-brand-red flex items-start gap-2.5 shadow-2xs">
+                <AlertCircle size={18} className="text-brand-red shrink-0 mt-0.5" />
                 <div>
                   <strong className="font-bold block">Payment Review Required</strong>
                   <span>Payment arrived after cancellation and stock was released. Verify availability with the customer or issue a refund in the payment provider dashboard before fulfilment.</span>
@@ -1164,21 +1164,21 @@ export const AdminOrders: React.FC = () => {
                   return (
                     <div className={cn(
                       'p-4 sm:p-5 rounded-2xl border space-y-3.5 shadow-xs',
-                      isAwaiting ? 'bg-amber-50/40 border-amber-300' : 'bg-blue-50/30 border-blue-200'
+                      isAwaiting ? 'bg-brand-red-soft/30 border-brand-red/30' : 'bg-blue-50/30 border-blue-200'
                     )}>
                       <div className="flex items-center justify-between pb-2 border-b border-gray-200/70">
                         <div className="flex items-center gap-2">
-                          <Building2 className={cn('w-4 h-4', isAwaiting ? 'text-amber-700' : 'text-brand-blue')} />
+                          <Building2 className={cn('w-4 h-4', isAwaiting ? 'text-brand-red' : 'text-brand-blue')} />
                           <span className="font-bold text-dark text-xs uppercase tracking-wide">
                             Bank Transfer Proof
                           </span>
                         </div>
                         {proof ? (
-                          <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 bg-blue-100 text-brand-blue text-[10px] font-bold px-2 py-0.5 rounded-full">
                             <Paperclip size={10} /> Proof Available
                           </span>
                         ) : isAwaiting ? (
-                          <span className="inline-flex items-center gap-1 bg-amber-200 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 bg-brand-red-soft text-brand-red border border-brand-red/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
                             <AlertCircle size={10} /> Awaiting Proof
                           </span>
                         ) : null}

@@ -40,7 +40,10 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div><h2 className="font-display text-lg font-bold text-dark">Profile Details</h2><p className="mt-0.5 text-xs text-gray-500">Your live account details used for order communication.</p></div>
+      <div>
+        <h2 className="font-display text-lg font-bold text-dark dark:text-white">Profile Details</h2>
+        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Your live account details used for order communication.</p>
+      </div>
       <form onSubmit={handleSubmit} className="max-w-lg space-y-4">
         <Input label="Full Name" value={fullName} onChange={(event) => setFullName(event.target.value)} required />
         <Input label="Email Address" type="email" value={profileQuery.data.email} readOnly helperText="Email changes require an authenticated account flow." />

@@ -25,18 +25,18 @@ export const ToastContainer: React.FC = () => {
             {/* Status Icon with subtle ambient badge */}
             <div className="shrink-0 mt-0.5">
               {toast.type === 'success' && (
-                <div className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="w-6 h-6 rounded-full bg-brand-blue/20 border border-brand-blue/40 flex items-center justify-center">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-brand-blue dark:text-blue-400" />
                 </div>
               )}
               {toast.type === 'error' && (
-                <div className="w-6 h-6 rounded-full bg-rose-500/15 border border-rose-500/30 flex items-center justify-center">
-                  <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                <div className="w-6 h-6 rounded-full bg-brand-red/20 border border-brand-red/40 flex items-center justify-center">
+                  <AlertCircle className="w-3.5 h-3.5 text-brand-red dark:text-red-400" />
                 </div>
               )}
               {toast.type === 'info' && (
-                <div className="w-6 h-6 rounded-full bg-sky-500/15 border border-sky-500/30 flex items-center justify-center">
-                  <Info className="w-3.5 h-3.5 text-sky-400" />
+                <div className="w-6 h-6 rounded-full bg-brand-blue/20 border border-brand-blue/40 flex items-center justify-center">
+                  <Info className="w-3.5 h-3.5 text-brand-blue dark:text-blue-400" />
                 </div>
               )}
             </div>

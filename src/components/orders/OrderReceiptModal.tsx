@@ -34,9 +34,9 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
       >
         <div className="space-y-6">
           {/* Top Control Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200 no-print">
-            <div className="text-xs text-gray-600">
-              <span className="font-semibold text-gray-900 font-mono">{order.order_number}</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 dark:bg-[#141A26] p-3 rounded-lg border border-gray-200 dark:border-white/10 no-print">
+            <div className="text-xs text-gray-600 dark:text-gray-300">
+              <span className="font-semibold text-gray-900 dark:text-white font-mono">{order.order_number}</span>
               <span className="hidden sm:inline"> • Ready for printing or PDF export</span>
             </div>
 
@@ -63,7 +63,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
           </div>
 
           {/* On-screen Preview Frame */}
-          <div className="overflow-y-auto max-h-[65vh] rounded-lg border border-gray-200 bg-gray-100 p-2 sm:p-5">
+          <div className="overflow-y-auto max-h-[65vh] rounded-lg border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-black/40 p-2 sm:p-5">
             <PrintableReceipt order={order} />
           </div>
         </div>

@@ -162,9 +162,9 @@ export const SearchOverlay: React.FC = () => {
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="relative z-10 max-w-3xl mx-auto px-3 pt-4 sm:px-4 sm:pt-20 pb-6 sm:pb-12"
           >
-            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 text-dark">
+            <div className="bg-white dark:bg-[#0E131F] rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-white/10 text-dark dark:text-white">
               {/* Top Input Bar */}
-              <div className="flex items-center px-4 py-3.5 border-b border-gray-100 sm:px-6 sm:py-4 gap-2">
+              <div className="flex items-center px-4 py-3.5 border-b border-gray-100 dark:border-white/10 sm:px-6 sm:py-4 gap-2">
                 <Search className="w-5 h-5 text-gray-400 shrink-0" />
 
                 <input
@@ -174,7 +174,7 @@ export const SearchOverlay: React.FC = () => {
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Search titles, actors, directors, box sets..."
-                  className="w-full text-base sm:text-lg text-dark placeholder:text-gray-400 bg-transparent focus:outline-none font-medium"
+                  className="w-full text-base sm:text-lg text-dark dark:text-white placeholder:text-gray-400 bg-transparent focus:outline-none font-medium"
                 />
 
                 {query && (
@@ -184,7 +184,7 @@ export const SearchOverlay: React.FC = () => {
                       setQuery('');
                       inputRef.current?.focus();
                     }}
-                    className="px-2 py-1 text-xs font-medium text-gray-400 hover:text-dark hover:bg-gray-100 rounded-md transition cursor-pointer shrink-0"
+                    className="px-2 py-1 text-xs font-medium text-gray-400 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-md transition cursor-pointer shrink-0"
                     title="Clear search"
                   >
                     Clear
@@ -194,7 +194,7 @@ export const SearchOverlay: React.FC = () => {
                 <button
                   type="button"
                   onClick={closeSearch}
-                  className="p-1.5 text-gray-400 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors cursor-pointer shrink-0"
+                  className="p-1.5 text-gray-400 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors cursor-pointer shrink-0"
                   aria-label="Close search"
                 >
                   <X className="w-5 h-5" />
@@ -202,7 +202,7 @@ export const SearchOverlay: React.FC = () => {
               </div>
 
               {/* Quick Format Filter Tabs */}
-              <div className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-50 border-b border-gray-100 overflow-x-auto scrollbar-none sm:px-6">
+              <div className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-50 dark:bg-[#141A26] border-b border-gray-100 dark:border-white/10 overflow-x-auto scrollbar-none sm:px-6">
                 <Filter className="w-3.5 h-3.5 text-gray-400 shrink-0 mr-1 hidden min-[400px]:block" />
                 {FORMAT_TABS.map((tab) => {
                   const isActive = selectedFormat === tab.value;
@@ -215,7 +215,7 @@ export const SearchOverlay: React.FC = () => {
                         'px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors cursor-pointer',
                         isActive
                           ? 'bg-brand-blue text-white shadow-xs'
-                          : 'bg-white text-gray-600 hover:text-dark border border-gray-200'
+                          : 'bg-white dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:text-dark dark:hover:text-white border border-gray-200 dark:border-white/10'
                       )}
                     >
                       {tab.label}
@@ -240,7 +240,7 @@ export const SearchOverlay: React.FC = () => {
                             key={term}
                             type="button"
                             onClick={() => handleSelectSearch(term)}
-                            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-brand-blue hover:text-white rounded-full transition-colors text-dark font-medium cursor-pointer"
+                            className="text-xs px-3 py-1.5 bg-gray-100 dark:bg-white/10 hover:bg-brand-blue hover:text-white rounded-full transition-colors text-dark dark:text-white font-medium cursor-pointer"
                           >
                             {term}
                           </button>
@@ -271,7 +271,7 @@ export const SearchOverlay: React.FC = () => {
                             <div
                               key={term}
                               onClick={() => handleSelectSearch(term)}
-                              className="group inline-flex items-center gap-1 text-xs px-3 py-1.5 bg-gray-50 border border-gray-200 hover:border-gray-400 rounded-full transition-colors text-dark font-medium cursor-pointer"
+                              className="group inline-flex items-center gap-1 text-xs px-3 py-1.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20 rounded-full transition-colors text-dark dark:text-white font-medium cursor-pointer"
                             >
                               <span>{term}</span>
                               <button
@@ -292,14 +292,14 @@ export const SearchOverlay: React.FC = () => {
                   </div>
                 ) : results.length > 0 ? (
                   <div>
-                    <div className="flex items-center justify-between gap-3 pb-3 mb-2 border-b border-gray-100 text-xs text-gray-500">
-                      <span className="font-semibold text-dark">
+                    <div className="flex items-center justify-between gap-3 pb-3 mb-2 border-b border-gray-100 dark:border-white/10 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="font-semibold text-dark dark:text-white">
                         Found {results.length} matching {results.length === 1 ? 'edition' : 'editions'}
                       </span>
                       <span className="hidden font-mono sm:inline">Press Enter to view all</span>
                     </div>
 
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-gray-100 dark:divide-white/5">
                       {results.map((product) => (
                         <Link
                           key={product.id}
@@ -308,10 +308,10 @@ export const SearchOverlay: React.FC = () => {
                             saveRecentSearch(product.title);
                             closeSearch();
                           }}
-                          className="py-3 flex items-center justify-between gap-4 group hover:bg-gray-50 px-2 rounded-xl transition-colors"
+                          className="py-3 flex items-center justify-between gap-4 group hover:bg-gray-50 dark:hover:bg-white/5 px-2 rounded-xl transition-colors"
                         >
                           <div className="flex items-center gap-3.5 min-w-0">
-                            <div className="w-11 aspect-dvd bg-gray-100 rounded overflow-hidden shrink-0 border border-gray-200 shadow-2xs">
+                            <div className="w-11 aspect-dvd bg-gray-100 dark:bg-white/5 rounded overflow-hidden shrink-0 border border-gray-200 dark:border-white/10 shadow-2xs">
                               <img
                                 src={product.cover_image_url}
                                 alt={product.title}
@@ -319,11 +319,11 @@ export const SearchOverlay: React.FC = () => {
                               />
                             </div>
                             <div className="truncate">
-                              <p className="font-display font-bold text-sm text-dark group-hover:text-brand-blue truncate">
+                              <p className="font-display font-bold text-sm text-dark dark:text-white group-hover:text-brand-blue dark:group-hover:text-blue-400 truncate">
                                 {product.title}
                               </p>
                               <div className="flex items-center gap-2 text-xs text-gray-400 font-mono mt-0.5">
-                                <span className="px-1.5 py-0.2 rounded bg-gray-100 text-gray-700 text-[10px] font-bold uppercase">
+                                <span className="px-1.5 py-0.2 rounded bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 text-[10px] font-bold uppercase">
                                   {product.format}
                                 </span>
                                 <span>{product.release_year}</span>
@@ -334,16 +334,16 @@ export const SearchOverlay: React.FC = () => {
                           </div>
 
                           <div className="flex shrink-0 items-center gap-3">
-                            <span className="font-bold text-sm text-dark font-mono">
+                            <span className="font-bold text-sm text-dark dark:text-white font-mono">
                               {formatGBP(product.price)}
                             </span>
-                            <ArrowRight className="hidden w-4 h-4 text-gray-300 group-hover:text-brand-blue group-hover:translate-x-0.5 transition-all sm:block" />
+                            <ArrowRight className="hidden w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-brand-blue dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all sm:block" />
                           </div>
                         </Link>
                       ))}
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-gray-100 text-center">
+                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/10 text-center">
                       <button
                         type="button"
                         onClick={() => {
@@ -360,11 +360,11 @@ export const SearchOverlay: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-center py-10">
-                    <p className="font-display font-semibold text-dark text-sm mb-1">
+                    <p className="font-display font-semibold text-dark dark:text-white text-sm mb-1">
                       No matching editions found for &ldquo;{query}&rdquo;
                     </p>
                     {suggestion ? (
-                      <div className="mt-3 p-3 bg-blue-50/60 border border-blue-100 rounded-xl inline-flex items-center gap-2 text-xs text-gray-700">
+                      <div className="mt-3 p-3 bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/40 rounded-xl inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
                         <Sparkles className="w-4 h-4 text-brand-blue shrink-0" />
                         <span>Did you mean:</span>
                         <button

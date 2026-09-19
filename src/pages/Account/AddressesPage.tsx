@@ -154,8 +154,8 @@ export const AddressesPage: React.FC = () => {
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="font-display text-lg font-bold text-dark">Saved Addresses</h2>
-          <p className="mt-0.5 text-xs text-gray-500">
+          <h2 className="font-display text-lg font-bold text-dark dark:text-white">Saved Addresses</h2>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
             Manage your personal delivery locations for rapid, one-click checkout.
           </p>
         </div>
@@ -167,12 +167,12 @@ export const AddressesPage: React.FC = () => {
 
       {/* Address Cards Grid */}
       {addresses.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 p-12 text-center bg-gray-50/50">
-          <div className="w-12 h-12 rounded-full bg-blue-50 text-brand-blue flex items-center justify-center mx-auto mb-3">
+        <div className="rounded-xl border border-dashed border-gray-300 dark:border-white/15 p-12 text-center bg-gray-50/50 dark:bg-white/5">
+          <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-500/10 text-brand-blue dark:text-blue-400 flex items-center justify-center mx-auto mb-3">
             <MapPin className="h-6 w-6" />
           </div>
-          <p className="text-sm font-bold text-dark">No saved addresses yet</p>
-          <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
+          <p className="text-sm font-bold text-dark dark:text-white">No saved addresses yet</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto leading-relaxed">
             Add your primary home or office delivery address to speed up future Royal Mail orders.
           </p>
           <div className="mt-5">
@@ -189,8 +189,8 @@ export const AddressesPage: React.FC = () => {
               key={address.id}
               className={`relative flex flex-col justify-between rounded-xl border p-5 transition-all ${
                 address.is_default
-                  ? 'border-brand-blue/60 bg-blue-50/20 shadow-xs ring-1 ring-brand-blue/20'
-                  : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-2xs'
+                  ? 'border-brand-blue/60 bg-blue-50/20 dark:bg-blue-500/10 shadow-xs ring-1 ring-brand-blue/20'
+                  : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] hover:border-gray-300 dark:hover:border-white/20 hover:shadow-2xs'
               }`}
             >
               {/* Header inside Card: Badges & Top Actions */}
@@ -206,7 +206,7 @@ export const AddressesPage: React.FC = () => {
                       type="button"
                       disabled={settingDefaultId === address.id}
                       onClick={() => handleSetDefault(address.id)}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-brand-blue transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-brand-blue dark:hover:text-blue-400 transition-colors cursor-pointer"
                     >
                       <Star className="w-3 h-3" />
                       <span>{settingDefaultId === address.id ? 'Setting...' : 'Set as default'}</span>
@@ -218,7 +218,7 @@ export const AddressesPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => openEditModal(address)}
-                      className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                      className="rounded p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-white transition-colors"
                       title="Edit address"
                       aria-label="Edit address"
                     >
@@ -227,7 +227,7 @@ export const AddressesPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => removeAddress(address.id)}
-                      className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-brand-red transition-colors"
+                      className="rounded p-1.5 text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-brand-red transition-colors"
                       title="Remove address"
                       aria-label="Remove address"
                     >
@@ -238,22 +238,22 @@ export const AddressesPage: React.FC = () => {
 
                 {/* Recipient details */}
                 <div>
-                  <h4 className="font-display text-sm font-bold text-dark">{address.full_name}</h4>
+                  <h4 className="font-display text-sm font-bold text-dark dark:text-white">{address.full_name}</h4>
                   {address.phone && (
-                    <p className="text-[11px] text-gray-500 font-mono mt-0.5">Tel: {address.phone}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">Tel: {address.phone}</p>
                   )}
                 </div>
 
                 {/* Address text */}
-                <div className="text-xs leading-relaxed text-gray-600 space-y-0.5 pt-1 border-t border-gray-100">
-                  <p className="font-medium text-gray-800">{address.address_line_1}</p>
+                <div className="text-xs leading-relaxed text-gray-600 dark:text-gray-400 space-y-0.5 pt-1 border-t border-gray-100 dark:border-white/10">
+                  <p className="font-medium text-gray-800 dark:text-gray-200">{address.address_line_1}</p>
                   {address.address_line_2 && <p>{address.address_line_2}</p>}
                   <p>
                     {address.city}
                     {address.county ? `, ${address.county}` : ''}
                   </p>
-                  <p className="font-mono font-bold text-gray-900">{address.postcode}</p>
-                  <p className="text-gray-500">{address.country || 'United Kingdom'}</p>
+                  <p className="font-mono font-bold text-gray-900 dark:text-white">{address.postcode}</p>
+                  <p className="text-gray-500 dark:text-gray-400">{address.country || 'United Kingdom'}</p>
                 </div>
               </div>
             </div>
@@ -327,7 +327,7 @@ export const AddressesPage: React.FC = () => {
             onChange={(e) => setField('country', e.target.value)}
             required
           />
-          <label className="flex items-center gap-2 text-xs text-gray-700 sm:col-span-2 cursor-pointer select-none pt-1">
+          <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 sm:col-span-2 cursor-pointer select-none pt-1">
             <input
               type="checkbox"
               checked={form.is_default}
@@ -336,7 +336,7 @@ export const AddressesPage: React.FC = () => {
             />
             <span>Set as default address for future orders</span>
           </label>
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 border-t border-gray-100 pt-4 sm:col-span-2">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 border-t border-gray-100 dark:border-white/10 pt-4 sm:col-span-2">
             <Button
               type="button"
               variant="secondary"

@@ -61,7 +61,7 @@ BEGIN
     CASE WHEN p_order->>'payment_method' = 'bank_transfer' THEN 'awaiting_payment' ELSE 'pending' END,
     p_order->>'payment_method', p_order->>'payment_provider', 'unfulfilled', (p_order->>'subtotal')::NUMERIC,
     (p_order->>'shipping_amount')::NUMERIC, (p_order->>'discount_amount')::NUMERIC, (p_order->>'total_amount')::NUMERIC,
-    'GBP', p_order->'shipping_address', p_request_id, p_request_hash, p_access_hash, p_order->>'delivery_tier', p_order->>'delivery_name', p_order->'bank_details',
+    COALESCE(NULLIF(p_order->>'currency',''), 'GBP'), p_order->'shipping_address', p_request_id, p_request_hash, p_access_hash, p_order->>'delivery_tier', p_order->>'delivery_name', p_order->'bank_details',
     CASE WHEN p_order->>'payment_method' = 'bank_transfer' THEN v_number ELSE NULL END);
   FOR v_item IN SELECT value FROM jsonb_array_elements(p_items) LOOP
     INSERT INTO public.order_items(order_id, product_id, product_title, product_sku, quantity, unit_price, total_price, product_snapshot)

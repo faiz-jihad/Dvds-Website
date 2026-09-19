@@ -82,7 +82,7 @@ export const AzDarkLandingNav: React.FC = () => {
   const { openCartDrawer, openSearch } = useUiStore();
   const cartCount = useCartStore((s) => s.getItemCount());
   const { customer, isAuthenticated, logout } = useCustomerAuth();
-  const { theme, setTheme } = useThemeStore();
+  const { theme, setTheme, toggleTheme } = useThemeStore();
   const isDark = theme === 'dark';
 
   // Sync selected category label with URL
@@ -159,13 +159,14 @@ export const AzDarkLandingNav: React.FC = () => {
                   ? 'bg-white/10 hover:bg-white/15 border-white/15 text-white'
                   : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-900'
               )}
-              aria-label="Filter category"
+              aria-label="Filter catalogue by category"
               aria-expanded={categoryMenuOpen}
             >
+              <Film size={15} className="text-brand-blue shrink-0" />
               <span>{selectedCategory}</span>
               <ChevronDown
                 size={14}
-                className={cn('transition-transform duration-200 text-gray-400', categoryMenuOpen && 'rotate-180')}
+                className={cn('text-gray-400 transition-transform duration-200', categoryMenuOpen && 'rotate-180')}
               />
             </button>
 
@@ -173,46 +174,54 @@ export const AzDarkLandingNav: React.FC = () => {
             {categoryMenuOpen && (
               <div
                 className={cn(
-                  'absolute left-0 top-full mt-2 w-64 rounded-2xl border p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150',
+                  'absolute top-full left-0 mt-2 w-72 rounded-2xl border p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150',
                   isDark ? 'bg-[#0E131F] border-white/15 text-white' : 'bg-white border-gray-200 text-gray-900'
                 )}
               >
-                <div
-                  className={cn(
-                    'px-3 py-1.5 border-b mb-1 text-[10px] font-mono font-bold uppercase tracking-wider',
-                    isDark ? 'border-white/10 text-gray-400' : 'border-gray-100 text-gray-500'
-                  )}
-                >
-                  Select Category
-                </div>
-                <div className="space-y-0.5">
+                <p className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-gray-400 font-bold">
+                  Browse by Category
+                </p>
+                <div className="space-y-1">
                   {categoryOptions.map((item) => {
-                    const isSelected = selectedCategory === item.label;
                     const Icon = item.icon;
+                    const isSelected = selectedCategory === item.label;
                     return (
                       <button
-                        key={item.label}
+                        key={item.slug}
                         type="button"
                         onClick={() => handleCategorySelect(item)}
                         className={cn(
-                          'w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition-colors cursor-pointer',
+                          'w-full flex items-center justify-between p-2 rounded-xl text-left transition-all cursor-pointer group',
                           isSelected
                             ? isDark
-                              ? 'bg-white/10 text-white font-bold'
-                              : 'bg-brand-blue/10 text-brand-blue font-bold'
+                              ? 'bg-brand-blue/20 text-white'
+                              : 'bg-brand-blue/10 text-brand-blue'
                             : isDark
-                              ? 'text-gray-300 hover:bg-white/5 hover:text-white'
-                              : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                              ? 'hover:bg-white/5 text-gray-300 hover:text-white'
+                              : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900'
                         )}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <Icon size={15} className={isSelected ? 'text-brand-blue' : 'text-gray-400'} />
-                          <div>
-                            <p className="font-semibold">{item.label}</p>
-                            <p className="text-[10px] text-gray-400 font-normal">{item.desc}</p>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className={cn(
+                              'p-1.5 rounded-lg shrink-0 transition-colors',
+                              isSelected
+                                ? 'bg-brand-blue text-white'
+                                : isDark
+                                  ? 'bg-white/5 text-gray-400 group-hover:text-white'
+                                  : 'bg-gray-100 text-gray-500 group-hover:text-gray-900'
+                            )}
+                          >
+                            <Icon size={14} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className={cn('text-xs font-semibold truncate', isSelected && 'font-bold')}>
+                              {item.label}
+                            </p>
+                            <p className="text-[10px] text-gray-400 truncate">{item.desc}</p>
                           </div>
                         </div>
-                        {isSelected && <Check size={14} className="text-brand-blue shrink-0" />}
+                        {isSelected && <Check size={14} className="text-brand-blue shrink-0 ml-2" />}
                       </button>
                     );
                   })}
@@ -221,31 +230,29 @@ export const AzDarkLandingNav: React.FC = () => {
             )}
           </div>
 
-          {/* Widened Search Engine Input [ 🔍 Movies, series, shows... 🎚️ ] matching Gambar 2 */}
-          <div className="flex-1 relative min-w-0">
+          {/* ── Search Engine Pill ── */}
+          <div className="flex-1 min-w-0">
             <button
               type="button"
               onClick={openSearch}
               className={cn(
-                'w-full h-11 px-4 rounded-xl border flex items-center justify-between text-xs sm:text-sm transition-all duration-150 group shadow-xs cursor-pointer text-left',
+                'w-full h-11 px-4 rounded-xl border text-xs sm:text-sm font-normal flex items-center justify-between transition-all cursor-pointer group shadow-xs',
                 isDark
-                  ? 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-400 hover:text-gray-200'
-                  : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-500 hover:text-gray-800'
+                  ? 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-400 hover:text-white'
+                  : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-600 hover:text-gray-900'
               )}
-              aria-label="Search catalogue"
             >
-              <div className="flex items-center gap-3 truncate">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <Search
-                  size={17}
+                  size={16}
                   className={cn(
                     'transition-colors shrink-0',
                     isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-500 group-hover:text-gray-900'
                   )}
                 />
-                <span className="truncate font-normal">Movies, series, shows...</span>
+                <span className="truncate">Search titles, actors, genres, box sets, or SKU...</span>
               </div>
-
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0 ml-2">
                 <kbd
                   className={cn(
                     'hidden xl:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-bold rounded border',
@@ -288,10 +295,26 @@ export const AzDarkLandingNav: React.FC = () => {
           </Link>
         </div>
 
-        {/* ── RIGHT: Notifications, Account, Basket ── */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        {/* ── RIGHT: Notifications, Theme Switcher, Account, Basket ── */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* ── Notification Bell (Item 5: Present on homepage and all pages) ── */}
           <CustomerNotificationMenu />
+
+          {/* ── Direct Theme Switcher Button ── */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className={cn(
+              'flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border transition-all cursor-pointer shadow-xs',
+              isDark
+                ? 'bg-white/5 hover:bg-white/10 border-white/10 text-amber-400 hover:text-amber-300'
+                : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700 hover:text-gray-900'
+            )}
+            title={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
+            aria-label="Toggle color theme"
+          >
+            {isDark ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
 
           {/* ── Customer Account Menu with Dark/Light Mode Toggle (Item 6) ── */}
           <div ref={accountRef} className="relative">

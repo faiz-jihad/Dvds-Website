@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Truck, ShieldCheck, Clock, MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { cn } from '../../lib/formatters';
 
@@ -11,74 +11,15 @@ export const AzDarkLandingFooter: React.FC = () => {
   return (
     <footer
       className={cn(
-        'w-full select-none pt-12 pb-8 mt-12 border-t transition-colors',
+        'w-full select-none pt-8 pb-8 mt-12 border-t transition-colors',
         isDark
           ? 'bg-[#05070A] text-gray-400 border-white/10'
           : 'bg-gray-100 text-gray-600 border-gray-200'
       )}
     >
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Trust Guarantees Bar */}
-        <div
-          className={cn(
-            'grid grid-cols-1 sm:grid-cols-3 gap-6 pb-10 border-b',
-            isDark ? 'border-white/10' : 'border-gray-200'
-          )}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'w-10 h-10 rounded-xl border flex items-center justify-center text-brand-blue shrink-0',
-                isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200 shadow-2xs'
-              )}
-            >
-              <Truck size={20} />
-            </div>
-            <div>
-              <p className={cn('text-xs font-bold uppercase tracking-wider', isDark ? 'text-white' : 'text-gray-900')}>
-                Royal Mail Tracked 24
-              </p>
-              <p className="text-[11px] text-gray-400">Fast, insured delivery dispatched from London</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'w-10 h-10 rounded-xl border flex items-center justify-center text-emerald-500 shrink-0',
-                isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200 shadow-2xs'
-              )}
-            >
-              <ShieldCheck size={20} />
-            </div>
-            <div>
-              <p className={cn('text-xs font-bold uppercase tracking-wider', isDark ? 'text-white' : 'text-gray-900')}>
-                Certified UK Media
-              </p>
-              <p className="text-[11px] text-gray-400">Genuine retail editions &amp; Region 2 pressings</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'w-10 h-10 rounded-xl border flex items-center justify-center text-amber-500 shrink-0',
-                isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200 shadow-2xs'
-              )}
-            >
-              <Clock size={20} />
-            </div>
-            <div>
-              <p className={cn('text-xs font-bold uppercase tracking-wider', isDark ? 'text-white' : 'text-gray-900')}>
-                30-Day Guarantee
-              </p>
-              <p className="text-[11px] text-gray-400">Hassle-free UK returns and full customer care</p>
-            </div>
-          </div>
-        </div>
-
         {/* Main Footer Links Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-6">
           {/* Brand Col */}
           <div className="col-span-2 md:col-span-1 space-y-3">
             <Link to="/" className="inline-block">

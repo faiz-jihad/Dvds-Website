@@ -20,9 +20,14 @@ const CURRENCY_LOCALES = {
   IDR: 'id-ID',
 };
 export function formatMoney(value, currency = 'GBP') {
-  const code = String(currency || 'GBP').toUpperCase();
+  let code = String(currency || 'GBP').toUpperCase();
+  if (code === 'GBP' && Number(value) >= 5000) {
+    code = 'IDR';
+  }
   const locale = CURRENCY_LOCALES[code] || 'en-GB';
-  return new Intl.NumberFormat(locale, { style: 'currency', currency: code, minimumFractionDigits: currencyDigits(code), maximumFractionDigits: currencyDigits(code) }).format(Number(value));
+  const minDigits = (code === 'JPY' || code === 'IDR') ? 0 : 2;
+  const maxDigits = (code === 'JPY') ? 0 : (code === 'IDR' ? (Number(value) % 1 === 0 ? 0 : 2) : 2);
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: code, minimumFractionDigits: minDigits, maximumFractionDigits: maxDigits }).format(Number(value));
 }
 export function addressRules(value) {
   const code = countryCode(value);

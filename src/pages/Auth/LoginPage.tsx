@@ -94,50 +94,50 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50/70">
+    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white transition-colors duration-200">
       <div className="max-w-md w-full">
         {/* Header link */}
         <div className="mb-6 flex items-center justify-between">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-dark transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-dark dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Store</span>
           </Link>
-          <span className="text-xs text-gray-400 font-medium">
+          <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
             Secure Account Access
           </span>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-xl p-5 sm:p-8 md:p-10 border border-gray-200 shadow-xs">
+        <div className="bg-white dark:bg-[#0E131F] rounded-xl p-5 sm:p-8 md:p-10 border border-gray-200 dark:border-white/10 shadow-xs text-dark dark:text-white">
 
           <div className="text-center mb-8">
-            <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-dark tracking-tight">
+            <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-dark dark:text-white tracking-tight">
               Customer Sign In
             </h1>
-            <p className="mt-1.5 text-xs sm:text-sm text-gray-500">
+            <p className="mt-1.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               Access your order history, delivery tracking, and saved wishlist.
             </p>
           </div>
 
           {/* Error notice */}
           {error && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 leading-relaxed" role="alert">
+            <div className="mb-6 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-3 text-xs text-red-700 dark:text-red-300 leading-relaxed" role="alert">
               {error}
             </div>
           )}
 
           {/* Checkout Redirect Notice */}
           {isCheckoutRedirect && (
-            <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50/90 p-4 text-xs text-blue-900 flex items-start gap-3 shadow-xs">
-              <div className="p-1.5 bg-blue-100 text-brand-blue rounded-lg shrink-0 mt-0.5">
+            <div className="mb-6 rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/90 dark:bg-blue-950/30 p-4 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-3 shadow-xs">
+              <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-brand-blue dark:text-blue-300 rounded-lg shrink-0 mt-0.5">
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-bold text-blue-950 text-sm">Sign in to complete checkout</p>
-                <p className="text-blue-800/80 mt-1 leading-relaxed">
+                <p className="font-bold text-blue-950 dark:text-blue-100 text-sm">Sign in to complete checkout</p>
+                <p className="text-blue-800/80 dark:text-blue-300 mt-1 leading-relaxed">
                   Please sign in or create an account to proceed with your order, access saved delivery addresses, and track delivery securely.
                 </p>
               </div>
@@ -147,11 +147,11 @@ export const LoginPage: React.FC = () => {
           {/* Email / Password Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
                 Email Address
               </label>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 dark:text-gray-500">
                   <Mail className="h-4 w-4" />
                 </div>
                 <input
@@ -161,19 +161,19 @@ export const LoginPage: React.FC = () => {
                   required
                   autoComplete="username"
                   placeholder="e.g. name@example.co.uk"
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-4 text-sm text-dark placeholder-gray-400 outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
+                  className="h-11 w-full rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] pl-10 pr-4 text-sm text-dark dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
                   Password
                 </label>
               </div>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 dark:text-gray-500">
                   <LockKeyhole className="h-4 w-4" />
                 </div>
                 <input
@@ -183,12 +183,12 @@ export const LoginPage: React.FC = () => {
                   required
                   autoComplete="current-password"
                   placeholder="Enter your password"
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-11 text-sm text-dark placeholder-gray-400 outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
+                  className="h-11 w-full rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] pl-10 pr-11 text-sm text-dark dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-gray-400 hover:text-dark cursor-pointer"
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-gray-400 hover:text-dark dark:hover:text-white cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -214,10 +214,10 @@ export const LoginPage: React.FC = () => {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-gray-200 dark:border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase tracking-wider">
-              <span className="bg-white px-3 text-gray-400 font-medium">Or continue with</span>
+              <span className="bg-white dark:bg-[#0E131F] px-3 text-gray-400 dark:text-gray-500 font-medium">Or continue with</span>
             </div>
           </div>
 
@@ -226,7 +226,7 @@ export const LoginPage: React.FC = () => {
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleSubmitting || submitting}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-dark text-sm font-semibold shadow-xs transition cursor-pointer disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] hover:bg-gray-50 dark:hover:bg-white/10 text-dark dark:text-white text-sm font-semibold shadow-xs transition cursor-pointer disabled:opacity-60"
           >
             {/* Google SVG Icon */}
             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -251,13 +251,13 @@ export const LoginPage: React.FC = () => {
           </button>
 
           {/* Footer note */}
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-500">
+          <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               New customer?{' '}
               <Link
                 to={from !== '/account' ? `/register?redirect=${encodeURIComponent(from)}` : '/register'}
                 state={{ from }}
-                className="font-bold text-brand-blue hover:underline"
+                className="font-bold text-brand-blue dark:text-blue-400 hover:underline"
               >
                 Create an account
               </Link>
@@ -267,8 +267,8 @@ export const LoginPage: React.FC = () => {
 
         {/* Staff portal link */}
         <div className="mt-6 text-center">
-          <Link to="/admin/login" className="text-xs text-gray-400 hover:text-gray-600 transition">
-            Store Staff & Administrators: Go to Backoffice →
+          <Link to="/admin/login" className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition">
+            Store Staff &amp; Administrators: Go to Backoffice →
           </Link>
         </div>
       </div>

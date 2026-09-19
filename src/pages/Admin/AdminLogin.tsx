@@ -3,9 +3,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
 import { useAdminAuth } from '../../auth/AdminAuth';
 import { sanitizeRedirectPath } from '../../lib/utils';
+import { useThemeStore } from '../../stores/useThemeStore';
 
 export const AdminLogin: React.FC = () => {
   const { user, isLoading, login } = useAdminAuth();
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -61,7 +64,7 @@ export const AdminLogin: React.FC = () => {
   };
 
   return (
-    <main className="min-h-screen bg-white grid lg:grid-cols-2">
+    <main className="min-h-screen bg-white dark:bg-[#07090E] grid lg:grid-cols-2">
       {/* Left Column: Natural Photography Background, Clean & Editorial */}
       <section className="relative hidden lg:flex flex-col justify-between p-12 xl:p-16 bg-[#0f172a] text-white">
         {/* Background photo */}
@@ -103,13 +106,13 @@ export const AdminLogin: React.FC = () => {
       </section>
 
       {/* Right Column: Clean White Authentication Form */}
-      <section className="flex min-h-screen items-center justify-center p-4 sm:p-8 md:p-12 bg-gray-50">
+      <section className="flex min-h-screen items-center justify-center p-4 sm:p-8 md:p-12 bg-gray-50 dark:bg-[#07090E]">
         <div className="w-full max-w-md">
           {/* Back link */}
           <div className="mb-6">
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-dark transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-dark dark:hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to storefront</span>
@@ -117,28 +120,30 @@ export const AdminLogin: React.FC = () => {
           </div>
 
           {/* Clean Login Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5 sm:p-8 md:p-10 shadow-xs">
+          <div className="bg-white dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 rounded-xl p-5 sm:p-8 md:p-10 shadow-xs">
             <div className="mb-6">
               <div className="mb-4">
-                <img src="/brand/logo.png" alt="DVDs Zone" className="h-10 w-auto object-contain" />
+                <img
+                  src={isDark ? "/brand/logo-dark-theme.png" : "/brand/logo.png"}
+                  alt="DVDs Zone"
+                  className="h-10 w-auto object-contain"
+                />
               </div>
-              <h2 className="font-display text-2xl font-bold text-dark tracking-tight">
+              <h2 className="font-display text-2xl font-bold text-dark dark:text-white tracking-tight">
                 Admin Sign In
               </h2>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Enter your credentials to access the management backoffice.
               </p>
-
-
             </div>
 
             {/* Error message */}
             {error && (
               <div
-                className="mb-6 flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 leading-relaxed"
+                className="mb-6 flex items-start gap-2.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3 text-xs text-red-700 dark:text-red-400 leading-relaxed"
                 role="alert"
               >
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
@@ -146,7 +151,7 @@ export const AdminLogin: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Address */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                   Email Address
                 </label>
                 <div className="relative">
@@ -160,7 +165,7 @@ export const AdminLogin: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="name@azrayan.co.uk"
-                    className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm text-dark placeholder-gray-400 outline-none transition focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
+                    className="h-10 w-full rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] pl-9 pr-3 text-sm text-dark dark:text-white placeholder-gray-400 outline-none transition focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
                   />
                 </div>
               </div>
@@ -168,7 +173,7 @@ export const AdminLogin: React.FC = () => {
               {/* Password */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-gray-700">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                     Password
                   </label>
                 </div>
@@ -183,13 +188,13 @@ export const AdminLogin: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••"
-                    className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-10 text-sm text-dark placeholder-gray-400 outline-none transition focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
+                    className="h-10 w-full rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] pl-9 pr-10 text-sm text-dark dark:text-white placeholder-gray-400 outline-none transition focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-gray-400 hover:text-dark transition cursor-pointer"
+                    className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-gray-400 hover:text-dark dark:hover:text-white transition cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -198,12 +203,12 @@ export const AdminLogin: React.FC = () => {
 
               {/* Remember Me */}
               <div className="pt-1">
-                <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-600 select-none">
+                <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-600 dark:text-gray-300 select-none">
                   <input
                     type="checkbox"
                     checked={remember}
                     onChange={(e) => setRemember(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue cursor-pointer"
+                    className="h-4 w-4 rounded border-gray-300 dark:border-white/15 text-brand-blue focus:ring-brand-blue cursor-pointer"
                   />
                   <span>Keep signed in on this device</span>
                 </label>

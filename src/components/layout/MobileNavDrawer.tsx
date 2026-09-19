@@ -15,10 +15,13 @@ import {
   Tag,
   Film,
   ChevronDown,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useUiStore } from "../../stores/useUiStore";
+import { useThemeStore } from "../../stores/useThemeStore";
 import { useCustomerAuth } from "../../auth/CustomerAuth";
 import { useFavouritesStore } from "../../stores/useFavouritesStore";
 import { useNotificationStore } from "../../stores/useNotificationStore";
@@ -37,6 +40,8 @@ const GENRE_NAV_ITEMS = [
 
 export const MobileNavDrawer: React.FC = () => {
   const { isMobileNavOpen, closeMobileNav, openSearch } = useUiStore();
+  const { theme, setTheme, toggleTheme } = useThemeStore();
+  const isDark = theme === "dark";
   const {
     customer,
     isAuthenticated,
@@ -81,19 +86,19 @@ export const MobileNavDrawer: React.FC = () => {
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
-            className="fixed inset-y-0 left-0 w-[min(90vw,380px)] max-w-full bg-white border-r border-gray-200 text-dark shadow-2xl z-10 flex flex-col overflow-y-auto overscroll-contain"
+            className="fixed inset-y-0 left-0 w-[min(90vw,380px)] max-w-full bg-white dark:bg-[#0E131F] border-r border-gray-200 dark:border-white/10 text-dark dark:text-white shadow-2xl z-10 flex flex-col overflow-y-auto overscroll-contain"
           >
             <div>
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-white/10">
                 <div className="flex items-center gap-2.5">
                   <img
-                    src="/brand/logo.png"
+                    src={isDark ? "/brand/logo-dark-theme.png" : "/brand/logo.png"}
                     alt="DVDs Zone"
                     className="h-10 w-auto max-w-[9.5rem] object-contain"
                   />
                   <div className="flex flex-col">
-                    <span className="font-display font-extrabold text-sm tracking-tight text-dark leading-none">
+                    <span className="font-display font-extrabold text-sm tracking-tight text-dark dark:text-white leading-none">
                       DVDs Zone
                     </span>
                     <span className="text-[9px] font-mono tracking-wider text-gray-400 uppercase mt-0.5">
@@ -103,7 +108,7 @@ export const MobileNavDrawer: React.FC = () => {
                 </div>
                 <button
                   onClick={closeMobileNav}
-                  className="min-h-10 min-w-10 p-2 text-gray-400 hover:text-dark hover:bg-gray-100 rounded-lg flex items-center justify-center transition cursor-pointer"
+                  className="min-h-10 min-w-10 p-2 text-gray-400 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg flex items-center justify-center transition cursor-pointer"
                   aria-label="Close navigation drawer"
                 >
                   <X className="w-5 h-5" />
@@ -111,10 +116,10 @@ export const MobileNavDrawer: React.FC = () => {
               </div>
 
               {/* Search Bar Button */}
-              <div className="p-4 border-b border-gray-100">
+              <div className="p-4 border-b border-gray-100 dark:border-white/10">
                 <button
                   onClick={handleSearchClick}
-                  className="w-full min-h-12 py-2.5 px-3.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-xs text-gray-500 hover:text-dark flex items-center justify-between transition-colors cursor-pointer shadow-2xs"
+                  className="w-full min-h-12 py-2.5 px-3.5 bg-gray-50 dark:bg-[#131826] hover:bg-gray-100 dark:hover:bg-[#1A2333] border border-gray-200 dark:border-white/10 rounded-xl text-xs text-gray-500 dark:text-gray-400 hover:text-dark dark:hover:text-white flex items-center justify-between transition-colors cursor-pointer shadow-2xs"
                 >
                   <span className="flex items-center gap-2">
                     <Search className="w-3.5 h-3.5 text-gray-400" />
@@ -125,7 +130,7 @@ export const MobileNavDrawer: React.FC = () => {
               </div>
 
               {/* Customer Account Mobile Status */}
-              <div className="p-4 border-b border-gray-100 bg-gray-50/60">
+              <div className="p-4 border-b border-gray-100 dark:border-white/10 bg-gray-50/60 dark:bg-[#131826]/70">
                 {isAuthenticated && customer ? (
                   <div className="flex items-center justify-between gap-3">
                     <Link
@@ -139,7 +144,7 @@ export const MobileNavDrawer: React.FC = () => {
                           .toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-dark truncate">
+                        <p className="text-xs font-bold text-dark dark:text-white truncate">
                           {customer.full_name || "My Account"}
                         </p>
                         <p className="text-[10px] text-gray-400 truncate font-mono">
@@ -153,7 +158,7 @@ export const MobileNavDrawer: React.FC = () => {
                         closeMobileNav();
                         customerLogout();
                       }}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
+                      className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition cursor-pointer"
                       title="Sign Out"
                     >
                       <LogOut className="w-4 h-4" />
@@ -172,7 +177,7 @@ export const MobileNavDrawer: React.FC = () => {
                     <Link
                       to="/register"
                       onClick={closeMobileNav}
-                      className="flex items-center justify-center py-2.5 px-3 rounded-lg border border-gray-300 bg-white text-dark text-xs font-semibold hover:bg-gray-50 transition text-center shadow-2xs"
+                      className="flex items-center justify-center py-2.5 px-3 rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#1A2333] text-dark dark:text-white text-xs font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition text-center shadow-2xs"
                     >
                       <span>Register</span>
                     </Link>
@@ -188,8 +193,8 @@ export const MobileNavDrawer: React.FC = () => {
                   className={cn(
                     "flex items-center justify-between min-h-11 py-2.5 px-3 font-semibold rounded-lg transition-colors",
                     location.pathname === "/shop" && !location.search
-                      ? "bg-gray-100 text-dark font-bold"
-                      : "text-gray-700 hover:text-dark hover:bg-gray-100",
+                      ? "bg-gray-100 dark:bg-white/10 text-dark dark:text-white font-bold"
+                      : "text-gray-700 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5",
                   )}
                 >
                   <span>Complete Catalogue</span>
@@ -203,12 +208,12 @@ export const MobileNavDrawer: React.FC = () => {
                     "flex items-center justify-between min-h-11 py-2.5 px-3 font-semibold rounded-lg transition-colors",
                     location.pathname === "/shop" &&
                       location.search.includes("filter=new")
-                      ? "bg-gray-100 text-dark font-bold"
-                      : "text-gray-700 hover:text-dark hover:bg-gray-100",
+                      ? "bg-gray-100 dark:bg-white/10 text-dark dark:text-white font-bold"
+                      : "text-gray-700 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5",
                   )}
                 >
                   <span>New Pressings</span>
-                  <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-bold">
+                  <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 px-1.5 py-0.5 rounded font-bold">
                     FRESH
                   </span>
                 </Link>
@@ -220,8 +225,8 @@ export const MobileNavDrawer: React.FC = () => {
                     "flex items-center justify-between min-h-11 py-2.5 px-3 font-semibold rounded-lg transition-colors",
                     location.pathname === "/shop" &&
                       location.search.includes("filter=bestseller")
-                      ? "bg-gray-100 text-dark font-bold"
-                      : "text-gray-700 hover:text-dark hover:bg-gray-100",
+                      ? "bg-gray-100 dark:bg-white/10 text-dark dark:text-white font-bold"
+                      : "text-gray-700 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5",
                   )}
                 >
                   <span>Best Sellers</span>
@@ -235,8 +240,8 @@ export const MobileNavDrawer: React.FC = () => {
                     "flex items-center justify-between min-h-11 py-2.5 px-3 font-bold rounded-xl transition-all border",
                     location.pathname === "/shop" &&
                       location.search.includes("filter=sale")
-                      ? "bg-red-50 text-brand-red border-red-200 shadow-xs"
-                      : "bg-red-50/40 text-brand-red border-red-100 hover:bg-red-50 hover:border-red-200",
+                      ? "bg-red-50 dark:bg-red-950/30 text-brand-red border-red-200 dark:border-red-900/40 shadow-xs"
+                      : "bg-red-50/40 dark:bg-red-950/20 text-brand-red border-red-100 dark:border-red-950/50 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-200",
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -255,10 +260,10 @@ export const MobileNavDrawer: React.FC = () => {
                     onClick={() => setGenresOpen(!genresOpen)}
                     aria-expanded={genresOpen}
                     aria-controls="mobile-genres-menu"
-                    className="w-full min-h-11 flex items-center justify-between px-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 hover:text-dark transition cursor-pointer rounded-lg"
+                    className="w-full min-h-11 flex items-center justify-between px-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:text-dark dark:hover:text-white transition cursor-pointer rounded-lg"
                   >
                     <div className="flex items-center gap-2">
-                      <Film className="w-3.5 h-3.5 text-gray-600" />
+                      <Film className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
                       <span>Curated Film Genres</span>
                     </div>
                     <ChevronDown
@@ -288,8 +293,8 @@ export const MobileNavDrawer: React.FC = () => {
                             className={cn(
                               "flex items-center justify-between min-h-11 py-2 px-3 text-xs rounded-lg transition-colors",
                               isActive
-                                ? "bg-gray-100 text-dark font-bold"
-                                : "text-gray-600 hover:text-dark hover:bg-gray-100",
+                                ? "bg-gray-100 dark:bg-white/10 text-dark dark:text-white font-bold"
+                                : "text-gray-600 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5",
                             )}
                           >
                             <span>{item.name}</span>
@@ -297,8 +302,8 @@ export const MobileNavDrawer: React.FC = () => {
                               className={cn(
                                 "w-3.5 h-3.5 transition-all",
                                 isActive
-                                  ? "text-dark translate-x-0.5"
-                                  : "text-gray-300",
+                                  ? "text-dark dark:text-white translate-x-0.5"
+                                  : "text-gray-300 dark:text-gray-600",
                               )}
                             />
                           </Link>
@@ -316,29 +321,69 @@ export const MobileNavDrawer: React.FC = () => {
                   <Link
                     to="/shop?category=tv-box-sets"
                     onClick={closeMobileNav}
-                    className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
+                    className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                   >
                     <span>Complete TV Box Sets</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-gray-300" />
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
                   </Link>
                   <Link
                     to="/shop?search=Star+Wars"
                     onClick={closeMobileNav}
-                    className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors"
+                    className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                   >
                     <span>Star Wars Anthology Vault</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-gray-300" />
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
                   </Link>
                 </div>
               </nav>
             </div>
 
             {/* Bottom Actions */}
-            <div className="p-4 border-t border-gray-100 bg-gray-50/80 space-y-1 text-xs">
+            <div className="p-4 border-t border-gray-100 dark:border-white/10 bg-gray-50/80 dark:bg-[#0A0D14] space-y-2 text-xs">
+              {/* Appearance Theme Selector */}
+              <div className="p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#131826]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Appearance
+                  </span>
+                  <span className="text-[10px] font-mono text-gray-400">
+                    {isDark ? "Dark" : "Light"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-gray-100 dark:bg-black/40">
+                  <button
+                    type="button"
+                    onClick={() => setTheme("dark")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                      isDark
+                        ? "bg-brand-blue text-white shadow-xs font-bold"
+                        : "text-gray-500 dark:text-gray-400 hover:text-dark dark:hover:text-white"
+                    )}
+                  >
+                    <Moon className="w-3.5 h-3.5" />
+                    <span>Dark</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme("light")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                      !isDark
+                        ? "bg-white text-dark shadow-xs font-bold"
+                        : "text-gray-500 dark:text-gray-400 hover:text-white"
+                    )}
+                  >
+                    <Sun className="w-3.5 h-3.5" />
+                    <span>Light</span>
+                  </button>
+                </div>
+              </div>
+
               <Link
                 to="/account/orders"
                 onClick={closeMobileNav}
-                className="flex items-center gap-2.5 py-2 px-3 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                className="flex items-center gap-2.5 py-2 px-3 text-gray-700 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors font-medium"
               >
                 <Truck className="w-4 h-4 text-gray-400" />
                 <span>Orders & Consignment Tracking</span>
@@ -346,14 +391,14 @@ export const MobileNavDrawer: React.FC = () => {
               <Link
                 to="/favourites"
                 onClick={closeMobileNav}
-                className="flex items-center justify-between py-2 px-3 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                className="flex items-center justify-between py-2 px-3 text-gray-700 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors font-medium"
               >
                 <div className="flex items-center gap-2.5">
                   <Heart className="w-4 h-4 text-gray-400" />
                   <span>Saved Wishlist</span>
                 </div>
                 {favourites.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-blue-50 text-brand-blue font-bold text-[10px] font-mono border border-blue-100">
+                  <span className="px-1.5 py-0.2 rounded-full bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-300 font-bold text-[10px] font-mono border border-blue-100 dark:border-blue-800/40">
                     {favourites.length}
                   </span>
                 )}
@@ -361,7 +406,7 @@ export const MobileNavDrawer: React.FC = () => {
               <Link
                 to="/account/orders"
                 onClick={closeMobileNav}
-                className="flex items-center justify-between py-2 px-3 text-gray-700 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                className="flex items-center justify-between py-2 px-3 text-gray-700 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors font-medium"
               >
                 <div className="flex items-center gap-2.5">
                   <Bell className="w-4 h-4 text-gray-400" />

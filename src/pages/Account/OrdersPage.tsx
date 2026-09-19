@@ -215,14 +215,14 @@ export const OrdersPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-dark dark:text-white">
       {/* Header and Summary stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="font-display font-bold text-lg text-dark">
+          <h2 className="font-display font-bold text-lg text-dark dark:text-white">
             Order History
           </h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             Track deliveries, print official receipts, and reorder previous
             physical media purchases.
           </p>
@@ -231,16 +231,16 @@ export const OrdersPage: React.FC = () => {
         {/* Quick KPI pills */}
         {orders.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold">
+            <span className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-semibold border border-transparent dark:border-white/10">
               Total: {stats.total}
             </span>
             {stats.active > 0 && (
-              <span className="px-2.5 py-1 rounded-full bg-blue-50 text-brand-blue font-semibold border border-blue-200">
+              <span className="px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400 font-semibold border border-blue-200 dark:border-blue-900/40">
                 In Transit: {stats.active}
               </span>
             )}
             {stats.delivered > 0 && (
-              <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200">
+              <span className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 font-semibold border border-emerald-200 dark:border-emerald-900/40">
                 Delivered: {stats.delivered}
               </span>
             )}
@@ -252,14 +252,14 @@ export const OrdersPage: React.FC = () => {
       {orders.length > 0 && (
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           {/* Status Tabs — Responsive 2x2 grid on mobile fitting one screen width without horizontal slider, flex row on sm+ */}
-          <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 bg-gray-100 p-1 rounded-lg text-xs font-semibold w-full sm:w-auto">
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 bg-gray-100 dark:bg-white/5 p-1 rounded-lg border border-transparent dark:border-white/10 text-xs font-semibold w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setActiveTab("all")}
               className={`px-2.5 py-2 sm:py-1.5 rounded-md transition-all text-center justify-center cursor-pointer text-[11px] sm:text-xs ${
                 activeTab === "all"
-                  ? "bg-white text-dark shadow-2xs font-bold"
-                  : "text-gray-600 hover:text-dark"
+                  ? "bg-white dark:bg-[#141A26] text-dark dark:text-white shadow-2xs font-bold border border-transparent dark:border-white/10"
+                  : "text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white"
               }`}
             >
               All Orders
@@ -269,8 +269,8 @@ export const OrdersPage: React.FC = () => {
               onClick={() => setActiveTab("in_progress")}
               className={`px-2.5 py-2 sm:py-1.5 rounded-md transition-all text-center justify-center cursor-pointer text-[11px] sm:text-xs ${
                 activeTab === "in_progress"
-                  ? "bg-white text-dark shadow-2xs font-bold"
-                  : "text-gray-600 hover:text-dark"
+                  ? "bg-white dark:bg-[#141A26] text-dark dark:text-white shadow-2xs font-bold border border-transparent dark:border-white/10"
+                  : "text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white"
               }`}
             >
               In Progress
@@ -280,8 +280,8 @@ export const OrdersPage: React.FC = () => {
               onClick={() => setActiveTab("delivered")}
               className={`px-2.5 py-2 sm:py-1.5 rounded-md transition-all text-center justify-center cursor-pointer text-[11px] sm:text-xs ${
                 activeTab === "delivered"
-                  ? "bg-white text-dark shadow-2xs font-bold"
-                  : "text-gray-600 hover:text-dark"
+                  ? "bg-white dark:bg-[#141A26] text-dark dark:text-white shadow-2xs font-bold border border-transparent dark:border-white/10"
+                  : "text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white"
               }`}
             >
               Delivered
@@ -291,8 +291,8 @@ export const OrdersPage: React.FC = () => {
               onClick={() => setActiveTab("awaiting_payment")}
               className={`px-2.5 py-2 sm:py-1.5 rounded-md transition-all text-center justify-center cursor-pointer text-[11px] sm:text-xs ${
                 activeTab === "awaiting_payment"
-                  ? "bg-white text-dark shadow-2xs font-bold"
-                  : "text-gray-600 hover:text-dark"
+                  ? "bg-white dark:bg-[#141A26] text-dark dark:text-white shadow-2xs font-bold border border-transparent dark:border-white/10"
+                  : "text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white"
               }`}
             >
               Awaiting Payment
@@ -307,7 +307,7 @@ export const OrdersPage: React.FC = () => {
               placeholder="Search by order # or DVD..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-blue"
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] text-dark dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-blue"
             />
           </div>
         </div>
@@ -315,16 +315,16 @@ export const OrdersPage: React.FC = () => {
 
       {/* Orders List / Empty State */}
       {filteredOrders.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 p-12 text-center bg-gray-50/50">
-          <div className="w-12 h-12 rounded-full bg-blue-50 text-brand-blue flex items-center justify-center mx-auto mb-3">
+        <div className="rounded-xl border border-dashed border-gray-300 dark:border-white/20 p-12 text-center bg-gray-50/50 dark:bg-white/5">
+          <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/40 text-brand-blue flex items-center justify-center mx-auto mb-3 border border-transparent dark:border-blue-900/40">
             <Package className="h-6 w-6" />
           </div>
-          <p className="text-sm font-bold text-dark">
+          <p className="text-sm font-bold text-dark dark:text-white">
             {orders.length === 0
               ? "No orders placed yet"
               : "No matching orders found"}
           </p>
-          <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto leading-relaxed">
             {orders.length === 0
               ? "When you order DVDs from our archival store, tracking references and tax receipts will appear here."
               : "Try clearing your search or switching filter tabs to see other purchases."}
@@ -366,37 +366,37 @@ export const OrdersPage: React.FC = () => {
             return (
               <div
                 key={order.id}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-2xs hover:shadow-md hover:border-gray-300 transition-all duration-200"
+                className="bg-white dark:bg-[#0E131F] rounded-2xl border border-gray-200 dark:border-white/10 overflow-hidden shadow-2xs hover:shadow-md hover:border-gray-300 dark:hover:border-white/20 transition-all duration-200"
               >
                 {/* Enterprise Header Ribbon: 4-Column Metadata + Status */}
-                <div className="bg-gray-50/90 px-5 sm:px-6 py-3.5 border-b border-gray-200 flex flex-wrap items-center justify-between gap-4 text-xs">
+                <div className="bg-gray-50/90 dark:bg-[#141A26]/80 px-5 sm:px-6 py-3.5 border-b border-gray-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs">
                   {/* Left: Key Order Metadata */}
                   <div className="flex flex-wrap items-center gap-5 sm:gap-8">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-0.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block mb-0.5">
                         Order Placed
                       </span>
-                      <span className="font-semibold text-dark text-xs sm:text-sm">
+                      <span className="font-semibold text-dark dark:text-white text-xs sm:text-sm">
                         {formatDateUK(order.created_at)}
                       </span>
                     </div>
 
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-0.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block mb-0.5">
                         Total
                       </span>
-                      <span className="font-mono font-black text-dark text-xs sm:text-sm">
+                      <span className="font-mono font-black text-dark dark:text-white text-xs sm:text-sm">
                         {formatMoney(order.total_amount, order.currency)}
                       </span>
                     </div>
 
                     {order.shipping_address?.full_name && (
                       <div className="hidden sm:block">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-0.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block mb-0.5">
                           Dispatched To
                         </span>
                         <span
-                          className="font-semibold text-dark text-xs sm:text-sm truncate max-w-[140px] block"
+                          className="font-semibold text-dark dark:text-white text-xs sm:text-sm truncate max-w-[140px] block"
                           title={order.shipping_address.full_name}
                         >
                           {order.shipping_address.full_name}
@@ -407,11 +407,11 @@ export const OrdersPage: React.FC = () => {
 
                   {/* Right: Order # & Status Badge */}
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 px-2.5 py-1 rounded-lg shadow-2xs">
+                    <div className="inline-flex items-center gap-1.5 bg-white dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 px-2.5 py-1 rounded-lg shadow-2xs">
                       <span className="text-[10px] font-mono text-gray-400 uppercase">
                         Order #
                       </span>
-                      <span className="font-mono font-bold text-dark text-xs">
+                      <span className="font-mono font-bold text-dark dark:text-white text-xs">
                         {order.order_number}
                       </span>
                       <button
@@ -419,12 +419,12 @@ export const OrdersPage: React.FC = () => {
                         onClick={() =>
                           handleCopy(order.order_number, order.order_number)
                         }
-                        className="text-gray-400 hover:text-dark transition-colors p-0.5 cursor-pointer ml-0.5"
+                        className="text-gray-400 hover:text-dark dark:hover:text-white transition-colors p-0.5 cursor-pointer ml-0.5"
                         title="Copy order reference"
                         aria-label="Copy order reference"
                       >
                         {copiedId === order.order_number ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
@@ -435,14 +435,14 @@ export const OrdersPage: React.FC = () => {
                     <span
                       className={`text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1.5 border shadow-2xs ${
                         isDelivered
-                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40"
                           : isDispatched
-                            ? "bg-blue-50 text-brand-blue border-blue-200"
+                            ? "bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400 border-blue-200 dark:border-blue-900/40"
                             : order.status === "cancelled"
-                              ? "bg-red-50 text-red-700 border-red-200"
+                              ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/40"
                               : isAwaitingPayment
-                                ? "bg-amber-50 text-amber-900 border-amber-300"
-                                : "bg-amber-50 text-amber-800 border-amber-200"
+                                ? "bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-900/50"
+                                : "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-900/40"
                       }`}
                     >
                       {isDelivered && <CheckCircle2 className="w-3.5 h-3.5" />}
@@ -458,9 +458,9 @@ export const OrdersPage: React.FC = () => {
 
                 {/* Awaiting Bank Transfer Notice (if pending proof) */}
                 {isAwaitingPayment && (
-                  <div className="bg-amber-50/80 border-b border-amber-200/90 px-5 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-2.5 text-amber-900">
-                      <Clock size={16} className="text-amber-600 shrink-0" />
+                  <div className="bg-amber-50/80 dark:bg-amber-950/30 border-b border-amber-200/90 dark:border-amber-900/40 px-5 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5 text-amber-900 dark:text-amber-200">
+                      <Clock size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
                       <span>
                         <strong>Action Required:</strong> Awaiting company bank
                         transfer payment. Transfer and upload proof to start
@@ -479,16 +479,16 @@ export const OrdersPage: React.FC = () => {
 
                 {/* Royal Mail Tracking Strip (if dispatched) */}
                 {order.tracking_number && (
-                  <div className="bg-blue-50/50 border-b border-blue-100/90 px-5 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="bg-blue-50/50 dark:bg-blue-950/20 border-b border-blue-100/90 dark:border-blue-900/40 px-5 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-blue-100 border border-blue-200 text-brand-blue flex items-center justify-center shrink-0 shadow-2xs">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800/40 text-brand-blue dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
                         <Truck size={16} />
                       </div>
                       <div className="min-w-0">
-                        <span className="text-[11px] text-gray-500 font-medium block">
+                        <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium block">
                           {order.shipping_carrier || "Royal Mail Tracked 24/48"}
                         </span>
-                        <span className="font-mono font-extrabold text-dark text-xs sm:text-sm tracking-wide">
+                        <span className="font-mono font-extrabold text-dark dark:text-white text-xs sm:text-sm tracking-wide">
                           {order.tracking_number}
                         </span>
                       </div>
@@ -500,7 +500,7 @@ export const OrdersPage: React.FC = () => {
                         onClick={() =>
                           handleCopy(order.tracking_number!, "Tracking Number")
                         }
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-300 shadow-2xs transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-[#141A26] hover:bg-gray-50 dark:hover:bg-white/10 px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-white/15 shadow-2xs transition-colors cursor-pointer"
                       >
                         <Copy size={12} />
                         <span>Copy</span>
@@ -509,7 +509,7 @@ export const OrdersPage: React.FC = () => {
                         href={`https://www.royalmail.com/track-your-item#/tracking-results/${order.tracking_number}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-blue bg-white hover:bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 shadow-2xs transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-blue dark:text-blue-300 bg-white dark:bg-[#141A26] hover:bg-blue-50 dark:hover:bg-blue-950/40 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-900/40 shadow-2xs transition-all cursor-pointer"
                       >
                         <span>Track on Royal Mail</span>
                         <ExternalLink size={12} />
@@ -522,7 +522,7 @@ export const OrdersPage: React.FC = () => {
                 <div className="p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   {/* Left Column: Purchased DVD Media Items */}
                   <div className="lg:col-span-8 space-y-4">
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-gray-100 dark:divide-white/10">
                       {items.map((item, idx) => {
                         const matchedProduct =
                           (item.product_id
@@ -549,7 +549,7 @@ export const OrdersPage: React.FC = () => {
                             className="py-3.5 first:pt-0 last:pb-0 flex items-center gap-4"
                           >
                             {/* Cinematic Poster Thumbnail */}
-                            <div className="w-14 h-20 sm:w-16 sm:h-22 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs relative">
+                            <div className="w-14 h-20 sm:w-16 sm:h-22 bg-gray-100 dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs relative">
                               {coverUrl ? (
                                 <img
                                   src={coverUrl}
@@ -568,12 +568,12 @@ export const OrdersPage: React.FC = () => {
                               ) : null}
                               <div
                                 className={cn(
-                                  "disc-fallback w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-400",
+                                  "disc-fallback w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-[#141A26] text-gray-400 dark:text-gray-500",
                                   coverUrl ? "hidden" : "flex",
                                 )}
                               >
-                                <Disc className="w-6 h-6 text-gray-400" />
-                                <span className="text-[9px] font-bold text-gray-400 mt-0.5">
+                                <Disc className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                                <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">
                                   DVD
                                 </span>
                               </div>
@@ -581,20 +581,20 @@ export const OrdersPage: React.FC = () => {
 
                             {/* Title and Specs */}
                             <div className="min-w-0 flex-1">
-                              <h5 className="font-bold text-xs sm:text-sm text-dark leading-snug truncate">
+                              <h5 className="font-bold text-xs sm:text-sm text-dark dark:text-white leading-snug truncate">
                                 {item.product_title}
                               </h5>
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-1.5 font-medium">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[11px] font-semibold border border-gray-200/80">
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 text-[11px] font-semibold border border-gray-200/80 dark:border-white/10">
                                   Qty: {item.quantity}
                                 </span>
                                 {item.product_sku && (
-                                  <span className="font-mono text-[11px] text-gray-400">
+                                  <span className="font-mono text-[11px] text-gray-400 dark:text-gray-500">
                                     SKU: {item.product_sku}
                                   </span>
                                 )}
-                                <span className="text-gray-300">•</span>
-                                <span className="font-mono text-[11px] text-gray-500">
+                                <span className="text-gray-300 dark:text-gray-600">•</span>
+                                <span className="font-mono text-[11px] text-gray-500 dark:text-gray-400">
                                   {formatMoney(item.unit_price, order.currency)}{" "}
                                   each
                                 </span>
@@ -603,7 +603,7 @@ export const OrdersPage: React.FC = () => {
 
                             {/* Line Item Total Price */}
                             <div className="text-right shrink-0">
-                              <span className="text-xs sm:text-sm font-mono font-black text-dark">
+                              <span className="text-xs sm:text-sm font-mono font-black text-dark dark:text-white">
                                 {formatMoney(
                                   item.total_price ||
                                     item.unit_price * item.quantity,
@@ -618,15 +618,15 @@ export const OrdersPage: React.FC = () => {
                   </div>
 
                   {/* Right Column: Destination Info & Action Buttons */}
-                  <div className="lg:col-span-4 lg:border-l lg:border-gray-200 lg:pl-6 space-y-4">
+                  <div className="lg:col-span-4 lg:border-l lg:border-gray-200 dark:lg:border-white/10 lg:pl-6 space-y-4">
                     {/* Destination Address */}
                     {order.shipping_address && (
-                      <div className="rounded-xl bg-gray-50/80 border border-gray-200/80 p-3.5 text-xs text-gray-600">
-                        <div className="flex items-center gap-1.5 font-bold text-dark text-xs mb-1.5">
+                      <div className="rounded-xl bg-gray-50/80 dark:bg-[#141A26]/50 border border-gray-200/80 dark:border-white/10 p-3.5 text-xs text-gray-600 dark:text-gray-300">
+                        <div className="flex items-center gap-1.5 font-bold text-dark dark:text-white text-xs mb-1.5">
                           <MapPin size={13} className="text-brand-blue" />
                           <span>Delivery Address</span>
                         </div>
-                        <p className="font-semibold text-dark">
+                        <p className="font-semibold text-dark dark:text-white">
                           {order.shipping_address.full_name}
                         </p>
                         <p className="truncate">
@@ -640,7 +640,7 @@ export const OrdersPage: React.FC = () => {
                             .filter(Boolean)
                             .join(", ")}
                         </p>
-                        <p className="text-gray-400 mt-0.5">
+                        <p className="text-gray-400 dark:text-gray-500 mt-0.5">
                           {countryName(order.shipping_address.country)}
                         </p>
                       </div>
@@ -666,9 +666,9 @@ export const OrdersPage: React.FC = () => {
                               prev === order.id ? null : order.id,
                             )
                           }
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-300 hover:bg-gray-50 text-dark shadow-2xs transition-all cursor-pointer"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] border border-gray-300 dark:border-white/15 hover:bg-gray-50 dark:hover:bg-white/10 text-dark dark:text-white shadow-2xs transition-all cursor-pointer"
                         >
-                          <Package size={13} className="text-gray-500" />
+                          <Package size={13} className="text-gray-500 dark:text-gray-400" />
                           <span>
                             {isStepperOpen ? "Hide Track" : "Track Status"}
                           </span>
@@ -677,9 +677,9 @@ export const OrdersPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setSelectedReceiptOrder(order)}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-300 hover:bg-gray-50 text-dark shadow-2xs transition-all cursor-pointer"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] border border-gray-300 dark:border-white/15 hover:bg-gray-50 dark:hover:bg-white/10 text-dark dark:text-white shadow-2xs transition-all cursor-pointer"
                         >
-                          <Printer size={13} className="text-gray-500" />
+                          <Printer size={13} className="text-gray-500 dark:text-gray-400" />
                           <span>Print Receipt</span>
                         </button>
                       </div>
@@ -688,7 +688,7 @@ export const OrdersPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleReorder(order)}
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 transition-colors cursor-pointer shadow-2xs"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-gray-50 dark:bg-[#141A26]/60 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 transition-colors cursor-pointer shadow-2xs"
                       >
                         <RotateCcw size={13} className="text-brand-blue" />
                         <span>Buy these items again</span>
@@ -699,7 +699,7 @@ export const OrdersPage: React.FC = () => {
 
                 {/* Expandable Order Status Stepper */}
                 {isStepperOpen && (
-                  <div className="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100 bg-gray-50/60">
+                  <div className="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100 dark:border-white/10 bg-gray-50/60 dark:bg-[#141A26]/40">
                     <OrderStatusStepper order={order} />
                   </div>
                 )}

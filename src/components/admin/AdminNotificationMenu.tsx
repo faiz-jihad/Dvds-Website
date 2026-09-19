@@ -82,11 +82,11 @@ export const AdminNotificationMenu: React.FC = () => {
   const getItemIcon = (type: NotificationType) => {
     switch (type) {
       case 'order':
-        return <ShoppingCart className="h-4 w-4 text-emerald-600" />;
+        return <ShoppingCart className="h-4 w-4 text-brand-blue" />;
       case 'stock':
-        return <Boxes className="h-4 w-4 text-amber-600" />;
+        return <Boxes className="h-4 w-4 text-brand-red" />;
       case 'support':
-        return <Mail className="h-4 w-4 text-blue-600" />;
+        return <Mail className="h-4 w-4 text-brand-blue" />;
       default:
         return <Info className="h-4 w-4 text-slate-500" />;
     }
@@ -95,9 +95,9 @@ export const AdminNotificationMenu: React.FC = () => {
   const getIconContainerClass = (type: NotificationType) => {
     switch (type) {
       case 'order':
-        return 'bg-emerald-50 border-emerald-200/60';
+        return 'bg-blue-50 border-blue-200/60';
       case 'stock':
-        return 'bg-amber-50 border-amber-200/60';
+        return 'bg-brand-red-soft border-brand-red/30';
       case 'support':
         return 'bg-blue-50 border-blue-200/60';
       default:
@@ -278,7 +278,7 @@ export const AdminNotificationMenu: React.FC = () => {
           {/* Footer */}
           <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/80 px-4 py-2.5 text-[11px] text-slate-500">
             <span className="flex items-center gap-1.5 font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-blue animate-pulse" />
               <span>Real-time Sync Active</span>
             </span>
             <div className="flex items-center gap-2">

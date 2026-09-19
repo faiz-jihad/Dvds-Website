@@ -85,7 +85,7 @@ export const ProductDetail: React.FC = () => {
   };
 
   return (
-    <div className="bg-white min-h-screen py-8 sm:py-12">
+    <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-12 transition-colors">
       <Seo
         title={`${product.title} — Buy on DVD | DVDs Zone UK`}
         description={`Buy ${product.title} on DVD. ${product.description ? product.description.slice(0, 130).replace(/\s\S+$/, '') + '...' : 'Region 2 UK edition.'} Free UK delivery. Royal Mail Tracked dispatch from London.`}
@@ -127,19 +127,19 @@ export const ProductDetail: React.FC = () => {
       />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Breadcrumb Navigation */}
-        <nav className="flex min-w-0 items-center gap-2 overflow-hidden text-xs text-gray-500 mb-8 font-medium">
-          <Link to="/" className="hover:text-dark">Home</Link>
+        <nav className="flex min-w-0 items-center gap-2 overflow-hidden text-xs text-gray-500 dark:text-gray-400 mb-8 font-medium">
+          <Link to="/" className="hover:text-dark dark:hover:text-white transition-colors">Home</Link>
           <span>/</span>
-          <Link to="/shop" className="hover:text-dark">Shop</Link>
+          <Link to="/shop" className="hover:text-dark dark:hover:text-white transition-colors">Shop</Link>
           <span>/</span>
-          <span className="text-dark truncate max-w-xs">{product.title}</span>
+          <span className="text-dark dark:text-white truncate max-w-xs">{product.title}</span>
         </nav>
 
         {/* Product Layout: Left Gallery + Right Sticky Purchase Box */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-16">
           {/* Left: Product Artwork Gallery */}
           <div className="lg:col-span-6 flex flex-col items-center">
-            <div className="w-full max-w-md aspect-dvd rounded-sm overflow-hidden bg-gray-50 border border-gray-200 shadow-dvd-subtle relative group">
+            <div className="w-full max-w-md aspect-dvd rounded-sm overflow-hidden bg-gray-50 dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 shadow-dvd-subtle relative group">
               <img
                 src={product.cover_image_url}
                 alt={`${product.title} DVD Cover`}
@@ -162,7 +162,7 @@ export const ProductDetail: React.FC = () => {
               )}
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-400 font-mono sm:gap-6">
+            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-400 dark:text-gray-500 font-mono sm:gap-6">
               <span className="flex items-center gap-1.5">
                 <Disc className="w-4 h-4 text-brand-blue" />
                 Original PAL DVD Edition
@@ -183,33 +183,33 @@ export const ProductDetail: React.FC = () => {
                   )}
                   <Badge variant="format">{product.format}</Badge>
                   <span className="text-xs text-gray-400 font-mono">•</span>
-                  <span className="text-xs text-gray-500 font-mono">{product.release_year}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{product.release_year}</span>
                   <span className="text-xs text-gray-400 font-mono">•</span>
                   <BbfcBadge rating={product.age_rating} size="sm" showLabel />
                   <span className="text-xs text-gray-400 font-mono">•</span>
                   <ImdbBadge product={product} size="sm" showTenSuffix asLink />
                 </div>
 
-                <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-dark tracking-tight leading-tight">
+                <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-dark dark:text-white tracking-tight leading-tight">
                   {product.title}
                 </h1>
 
                 {product.director && (
-                  <p className="text-sm font-medium text-brand-blue mt-1">
+                  <p className="text-sm font-medium text-brand-blue dark:text-blue-400 mt-1">
                     Directed by {product.director}
                   </p>
                 )}
 
                 {product.short_description && (
-                  <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed">
                     {product.short_description}
                   </p>
                 )}
               </div>
 
               {/* Price Block with Red Sale treatment */}
-              <div className="flex flex-wrap items-baseline gap-3 pb-6 border-b border-gray-100">
-                <span className={cn('text-3xl font-extrabold font-mono tracking-tight', hasDiscount ? 'text-brand-red' : 'text-dark')}>
+              <div className="flex flex-wrap items-baseline gap-3 pb-6 border-b border-gray-200 dark:border-white/10">
+                <span className={cn('text-3xl font-extrabold font-mono tracking-tight', hasDiscount ? 'text-brand-red dark:text-red-400' : 'text-dark dark:text-white')}>
                   {formatGBP(product.price)}
                 </span>
                 {hasDiscount && (
@@ -217,7 +217,7 @@ export const ProductDetail: React.FC = () => {
                     <span className="text-sm text-gray-400 line-through font-mono">
                       {formatGBP(product.compare_at_price)}
                     </span>
-                    <span className="text-xs font-bold text-brand-red uppercase tracking-wider bg-brand-red-soft px-2 py-0.5 rounded-sm">
+                    <span className="text-xs font-bold text-brand-red uppercase tracking-wider bg-brand-red-soft dark:bg-red-950/40 dark:text-red-400 px-2 py-0.5 rounded-sm">
                       Save {formatGBP(product.compare_at_price! - product.price)}
                     </span>
                   </>
@@ -228,15 +228,15 @@ export const ProductDetail: React.FC = () => {
               <div className="flex items-center gap-2 text-xs">
                 {product.stock_quantity > 0 ? (
                   <>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="font-semibold text-emerald-800">
+                    <span className="w-2 h-2 rounded-full bg-brand-blue" />
+                    <span className="font-semibold text-brand-blue dark:text-blue-400">
                       In Stock ({product.stock_quantity} available for immediate dispatch)
                     </span>
                   </>
                 ) : (
                   <>
                     <span className="w-2 h-2 rounded-full bg-brand-red" />
-                    <span className="font-semibold text-brand-red">Temporarily Out of Stock</span>
+                    <span className="font-semibold text-brand-red dark:text-red-400">Temporarily Out of Stock</span>
                   </>
                 )}
               </div>
@@ -244,7 +244,7 @@ export const ProductDetail: React.FC = () => {
               {/* Quantity & Add to Basket */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center gap-4">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-600">Quantity</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">Quantity</span>
                   <QuantitySelector
                     quantity={quantity}
                     max={product.stock_quantity}
@@ -278,10 +278,10 @@ export const ProductDetail: React.FC = () => {
                   <button
                     onClick={handleToggleFav}
                     className={cn(
-                      'min-h-12 min-w-12 p-3 rounded-md border transition-colors flex items-center justify-center',
+                      'min-h-12 min-w-12 p-3 rounded-md border transition-colors flex items-center justify-center cursor-pointer',
                       isFav
-                        ? 'border-brand-red text-brand-red bg-brand-red-soft'
-                        : 'border-gray-300 text-gray-600 hover:border-dark hover:text-dark'
+                        ? 'border-brand-red text-brand-red bg-red-50 dark:bg-red-950/30'
+                        : 'border-gray-300 dark:border-white/15 text-gray-600 dark:text-gray-300 hover:border-dark dark:hover:border-white hover:text-dark dark:hover:text-white'
                     )}
                     aria-label={isFav ? 'Remove from favourites' : 'Save to favourites'}
                   >
@@ -291,14 +291,14 @@ export const ProductDetail: React.FC = () => {
               </div>
 
               {/* UK Delivery & Return Information */}
-              <div className="bg-gray-50 rounded-md p-4 border border-gray-200/70 space-y-3 text-xs text-gray-600">
+              <div className="bg-white dark:bg-[#0E131F] rounded-lg p-4 border border-gray-200 dark:border-white/10 space-y-3 text-xs text-gray-600 dark:text-gray-300 shadow-xs">
                 <div className="flex items-start gap-3">
-                  <Truck className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
+                  <Truck className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-dark font-semibold">UK Delivery: </strong>
+                    <strong className="text-dark dark:text-white font-semibold">UK Delivery: </strong>
                     {settingsQuery.data!.free_shipping_threshold <= 0 || settingsQuery.data!.standard_shipping_fee === 0 ? (
                       <>
-                        <span className="text-emerald-700 font-bold">100% Free UK Delivery</span> on all orders via {settingsQuery.data!.standard_shipping_name} ({settingsQuery.data!.standard_shipping_eta}).
+                        <span className="text-brand-blue dark:text-blue-400 font-bold">100% Free UK Delivery</span> on all orders via {settingsQuery.data!.standard_shipping_name} ({settingsQuery.data!.standard_shipping_eta}).
                       </>
                     ) : (
                       <>
@@ -308,20 +308,20 @@ export const ProductDetail: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <ShieldCheck className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
+                  <ShieldCheck className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-dark font-semibold">30-Day Money Back Guarantee: </strong>
+                    <strong className="text-dark dark:text-white font-semibold">30-Day Money Back Guarantee: </strong>
                     Returned discs must be in unblemished packaging. Free return labels available.
                   </div>
                 </div>
               </div>
 
               {/* Description Narrative */}
-              <div className="pt-6 border-t border-gray-100">
-                <h3 className="font-display font-bold text-base text-dark mb-2">
-                  Synopsis & Edition Overview
+              <div className="pt-6 border-t border-gray-200 dark:border-white/10">
+                <h3 className="font-display font-bold text-base text-dark dark:text-white mb-2">
+                  Synopsis &amp; Edition Overview
                 </h3>
-                <p className="text-sm text-gray-600 leading-relaxed font-normal">
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-normal">
                   {product.description}
                 </p>
               </div>
@@ -336,17 +336,17 @@ export const ProductDetail: React.FC = () => {
 
         {/* Related Titles */}
         {relatedProducts.length > 0 && (
-          <div className="mt-16 pt-10 border-t border-gray-100 sm:mt-24 sm:pt-12">
+          <div className="mt-16 pt-10 border-t border-gray-200 dark:border-white/10 sm:mt-24 sm:pt-12">
             <div className="flex flex-col items-start gap-4 mb-8 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
               <div>
-                <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
+                <span className="text-xs font-mono uppercase tracking-widest text-brand-blue dark:text-blue-400">
                   Complementary Viewing
                 </span>
-                <h3 className="font-display font-bold text-2xl text-dark tracking-tight mt-1">
+                <h3 className="font-display font-bold text-2xl text-dark dark:text-white tracking-tight mt-1">
                   You May Also Cherish
                 </h3>
               </div>
-              <Link to="/shop" className="text-xs font-semibold text-dark hover:text-brand-blue">
+              <Link to="/shop" className="text-xs font-semibold text-dark dark:text-gray-300 hover:text-brand-blue dark:hover:text-blue-400 transition-colors">
                 View All Vault Titles →
               </Link>
             </div>

@@ -208,7 +208,7 @@ export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
                     </p>
                     <p className="text-[10px] text-gray-500 mt-1">
                       {product.release_year} &bull;{" "}
-                      <span className="text-amber-500 font-bold">
+                      <span className="text-brand-blue font-bold">
                         {product.imdb_rating
                           ? `${product.imdb_rating.toFixed(1)} ★`
                           : product.format}
@@ -423,7 +423,7 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
                     </p>
                     <p className="text-[10px] text-gray-500">
                       {product.release_year} &bull;{" "}
-                      <span className="text-amber-500 font-bold">
+                      <span className="text-brand-blue font-bold">
                         {product.imdb_rating
                           ? `${product.imdb_rating.toFixed(1)} ★`
                           : product.format}
@@ -495,7 +495,7 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
         {/* Bottom Dispatch Guarantee */}
         <div className="mt-auto px-4 py-3.5 bg-gray-50 border-t border-gray-150">
           <div className="flex items-center gap-2 text-[10px] font-medium text-gray-500">
-            <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
+            <ShieldCheck size={14} className="text-brand-blue shrink-0" />
             <span>Royal Mail Tracked 24 Dispatch</span>
           </div>
         </div>

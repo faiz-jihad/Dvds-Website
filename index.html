@@ -5,8 +5,23 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>if (location.pathname === '/') document.documentElement.setAttribute('data-home-entry', '');</script>
-    <style>html[data-home-entry], html[data-home-entry] body { background: #050505; }</style>
+    <script>
+      try {
+        var t = localStorage.getItem('dvds_theme_mode') || 'dark';
+        if (t === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {}
+      if (location.pathname === '/') document.documentElement.setAttribute('data-home-entry', '');
+    </script>
+    <style>
+      html[data-home-entry].dark, html[data-home-entry].dark body { background: #07090E; }
+      html[data-home-entry]:not(.dark), html[data-home-entry]:not(.dark) body { background: #FFFFFF; }
+    </style>
 
     <!-- Primary SEO Metadata -->
     <title>DVDs Zone — Buy Physical DVDs &amp; TV Box Sets UK | Your World of Entertainment</title>
