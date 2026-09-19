@@ -43,66 +43,112 @@ interface AdminHeroVideoPlayerProps {
 
 const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, startSec, endSec }) => {
   const [cycle, setCycle] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const duration = endSec > startSec ? endSec - startSec : 0;
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  const sendCommand = useCallback((func: string, args: any[] = []) => {
+    try {
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify({ event: 'command', func, args }),
+        '*'
+      );
+    } catch {}
+  }, []);
+
+  // Reset isPlaying when video changes
+  useEffect(() => {
+    setIsPlaying(false);
+  }, [videoId, cycle]);
 
   // Loop timer for custom segment timing (minutes:seconds)
   useEffect(() => {
     if (duration <= 0) return;
     const timer = setTimeout(() => {
+      sendCommand('seekTo', [startSec, true]);
+      sendCommand('playVideo');
       setCycle((c) => c + 1);
     }, duration * 1000);
     return () => clearTimeout(timer);
-  }, [duration, cycle, videoId, startSec]);
+  }, [duration, cycle, videoId, startSec, sendCommand]);
 
-  // Listen to YouTube API postMessage for natural video end
+  // Listen to YouTube API postMessage for natural video end or pause state
   useEffect(() => {
     const handleMessage = (e: MessageEvent) => {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (data?.event === 'onStateChange' && data?.info === 0) {
+        const playerState =
+          data?.info?.playerState !== undefined
+            ? data.info.playerState
+            : data?.event === 'onStateChange'
+              ? data.info
+              : undefined;
+
+        if (playerState === 1) {
+          // Strictly only reveal when actively playing frames
+          setIsPlaying(true);
+        } else if (playerState === 2) {
+          // If paused, hide iframe so pause icon never renders, and auto-resume immediately
+          setIsPlaying(false);
+          sendCommand('playVideo');
+        } else if (playerState === 0) {
+          sendCommand('seekTo', [startSec, true]);
+          sendCommand('playVideo');
           setCycle((c) => c + 1);
         }
       } catch {}
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  }, [sendCommand, startSec]);
 
   // Resume video immediately when user returns to this browser tab to prevent paused state icon
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && iframeRef.current?.contentWindow) {
-        try {
-          iframeRef.current.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
-            '*'
-          );
-        } catch {}
+      if (document.visibilityState === 'visible') {
+        sendCommand('playVideo');
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  }, [sendCommand]);
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
 
   return (
-    <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
+    <div className="absolute inset-0 overflow-hidden select-none bg-[#07090E]">
       <iframe
         ref={iframeRef}
         key={`${videoId}-${startSec}-${cycle}`}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-[max(120%,190%)] h-[max(120%,62%)] scale-[1.25] origin-center aspect-video pointer-events-none select-none opacity-100"
-        style={{ pointerEvents: 'none' }}
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-[max(120%,190%)] h-[max(120%,62%)] scale-[1.25] origin-center aspect-video pointer-events-none select-none transition-opacity duration-500 ${
+          isPlaying ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ pointerEvents: 'none', touchAction: 'none' }}
+        tabIndex={-1}
+        aria-hidden="true"
         src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&origin=${encodeURIComponent(origin)}`}
         title="Admin YouTube Preview"
         allow="autoplay; encrypted-media; picture-in-picture"
+        onLoad={() => {
+          sendCommand('listening');
+          sendCommand('playVideo');
+          sendCommand('mute');
+        }}
       />
       {/* Top crop guard gradient */}
       <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-[6]" />
       {/* Click-shield overlay: intercepts all user interactions so YouTube player never pauses or displays play/pause icon */}
-      <div className="absolute inset-0 z-[5] bg-transparent cursor-default pointer-events-auto" />
+      <div
+        className="absolute inset-0 z-20 bg-transparent cursor-default pointer-events-auto select-none"
+        style={{ touchAction: 'pan-y' }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        aria-hidden="true"
+      />
     </div>
   );
 };
@@ -626,7 +672,7 @@ export const AdminStoreSettings: React.FC = () => {
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      Pilih film yang akan ditampilkan di Hero slider dan pasang 1 video trailer YouTube untuk masing-masing film dengan pengaturan durasi menit &amp; detik tayang.
+                      Select titles displayed in the Hero carousel and link a YouTube trailer for each film with custom start &amp; end timing.
                     </p>
                   </div>
                 </div>
@@ -662,7 +708,7 @@ export const AdminStoreSettings: React.FC = () => {
                       <span>Mute Audio by Default</span>
                     </div>
                     <p className="text-[11px] text-gray-500 mt-0.5">
-                      Disarankan aktif agar autoplay browser tidak diblokir. Pengunjung tetap bisa klik tombol suara di homepage untuk mendengarkan audio trailer.
+                      Recommended enabled so browser autoplay policies are not blocked. Visitors can unmute at any time via the sound toggle on the homepage.
                     </p>
                   </div>
                 </label>
@@ -681,7 +727,7 @@ export const AdminStoreSettings: React.FC = () => {
                       <span>Loop Video Continuously</span>
                     </div>
                     <p className="text-[11px] text-gray-500 mt-0.5">
-                      Mengulang video trailer secara otomatis sebagai efek video sinematik ambient di latar belakang hero.
+                      Seamlessly loops the trailer video as an ambient cinematic background behind the hero.
                     </p>
                   </div>
                 </label>
@@ -693,10 +739,10 @@ export const AdminStoreSettings: React.FC = () => {
                   <div>
                     <h3 className="text-sm font-bold text-dark flex items-center gap-2">
                       <Film className="w-4 h-4 text-brand-blue" />
-                      <span>Daftar Film Hero &amp; Trailer (1 Film = 1 Link Trailer)</span>
+                      <span>Hero Films &amp; Trailers (1 Title = 1 Trailer Link)</span>
                     </h3>
                     <p className="text-xs text-gray-500">
-                      Tentukan film yang tampil di slider Hero dan link trailer masing-masing film beserta durasi tayang yang diinginkan.
+                      Configure titles featured in the Hero carousel, linking custom YouTube trailers and timing durations for each.
                     </p>
                   </div>
                   <Button
@@ -707,7 +753,7 @@ export const AdminStoreSettings: React.FC = () => {
                     className="gap-1.5 text-xs cursor-pointer shrink-0 self-start sm:self-auto"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Tambah Film Hero</span>
+                    <span>Add Hero Film</span>
                   </Button>
                 </div>
 
@@ -715,9 +761,9 @@ export const AdminStoreSettings: React.FC = () => {
                   <div className="p-6 rounded-xl border border-dashed border-gray-300 bg-gray-50/50 text-center space-y-3">
                     <Film className="w-8 h-8 text-gray-400 mx-auto" />
                     <div>
-                      <p className="text-xs font-bold text-gray-700">Belum ada trailer per-film yang dikonfigurasi</p>
+                      <p className="text-xs font-bold text-gray-700">No title-specific trailers configured yet</p>
                       <p className="text-[11px] text-gray-500 mt-0.5">
-                        Klik tombol di bawah untuk menambahkan film hero pertama beserta link trailer YouTube-nya.
+                        Click the button below to add your first hero film with its dedicated YouTube trailer.
                       </p>
                     </div>
                     <Button
@@ -728,7 +774,7 @@ export const AdminStoreSettings: React.FC = () => {
                       className="gap-1.5 text-xs"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Tambah Trailer Film Pertama</span>
+                      <span>Add First Hero Trailer</span>
                     </Button>
                   </div>
                 ) : (
@@ -748,10 +794,10 @@ export const AdminStoreSettings: React.FC = () => {
                               </span>
                               <div>
                                 <h4 className="text-xs font-bold text-dark">
-                                  {selectedProduct?.title || 'Pilih Film'}
+                                  {selectedProduct?.title || 'Select Film'}
                                 </h4>
                                 <p className="text-[11px] text-gray-500">
-                                  {selectedProduct ? `${selectedProduct.release_year} • ${selectedProduct.format || 'DVD'} • SKU: ${selectedProduct.sku}` : 'Pilih produk dari katalog'}
+                                  {selectedProduct ? `${selectedProduct.release_year} • ${selectedProduct.format || 'DVD'} • SKU: ${selectedProduct.sku}` : 'Select a title from catalogue'}
                                 </p>
                               </div>
                             </div>
@@ -765,13 +811,13 @@ export const AdminStoreSettings: React.FC = () => {
                                     : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
                                 }`}
                               >
-                                Preview Ini
+                                Preview This
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleRemoveTrailer(idx)}
                                 className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
-                                title="Hapus trailer film ini"
+                                title="Remove this film trailer"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -782,7 +828,7 @@ export const AdminStoreSettings: React.FC = () => {
                             {/* Film selector */}
                             <div className="md:col-span-5">
                               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                Pilih Film dari Katalog
+                                Select Title from Catalogue
                               </label>
                               <select
                                 value={trailer.product_id}
@@ -800,13 +846,13 @@ export const AdminStoreSettings: React.FC = () => {
                             {/* YouTube URL */}
                             <div className="md:col-span-7">
                               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                Link Trailer YouTube untuk Film Ini
+                                YouTube Trailer Link for This Title
                               </label>
                               <input
                                 type="text"
                                 value={trailer.youtube_url || ''}
                                 onChange={(e) => handleUpdateTrailer(idx, { youtube_url: e.target.value })}
-                                placeholder="e.g. https://youtu.be/AwwbhhjQ9Xk atau ID YouTube"
+                                placeholder="e.g. https://youtu.be/AwwbhhjQ9Xk or YouTube Video ID"
                                 className="w-full rounded-lg border border-gray-200 p-2.5 text-xs text-dark focus:border-brand-blue focus:outline-none bg-white"
                               />
                               {trailerVideoId ? (
@@ -816,20 +862,20 @@ export const AdminStoreSettings: React.FC = () => {
                                 </p>
                               ) : trailer.youtube_url?.trim() ? (
                                 <p className="text-[10px] text-amber-600 font-medium mt-1">
-                                  Format URL belum valid. Masukkan URL YouTube atau ID video 11 karakter.
+                                  Invalid URL format. Enter a YouTube URL or an 11-character video ID.
                                 </p>
                               ) : null}
                             </div>
 
-                            {/* Start Time: Menit & Detik */}
+                            {/* Start Time: Minutes & Seconds */}
                             <div className="md:col-span-6 bg-white p-3 rounded-lg border border-gray-200">
                               <span className="block text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 text-brand-blue" />
-                                <span>Waktu Mulai Tayang (Start)</span>
+                                <span>Playback Start Time</span>
                               </span>
                               <div className="flex items-center gap-2">
                                 <div className="flex-1">
-                                  <label className="block text-[10px] text-gray-500 mb-0.5">Menit</label>
+                                  <label className="block text-[10px] text-gray-500 mb-0.5">Minutes</label>
                                   <input
                                     type="number"
                                     min="0"
@@ -846,7 +892,7 @@ export const AdminStoreSettings: React.FC = () => {
                                 </div>
                                 <span className="font-bold text-gray-400 mt-4">:</span>
                                 <div className="flex-1">
-                                  <label className="block text-[10px] text-gray-500 mb-0.5">Detik</label>
+                                  <label className="block text-[10px] text-gray-500 mb-0.5">Seconds</label>
                                   <input
                                     type="number"
                                     min="0"
@@ -864,15 +910,15 @@ export const AdminStoreSettings: React.FC = () => {
                               </div>
                             </div>
 
-                            {/* End Time: Menit & Detik */}
+                            {/* End Time: Minutes & Seconds */}
                             <div className="md:col-span-6 bg-white p-3 rounded-lg border border-gray-200">
                               <span className="block text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 text-amber-500" />
-                                <span>Waktu Selesai Tayang (End)</span>
+                                <span>Playback End Time</span>
                               </span>
                               <div className="flex items-center gap-2">
                                 <div className="flex-1">
-                                  <label className="block text-[10px] text-gray-500 mb-0.5">Menit</label>
+                                  <label className="block text-[10px] text-gray-500 mb-0.5">Minutes</label>
                                   <input
                                     type="number"
                                     min="0"
@@ -889,7 +935,7 @@ export const AdminStoreSettings: React.FC = () => {
                                 </div>
                                 <span className="font-bold text-gray-400 mt-4">:</span>
                                 <div className="flex-1">
-                                  <label className="block text-[10px] text-gray-500 mb-0.5">Detik</label>
+                                  <label className="block text-[10px] text-gray-500 mb-0.5">Seconds</label>
                                   <input
                                     type="number"
                                     min="0"
@@ -917,11 +963,11 @@ export const AdminStoreSettings: React.FC = () => {
               {/* Fallback YouTube URL (if any film has no trailer) */}
               <div className="pt-2 border-t border-gray-100 space-y-3">
                 <Input
-                  label="URL Trailer Cadangan / Global Fallback (Opsional)"
+                  label="Global Fallback Trailer URL (Optional)"
                   value={settings.hero_youtube_url || ''}
                   onChange={(e) => handleChange('hero_youtube_url', e.target.value)}
                   placeholder="e.g. https://www.youtube.com/watch?v=1g3_CFmnU7k"
-                  helperText="Digunakan jika ada film di hero yang tidak memiliki link trailer khusus."
+                  helperText="Used if a featured hero title does not have a dedicated trailer configured."
                 />
 
                 {/* Global Trailer Start & End Timing */}
@@ -931,11 +977,11 @@ export const AdminStoreSettings: React.FC = () => {
                     <div className="bg-white p-3 rounded-lg border border-gray-200">
                       <span className="block text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 text-brand-blue" />
-                        <span>Waktu Mulai Global (Start)</span>
+                        <span>Global Playback Start Time</span>
                       </span>
                       <div className="flex items-center gap-2">
                         <div className="flex-1">
-                          <label className="block text-[10px] text-gray-500 mb-0.5">Menit</label>
+                          <label className="block text-[10px] text-gray-500 mb-0.5">Minutes</label>
                           <input
                             type="number"
                             min="0"
@@ -950,7 +996,7 @@ export const AdminStoreSettings: React.FC = () => {
                         </div>
                         <span className="font-bold text-gray-400 mt-4">:</span>
                         <div className="flex-1">
-                          <label className="block text-[10px] text-gray-500 mb-0.5">Detik</label>
+                          <label className="block text-[10px] text-gray-500 mb-0.5">Seconds</label>
                           <input
                             type="number"
                             min="0"
@@ -970,11 +1016,11 @@ export const AdminStoreSettings: React.FC = () => {
                     <div className="bg-white p-3 rounded-lg border border-gray-200">
                       <span className="block text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 text-brand-blue" />
-                        <span>Waktu Selesai Global (End)</span>
+                        <span>Global Playback End Time</span>
                       </span>
                       <div className="flex items-center gap-2">
                         <div className="flex-1">
-                          <label className="block text-[10px] text-gray-500 mb-0.5">Menit</label>
+                          <label className="block text-[10px] text-gray-500 mb-0.5">Minutes</label>
                           <input
                             type="number"
                             min="0"
@@ -989,7 +1035,7 @@ export const AdminStoreSettings: React.FC = () => {
                         </div>
                         <span className="font-bold text-gray-400 mt-4">:</span>
                         <div className="flex-1">
-                          <label className="block text-[10px] text-gray-500 mb-0.5">Detik</label>
+                          <label className="block text-[10px] text-gray-500 mb-0.5">Seconds</label>
                           <input
                             type="number"
                             min="0"
@@ -1013,7 +1059,7 @@ export const AdminStoreSettings: React.FC = () => {
                 <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Eye className="w-3.5 h-3.5 text-brand-blue" />
-                    <span>Live Preview Video Trailer Hero (Shadow Gelap Dihilangkan)</span>
+                    <span>Live Hero Video Trailer Preview</span>
                   </div>
                   {activePreviewVideoId && (
                     <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
@@ -1038,7 +1084,7 @@ export const AdminStoreSettings: React.FC = () => {
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           }`}
                         >
-                          {p?.title || `Film ${idx + 1}`}
+                          {p?.title || `Title ${idx + 1}`}
                         </button>
                       );
                     })}
@@ -1058,8 +1104,8 @@ export const AdminStoreSettings: React.FC = () => {
                       <Youtube className="w-10 h-10 text-gray-600 mb-2" />
                       <p className="text-xs font-bold text-gray-400">
                         {settings.hero_youtube_enabled
-                          ? 'Masukkan link trailer YouTube pada film untuk melihat preview video'
-                          : 'Video background dinonaktifkan (poster film akan digunakan)'}
+                          ? 'Enter a YouTube trailer URL for this title to preview the video'
+                          : 'Video backdrop disabled (film cover art will be displayed)'}
                       </p>
                     </div>
                   )}
@@ -1081,7 +1127,7 @@ export const AdminStoreSettings: React.FC = () => {
                       {activePreviewProduct?.title || 'THE EXPENDABLES'}
                     </h4>
                     <p className="text-[11px] text-gray-100 line-clamp-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] font-medium">
-                      Trailer video YouTube berputar jernih dan terang tanpa tertutup bayangan gelap.
+                      YouTube trailer playback renders vividly in crisp clarity.
                     </p>
                     <div className="flex items-center gap-2 pt-1">
                       <span className="px-3 py-1.5 rounded-lg bg-white text-dark text-[11px] font-black shadow-lg">

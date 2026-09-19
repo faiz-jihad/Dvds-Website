@@ -18,7 +18,7 @@ import {
   Moon,
 } from 'lucide-react';
 import { cn } from '../../lib/formatters';
-import { useFavouritesStore } from '../../stores/useFavouritesStore';
+import { useFavouritesStore, useActiveFavouritesCount } from '../../stores/useFavouritesStore';
 import { useLastSeenStore } from '../../stores/useLastSeenStore';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { publicApi } from '../../lib/publicApi';
@@ -38,7 +38,6 @@ export const AzPublicSidebar: React.FC<AzPublicSidebarProps> = ({
   const location = useLocation();
   const { pathname, search } = location;
   const [collapsed, setCollapsed] = useState(false);
-  const favourites = useFavouritesStore((s) => s.favourites);
   const { lastSeenProducts, recordView } = useLastSeenStore();
   const { theme, toggleTheme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -55,10 +54,12 @@ export const AzPublicSidebar: React.FC<AzPublicSidebarProps> = ({
     ? fallbackProducts
     : productsQuery.data || [];
 
+  const activeFavouritesCount = useActiveFavouritesCount(availableProducts);
+
   // Primary navigation items (Item 2: "New Releases", Item 3: "Director Spotlight" removed)
   const mainNav = [
     { label: 'Home', href: '/', filter: 'all', icon: Home },
-    { label: 'Favorites', href: '/favourites', filter: '', icon: Heart, badge: favourites.length },
+    { label: 'Favorites', href: '/favourites', filter: '', icon: Heart, badge: activeFavouritesCount },
     { label: 'New Releases', href: '/shop?filter=new', filter: 'new', icon: Calendar },
     { label: 'Trending', href: '/shop?filter=trending', filter: 'trending', icon: TrendingUp },
   ];

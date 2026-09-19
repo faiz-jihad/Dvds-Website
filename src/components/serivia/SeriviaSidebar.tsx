@@ -17,7 +17,7 @@ import {
   Disc,
 } from "lucide-react";
 import { cn } from "../../lib/formatters";
-import { useFavouritesStore } from "../../stores/useFavouritesStore";
+import { useFavouritesStore, useActiveFavouritesCount } from "../../stores/useFavouritesStore";
 import { useCustomerAuth } from "../../auth/CustomerAuth";
 import { Product, Category, Genre } from "../../types";
 
@@ -70,7 +70,7 @@ export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
   onSelectFilter,
 }) => {
   const { pathname } = useLocation();
-  const favourites = useFavouritesStore((s) => s.favourites);
+  const activeFavouritesCount = useActiveFavouritesCount(recentProducts);
 
   const isActive = (item: (typeof NAV_ITEMS)[0]) => {
     if (pathname === "/" && onSelectFilter) {
@@ -135,9 +135,9 @@ export const SeriviaSidebar: React.FC<SeriviaSidebarProps> = ({
                         : "text-gray-400 group-hover:text-dark",
                     )}
                   />
-                  {isFavourites && favourites.length > 0 && (
+                  {isFavourites && activeFavouritesCount > 0 && (
                     <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] rounded-full bg-brand-red text-white text-[8px] font-extrabold flex items-center justify-center px-0.5 leading-none shadow">
-                      {Math.min(favourites.length, 99)}
+                      {Math.min(activeFavouritesCount, 99)}
                     </span>
                   )}
                 </div>

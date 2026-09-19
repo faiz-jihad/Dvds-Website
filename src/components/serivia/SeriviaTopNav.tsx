@@ -90,7 +90,7 @@ export const SeriviaTopNav: React.FC<SeriviaTopNavProps> = ({
     TYPE_OPTIONS.find((t) => t.value === activeType)?.label || 'All Formats';
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-2.5 bg-[#0d0f14]/95 backdrop-blur-xl border-b border-white/[0.08] select-none">
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-2.5 bg-[#0d0f14]/95 backdrop-blur-xl border-b-0 sm:border-b border-white/[0.08] select-none">
       {/* Left: Hamburger (mobile) + Brand Logo */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
@@ -314,10 +314,10 @@ export const SeriviaTopNav: React.FC<SeriviaTopNavProps> = ({
           )}
         </div>
 
-        {/* Cart Button with Counter */}
+        {/* Cart Button with Counter (Desktop/Tablet only; on mobile it is in bottom bar) */}
         <button
           onClick={openCartDrawer}
-          className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white/70 hover:text-white transition-all active:scale-95 cursor-pointer"
+          className="relative hidden sm:flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white/70 hover:text-white transition-all active:scale-95 cursor-pointer"
           aria-label="View basket"
           title="View Cart"
         >

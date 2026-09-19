@@ -11,7 +11,7 @@ import { ToastContainer } from '../common/Toast';
 import { publicApi } from '../../lib/publicApi';
 import { useCartStore } from '../../stores/useCartStore';
 import { useUiStore } from '../../stores/useUiStore';
-import { useFavouritesStore } from '../../stores/useFavouritesStore';
+import { useFavouritesStore, useActiveFavouritesCount } from '../../stores/useFavouritesStore';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { StoreDataState } from '../common/StoreDataState';
 import { Home, Film, Heart, ShoppingBag, Menu, Search } from 'lucide-react';
@@ -56,7 +56,7 @@ export const RootLayout: React.FC = () => {
   const isHome = pathname === '/';
   const { openCartDrawer, openMobileNav, isMobileNavOpen, openSearch } = useUiStore();
   const cartCount = useCartStore((s) => s.getItemCount());
-  const favourites = useFavouritesStore((s) => s.favourites);
+  const activeFavouritesCount = useActiveFavouritesCount(productsQuery.data);
 
   return (
     <div
@@ -175,9 +175,9 @@ export const RootLayout: React.FC = () => {
           >
             <div className="relative">
               <Heart size={18} />
-              {favourites.length > 0 && (
+              {activeFavouritesCount > 0 && (
                 <span className="absolute -top-1.5 -right-2.5 min-w-[15px] h-[15px] rounded-full bg-brand-red text-white text-[9px] font-extrabold flex items-center justify-center px-0.5 leading-none shadow">
-                  {favourites.length}
+                  {activeFavouritesCount}
                 </span>
               )}
             </div>

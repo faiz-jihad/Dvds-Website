@@ -23,7 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useUiStore } from "../../stores/useUiStore";
 import { useThemeStore } from "../../stores/useThemeStore";
 import { useCustomerAuth } from "../../auth/CustomerAuth";
-import { useFavouritesStore } from "../../stores/useFavouritesStore";
+import { useFavouritesStore, useActiveFavouritesCount } from "../../stores/useFavouritesStore";
 import { useNotificationStore } from "../../stores/useNotificationStore";
 import { publicApi } from "../../lib/publicApi";
 import { cn } from "../../lib/formatters";
@@ -49,7 +49,7 @@ export const MobileNavDrawer: React.FC = () => {
   } = useCustomerAuth();
   const location = useLocation();
   const [genresOpen, setGenresOpen] = useState(false);
-  const favourites = useFavouritesStore((state) => state.favourites);
+  const activeFavouritesCount = useActiveFavouritesCount();
   const allNotifications = useNotificationStore((state) => state.notifications);
   const unreadCount = allNotifications.filter(
     (n) => n.target === "customer" && !n.read,
@@ -397,9 +397,9 @@ export const MobileNavDrawer: React.FC = () => {
                   <Heart className="w-4 h-4 text-gray-400" />
                   <span>Saved Wishlist</span>
                 </div>
-                {favourites.length > 0 && (
+                {activeFavouritesCount > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-300 font-bold text-[10px] font-mono border border-blue-100 dark:border-blue-800/40">
-                    {favourites.length}
+                    {activeFavouritesCount}
                   </span>
                 )}
               </Link>

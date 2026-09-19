@@ -128,10 +128,10 @@ export const AzDarkLandingNav: React.FC = () => {
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 w-full backdrop-blur-md transition-colors select-none border-b',
+        'sticky top-0 z-40 w-full backdrop-blur-md transition-colors select-none border-b-0 sm:border-b',
         isDark
           ? 'bg-[#07090E]/95 border-white/10 text-white'
-          : 'bg-white/95 border-gray-200 text-gray-900 shadow-xs'
+          : 'bg-white/95 border-gray-200 text-gray-900 shadow-none sm:shadow-xs'
       )}
     >
       <div className="w-full h-[64px] sm:h-[80px] flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 lg:px-8">
@@ -462,11 +462,11 @@ export const AzDarkLandingNav: React.FC = () => {
             )}
           </div>
 
-          {/* ── Cart Trigger Button ── */}
+          {/* ── Cart Trigger Button (Desktop/Tablet only; on mobile it is in the bottom bar) ── */}
           <button
             type="button"
             onClick={openCartDrawer}
-            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-full bg-brand-blue hover:bg-brand-blue-hover text-white text-xs sm:text-[13px] font-bold transition-all shadow-md active:scale-95 cursor-pointer shrink-0"
+            className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-full bg-brand-blue hover:bg-brand-blue-hover text-white text-xs sm:text-[13px] font-bold transition-all shadow-md active:scale-95 cursor-pointer shrink-0"
             aria-label={`View basket (${cartCount} items)`}
           >
             <ShoppingBag size={15} />

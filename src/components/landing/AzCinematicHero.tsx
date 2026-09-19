@@ -52,6 +52,89 @@ export function extractYouTubeVideoId(input?: string | null): string | null {
   return null;
 }
 
+export function isDirectVideoUrl(input?: string | null): boolean {
+  if (!input) return false;
+  const trimmed = input.trim().toLowerCase();
+  return (
+    trimmed.endsWith('.mp4') ||
+    trimmed.endsWith('.webm') ||
+    trimmed.endsWith('.ogg') ||
+    trimmed.includes('cloudinary.com') ||
+    trimmed.includes('/video/upload/')
+  );
+}
+
+
+interface HeroDirectVideoBackdropProps {
+  src: string;
+  isMuted: boolean;
+  fallbackImageUrl?: string;
+}
+
+const HeroDirectVideoBackdrop: React.FC<HeroDirectVideoBackdropProps> = ({
+  src,
+  isMuted,
+  fallbackImageUrl,
+}) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  useEffect(() => {
+    setIsPlaying(false);
+    setHasError(false);
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  }, [src]);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
+      {fallbackImageUrl && (
+        <div
+          className={cn(
+            'absolute inset-0 transition-opacity duration-700 ease-out z-0',
+            isPlaying && !hasError ? 'opacity-0' : 'opacity-100'
+          )}
+        >
+          <img
+            src={fallbackImageUrl}
+            alt="Cinema Backdrop"
+            className="w-full h-full object-cover object-center lg:object-right-top scale-105"
+          />
+        </div>
+      )}
+      {!hasError && (
+        <video
+          ref={videoRef}
+          src={src}
+          autoPlay
+          loop
+          muted={isMuted}
+          playsInline
+          preload="auto"
+          onPlay={() => {
+            setIsPlaying(true);
+            setHasError(false);
+          }}
+          onError={() => setHasError(true)}
+          className={cn(
+            'absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-out z-[1]',
+            isPlaying ? 'opacity-100' : 'opacity-0'
+          )}
+        />
+      )}
+    </div>
+  );
+};
+
 interface AzCinematicHeroProps {
   products: Product[];
   settings?: StoreSettings | null;
@@ -83,6 +166,7 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
   const [hasError, setHasError] = useState(false);
   const duration = endSec > startSec ? endSec - startSec : 0;
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const revealTimerRef = useRef<any>(null);
 
   // Send postMessage helper to YouTube Iframe
   const sendCommand = useCallback((func: string, args: any[] = []) => {
@@ -120,6 +204,7 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
   useEffect(() => {
     setIsPlaying(false);
     setHasError(false);
+    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
   }, [videoId, currentId]);
 
   // Listen to YouTube API postMessage for state changes, loop, and error detection
@@ -127,20 +212,35 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
     const handleMessage = (e: MessageEvent) => {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (data?.event === 'onStateChange') {
-          if (data.info === 1) {
-            // Video is actually playing!
-            setIsPlaying(true);
-            setHasError(false);
-          } else if (data.info === 0) {
-            // Video ended -> restart loop smoothly
-            if (isLoop) {
-              sendCommand('seekTo', [startSec, true]);
-              sendCommand('playVideo');
-              setCycle((c) => c + 1);
-            }
+        const playerState =
+          data?.info?.playerState !== undefined
+            ? data.info.playerState
+            : data?.event === 'onStateChange'
+              ? data.info
+              : undefined;
+
+        if (playerState === 1) {
+          // STRICT: Only reveal video when it is ACTUALLY PLAYING frames!
+          // This guarantees the YouTube pause/play HUD is 100% impossible to ever be seen!
+          setIsPlaying(true);
+          setHasError(false);
+          if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+        } else if (playerState === 2) {
+          // 2 = paused -> instantly hide iframe back to backdrop poster so pause icon never renders!
+          setIsPlaying(false);
+          // Auto-resume immediately
+          sendCommand('playVideo');
+        } else if (playerState === 0) {
+          // Video ended -> restart loop smoothly
+          if (isLoop) {
+            sendCommand('seekTo', [startSec, true]);
+            sendCommand('playVideo');
+            setCycle((c) => c + 1);
           }
-        } else if (data?.event === 'onError') {
+        } else if (
+          data?.event === 'onError' ||
+          (data?.event === 'infoDelivery' && data?.info?.errorCode)
+        ) {
           // YouTube error (embedding restricted, video deleted/private)
           setHasError(true);
         }
@@ -148,7 +248,10 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
     };
 
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    };
   }, [isLoop, startSec, sendCommand]);
 
   // Resume video immediately when user returns to this browser tab
@@ -163,7 +266,9 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
   }, [sendCommand]);
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&loop=1&playlist=${videoId}&cc_load_policy=0&origin=${encodeURIComponent(origin)}`;
+  const originParam = origin ? `&origin=${encodeURIComponent(origin)}` : '';
+  // Removed &loop=1&playlist=${videoId} to prevent YouTube from entering Playlist mode (which renders |<< and >>| navigation overlays)
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&cc_load_policy=0${originParam}`;
 
   return (
     <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
@@ -189,10 +294,12 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
           ref={iframeRef}
           key={`${currentId}-${videoId}-${startSec}`}
           className={cn(
-            'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[142%] h-[142%] sm:w-[max(135%,200vh)] sm:h-[max(135%,65vw)] sm:scale-[1.25] origin-center pointer-events-none select-none transition-opacity duration-700 ease-out z-[1]',
+            'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] scale-[1.25] sm:w-[max(135%,200vh)] sm:h-[max(135%,65vw)] sm:scale-[1.3] origin-center pointer-events-none select-none transition-opacity duration-700 ease-out z-[1]',
             isPlaying ? 'opacity-100' : 'opacity-0'
           )}
-          style={{ pointerEvents: 'none' }}
+          style={{ pointerEvents: 'none', touchAction: 'none' }}
+          tabIndex={-1}
+          aria-hidden="true"
           src={embedUrl}
           title="Featured Cinema Trailer"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -207,6 +314,14 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
               sendCommand('unMute');
               sendCommand('setVolume', [100]);
             }
+
+            // Safety timeout: if YouTube takes longer than 7s, remain on poster
+            if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+            revealTimerRef.current = setTimeout(() => {
+              if (!isPlaying) {
+                setHasError(true);
+              }
+            }, 7000);
           }}
         />
       )}
@@ -231,8 +346,18 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
         )}
       />
 
-      {/* Click-shield overlay */}
-      <div className="absolute inset-0 z-[5] bg-transparent cursor-default pointer-events-auto" />
+      {/* Click-shield overlay: intercepts pointer events */}
+      <div
+        className="absolute inset-0 z-[7] bg-transparent cursor-default pointer-events-auto select-none"
+        style={{ touchAction: 'pan-y' }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        aria-hidden="true"
+      />
     </div>
   );
 };
@@ -245,7 +370,7 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === 'dark';
 
-  const isYouTubeEnabled = Boolean(settings?.hero_youtube_enabled);
+  const isYouTubeEnabled = settings?.hero_youtube_enabled ?? true;
   const [isMuted, setIsMuted] = useState(settings?.hero_youtube_mute ?? true);
   const isLoop = settings?.hero_youtube_loop ?? true;
 
@@ -316,15 +441,56 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
   const current = featured[activeIndex] || featured[0];
   const formatBadge = current.format === 'Box Set' ? 'Collector Box Set' : current.format || 'DVD Edition';
 
-  // Per-film trailer matching & timing calculation
+  // Per-film trailer matching & timing calculation (Purely dynamic from Admin Settings or Product data)
   const currentTrailer = React.useMemo(() => {
     if (!current) return null;
-    return settings?.hero_trailers?.find((t) => t.product_id === current.id) || null;
-  }, [current, settings?.hero_trailers]);
 
-  const rawTrailerUrl = currentTrailer?.youtube_url?.trim() || settings?.hero_youtube_url?.trim() || '';
+    // 1. Check if configured for this specific film in Admin Store Settings
+    const adminTrailer = settings?.hero_trailers?.find(
+      (t) => (t.product_id === current.id || t.product_id === current.slug) && Boolean(t.youtube_url?.trim())
+    );
+    if (adminTrailer) {
+      return adminTrailer;
+    }
+
+    // 2. Check if product itself has a trailer URL attached in catalogue data
+    const productTrailer = (current as any).trailer_url || (current as any).video_url;
+    if (productTrailer && typeof productTrailer === 'string' && productTrailer.trim()) {
+      return {
+        product_id: current.id,
+        youtube_url: productTrailer.trim(),
+        start_seconds: 0,
+      };
+    }
+
+    // 3. Fallback to global fallback trailer configured by admin in Store Settings (if any)
+    if (settings?.hero_youtube_url?.trim()) {
+      return {
+        product_id: current.id,
+        youtube_url: settings.hero_youtube_url.trim(),
+        start_minutes: settings.hero_youtube_start_minutes ?? 0,
+        start_seconds: settings.hero_youtube_start_seconds ?? 0,
+        end_minutes: settings.hero_youtube_end_minutes,
+        end_seconds: settings.hero_youtube_end_seconds,
+      };
+    }
+
+    // No video configured: cleanly return null without any hardcoded fallback
+    return null;
+  }, [
+    current,
+    settings?.hero_trailers,
+    settings?.hero_youtube_url,
+    settings?.hero_youtube_start_minutes,
+    settings?.hero_youtube_start_seconds,
+    settings?.hero_youtube_end_minutes,
+    settings?.hero_youtube_end_seconds,
+  ]);
+
+  const rawTrailerUrl = currentTrailer?.youtube_url?.trim() || '';
+  const isDirectVideo = isDirectVideoUrl(rawTrailerUrl);
   const youtubeVideoId = extractYouTubeVideoId(rawTrailerUrl);
-  const isYouTubeActive = isYouTubeEnabled && Boolean(youtubeVideoId);
+  const isVideoActive = Boolean(isYouTubeEnabled && rawTrailerUrl && (youtubeVideoId || isDirectVideo));
 
   // Calculate start and end timing in seconds (per-film custom trailer or fallback to global settings)
   const isUsingCustomTrailer = Boolean(currentTrailer?.youtube_url?.trim());
@@ -378,8 +544,16 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
           isDark ? 'bg-[#07090E]' : 'bg-[#F8FAFC]'
         )}
       >
-        {isYouTubeActive && youtubeVideoId ? (
+        {isVideoActive && isDirectVideo ? (
+          <HeroDirectVideoBackdrop
+            key={`${current.id}-${rawTrailerUrl}`}
+            src={rawTrailerUrl}
+            isMuted={isMuted}
+            fallbackImageUrl={current.cover_image_url}
+          />
+        ) : isVideoActive && youtubeVideoId ? (
           <HeroYouTubeBackdrop
+            key={`${current.id}-${youtubeVideoId}-${startSec}`}
             currentId={current.id}
             videoId={youtubeVideoId}
             startSec={startSec}
@@ -427,6 +601,19 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
           <div className="hidden sm:block absolute inset-0 bg-radial from-transparent via-[#07090E]/40 to-[#07090E] pointer-events-none z-[4]" />
         )}
 
+        {/* Interaction shield: completely absorbs taps & clicks so YouTube iframe never pauses or displays pause HUD */}
+        <div
+          className="absolute inset-0 z-[8] bg-transparent select-none cursor-default pointer-events-auto"
+          style={{ touchAction: 'pan-y' }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          aria-hidden="true"
+        />
+
         {/* Mobile controls overlay directly on video (dots and unmute button) */}
         <div className="sm:hidden absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
           {featured.length > 1 ? (
@@ -456,7 +643,7 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
             </div>
           ) : <div />}
 
-          {isYouTubeActive && (
+          {isVideoActive && (
             <button
               type="button"
               onClick={() => setIsMuted((prev) => !prev)}
@@ -698,7 +885,7 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
           </div>
         ) : <div />}
 
-        {isYouTubeActive && (
+        {isVideoActive && (
           <button
             type="button"
             onClick={() => setIsMuted((prev) => !prev)}

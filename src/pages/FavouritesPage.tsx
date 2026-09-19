@@ -14,7 +14,7 @@ export const FavouritesPage: React.FC = () => {
   const productsQuery = useQuery({ queryKey: ['store', 'products'], queryFn: () => publicApi.getProducts() });
   const allProducts = productsQuery.data || [];
 
-  const favProducts = allProducts.filter((p) => favourites.includes(p.id));
+  const favProducts = allProducts.filter((p) => favourites.includes(p.id) && p.status === 'active');
 
   if (productsQuery.isLoading || productsQuery.error) {
     return <StoreDataState loading={productsQuery.isLoading} error={productsQuery.error} retry={() => productsQuery.refetch()} />;

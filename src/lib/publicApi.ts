@@ -91,8 +91,14 @@ export const publicApi = {
     if (!sb) return { ...DEFAULT_STORE_SETTINGS, ...localOverride };
     const { data, error } = await sb.from('store_settings').select('*').eq('singleton', true).maybeSingle();
     if (error || !data) throw new Error('Store settings are unavailable. Please retry.');
+
     return {
-      ...DEFAULT_STORE_SETTINGS, ...data, ...localOverride,
+      ...DEFAULT_STORE_SETTINGS,
+      ...data,
+      hero_youtube_enabled: data.hero_youtube_enabled ?? DEFAULT_STORE_SETTINGS.hero_youtube_enabled ?? false,
+      hero_youtube_url: data.hero_youtube_url ?? DEFAULT_STORE_SETTINGS.hero_youtube_url ?? '',
+      hero_trailers: Array.isArray(data.hero_trailers) ? data.hero_trailers : (DEFAULT_STORE_SETTINGS.hero_trailers || []),
+      ...localOverride,
       deal_discount_price: Number(data.deal_discount_price),
       free_shipping_threshold: Number(data.free_shipping_threshold),
       standard_shipping_fee: Number(data.standard_shipping_fee),
