@@ -86,6 +86,8 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
   return (
     <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
       <iframe
@@ -93,7 +95,7 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
         key={`${videoId}-${startSec}-${cycle}`}
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-[max(120%,190%)] h-[max(120%,62%)] scale-[1.25] origin-center aspect-video pointer-events-none select-none opacity-100"
         style={{ pointerEvents: 'none' }}
-        src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1`}
+        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&origin=${encodeURIComponent(origin)}`}
         title="Admin YouTube Preview"
         allow="autoplay; encrypted-media; picture-in-picture"
       />

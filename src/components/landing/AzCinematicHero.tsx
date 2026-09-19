@@ -12,6 +12,7 @@ import {
 import { Product, StoreSettings } from '../../types';
 import { useCartStore } from '../../stores/useCartStore';
 import { useUiStore } from '../../stores/useUiStore';
+import { useThemeStore } from '../../stores/useThemeStore';
 import { formatGBP, formatRuntime, cn } from '../../lib/formatters';
 
 export function extractYouTubeVideoId(input?: string | null): string | null {
@@ -24,23 +25,27 @@ export function extractYouTubeVideoId(input?: string | null): string | null {
   }
 
   try {
-    const url = new URL(trimmed);
-    if (url.hostname === 'youtu.be') {
+    const raw = trimmed.startsWith('http://') || trimmed.startsWith('https://') ? trimmed : `https://${trimmed}`;
+    const url = new URL(raw);
+    if (url.hostname === 'youtu.be' || url.hostname.endsWith('.youtu.be')) {
       const pathId = url.pathname.slice(1);
-      return pathId.split('?')[0] || null;
+      return pathId.split('?')[0]?.split('&')[0] || null;
     }
     if (url.hostname.includes('youtube.com')) {
       if (url.pathname.startsWith('/embed/')) {
-        return url.pathname.split('/embed/')[1]?.split('?')[0] || null;
+        return url.pathname.split('/embed/')[1]?.split('?')[0]?.split('&')[0] || null;
       }
       if (url.pathname.startsWith('/shorts/')) {
-        return url.pathname.split('/shorts/')[1]?.split('?')[0] || null;
+        return url.pathname.split('/shorts/')[1]?.split('?')[0]?.split('&')[0] || null;
+      }
+      if (url.pathname.startsWith('/live/')) {
+        return url.pathname.split('/live/')[1]?.split('?')[0]?.split('&')[0] || null;
       }
       const v = url.searchParams.get('v');
       if (v) return v;
     }
   } catch {
-    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\w-]{11})/);
     if (match?.[1]) return match[1];
   }
 
@@ -59,6 +64,8 @@ interface HeroYouTubeBackdropProps {
   endSec: number;
   isMuted: boolean;
   isLoop: boolean;
+  isDark: boolean;
+  fallbackImageUrl?: string;
 }
 
 const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
@@ -68,112 +75,163 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
   endSec,
   isMuted,
   isLoop,
+  isDark,
+  fallbackImageUrl,
 }) => {
   const [cycle, setCycle] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const duration = endSec > startSec ? endSec - startSec : 0;
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  // Loop timer for custom segment timing (e.g. from minute:second to minute:second)
+  // Send postMessage helper to YouTube Iframe
+  const sendCommand = useCallback((func: string, args: any[] = []) => {
+    try {
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify({ event: 'command', func, args }),
+        '*'
+      );
+    } catch {}
+  }, []);
+
+  // Handle Mute/Unmute dynamically without destroying the iframe
+  useEffect(() => {
+    if (isMuted) {
+      sendCommand('mute');
+      sendCommand('setVolume', [0]);
+    } else {
+      sendCommand('unMute');
+      sendCommand('setVolume', [100]);
+    }
+  }, [isMuted, sendCommand]);
+
+  // Loop timer for custom segment timing (e.g. from startSec to endSec)
   useEffect(() => {
     if (!isLoop || duration <= 0) return;
     const timer = setTimeout(() => {
+      sendCommand('seekTo', [startSec, true]);
+      sendCommand('playVideo');
       setCycle((c) => c + 1);
     }, duration * 1000);
     return () => clearTimeout(timer);
-  }, [isLoop, duration, cycle, currentId, videoId, startSec]);
+  }, [isLoop, duration, cycle, currentId, videoId, startSec, sendCommand]);
 
-  // Listen to YouTube API postMessage for state changes and loop
+  // Reset states when film or video changes
   useEffect(() => {
-    const sendCommand = (func: string, args: any[] = []) => {
-      try {
-        iframeRef.current?.contentWindow?.postMessage(
-          JSON.stringify({ event: 'command', func, args }),
-          '*'
-        );
-      } catch {}
-    };
+    setIsPlaying(false);
+    setHasError(false);
+  }, [videoId, currentId]);
 
-    // Handshake with YouTube Iframe API
-    const interval = setInterval(() => {
-      try {
-        iframeRef.current?.contentWindow?.postMessage(
-          JSON.stringify({ event: 'listening' }),
-          '*'
-        );
-      } catch {}
-    }, 1000);
-
+  // Listen to YouTube API postMessage for state changes, loop, and error detection
+  useEffect(() => {
     const handleMessage = (e: MessageEvent) => {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
         if (data?.event === 'onStateChange') {
-          if (data.info === 0) {
-            // Video ended -> restart loop
+          if (data.info === 1) {
+            // Video is actually playing!
+            setIsPlaying(true);
+            setHasError(false);
+          } else if (data.info === 0) {
+            // Video ended -> restart loop smoothly
             if (isLoop) {
-              setCycle((c) => c + 1);
+              sendCommand('seekTo', [startSec, true]);
               sendCommand('playVideo');
+              setCycle((c) => c + 1);
             }
-          } else if (data.info === 2) {
-            // Player was paused -> instantly resume playback so pause icon, title, & thumbnails never linger
-            sendCommand('playVideo');
           }
+        } else if (data?.event === 'onError') {
+          // YouTube error (embedding restricted, video deleted/private)
+          setHasError(true);
         }
       } catch {}
     };
 
     window.addEventListener('message', handleMessage);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [isLoop]);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [isLoop, startSec, sendCommand]);
 
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-
-  // Resume video immediately when user returns to this browser tab to prevent paused state icon
+  // Resume video immediately when user returns to this browser tab
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && iframeRef.current?.contentWindow) {
-        try {
-          iframeRef.current.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
-            '*'
-          );
-        } catch {}
+        sendCommand('playVideo');
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  }, [sendCommand]);
+
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&loop=1&playlist=${videoId}&cc_load_policy=0&origin=${encodeURIComponent(origin)}`;
 
   return (
     <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
-      <iframe
-        ref={iframeRef}
-        key={`${currentId}-${videoId}-${startSec}-${cycle}-${isMuted}`}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[142%] h-[142%] sm:w-[max(135%,200vh)] sm:h-[max(135%,65vw)] sm:scale-[1.25] origin-center pointer-events-none select-none opacity-100"
-        style={{ pointerEvents: 'none' }}
-        src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=${isMuted ? '1' : '0'}&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&loop=1&playlist=${videoId}&cc_load_policy=0&cc_lang_pref=none&hl=en`}
-        title="Featured Cinema Trailer"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        loading="eager"
-        onLoad={() => {
-          try {
-            iframeRef.current?.contentWindow?.postMessage(
-              JSON.stringify({ event: 'listening' }),
-              '*'
-            );
-            iframeRef.current?.contentWindow?.postMessage(
-              JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
-              '*'
-            );
-          } catch {}
-        }}
+      {/* Background Fallback Poster: Always present underneath so there is never a blank/black flash */}
+      {fallbackImageUrl && (
+        <div
+          className={cn(
+            'absolute inset-0 transition-opacity duration-700 ease-out z-0',
+            isPlaying && !hasError ? 'opacity-0' : 'opacity-100'
+          )}
+        >
+          <img
+            src={fallbackImageUrl}
+            alt="Cinema Backdrop"
+            className="w-full h-full object-cover object-center lg:object-right-top scale-105"
+          />
+        </div>
+      )}
+
+      {/* YouTube Iframe Video */}
+      {!hasError && (
+        <iframe
+          ref={iframeRef}
+          key={`${currentId}-${videoId}-${startSec}`}
+          className={cn(
+            'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[142%] h-[142%] sm:w-[max(135%,200vh)] sm:h-[max(135%,65vw)] sm:scale-[1.25] origin-center pointer-events-none select-none transition-opacity duration-700 ease-out z-[1]',
+            isPlaying ? 'opacity-100' : 'opacity-0'
+          )}
+          style={{ pointerEvents: 'none' }}
+          src={embedUrl}
+          title="Featured Cinema Trailer"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          loading="eager"
+          onError={() => setHasError(true)}
+          onLoad={() => {
+            sendCommand('listening');
+            sendCommand('playVideo');
+            if (isMuted) {
+              sendCommand('mute');
+            } else {
+              sendCommand('unMute');
+              sendCommand('setVolume', [100]);
+            }
+          }}
+        />
+      )}
+
+      {/* Top crop guard gradient: blends to the active theme color */}
+      <div
+        className={cn(
+          'absolute top-0 left-0 right-0 h-16 sm:h-20 bg-gradient-to-b pointer-events-none z-[6] transition-colors duration-300',
+          isDark
+            ? 'from-[#07090E] via-[#07090E]/90 to-transparent'
+            : 'from-[#F8FAFC] via-[#F8FAFC]/90 to-transparent'
+        )}
       />
-      {/* Top crop guard gradient: 64px gradient completely cloaks YouTube title and channel branding */}
-      <div className="absolute top-0 left-0 right-0 h-16 sm:h-20 bg-gradient-to-b from-[#07090E] via-[#07090E]/90 to-transparent pointer-events-none z-[6]" />
-      {/* Bottom crop guard gradient: seamlessly blends YouTube watermark & recommendations into #07090E */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-24 bg-gradient-to-t from-[#07090E] via-[#07090E]/90 to-transparent pointer-events-none z-[6]" />
-      {/* Click-shield overlay: intercepts all user interactions so YouTube player never receives clicks, pauses, or shows play/pause icon */}
+
+      {/* Bottom crop guard gradient: seamlessly blends YouTube watermark & controls into the active theme */}
+      <div
+        className={cn(
+          'absolute bottom-0 left-0 right-0 h-20 sm:h-24 bg-gradient-to-t pointer-events-none z-[6] transition-colors duration-300',
+          isDark
+            ? 'from-[#07090E] via-[#07090E]/90 to-transparent'
+            : 'from-[#F8FAFC] via-[#F8FAFC]/90 to-transparent'
+        )}
+      />
+
+      {/* Click-shield overlay */}
       <div className="absolute inset-0 z-[5] bg-transparent cursor-default pointer-events-auto" />
     </div>
   );
@@ -183,6 +241,9 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === 'dark';
 
   const isYouTubeEnabled = Boolean(settings?.hero_youtube_enabled);
   const [isMuted, setIsMuted] = useState(settings?.hero_youtube_mute ?? true);
@@ -299,7 +360,10 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
 
   return (
     <section
-      className="relative w-full flex flex-col sm:block overflow-hidden select-none bg-[#07090E]"
+      className={cn(
+        'relative w-full flex flex-col sm:block overflow-hidden select-none transition-colors duration-300',
+        isDark ? 'bg-[#07090E]' : 'bg-[#F8FAFC]'
+      )}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}
@@ -308,7 +372,12 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
       aria-label="Featured Physical DVD Premiere Showcase"
     >
       {/* ── 1. Dedicated 16:9 Widescreen Video Stage on Mobile / Full-bleed Backdrop on Desktop ── */}
-      <div className="relative sm:absolute w-full aspect-video sm:aspect-auto sm:inset-0 z-0 overflow-hidden bg-[#07090E] shrink-0 border-0 outline-none">
+      <div
+        className={cn(
+          'relative sm:absolute w-full aspect-video sm:aspect-auto sm:inset-0 z-0 overflow-hidden shrink-0 border-0 outline-none transition-colors duration-300',
+          isDark ? 'bg-[#07090E]' : 'bg-[#F8FAFC]'
+        )}
+      >
         {isYouTubeActive && youtubeVideoId ? (
           <HeroYouTubeBackdrop
             currentId={current.id}
@@ -317,6 +386,8 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
             endSec={endSec}
             isMuted={isMuted}
             isLoop={isLoop}
+            isDark={isDark}
+            fallbackImageUrl={current.cover_image_url}
           />
         ) : (
           <div
@@ -333,19 +404,40 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
           </div>
         )}
 
-        {/* Soft Cinematic Bottom Dissolve: seamlessly melts the video into the dark background and text with NO harsh cutoff or divider line */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-44 bg-gradient-to-t from-[#07090E] via-[#07090E]/85 to-transparent pointer-events-none z-[5]" />
-        {!isYouTubeActive && (
-          <>
-            <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-[#07090E] via-[#07090E]/90 to-transparent sm:w-4/5 lg:w-3/5" />
-            <div className="hidden sm:block absolute inset-0 bg-radial from-transparent via-[#07090E]/40 to-[#07090E]" />
-          </>
+        {/* Soft Cinematic Bottom Dissolve: seamlessly melts the video into the theme background with NO harsh cutoff */}
+        <div
+          className={cn(
+            'absolute bottom-0 left-0 right-0 h-20 sm:h-44 bg-gradient-to-t pointer-events-none z-[5] transition-colors duration-300',
+            isDark
+              ? 'from-[#07090E] via-[#07090E]/85 to-transparent'
+              : 'from-[#F8FAFC] via-[#F8FAFC]/90 to-transparent'
+          )}
+        />
+
+        {/* Left text readability protection gradient (adapts to active theme) */}
+        <div
+          className={cn(
+            'hidden sm:block absolute inset-0 sm:w-4/5 lg:w-3/5 pointer-events-none z-[4] transition-colors duration-300',
+            isDark
+              ? 'bg-gradient-to-r from-[#07090E] via-[#07090E]/85 to-transparent'
+              : 'bg-gradient-to-r from-[#F8FAFC] via-[#F8FAFC]/95 to-transparent'
+          )}
+        />
+        {isDark && (
+          <div className="hidden sm:block absolute inset-0 bg-radial from-transparent via-[#07090E]/40 to-[#07090E] pointer-events-none z-[4]" />
         )}
 
         {/* Mobile controls overlay directly on video (dots and unmute button) */}
         <div className="sm:hidden absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
           {featured.length > 1 ? (
-            <div className="flex items-center gap-1.5 pointer-events-auto bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15">
+            <div
+              className={cn(
+                'flex items-center gap-1.5 pointer-events-auto backdrop-blur-md px-2.5 py-1 rounded-full border transition-colors',
+                isDark
+                  ? 'bg-black/75 border-white/15'
+                  : 'bg-white/85 border-gray-200 shadow-md'
+              )}
+            >
               {featured.map((item, idx) => (
                 <button
                   key={item.id}
@@ -353,8 +445,10 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
                   className={cn(
                     'h-1.5 rounded-full transition-all duration-300 cursor-pointer',
                     idx === activeIndex
-                      ? 'w-5 bg-amber-400'
-                      : 'w-1.5 bg-white/40 hover:bg-white/70'
+                      ? 'w-5 bg-brand-blue'
+                      : isDark
+                        ? 'w-1.5 bg-white/40 hover:bg-white/70'
+                        : 'w-1.5 bg-gray-400 hover:bg-gray-600'
                   )}
                   aria-label={`Go to slide ${idx + 1}`}
                 />
@@ -366,12 +460,17 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
             <button
               type="button"
               onClick={() => setIsMuted((prev) => !prev)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white text-[11px] font-semibold shadow-xl transition-all cursor-pointer pointer-events-auto active:scale-95"
+              className={cn(
+                'flex items-center gap-1 px-2.5 py-1 rounded-full backdrop-blur-md border text-[11px] font-semibold shadow-xl transition-all cursor-pointer pointer-events-auto active:scale-95',
+                isDark
+                  ? 'bg-black/75 hover:bg-black/90 border-white/20 text-white'
+                  : 'bg-white/90 hover:bg-white border-gray-200 text-gray-800 shadow-md'
+              )}
               title={isMuted ? 'Turn Sound On' : 'Mute Background Video'}
             >
               {isMuted ? (
                 <>
-                  <VolumeX size={12} className="text-gray-300" />
+                  <VolumeX size={12} className={isDark ? 'text-gray-300' : 'text-gray-600'} />
                   <span>Unmute</span>
                 </>
               ) : (
@@ -394,9 +493,16 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
             isTransitioning ? 'opacity-0 translate-y-3' : 'opacity-100 translate-y-0'
           )}
         >
-          {/* Editorial Archive Overline (Authentic Cinema Kicker, No AI Sparkles or Pill Shape) */}
+          {/* Editorial Archive Overline (Authentic Cinema Kicker) */}
           {settings?.hero_badge_text && (
-            <div className="mb-1 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] text-amber-400 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] line-clamp-1 truncate">
+            <div
+              className={cn(
+                'mb-1 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] line-clamp-1 truncate',
+                isDark
+                  ? 'text-amber-400 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]'
+                  : 'text-amber-600 drop-shadow-xs'
+              )}
+            >
               {settings.hero_badge_text}
             </div>
           )}
@@ -416,20 +522,44 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
           </div>
 
           {/* Large Movie Title */}
-          <h1 className="text-xl sm:text-4xl lg:text-6xl font-black text-white leading-tight sm:leading-[1.12] tracking-tight mb-2 sm:mb-3 drop-shadow-md line-clamp-2">
+          <h1
+            className={cn(
+              'text-xl sm:text-4xl lg:text-6xl font-black leading-tight sm:leading-[1.12] tracking-tight mb-2 sm:mb-3 line-clamp-2 transition-colors duration-200',
+              isDark ? 'text-white drop-shadow-md' : 'text-gray-900 drop-shadow-xs'
+            )}
+          >
             {current.title}
           </h1>
 
           {/* Movie Metadata Strip */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-300 font-semibold mb-3.5 sm:mb-6">
+          <div
+            className={cn(
+              'flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm font-semibold mb-3.5 sm:mb-6 transition-colors duration-200',
+              isDark ? 'text-gray-300' : 'text-gray-600'
+            )}
+          >
             {current.imdb_rating && (
-              <span className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-md bg-amber-400/15 border border-amber-400/30 text-amber-300 font-black text-[11px] sm:text-xs">
+              <span
+                className={cn(
+                  'flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-md border font-black text-[11px] sm:text-xs',
+                  isDark
+                    ? 'bg-amber-400/15 border-amber-400/30 text-amber-300'
+                    : 'bg-amber-50 border-amber-300 text-amber-800'
+                )}
+              >
                 <Star size={12} fill="#fcd34d" />
                 {current.imdb_rating.toFixed(1)} IMDb
               </span>
             )}
 
-            <span className="px-1.5 py-0.5 rounded bg-white/10 border border-white/15 text-white font-bold text-[10px] sm:text-xs">
+            <span
+              className={cn(
+                'px-1.5 py-0.5 rounded border font-bold text-[10px] sm:text-xs',
+                isDark
+                  ? 'bg-white/10 border-white/15 text-white'
+                  : 'bg-gray-200/80 border-gray-300 text-gray-800'
+              )}
+            >
               {current.age_rating || '15'}
             </span>
 
@@ -437,9 +567,9 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
 
             {current.runtime_minutes && (
               <>
-                <span className="text-gray-500">&bull;</span>
+                <span className={isDark ? 'text-gray-500' : 'text-gray-400'}>&bull;</span>
                 <span className="flex items-center gap-1 text-[11px] sm:text-xs">
-                  <Clock size={11} className="text-gray-400" />
+                  <Clock size={11} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
                   {formatRuntime(current.runtime_minutes)}
                 </span>
               </>
@@ -447,7 +577,7 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
 
             {current.genres?.[0] && (
               <>
-                <span className="text-gray-500">&bull;</span>
+                <span className={isDark ? 'text-gray-500' : 'text-gray-400'}>&bull;</span>
                 <span className="text-brand-blue font-bold text-[11px] sm:text-xs">{current.genres[0].name}</span>
               </>
             )}
@@ -457,7 +587,12 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-4 w-full sm:w-auto">
             <Link
               to={`/product/${current.slug}`}
-              className="flex items-center justify-center gap-1.5 sm:gap-2.5 px-3 sm:px-8 py-2.5 sm:py-3.5 rounded-xl bg-white text-dark hover:bg-gray-100 font-black text-xs sm:text-sm tracking-wide transition-all shadow-xl hover:shadow-2xl active:scale-95 cursor-pointer text-center whitespace-nowrap"
+              className={cn(
+                'flex items-center justify-center gap-1.5 sm:gap-2.5 px-3 sm:px-8 py-2.5 sm:py-3.5 rounded-xl font-black text-xs sm:text-sm tracking-wide transition-all shadow-xl active:scale-95 cursor-pointer text-center whitespace-nowrap',
+                isDark
+                  ? 'bg-white text-dark hover:bg-gray-100 hover:shadow-2xl'
+                  : 'bg-gray-900 text-white hover:bg-gray-800 hover:shadow-2xl'
+              )}
             >
               <Play size={14} className="shrink-0" fill="currentColor" />
               <span className="truncate">{settings?.hero_cta_primary || 'View Details'}</span>
@@ -486,12 +621,24 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
             style={{ perspective: 1000 }}
           >
             {/* Subtle Ambient Backlight Glow behind the Case */}
-            <div className="absolute -inset-3 bg-gradient-to-tr from-brand-blue/25 via-white/10 to-amber-400/20 rounded-3xl blur-2xl opacity-60 pointer-events-none -z-10 group-hover:opacity-90 transition-opacity duration-500" />
+            <div
+              className={cn(
+                'absolute -inset-3 rounded-3xl blur-2xl pointer-events-none -z-10 transition-opacity duration-500',
+                isDark
+                  ? 'bg-gradient-to-tr from-brand-blue/25 via-white/10 to-amber-400/20 opacity-60 group-hover:opacity-90'
+                  : 'bg-gradient-to-tr from-brand-blue/15 via-black/5 to-amber-400/15 opacity-40 group-hover:opacity-70'
+              )}
+            />
 
             {/* 3D Physical DVD Case Container */}
             <Link
               to={`/product/${current.slug}`}
-              className="block relative w-[190px] sm:w-[220px] lg:w-[250px] aspect-[2/3] rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] border-2 border-white/25 ring-1 ring-white/10 group cursor-pointer animate-hero-card-float transition-all duration-500 hover:scale-[1.03] hover:shadow-[0_30px_70px_-10px_rgba(0,0,0,1)]"
+              className={cn(
+                'block relative w-[190px] sm:w-[220px] lg:w-[250px] aspect-[2/3] rounded-2xl overflow-hidden group cursor-pointer animate-hero-card-float transition-all duration-500 hover:scale-[1.03]',
+                isDark
+                  ? 'shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] border-2 border-white/25 ring-1 ring-white/10 hover:shadow-[0_30px_70px_-10px_rgba(0,0,0,1)]'
+                  : 'shadow-[0_20px_50px_-10px_rgba(0,0,0,0.2)] border-2 border-gray-300 ring-1 ring-black/5 hover:shadow-[0_25px_60px_-10px_rgba(0,0,0,0.3)]'
+              )}
             >
               <img
                 src={current.cover_image_url}
@@ -506,9 +653,16 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/20 pointer-events-none group-hover:via-white/20 transition-all duration-500" />
 
               {/* Physical DVD banner badge */}
-              <div className="absolute bottom-2 left-2 right-2 p-2 rounded-lg bg-black/85 backdrop-blur-md border border-white/15 flex items-center justify-between text-[11px] font-bold text-white transition-colors duration-300 group-hover:border-white/30">
+              <div
+                className={cn(
+                  'absolute bottom-2 left-2 right-2 p-2 rounded-lg backdrop-blur-md border flex items-center justify-between text-[11px] font-bold transition-colors duration-300',
+                  isDark
+                    ? 'bg-black/85 border-white/15 text-white group-hover:border-white/30'
+                    : 'bg-white/90 border-gray-200 text-gray-900 group-hover:border-gray-300 shadow-sm'
+                )}
+              >
                 <span className="truncate">{current.format || 'DVD'}</span>
-                <span className="text-emerald-400 font-mono">{formatGBP(current.price)}</span>
+                <span className="text-emerald-500 dark:text-emerald-400 font-mono">{formatGBP(current.price)}</span>
               </div>
             </Link>
           </div>
@@ -518,7 +672,14 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
       {/* ── 3. Desktop Slider Navigation Controls & Audio Toggle (Desktop only) ── */}
       <div className="hidden sm:flex absolute bottom-4 left-4 sm:left-8 right-4 sm:right-8 z-20 pointer-events-none items-center justify-between gap-4">
         {featured.length > 1 ? (
-          <div className="flex items-center gap-2 pointer-events-auto bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+          <div
+            className={cn(
+              'flex items-center gap-2 pointer-events-auto backdrop-blur-md px-3 py-1.5 rounded-full border transition-colors',
+              isDark
+                ? 'bg-black/60 border-white/10'
+                : 'bg-white/80 border-gray-200 shadow-sm'
+            )}
+          >
             {featured.map((item, idx) => (
               <button
                 key={item.id}
@@ -527,7 +688,9 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
                   'h-2 rounded-full transition-all duration-300 cursor-pointer',
                   idx === activeIndex
                     ? 'w-7 bg-brand-blue'
-                    : 'w-2 bg-white/30 hover:bg-white/70'
+                    : isDark
+                      ? 'w-2 bg-white/30 hover:bg-white/70'
+                      : 'w-2 bg-gray-300 hover:bg-gray-500'
                 )}
                 aria-label={`Switch to movie ${idx + 1}: ${item.title}`}
               />
@@ -539,12 +702,17 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
           <button
             type="button"
             onClick={() => setIsMuted((prev) => !prev)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-xl transition-all cursor-pointer pointer-events-auto active:scale-95"
+            className={cn(
+              'flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md border text-xs font-semibold shadow-xl transition-all cursor-pointer pointer-events-auto active:scale-95',
+              isDark
+                ? 'bg-black/70 hover:bg-black/90 border-white/20 text-white'
+                : 'bg-white/90 hover:bg-white border-gray-200 text-gray-800 shadow-md'
+            )}
             title={isMuted ? 'Turn Sound On' : 'Mute Background Video'}
           >
             {isMuted ? (
               <>
-                <VolumeX size={14} className="text-gray-300" />
+                <VolumeX size={14} className={isDark ? 'text-gray-300' : 'text-gray-600'} />
                 <span className="text-[11px] hidden min-[400px]:inline">Unmute Trailer</span>
               </>
             ) : (

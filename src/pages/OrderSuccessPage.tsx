@@ -1,5 +1,6 @@
 import { formatMoney, countryName } from "../../shared/commerce.js";
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -333,11 +334,8 @@ export const OrderSuccessPage: React.FC = () => {
               ? "Gunakan rekening bank dan nomor referensi di bawah ini. Harap transfer sebelum batas waktu 20 menit berakhir agar pesanan tidak hangus."
               : "We are checking the payment status. If you have already paid, please wait for confirmation before trying again.";
   const isAlert = isCancelledOrExpired || needsReview || refunded;
-  const showLottie = !isAlert;
   const Icon =
     isCancelledOrExpired || needsReview ? AlertCircle : paid ? CheckCircle2 : Clock;
-  const successLottieUrl =
-    "https://lottie.host/embed/d05e3661-9aee-46be-8482-a993fbbdfc69/a6krEvBTz0.lottie";
   const bank = order.bank_details;
   const pendingUrl =
     currentCheckoutAttempt()?.orderId === order.id
@@ -400,24 +398,53 @@ export const OrderSuccessPage: React.FC = () => {
       <div className="py-10 sm:py-14 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
           <header className="text-center mb-8">
-            {showLottie ? (
+            {paid ? (
               <div className="inline-flex items-center justify-center">
-                <iframe
-                  src={successLottieUrl}
-                  title="Order success animation"
-                  className="h-24 w-24 sm:h-28 sm:w-28 border-0 bg-transparent pointer-events-none overflow-hidden"
-                  loading="lazy"
-                  allowFullScreen
-                />
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative flex items-center justify-center"
+                >
+                  <div className="absolute inset-0 rounded-full bg-emerald-500/25 dark:bg-emerald-400/20 blur-xl animate-pulse" />
+                  <span className="relative inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 text-white shadow-xl shadow-emerald-500/25 border-4 border-white dark:border-[#141A26]">
+                    <motion.svg
+                      className="w-10 h-10 sm:w-12 sm:h-12 stroke-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={3}
+                    >
+                      <motion.path
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ delay: 0.15, type: "tween", ease: "easeOut", duration: 0.45 }}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </motion.svg>
+                  </span>
+                </motion.div>
               </div>
+            ) : bankPending ? (
+              <span
+                className={cn(
+                  "inline-flex items-center justify-center rounded-full p-4 sm:p-5 shadow-sm",
+                  "bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/50",
+                )}
+              >
+                <Clock size={34} className="animate-pulse" />
+              </span>
             ) : (
               <span
                 className={cn(
-                  "inline-flex items-center justify-center rounded-full p-4 shadow-xs",
-                  "bg-blue-50 dark:bg-blue-950/50 text-brand-blue dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/50",
+                  "inline-flex items-center justify-center rounded-full p-4 sm:p-5 shadow-sm",
+                  isAlert
+                    ? "bg-rose-50 dark:bg-rose-950/50 text-brand-red dark:text-red-400 border border-rose-200/80 dark:border-rose-900/50"
+                    : "bg-blue-50 dark:bg-blue-950/50 text-brand-blue dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/50",
                 )}
               >
-                <Icon size={30} />
+                <Icon size={34} />
               </span>
             )}
             <h1 className="font-display font-bold text-2xl sm:text-3xl mt-5 text-dark dark:text-white">
