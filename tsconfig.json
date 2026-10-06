@@ -19,7 +19,8 @@
     "paths": {
       "@/*": ["src/*"],
       "motion/react": ["node_modules/framer-motion"],
-      "@studio-freight/lenis": ["src/lib/lenis-shim.ts"]
+      "lenis": ["node_modules/lenis", "src/lib/lenis-shim.ts"],
+      "@studio-freight/lenis": ["node_modules/lenis", "src/lib/lenis-shim.ts"]
     }
   },
   "include": ["src"]

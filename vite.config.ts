@@ -50,7 +50,9 @@ const devApiPlugin = () => ({
   },
 });
 
-const lenisModulePath = fs.existsSync(path.resolve(__dirname, 'node_modules/@studio-freight/lenis'))
+const lenisModulePath = fs.existsSync(path.resolve(__dirname, 'node_modules/lenis'))
+  ? 'lenis'
+  : fs.existsSync(path.resolve(__dirname, 'node_modules/@studio-freight/lenis'))
   ? '@studio-freight/lenis'
   : path.resolve(__dirname, './src/lib/lenis-shim.ts');
 
@@ -61,6 +63,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       'motion/react': 'framer-motion',
+      'lenis': lenisModulePath,
       '@studio-freight/lenis': lenisModulePath,
     },
   },
