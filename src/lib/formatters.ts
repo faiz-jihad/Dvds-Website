@@ -39,3 +39,18 @@ export function formatDateUK(dateString: string): string {
     return dateString;
   }
 }
+
+export function formatDateTimeUK(dateString?: string | null): string {
+  if (!dateString) return '—';
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(dateString));
+  } catch {
+    return String(dateString);
+  }
+}

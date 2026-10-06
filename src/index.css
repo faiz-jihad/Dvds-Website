@@ -294,8 +294,10 @@
 }
 
 /* Dedicated Print Styles for Premium Receipt & Invoices */
-#print-only-container {
-  display: none !important;
+@media screen {
+  #print-only-container {
+    display: none !important;
+  }
 }
 
 @media print {
