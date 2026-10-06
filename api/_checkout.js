@@ -1,4 +1,4 @@
-import { countryCode, normalizeAddress, validateShippingZones, minorAmount } from '../shared/commerce.js';
+import { countryCode, normalizeAddress, validateShippingZones, minorAmount, currencyDigits } from '../shared/commerce.js';
 import { exchangeRate, convertQuote } from './_fx.js';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import Stripe from 'stripe';
