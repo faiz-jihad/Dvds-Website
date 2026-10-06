@@ -9,15 +9,32 @@ dotenv.config();
 const devApiPlugin = () => ({
   name: 'dev-api-server',
   configureServer(server: any) {
-    const endpoints = new Set(['checkout-quote', 'cancel-checkout', 'create-checkout-session', 'create-paypal-order', 'create-bank-transfer-order', 'upload-payment-proof', 'order-status', 'verify-stripe-payment', 'capture-paypal-order', 'stripe-webhook', 'paypal-webhook']);
+    const endpoints = new Set([
+      'checkout-quote',
+      'cancel-checkout',
+      'create-checkout-session',
+      'create-payment-intent',
+      'create-paypal-order',
+      'create-bank-transfer-order',
+      'upload-payment-proof',
+      'order-status',
+      'verify-stripe-payment',
+      'capture-paypal-order',
+      'stripe-webhook',
+      'stripe/webhook',
+      'paypal-webhook',
+      'verify-turnstile',
+    ]);
     server.middlewares.use(async (req: any, res: any, next: any) => {
       const route = req.url?.split('?')[0]?.replace('/api/', '');
-      if (!req.url?.startsWith('/api/') || !endpoints.has(route)) return next();
+      const filePath = path.resolve(__dirname, `api/${route}.js`);
+      if (!req.url?.startsWith('/api/') || (!endpoints.has(route) && !fs.existsSync(filePath))) return next();
       dotenv.config({ override: true });
       res.status = (code: number) => { res.statusCode = code; return res; };
       res.json = (value: unknown) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(value)); };
       try {
-        if (route !== 'stripe-webhook') {
+        const isRawStream = route === 'stripe-webhook' || route === 'stripe/webhook';
+        if (!isRawStream) {
           let body = '';
           for await (const chunk of req) { body += chunk; if (Buffer.byteLength(body) > 1024 * 1024) return res.status(413).json({ error: 'Request too large' }); }
           try { req.body = JSON.parse(body || '{}'); }

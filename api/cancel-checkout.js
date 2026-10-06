@@ -19,4 +19,4 @@ export default endpoint(async (req) => {
   order = await loadOrder(db, order.id);
   if (order.status !== 'cancelled') throw new CheckoutError('Payment has already been received. Refresh the order before continuing.', 409);
   return { cancelled: true };
-});
+}, 'POST', { max: 20, windowMs: 60000 });

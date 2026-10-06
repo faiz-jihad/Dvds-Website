@@ -44,12 +44,12 @@ async function post<T>(path: string, body: unknown, orderId?: string, accessToke
   if (orderId && readReceipts()[orderId]) headers['X-Order-Token'] = readReceipts()[orderId].accessToken;
   if (accessToken) headers['X-Order-Token'] = accessToken;
   const response = await fetch(`/api/${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
-  const data = await response.json().catch(() => ({ error: 'Checkout is temporarily unavailable. Please try again.' }));
+  const data = await response.json().catch(() => ({ error: response.status === 404 ? `Checkout endpoint not found (404).` : 'Checkout is temporarily unavailable. Please try again.' }));
   if (!response.ok) throw new CheckoutApiError(data.error || 'The request could not be completed.', data.code || 'CHECKOUT_ERROR', response.status, data.orderId);
   return data;
 }
 export const checkoutApi = {
-  configuration() { return post<{ currencies: string[]; countries: string[] }>('checkout-quote', { configuration: true }); },
+  configuration() { return post<{ currencies: string[]; countries: string[]; stripePublishableKey?: string | null; paypalClientId?: string | null }>('checkout-quote', { configuration: true }); },
   quote(input: Pick<CheckoutInput, 'items' | 'deliveryTier' | 'promoCode' | 'currency'> & { country?: string }) { return post<CheckoutQuote>('checkout-quote', input); },
   async create(method: PaymentMethodType, input: CheckoutInput) {
     const fingerprint = JSON.stringify({ method, ...input });
@@ -59,7 +59,8 @@ export const checkoutApi = {
       attempt = { fingerprint, requestId: crypto.randomUUID(), accessToken: crypto.randomUUID(), items: input.items, input, method };
       sessionStorage.setItem(ATTEMPT_KEY, JSON.stringify(attempt));
     }
-    const route = { card: 'create-checkout-session', paypal: 'create-paypal-order', bank_transfer: 'create-bank-transfer-order' }[method];
+    if (method === 'bank_transfer') throw new CheckoutApiError('Bank transfer is no longer supported. Please pay with Stripe or PayPal.', 'METHOD_DISABLED');
+    const route = { card: 'create-checkout-session', paypal: 'create-paypal-order' }[method];
     try {
       const result = await post<{ orderId: string; orderNumber: string; url?: string; completed?: boolean }>(route, { ...input, requestId: attempt.requestId, accessToken: attempt.accessToken });
       if (!result.orderId) throw new CheckoutApiError('The order could not be created. Please retry.', 'INVALID_RESPONSE');
@@ -75,6 +76,37 @@ export const checkoutApi = {
           const recovered = await post<{ order: Order }>('order-status', { requestId: attempt.requestId }, undefined, attempt.accessToken);
           savedOrderId = recovered.order.id;
         } catch { /* Keep the same request and access token for a safe retry. */ }
+      }
+      if (savedOrderId) {
+        const receipt = { ...attempt, orderId: savedOrderId };
+        sessionStorage.setItem(RECEIPTS_KEY, JSON.stringify({ ...readReceipts(), [savedOrderId]: receipt }));
+        sessionStorage.setItem(ATTEMPT_KEY, JSON.stringify(receipt));
+      } else if (error instanceof CheckoutApiError && (error.status === 400 || error.status === 409 || error.code === 'METHOD_UNAVAILABLE' || error.code === 'CHECKOUT_UNAVAILABLE')) forgetCheckoutAttempt();
+      throw error;
+    }
+  },
+  async createPaymentIntent(input: CheckoutInput) {
+    const fingerprint = JSON.stringify({ method: 'card', ...input });
+    let attempt = currentCheckoutAttempt();
+    if (attempt && attempt.fingerprint !== fingerprint) throw new CheckoutApiError('Resume or cancel the previous checkout before starting another order.', 'ATTEMPT_PENDING');
+    if (!attempt) {
+      attempt = { fingerprint, requestId: crypto.randomUUID(), accessToken: crypto.randomUUID(), items: input.items, input, method: 'card' };
+      sessionStorage.setItem(ATTEMPT_KEY, JSON.stringify(attempt));
+    }
+    try {
+      const result = await post<{ clientSecret: string; paymentIntentId: string; orderId: string; orderNumber: string; amount: number; currency: string; completed?: boolean }>('create-payment-intent', { ...input, requestId: attempt.requestId, accessToken: attempt.accessToken });
+      if (!result.orderId) throw new CheckoutApiError('The order could not be created. Please retry.', 'INVALID_RESPONSE');
+      const receipt = { ...attempt, orderId: result.orderId };
+      sessionStorage.setItem(RECEIPTS_KEY, JSON.stringify({ ...readReceipts(), [result.orderId]: receipt }));
+      sessionStorage.setItem(ATTEMPT_KEY, JSON.stringify(receipt));
+      return result;
+    } catch (error) {
+      let savedOrderId = error instanceof CheckoutApiError ? error.orderId : undefined;
+      if (!savedOrderId) {
+        try {
+          const recovered = await post<{ order: Order }>('order-status', { requestId: attempt.requestId }, undefined, attempt.accessToken);
+          savedOrderId = recovered.order.id;
+        } catch { /* Keep safe retry state */ }
       }
       if (savedOrderId) {
         const receipt = { ...attempt, orderId: savedOrderId };

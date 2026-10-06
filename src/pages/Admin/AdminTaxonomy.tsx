@@ -13,6 +13,8 @@ import {
   List,
   AlertTriangle,
   ArrowUpDown,
+  Disc,
+  RotateCcw,
 } from 'lucide-react';
 import { adminApi } from '../../lib/adminApi';
 import { Category, Genre } from '../../types';
@@ -21,6 +23,17 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Modal } from '../../components/common/Modal';
 import { useUiStore } from '../../stores/useUiStore';
+import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
+
+const DEFAULT_FORMATS = DEFAULT_STORE_SETTINGS.custom_formats || [
+  'Standard',
+  'DVD',
+  'Blu-ray',
+  '4K UHD',
+  'Box Set',
+  'Merchandise',
+  'Physical',
+];
 
 const makeSlug = (value: string) =>
   value
@@ -41,9 +54,19 @@ export const AdminTaxonomy: React.FC = () => {
     queryKey: ['admin', 'genres'],
     queryFn: () => adminApi.getGenres(),
   });
+  const settingsQuery = useQuery({
+    queryKey: ['admin', 'settings'],
+    queryFn: () => adminApi.getStoreSettings(),
+  });
 
   const categories = categoriesQuery.data || [];
   const genres = genresQuery.data || [];
+  const storeSettings = settingsQuery.data;
+
+  // Format management state
+  const [newFormatName, setNewFormatName] = useState('');
+  const [isUpdatingFormats, setIsUpdatingFormats] = useState(false);
+  const currentFormats = storeSettings?.custom_formats || DEFAULT_FORMATS;
 
   // Search filters
   const [categorySearch, setCategorySearch] = useState('');
@@ -102,12 +125,83 @@ export const AdminTaxonomy: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] }),
       queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] }),
       queryClient.invalidateQueries({ queryKey: ['admin', 'genres'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] }),
       queryClient.invalidateQueries({ queryKey: ['store', 'categories'] }),
       queryClient.invalidateQueries({ queryKey: ['store', 'genres'] }),
+      queryClient.invalidateQueries({ queryKey: ['store', 'settings'] }),
       queryClient.invalidateQueries({ queryKey: ['store', 'products'] }),
       queryClient.invalidateQueries({ queryKey: ['store', 'product'] }),
       queryClient.invalidateQueries({ queryKey: ['admin', 'products'] }),
     ]);
+  };
+
+  // --- Format / Packaging Actions ---
+  const handleAddFormat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newFormatName.trim();
+    if (!name) return;
+    if (currentFormats.some((f) => f.toLowerCase() === name.toLowerCase())) {
+      addToast(`Format "${name}" already exists`, 'info');
+      return;
+    }
+    const updatedFormats = [...currentFormats, name];
+    setIsUpdatingFormats(true);
+    try {
+      if (storeSettings) {
+        await adminApi.saveStoreSettings({
+          ...storeSettings,
+          custom_formats: updatedFormats,
+        });
+        await refreshAll();
+      }
+      setNewFormatName('');
+      addToast(`Format "${name}" added to catalogue filters & DVD wizard`, 'success');
+    } catch (err: any) {
+      addToast(err?.message || 'Failed to add format', 'error');
+    } finally {
+      setIsUpdatingFormats(false);
+    }
+  };
+
+  const handleRemoveFormat = async (formatToRemove: string) => {
+    const updatedFormats = currentFormats.filter((f) => f !== formatToRemove);
+    if (updatedFormats.length === 0) {
+      addToast('At least one media format must remain active', 'error');
+      return;
+    }
+    setIsUpdatingFormats(true);
+    try {
+      if (storeSettings) {
+        await adminApi.saveStoreSettings({
+          ...storeSettings,
+          custom_formats: updatedFormats,
+        });
+        await refreshAll();
+      }
+      addToast(`Format "${formatToRemove}" removed`, 'info');
+    } catch (err: any) {
+      addToast(err?.message || 'Failed to remove format', 'error');
+    } finally {
+      setIsUpdatingFormats(false);
+    }
+  };
+
+  const handleResetFormats = async () => {
+    setIsUpdatingFormats(true);
+    try {
+      if (storeSettings) {
+        await adminApi.saveStoreSettings({
+          ...storeSettings,
+          custom_formats: DEFAULT_FORMATS,
+        });
+        await refreshAll();
+      }
+      addToast('Formats reset to standard defaults', 'info');
+    } catch (err: any) {
+      addToast(err?.message || 'Failed to reset formats', 'error');
+    } finally {
+      setIsUpdatingFormats(false);
+    }
   };
 
   // --- Category Actions ---
@@ -275,7 +369,7 @@ export const AdminTaxonomy: React.FC = () => {
       <div className="border-b border-gray-200 pb-5">
         <p className="font-mono text-xs uppercase tracking-widest text-brand-blue">Catalogue structure</p>
         <div className="mt-1 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-          <h1 className="font-display text-3xl font-extrabold text-dark">Categories & Genres</h1>
+          <h1 className="font-display text-3xl font-extrabold text-dark">Taxonomy &amp; Formats</h1>
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-brand-blue">
               {categories.length} Categories
@@ -283,10 +377,13 @@ export const AdminTaxonomy: React.FC = () => {
             <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
               {genres.length} Genres
             </span>
+            <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+              {currentFormats.length} Formats
+            </span>
           </div>
         </div>
         <p className="mt-1 text-sm text-gray-500">
-          Maintain live navigation, sorting, and product taxonomy with complete CRUD operations.
+          Maintain live catalogue categories, genres, and media formats used in shop filters and product creation.
         </p>
       </div>
 
@@ -555,6 +652,100 @@ export const AdminTaxonomy: React.FC = () => {
           )}
         </section>
       </div>
+
+      {/* ================= MEDIA FORMATS & PACKAGING TYPES SECTION ================= */}
+      <section className="flex flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+              <Disc className="h-4 w-4" />
+            </div>
+            <div>
+              <h2 className="font-display font-bold text-dark">Media Formats &amp; Packaging Types</h2>
+              <p className="text-xs text-gray-400">
+                Manage available formats used in storefront sidebar filters (<code className="font-mono text-[11px] bg-gray-100 px-1 py-0.5 rounded">/shop</code>) and the DVD creation wizard.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleResetFormats}
+              disabled={isUpdatingFormats}
+              className="text-xs text-gray-500 hover:text-dark flex items-center gap-1 font-medium cursor-pointer"
+              title="Restore standard physical media presets"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Reset Defaults</span>
+            </button>
+            <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+              {currentFormats.length} Formats Active
+            </span>
+          </div>
+        </div>
+
+        {/* Add Format Form */}
+        <form onSubmit={handleAddFormat} className="space-y-2 rounded-lg border border-gray-100 bg-gray-50/70 p-3">
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Input
+                label="Add Custom Format or Packaging"
+                value={newFormatName}
+                onChange={(e) => setNewFormatName(e.target.value)}
+                placeholder="e.g. Steelbook, Criterion Edition, Limited Edition Box Set, Digipak"
+              />
+            </div>
+            <Button type="submit" isLoading={isUpdatingFormats} className="h-11 shrink-0 px-4">
+              <Plus className="mr-1 h-4 w-4" /> Add Format
+            </Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[10px] uppercase font-bold text-gray-400 mr-1">Quick Add:</span>
+            {['Steelbook', 'Criterion Edition', 'Limited Box Set', 'Digipak', 'VHS Retro', '4K Steelbook', 'Special Edition'].map((preset) => {
+              if (currentFormats.includes(preset)) return null;
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => {
+                    setNewFormatName(preset);
+                  }}
+                  className="text-[10px] px-2 py-0.5 rounded bg-white hover:bg-amber-50 text-gray-600 hover:text-amber-800 border border-gray-200 transition cursor-pointer"
+                >
+                  + {preset}
+                </button>
+              );
+            })}
+          </div>
+        </form>
+
+        {/* Formats Grid / Chips List */}
+        <div>
+          <span className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">
+            Configured Formats (Synced with Storefront &amp; Admin DVD Wizard)
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {currentFormats.map((fmt) => (
+              <div
+                key={fmt}
+                className="group inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-dark shadow-2xs transition-all hover:border-amber-400"
+              >
+                <Disc className="w-3.5 h-3.5 text-amber-500" />
+                <span>{fmt}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveFormat(fmt)}
+                  disabled={isUpdatingFormats}
+                  className="rounded p-0.5 text-gray-400 opacity-60 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition cursor-pointer"
+                  title={`Remove ${fmt}`}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ================= EDIT CATEGORY MODAL ================= */}
       <Modal

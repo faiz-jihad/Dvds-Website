@@ -45,8 +45,8 @@ export const OrderSuccessPage: React.FC = () => {
   const { theme, toggleTheme } = useThemeStore();
   const isDark = theme === "dark";
   const params = useParams<{ orderId: string; id: string }>();
-  const orderId = params.orderId || params.id || "";
   const [search] = useSearchParams();
+  const orderId = params.orderId || params.id || search.get("order_id") || search.get("id") || "";
   const [message, setMessage] = useState("");
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -69,19 +69,19 @@ export const OrderSuccessPage: React.FC = () => {
     queryKey: ["order", orderId, search.get("session_id"), search.get("token")],
     queryFn: () =>
       checkoutApi.orderStatus(
-        orderId,
+        orderId || "",
         search.get("session_id") || undefined,
         search.get("token") || search.get("paypal_order_id") || undefined,
       ),
-    enabled: Boolean(orderId),
-    retry: 1,
+    enabled: Boolean(orderId || search.get("session_id")),
+    retry: 2,
     refetchInterval: (state) => {
       const order = state.state.data;
       if (state.state.error) return false;
-      if (!order) return 5000;
+      if (!order) return 3000;
       if (["cancelled", "refunded", "delivered"].includes(order.status))
         return false;
-      return order.payment_status === "pending" ? 5000 : 15000;
+      return order.payment_status === "pending" ? 3000 : 15000;
     },
   });
   const order = query.data;
@@ -105,7 +105,7 @@ export const OrderSuccessPage: React.FC = () => {
   const effectiveCurrency =
     order?.currency && order.currency !== "GBP"
       ? order.currency
-      : attemptCurrency || (Number(order?.total_amount) >= 5000 ? "IDR" : (order?.currency || "GBP"));
+      : attemptCurrency || (order?.currency || "GBP");
 
   const ORDER_EXPIRY_MINUTES = 20;
   const isOrderExpired = Boolean(
@@ -152,9 +152,9 @@ export const OrderSuccessPage: React.FC = () => {
         order.payment_status !== "refunded")
     )
       return;
-    const purchased = consumeCheckoutReceipt(order.id);
+    const purchased = consumeCheckoutReceipt(order.id) || order.items;
     clearCheckoutDraft();
-    if (!purchased) return;
+    if (!purchased || !purchased.length) return;
 
     // Dispatch order confirmation for customer & admin
     useNotificationStore.getState().addNotification({
@@ -307,32 +307,37 @@ export const OrderSuccessPage: React.FC = () => {
   const needsReview =
     order.payment_review_required && (paid || partiallyRefunded);
   const isCancelledOrExpired = closed || (isOrderExpired && !paid);
+  const isPaymentFailed = order.payment_status === "failed";
   const title = refunded
     ? "Payment refunded"
     : isCancelledOrExpired
       ? "Order cancelled - Payment expired"
-      : needsReview
-        ? "Payment received - order under review"
-        : partiallyRefunded
-          ? "Payment partially refunded"
-          : paid
-            ? "Payment confirmed"
-            : bankPending
-              ? "Order placed - awaiting transfer"
-              : "Awaiting payment confirmation";
+      : isPaymentFailed
+        ? "Payment failed"
+        : needsReview
+          ? "Payment received - order under review"
+          : partiallyRefunded
+            ? "Payment partially refunded"
+            : paid
+              ? "Thank you. Your order has been confirmed."
+              : bankPending
+                ? "Order placed - awaiting transfer"
+                : "Payment still processing";
   const description = refunded
     ? "Your payment provider has confirmed a full refund for this order."
     : isCancelledOrExpired
-      ? "Batas waktu pembayaran 20 menit telah berakhir. Pesanan ini otomatis dibatalkan dan stok telah dirilis kembali."
-      : needsReview
-        ? "Your payment arrived after the stock reservation was released. Our team needs to review the order before dispatch."
-        : partiallyRefunded
-          ? "A refund has been recorded. Your latest order and delivery status are shown below."
-          : paid
-            ? "Your payment has been verified. Follow the delivery status below."
-            : bankPending
-              ? "Gunakan rekening bank dan nomor referensi di bawah ini. Harap transfer sebelum batas waktu 20 menit berakhir agar pesanan tidak hangus."
-              : "We are checking the payment status. If you have already paid, please wait for confirmation before trying again.";
+      ? "The 20-minute payment window has expired. This order has been automatically cancelled and reserved stock returned to inventory."
+      : isPaymentFailed
+        ? "Your payment could not be completed."
+        : needsReview
+          ? "Your payment arrived after the stock reservation was released. Our team needs to review the order before dispatch."
+          : partiallyRefunded
+            ? "A refund has been recorded. Your latest order and delivery status are shown below."
+            : paid
+              ? "Thank you. Your payment has been confirmed and your order is now being processed."
+              : bankPending
+                ? "Please use the bank account details and payment reference below to complete your transfer before the 20-minute window expires."
+                : "Your payment is being confirmed. We'll update your order shortly.";
   const isAlert = isCancelledOrExpired || needsReview || refunded;
   const Icon =
     isCancelledOrExpired || needsReview ? AlertCircle : paid ? CheckCircle2 : Clock;
@@ -482,17 +487,17 @@ export const OrderSuccessPage: React.FC = () => {
                 <AlertCircle size={30} />
               </div>
               <h2 className="text-lg font-bold text-dark dark:text-white">
-                Pesanan Dibatalkan (Waktu Pembayaran Hangus)
+                Order Cancelled (Payment Window Expired)
               </h2>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mt-2 leading-relaxed">
-                Batas waktu pembayaran 20 menit telah habis. Pesanan ini telah otomatis dibatalkan dan reservasi stok item telah dilepaskan kembali. Silakan lakukan pemesanan ulang.
+                The 20-minute payment window has expired. This order has been automatically cancelled and reserved items returned to inventory. Please place a new order.
               </p>
               <div className="mt-5 flex justify-center">
                 <Link
                   to="/shop"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-brand-blue hover:bg-brand-blue-hover text-white transition-colors shadow-xs"
                 >
-                  <span>Pesan Ulang / Kembali ke Toko</span>
+                  <span>Reorder / Return to Store</span>
                   <ArrowRight size={14} />
                 </Link>
               </div>
@@ -509,10 +514,10 @@ export const OrderSuccessPage: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-xs font-bold uppercase tracking-wider text-brand-red dark:text-red-300 block">
-                      Batas Waktu Pembayaran: 20 Menit
+                      Payment Window: 20 Minutes
                     </span>
                     <p className="text-xs text-brand-red/90 dark:text-red-300/90 mt-0.5">
-                      Segera selesaikan transfer sebelum batas waktu habis agar pesanan tidak hangus.
+                      Please complete your transfer before the timer expires to secure your order.
                     </p>
                   </div>
                 </div>
@@ -521,7 +526,7 @@ export const OrderSuccessPage: React.FC = () => {
                     {formattedCountdown}
                   </div>
                   <div className="text-[10px] uppercase font-mono text-gray-500 dark:text-gray-400">
-                    Sisa Waktu
+                    Time Remaining
                   </div>
                 </div>
               </div>
@@ -532,7 +537,7 @@ export const OrderSuccessPage: React.FC = () => {
                   Bank Transfer Instructions
                 </h2>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-red-soft dark:bg-brand-red/20 text-brand-red dark:text-red-400 border border-brand-red/30 dark:border-brand-red/40 font-mono">
-                  <Clock size={13} /> SISA WAKTU: {formattedCountdown}
+                  <Clock size={13} /> TIME REMAINING: {formattedCountdown}
                 </span>
               </div>
               {bank?.bank_account_number ? (

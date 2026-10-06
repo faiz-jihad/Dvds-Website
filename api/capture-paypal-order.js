@@ -7,4 +7,4 @@ export default endpoint(async (req) => {
   await capturePayPal(db, order, req.body?.paypalOrderId);
   const updated = await loadOrder(db, order.id);
   return { verified: updated.payment_status === 'paid', orderId: order.id, payment_status: updated.payment_status };
-});
+}, 'POST', { max: 20, windowMs: 60000 });

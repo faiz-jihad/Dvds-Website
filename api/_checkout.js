@@ -28,7 +28,7 @@ export const DEFAULT_SHIPPING_ZONES = [
 
 export const DEFAULT_BANK_SETTINGS = {
   bank_name: 'Barclays Bank UK',
-  bank_account_name: 'DVDs Zone Ltd',
+  bank_account_name: 'AZ Rayan LTD',
   bank_sort_code: '20-00-00',
   bank_account_number: '12345678',
   bank_iban: 'GB29BARC20000012345678',
@@ -57,12 +57,58 @@ export function check(result, message = 'The order could not be saved. Please re
   if (result.error) throw new CheckoutError(message, 503, 'DATABASE_ERROR');
   return result.data;
 }
+export function isAllowedOrigin(origin, req) {
+  if (!origin) return true;
+  const allowed = new Set([
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5173',
+  ]);
+  if (process.env.SITE_URL) {
+    try { allowed.add(new URL(process.env.SITE_URL).origin); } catch {}
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    allowed.add(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+  }
+  if (process.env.VERCEL_URL) {
+    allowed.add(`https://${process.env.VERCEL_URL}`);
+  }
+  if (req?.headers?.host) {
+    const proto = req.headers['x-forwarded-proto'] || 'https';
+    allowed.add(`${proto}://${req.headers.host}`);
+    allowed.add(`http://${req.headers.host}`);
+  }
+  return allowed.has(origin);
+}
+
 export function endpoint(action, method = 'POST', rateLimitOptions = { max: 60, windowMs: 60000 }) {
   return async (req, res) => {
     if (typeof res.setHeader === 'function') {
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('X-Content-Type-Options', 'nosniff');
     }
+
+    const origin = req.headers?.origin;
+    if (origin) {
+      if (!isAllowedOrigin(origin, req)) {
+        return res.status(403).json({ error: 'Cross-origin request blocked.', code: 'CORS_FORBIDDEN' });
+      }
+      if (typeof res.setHeader === 'function') {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Vary', 'Origin');
+      }
+    }
+
+    if (req.method === 'OPTIONS') {
+      if (typeof res.setHeader === 'function') {
+        res.setHeader('Allow', `${method}, OPTIONS`);
+        res.setHeader('Access-Control-Allow-Methods', `${method}, OPTIONS`);
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Order-Token');
+        res.setHeader('Access-Control-Max-Age', '86400');
+      }
+      return typeof res.end === 'function' ? res.status(204).end() : res.status(204).json({});
+    }
+
     if (req.method !== method) {
       if (typeof res.setHeader === 'function') res.setHeader('Allow', method);
       return res.status(405).json({ error: 'Method not allowed' });
@@ -118,7 +164,7 @@ export function normalizeItems(items) {
 export function paymentMethods(settings) {
   // These endpoints invoke service-role-only database functions. Do not list
   // a payment method when the server cannot complete its order lifecycle.
-  const backend = Boolean((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY));
+  const backend = Boolean((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) && process.env.SUPABASE_SERVICE_ROLE_KEY);
   const sortCodeDigits = String(settings?.bank_sort_code || '').replace(/\D/g, '');
   const accountNumber = String(settings?.bank_account_number || '').trim();
   const iban = String(settings?.bank_iban || '').trim();
@@ -128,7 +174,7 @@ export function paymentMethods(settings) {
   return {
     card: backend && settings?.payment_card_enabled !== false && Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
     paypal: backend && settings?.payment_paypal_enabled !== false && Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET && process.env.PAYPAL_WEBHOOK_ID),
-    bank_transfer: backend && settings?.payment_bank_transfer_enabled === true && bankValid,
+    bank_transfer: backend && Boolean(settings?.payment_bank_transfer_enabled) && bankValid,
   };
 }
 export function calculateQuote(items, products, settings, promo, promoCode, deliveryTier, now = Date.now(), country = 'GB') {
@@ -141,6 +187,10 @@ export function calculateQuote(items, products, settings, promo, promoCode, deli
     const deal = settings.deal_is_active && settings.deal_product_id === product.id && Date.parse(settings.deal_ends_at) > now && Number(settings.deal_discount_price) > 0;
     const unit = deal ? Math.min(base, money(settings.deal_discount_price)) : base;
     if (!Number.isSafeInteger(unit) || unit < 0) throw new CheckoutError('A selected title has an invalid price.');
+    if (unit > 15000) {
+      console.warn(`[checkout:price_limit] Product "${product.title}" (${product.id}) price ${unit}p exceeds maximum allowed price of £150.00.`);
+      throw new CheckoutError(`The price for "${product.title}" exceeds the maximum allowed price of £150.00.`);
+    }
     return { ...item, product_title: product.title, product_sku: product.sku, cover_image_url: product.cover_image_url, unit_price: unit / 100, base_price: base / 100, total_price: unit * item.quantity / 100 };
   });
   const subtotal = lines.reduce((sum, line) => sum + money(line.total_price), 0);
@@ -186,11 +236,14 @@ export async function quoteCheckout(db, input) {
   const items = normalizeItems(input.items);
   const products = check(await db.from('products').select('id,sku,title,price,status,stock_quantity,cover_image_url').in('id', items.map((item) => item.product_id)));
   const settings = check(await db.from('store_settings').select('*').eq('singleton', true).maybeSingle());
-  if (!settings || typeof settings.payment_card_enabled !== 'boolean') throw new CheckoutError('Checkout is temporarily unavailable while store settings are being updated.', 503);
+  if (!settings) throw new CheckoutError('Checkout is temporarily unavailable while store settings are being updated.', 503);
   const effectiveSettings = {
     ...DEFAULT_BANK_SETTINGS,
     ...settings,
-    payment_bank_transfer_enabled: true,
+    // If payment method columns are null (old schema), default to enabled so checkout doesn't hard-fail
+    payment_card_enabled: settings.payment_card_enabled ?? true,
+    payment_paypal_enabled: settings.payment_paypal_enabled ?? true,
+    payment_bank_transfer_enabled: false,
     bank_name: settings.bank_name?.trim() || DEFAULT_BANK_SETTINGS.bank_name,
     bank_account_name: settings.bank_account_name?.trim() || DEFAULT_BANK_SETTINGS.bank_account_name,
     bank_sort_code: settings.bank_sort_code?.trim() || DEFAULT_BANK_SETTINGS.bank_sort_code,
@@ -219,6 +272,8 @@ export async function requestUser(db, req) {
 }
 export function siteOrigin(req) {
   if (process.env.SITE_URL) return new URL(process.env.SITE_URL).origin;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   if (req?.headers?.host) return `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
   return 'http://localhost:3000';
 }
@@ -244,7 +299,7 @@ export async function expireOrderIfOutdated(db, order) {
   const createdAt = new Date(order.created_at).getTime();
   if (Number.isFinite(createdAt) && Date.now() - createdAt >= ORDER_EXPIRY_MS) {
     try {
-      await db.rpc('release_order_inventory', { p_order_id: order.id }).catch(() => {});
+      try { await db.rpc('release_order_inventory', { p_order_id: order.id }); } catch {}
       const expireRpc = await db.rpc('expire_checkout_order', {
         p_order_id: order.id,
         p_provider_order_id: order.checkout_session_id || null,
@@ -256,12 +311,14 @@ export async function expireOrderIfOutdated(db, order) {
           updated_at: new Date().toISOString(),
         }).eq('id', order.id);
       }
-      await db.from('order_status_history').insert({
-        order_id: order.id,
-        previous_status: order.status,
-        new_status: 'cancelled',
-        note: 'Order automatically cancelled: unpaid after 20 minutes.',
-      }).catch(() => {});
+      try {
+        await db.from('order_status_history').insert({
+          order_id: order.id,
+          previous_status: order.status,
+          new_status: 'cancelled',
+          note: 'Order automatically cancelled: unpaid after 20 minutes.',
+        });
+      } catch {}
       if (order.checkout_session_id && order.payment_provider === 'stripe') {
         try {
           const stripe = stripeClient();
@@ -298,10 +355,6 @@ export async function loadOrder(db, id) {
   if (!entityId.test(id || '')) throw new CheckoutError('Invalid order reference.', 400);
   let order = check(await db.from('orders').select('*, items:order_items(*)').eq('id', id).maybeSingle());
   if (!order) throw new CheckoutError('Order not found.', 404);
-  if (order.currency === 'GBP' && Number(order.total_amount) >= 5000 && !order.payment_reference?.startsWith('ch_') && !order.payment_reference?.startsWith('pi_')) {
-    order.currency = 'IDR';
-    await db.from('orders').update({ currency: 'IDR' }).eq('id', order.id);
-  }
   order = await expireOrderIfOutdated(db, order);
   return order;
 }
@@ -318,7 +371,7 @@ export function publicOrder(order) {
 }
 export async function initializeOrder(db, req, method) {
   const input = req.body || {};
-  sweepExpiredOrders(db).catch(() => {});
+  if (typeof db.rpc === 'function') sweepExpiredOrders(db).catch(() => {});
   if (!uuid.test(input.requestId || '') || !uuid.test(input.accessToken || '')) throw new CheckoutError('Please refresh checkout and try again.');
   const email = String(input.customerEmail || '').trim().toLowerCase();
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new CheckoutError('Enter a valid email address.');
@@ -373,9 +426,29 @@ export async function recordPayment(db, order, providerOrderId, reference, amoun
   check(await db.rpc('record_checkout_payment', { p_order_id: order.id, p_provider: order.payment_provider, p_provider_order_id: providerOrderId, p_reference: reference, p_amount: amount, p_currency: String(currency).toUpperCase() }));
 }
 export async function verifyStripe(db, order, sessionId) {
+  if (sessionId && sessionId.startsWith('pi_')) {
+    const paymentIntent = await stripeClient().paymentIntents.retrieve(sessionId);
+    if (order.payment_provider !== 'stripe' || paymentIntent.metadata?.order_id !== order.id) {
+      throw new CheckoutError('Payment does not belong to this order.', 403, 'PAYMENT_MISMATCH');
+    }
+    if (paymentIntent.status === 'succeeded') {
+      const numericAmount = Number(
+        ((paymentIntent.amount_received || paymentIntent.amount) / (order.currency === 'JPY' ? 1 : 100)).toFixed(2)
+      );
+      await recordPayment(db, order, paymentIntent.id, paymentIntent.id, numericAmount, paymentIntent.currency);
+    }
+    return {
+      id: paymentIntent.id,
+      payment_status: paymentIntent.status === 'succeeded' ? 'paid' : paymentIntent.status,
+      amount_total: paymentIntent.amount,
+      currency: paymentIntent.currency,
+    };
+  }
+
   const session = await stripeClient().checkout.sessions.retrieve(sessionId);
   if (order.payment_provider !== 'stripe' || session.metadata?.order_id !== order.id || (order.checkout_session_id && order.checkout_session_id !== session.id)) throw new CheckoutError('Payment does not belong to this order.', 403, 'PAYMENT_MISMATCH');
   if (session.payment_status === 'paid') await recordPayment(db, order, session.id, typeof session.payment_intent === 'string' ? session.payment_intent : session.id, session.amount_total / (order.currency === 'JPY' ? 1 : 100), session.currency);
   if (session.status === 'expired' && order.payment_status !== 'paid') check(await db.rpc('expire_checkout_order', { p_order_id: order.id, p_provider_order_id: session.id }));
   return session;
 }
+

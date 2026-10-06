@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Check, SlidersHorizontal } from 'lucide-react';
 import { adminApi } from '../../lib/adminApi';
@@ -22,6 +22,24 @@ export const AdminInventory: React.FC = () => {
   const [reason, setReason] = useState('');
   const [updating, setUpdating] = useState(false);
   const addToast = useUiStore((state) => state.addToast);
+
+  const threshold = settingsQuery.data?.low_stock_threshold ?? 3;
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((product) =>
+      product.title.toLowerCase().includes(q) || (product.sku && product.sku.toLowerCase().includes(q))
+    );
+  }, [products, search]);
+
+  const {
+    currentPage,
+    pageSize,
+    setCurrentPage,
+    setPageSize,
+    paginatedItems: paginatedProducts,
+    totalItems: totalFilteredCount,
+  } = useAdminPagination(filtered, 25);
 
   const handleAdjustStock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +69,7 @@ export const AdminInventory: React.FC = () => {
           target: 'admin',
           type: 'stock',
           title: 'Low Stock Alert',
-          message: `Film "${updated.title}" has reached ${updated.stock_quantity} units remaining (Threshold: ${currentThreshold}).`,
+          message: `Product "${updated.title}" has reached ${updated.stock_quantity} units remaining (Threshold: ${currentThreshold}).`,
           link: '/admin/inventory',
         });
       } else {
@@ -84,17 +102,6 @@ export const AdminInventory: React.FC = () => {
   }
 
   if (!settingsQuery.data) return <AdminDataState empty emptyTitle="Configure inventory alerts" emptyDescription="Save Store Settings to set the low-stock threshold before managing inventory." />;
-  const threshold = settingsQuery.data.low_stock_threshold;
-  const filtered = products.filter((product) => product.title.toLowerCase().includes(search.toLowerCase()) || product.sku.toLowerCase().includes(search.toLowerCase()));
-
-  const {
-    currentPage,
-    pageSize,
-    setCurrentPage,
-    setPageSize,
-    paginatedItems: paginatedProducts,
-    totalItems: totalFilteredCount,
-  } = useAdminPagination(filtered, 25);
 
   return (
     <div className="max-w-6xl space-y-6">
@@ -112,7 +119,7 @@ export const AdminInventory: React.FC = () => {
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-xs">
-              <thead className="border-b border-gray-200 bg-gray-50 font-semibold text-gray-700"><tr><th className="p-3.5">Film</th><th className="p-3.5">SKU</th><th className="p-3.5">Format</th><th className="p-3.5">Current stock</th><th className="p-3.5">Health</th><th className="p-3.5 text-right">Action</th></tr></thead>
+              <thead className="border-b border-gray-200 bg-gray-50 font-semibold text-gray-700"><tr><th className="p-3.5">Product</th><th className="p-3.5">SKU</th><th className="p-3.5">Format</th><th className="p-3.5">Current stock</th><th className="p-3.5">Health</th><th className="p-3.5 text-right">Action</th></tr></thead>
               <tbody className="divide-y divide-gray-100">
                 {paginatedProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50/70">
@@ -133,7 +140,7 @@ export const AdminInventory: React.FC = () => {
             totalItems={totalFilteredCount}
             onPageChange={setCurrentPage}
             onPageSizeChange={setPageSize}
-            itemLabel="titles"
+            itemLabel="products"
           />
         </div>
       )}

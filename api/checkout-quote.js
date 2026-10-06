@@ -13,7 +13,9 @@ export default endpoint(async (req) => {
       : DEFAULT_SHIPPING_ZONES;
     return {
       currencies,
-      countries: ['GB', ...zones.filter((zone) => zone?.enabled).flatMap((zone) => zone?.countries || [])]
+      countries: ['GB', ...zones.filter((zone) => zone?.enabled).flatMap((zone) => zone?.countries || [])],
+      stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY || null,
+      paypalClientId: process.env.PAYPAL_CLIENT_ID || process.env.VITE_PAYPAL_CLIENT_ID || null,
     };
   }
   return (await quoteCheckout(db, req.body || {})).quote;

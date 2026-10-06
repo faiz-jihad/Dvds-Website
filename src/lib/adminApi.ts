@@ -1,7 +1,7 @@
 import { isSupabaseConfigured, supabase } from './supabase';
 import { Category, FinancialStats, FulfilmentStatus, Genre, Order, OrderStatus, Product, Promotion, StoreSettings, Profile, UserRole } from '../types';
 import { adminSchemaChecks, AdminSchemaScope } from './adminSchema';
-import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
+import { DEFAULT_STORE_SETTINGS, MAX_PRODUCT_PRICE } from '../data/defaultStoreSettings';
 import { CURRENCIES, validateShippingZones } from '../../shared/commerce.js';
 
 export interface ActivityActor {
@@ -157,9 +157,44 @@ export const adminApi = {
       .select('*, category:categories(*), product_genres(genre:genres(*))')
       .order('created_at', { ascending: false });
     if (error) fail(error, 'Products could not be loaded.');
-    return (data || []).map((row: any) => ({ ...row, price: Number(row.price),
-      compare_at_price: row.compare_at_price == null ? null : Number(row.compare_at_price),
-      genres: (row.product_genres || []).map((link: any) => link.genre).filter(Boolean) }));
+
+    let cachedMap: Record<string, string[]> = {};
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('dvdszone_product_images_cache');
+        if (raw) cachedMap = JSON.parse(raw);
+      } catch {
+        // ignore
+      }
+    }
+
+    let dbProductImages: Record<string, string[]> = {};
+    try {
+      const { data: imgRows } = await client().from('product_images').select('product_id, image_url, sort_order').order('sort_order', { ascending: true });
+      if (imgRows && imgRows.length > 0) {
+        imgRows.forEach((r: any) => {
+          if (!dbProductImages[r.product_id]) dbProductImages[r.product_id] = [];
+          if (r.image_url && dbProductImages[r.product_id].length < 6) {
+            dbProductImages[r.product_id].push(r.image_url);
+          }
+        });
+      }
+    } catch {
+      // product_images table optional
+    }
+
+    return (data || []).map((row: any) => {
+      const dbImgs = dbProductImages[row.id] || [];
+      const cached = Array.isArray(cachedMap[row.id]) ? cachedMap[row.id] : [];
+      const allImgs = Array.from(new Set([row.cover_image_url, ...dbImgs, ...cached].filter(Boolean))).slice(0, 6);
+      return {
+        ...row,
+        price: Number(row.price),
+        compare_at_price: row.compare_at_price == null ? null : Number(row.compare_at_price),
+        genres: (row.product_genres || []).map((link: any) => link.genre).filter(Boolean),
+        images: allImgs.length > 0 ? allImgs : (row.cover_image_url ? [row.cover_image_url] : []),
+      };
+    });
   },
 
   async getCategories(): Promise<Category[]> {
@@ -208,21 +243,79 @@ export const adminApi = {
     if (error || !data) fail(error, 'Genre was not deleted. It may no longer exist or access was denied.');
   },
 
-  async saveProductWithGenres(id: string | null, fields: Partial<Product>, genreIds: string[]): Promise<Product> {
-    const { data, error } = await client().rpc('save_admin_product', {
+  async saveProductWithGenres(id: string | null, fields: Partial<Product>, genreIds: string[], images?: string[]): Promise<Product> {
+    let { data, error } = await client().rpc('save_admin_product', {
       p_product_id: id, p_fields: fields, p_genre_ids: genreIds,
     });
+
+    // If live DB still has legacy check constraints on format or age_rating, fallback gracefully
+    if (error && error.message) {
+      let retryFields = { ...fields };
+      let shouldRetry = false;
+      if (error.message.includes('products_format_check')) {
+        retryFields.format = 'DVD';
+        shouldRetry = true;
+      }
+      if (error.message.includes('products_age_rating_check')) {
+        retryFields.age_rating = 'U';
+        shouldRetry = true;
+      }
+      if (shouldRetry) {
+        const retryRes = await client().rpc('save_admin_product', {
+          p_product_id: id, p_fields: retryFields, p_genre_ids: genreIds,
+        });
+        if (!retryRes.error && retryRes.data) {
+          data = retryRes.data;
+          error = null;
+        }
+      }
+    }
+
     if (error || !data) fail(error, 'Product and genres could not be saved.');
-    return data as Product;
+    const saved = data as Product;
+    if (saved.price > MAX_PRODUCT_PRICE) {
+      throw new AdminBackendError(`Product price £${saved.price.toFixed(2)} exceeds the maximum allowed price of £${MAX_PRODUCT_PRICE.toFixed(2)}.`);
+    }
+
+    if (images && images.length > 0) {
+      const cleanImages = images.slice(0, 6).filter(Boolean);
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('dvdszone_product_images_cache') || '{}';
+          const map = JSON.parse(raw);
+          map[saved.id] = cleanImages;
+          localStorage.setItem('dvdszone_product_images_cache', JSON.stringify(map));
+        } catch {
+          // ignore
+        }
+      }
+
+      try {
+        await client().from('product_images').delete().eq('product_id', saved.id);
+        const rows = cleanImages.map((url, sort_order) => ({
+          product_id: saved.id,
+          image_url: url,
+          sort_order,
+        }));
+        await client().from('product_images').insert(rows);
+      } catch {
+        // product_images table optional
+      }
+      saved.images = cleanImages;
+    }
+
+    return saved;
   },
 
   async createProduct(input: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'category' | 'genres'>): Promise<Product> {
+    if (input.price > MAX_PRODUCT_PRICE) throw new AdminBackendError(`Product price cannot exceed £${MAX_PRODUCT_PRICE.toFixed(2)}.`);
     const { data, error } = await client().from('products').insert(input).select('*').single();
     if (error || !data) fail(error, 'Product could not be created.');
     return data as Product;
   },
 
   async updateProduct(id: string, input: Partial<Product>): Promise<Product> {
+    if (input.price !== undefined && input.price > MAX_PRODUCT_PRICE) throw new AdminBackendError(`Product price cannot exceed £${MAX_PRODUCT_PRICE.toFixed(2)}.`);
     const { id: ignoredId, category, genres, created_at, ...payload } = input;
     const { data, error } = await client().from('products').update(payload).eq('id', id).select('*').single();
     if (error || !data) fail(error, 'Product could not be updated.');
@@ -345,7 +438,23 @@ export const adminApi = {
       const stored = typeof window !== 'undefined' ? localStorage.getItem('dvds_store_settings_override') : null;
       if (stored) localOverride = JSON.parse(stored);
     } catch {}
-    return data ? { ...DEFAULT_STORE_SETTINGS, ...data, ...localOverride } as StoreSettings : null;
+    if (!data) return null;
+    const settings = { ...DEFAULT_STORE_SETTINGS, ...data, ...localOverride } as StoreSettings;
+    if (!settings.registered_office_address || settings.registered_office_address.includes('Ryland') || settings.registered_office_address.includes('Apartment')) {
+      settings.registered_office_address = 'West Midlands, Birmingham, United Kingdom';
+    }
+    if (!settings.warehouse_location || settings.warehouse_location.includes('Ryland') || settings.warehouse_location.includes('Apartment') || settings.warehouse_location.includes('London')) {
+      settings.warehouse_location = 'West Midlands, Birmingham, United Kingdom';
+    }
+    if (!settings.store_name || settings.store_name === 'AZ Rayan DVDs') {
+      settings.store_name = 'DVD ZONE';
+    }
+    if (!settings.registered_company_name || settings.registered_company_name === 'AZ Rayan DVDs') {
+      settings.registered_company_name = 'AZ Rayan LTD & DVD Zone';
+    }
+    settings.support_email = 'azrayanltd@gmail.com';
+    settings.support_phone = '00447400320038';
+    return settings;
   },
 
   async saveStoreSettings(input: StoreSettings): Promise<StoreSettings> {
@@ -354,12 +463,27 @@ export const adminApi = {
     const { data: existing, error: readError } = await client().from('store_settings').select('id').eq('singleton', true).maybeSingle();
     if (readError) fail(readError, 'Store settings could not be loaded before saving.');
     const { id, ...values } = input;
+    // Strictly sanitize address to protect personal privacy
+    if (values.registered_office_address?.includes('Ryland') || values.registered_office_address?.includes('Apartment')) {
+      values.registered_office_address = 'West Midlands, Birmingham, United Kingdom';
+    }
+    if (values.warehouse_location?.includes('Ryland') || values.warehouse_location?.includes('Apartment')) {
+      values.warehouse_location = 'West Midlands, Birmingham, United Kingdom';
+    }
+    if (!values.store_name || values.store_name === 'AZ Rayan DVDs') {
+      values.store_name = 'DVD ZONE';
+    }
+    if (!values.registered_company_name || values.registered_company_name === 'AZ Rayan DVDs') {
+      values.registered_company_name = 'AZ Rayan LTD & DVD Zone';
+    }
+    values.support_email = 'azrayanltd@gmail.com';
+    values.support_phone = '00447400320038';
     const payload = { ...values, singleton: true, updated_at: new Date().toISOString() };
 
     // Always persist to localStorage for instant UI updates & fallback
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('dvds_store_settings_override', JSON.stringify(input));
+        localStorage.setItem('dvds_store_settings_override', JSON.stringify({ ...input, ...values }));
       }
     } catch {}
     

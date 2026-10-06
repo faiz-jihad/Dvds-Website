@@ -62,15 +62,15 @@ export const Home: React.FC = () => {
   return (
     <>
       <Seo
-        title="DVDs Zone — Official UK Physical Cinema & Box Set Vault"
-        description="Shop definitive DVD box sets, restored British cinema and rare collector editions. Free UK delivery on all orders. Royal Mail Tracked 24 dispatch from London."
+        title="DVD ZONE — Quality DVDs & Entertainment | Free UK Delivery"
+        description="Quality DVDs, TV box sets, and entertainment. Free UK standard delivery on all orders. Same-day dispatch. Delivery within 2 working days via Royal Mail."
         canonicalPath="/"
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
-        siteName="DVDs Zone"
+        siteName="DVD ZONE"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          name: "DVDs Zone - Physical DVD Vault & Collector Editions",
+          name: "DVD ZONE - Quality DVDs & Entertainment",
           description:
             "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",
           url: "https://dvdszone.co.uk/",

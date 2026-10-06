@@ -25,6 +25,9 @@ import {
   Trash2,
   Clock,
   ShoppingCart,
+  Flame,
+  Tag,
+  Percent,
 } from 'lucide-react';
 import { extractYouTubeVideoId } from '../../components/landing/AzCinematicHero';
 import { adminApi } from '../../lib/adminApi';
@@ -35,6 +38,20 @@ import { useUiStore } from '../../stores/useUiStore';
 import { formatGBP } from '../../lib/formatters';
 import { AdminDataState } from '../../components/admin/AdminDataState';
 import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
+import { ExclusiveCampaignBanner } from '../../components/shop/ExclusiveCampaignBanner';
+
+const toDateTimeLocalValue = (isoString?: string | null): string => {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return '';
+  }
+};
+
 interface AdminHeroVideoPlayerProps {
   videoId: string;
   startSec: number;
@@ -148,7 +165,7 @@ export const AdminStoreSettings: React.FC = () => {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const dirty = useRef(false);
   const products = productsQuery.data || [];
-  const [activeTab, setActiveTab] = useState<'hero' | 'curator' | 'logistics' | 'payments'>('hero');
+  const [activeTab, setActiveTab] = useState<'hero' | 'campaign' | 'curator' | 'logistics' | 'payments'>('hero');
   const [isSaving, setIsSaving] = useState(false);
   const [previewTrailerIndex, setPreviewTrailerIndex] = useState(0);
   const addToast = useUiStore((state) => state.addToast);
@@ -200,21 +217,7 @@ export const AdminStoreSettings: React.FC = () => {
       return;
     }
 
-    // Validate Bank Transfer if enabled
-    if (settings.payment_bank_transfer_enabled) {
-      const cleanSortCode = (settings.bank_sort_code || '').replace(/\D/g, '');
-      const cleanAccountNum = (settings.bank_account_number || '').trim();
-      if (!settings.bank_name?.trim() || !settings.bank_account_name?.trim()) {
-        addToast('Enter receiving bank name and account holder name for company bank transfers.', 'error');
-        setActiveTab('payments');
-        return;
-      }
-      if (cleanSortCode.length !== 6 || cleanAccountNum.length !== 8) {
-        addToast('Company bank transfer requires a valid 6-digit sort code and 8-digit account number.', 'error');
-        setActiveTab('payments');
-        return;
-      }
-    }
+
 
     setIsSaving(true);
     try {
@@ -299,13 +302,13 @@ export const AdminStoreSettings: React.FC = () => {
       vip_promo_discount: 10,
       vip_min_spend: 20,
       store_name: 'DVDs Zone',
-      registered_company_name: 'DVDs Zone Ltd',
+      registered_company_name: 'DVDs Zone',
       company_number: '13894195',
-      registered_office_address: 'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
+      registered_office_address: 'West Midlands, Birmingham, United Kingdom',
       companies_house_url: 'https://find-and-update.company-information.service.gov.uk/company/13894195',
-      warehouse_location: 'Birmingham Logistics Hub, UK',
-      support_email: 'enquiries@dvdszone.co.uk',
-      support_phone: '+44 (0)121 496 0833',
+      warehouse_location: 'West Midlands, Birmingham, United Kingdom',
+      support_email: 'azrayanltd@gmail.com',
+      support_phone: '00447400320038',
       updated_at: new Date().toISOString(),
     });
   };
@@ -325,6 +328,8 @@ export const AdminStoreSettings: React.FC = () => {
   }
 
   const directorProductIds = Array.isArray(settings.director_product_ids) ? settings.director_product_ids : [];
+  const selectedDealProduct = products.find((p) => p.id === settings.deal_product_id);
+  const onSaleProductsCount = products.filter((p) => p.status === 'active' && p.compare_at_price && p.compare_at_price > p.price).length;
   const detectedVideoId = extractYouTubeVideoId(settings.hero_youtube_url);
 
   const heroTrailers: HeroTrailerItem[] = Array.isArray(settings.hero_trailers) ? settings.hero_trailers : [];
@@ -423,10 +428,11 @@ export const AdminStoreSettings: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs - 4 main storefront management tabs */}
+      {/* Tabs - 5 main storefront management tabs */}
       <div className="-mx-4 flex snap-x items-center gap-1 overflow-x-auto border-b border-gray-200 px-4 pb-px sm:mx-0 sm:gap-2 sm:px-0">
         {[
           { id: 'hero', label: 'Hero & Announcements', icon: Sparkles },
+          { id: 'campaign', label: 'Special Offers & Campaign', icon: Flame },
           { id: 'curator', label: 'Director Spotlight', icon: Award },
           { id: 'logistics', label: 'Shipping & Logistics', icon: Truck },
           { id: 'payments', label: 'Payment Methods & Bank', icon: Building2 },
@@ -1133,6 +1139,310 @@ export const AdminStoreSettings: React.FC = () => {
         )}
 
         {/* ==========================================
+            TAB: SPECIAL OFFERS & EXCLUSIVE CAMPAIGN
+        ========================================== */}
+        {activeTab === 'campaign' && (
+          <div className="space-y-8">
+            {/* Header & Status Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                      <Flame className="w-4 h-4 fill-amber-500 animate-pulse" />
+                    </span>
+                    <h2 className="font-display font-bold text-base text-dark">
+                      Special Offers &amp; Exclusive Campaign
+                    </h2>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Control the promotional campaign, exclusive badge, live countdown timer, and spotlight deal featured on the Special Offers page (<code className="bg-gray-100 px-1 py-0.5 rounded font-mono text-[11px]">/shop?filter=sale</code>).
+                  </p>
+                </div>
+
+                {/* Campaign Master Toggle */}
+                <label className="flex items-center gap-3 bg-gray-50 border border-gray-200 hover:border-amber-500/40 px-4 py-2.5 rounded-xl cursor-pointer transition select-none">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-amber-500 rounded"
+                    checked={Boolean(settings.campaign_is_active ?? true)}
+                    onChange={(e) => handleChange('campaign_is_active', e.target.checked)}
+                  />
+                  <div className="text-left">
+                    <span className="block text-xs font-bold text-dark">
+                      {settings.campaign_is_active ?? true ? 'Campaign Active' : 'Campaign Paused'}
+                    </span>
+                    <span className="block text-[10px] text-gray-400">
+                      {settings.campaign_is_active ?? true ? 'Showing banner & countdown' : 'Standard catalogue view'}
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Branding & Messaging */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Campaign Badge Text
+                  </label>
+                  <Input
+                    value={settings.campaign_badge || ''}
+                    onChange={(e) => handleChange('campaign_badge', e.target.value)}
+                    placeholder="e.g. CAMPAIGN EXCLUSIVE, LIMITED DROP, EASTER VAULT"
+                  />
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {['CAMPAIGN EXCLUSIVE', 'LIMITED TIME DROP', 'VAULT CLEARANCE', 'SPECIAL OFFER', 'EASTER EVENT'].map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => handleChange('campaign_badge', chip)}
+                        className={`text-[10px] px-2 py-0.5 rounded border transition cursor-pointer ${
+                          settings.campaign_badge === chip
+                            ? 'bg-amber-500/20 text-amber-700 border-amber-500/40 font-bold'
+                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {chip}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Discount Callout Tag
+                  </label>
+                  <Input
+                    value={settings.campaign_discount_text || ''}
+                    onChange={(e) => handleChange('campaign_discount_text', e.target.value)}
+                    placeholder="e.g. Up to 50% OFF, Save 30% Today"
+                  />
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {['Up to 50% OFF', 'Up to 40% OFF', 'Save 30% Today', 'Extra 20% Off', 'Half Price Deals'].map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => handleChange('campaign_discount_text', chip)}
+                        className={`text-[10px] px-2 py-0.5 rounded border transition cursor-pointer ${
+                          settings.campaign_discount_text === chip
+                            ? 'bg-red-50 text-brand-red border-red-300 font-bold'
+                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {chip}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Title & Tagline */}
+              <div className="space-y-4">
+                <Input
+                  label="Campaign Headline / Title"
+                  value={settings.campaign_title || ''}
+                  onChange={(e) => handleChange('campaign_title', e.target.value)}
+                  placeholder="e.g. Collector's Vault Special & Clearance"
+                  helperText="Primary heading rendered on the banner and shop page title."
+                />
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Campaign Tagline / Subtitle
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={settings.campaign_tagline || ''}
+                    onChange={(e) => handleChange('campaign_tagline', e.target.value)}
+                    placeholder="e.g. Limited boutique physical archive allocation with rare editions, special discounts, and same-day UK dispatch."
+                    className="w-full p-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Campaign Countdown Timer */}
+              <div className="pt-2 border-t border-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                  <div>
+                    <h3 className="font-display font-bold text-sm text-dark flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-amber-500" />
+                      <span>Live Countdown Timer (Event Expiry)</span>
+                    </h3>
+                    <p className="text-[11px] text-gray-500">
+                      When set, a ticking countdown (Days : Hours : Minutes : Seconds) appears on the storefront banner.
+                    </p>
+                  </div>
+                  {settings.campaign_ends_at && (
+                    <button
+                      type="button"
+                      onClick={() => handleChange('campaign_ends_at', null)}
+                      className="text-xs text-red-500 hover:underline font-semibold cursor-pointer self-start sm:self-auto"
+                    >
+                      Clear Countdown
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                  <input
+                    type="datetime-local"
+                    value={toDateTimeLocalValue(settings.campaign_ends_at)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleChange('campaign_ends_at', val ? new Date(val).toISOString() : null);
+                    }}
+                    className="h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition"
+                  />
+
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {[
+                      { label: '+24 Hours', ms: 24 * 3600 * 1000 },
+                      { label: '+3 Days', ms: 3 * 24 * 3600 * 1000 },
+                      { label: '+7 Days', ms: 7 * 24 * 3600 * 1000 },
+                      { label: '+14 Days', ms: 14 * 24 * 3600 * 1000 },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          const target = new Date(Date.now() + preset.ms).toISOString();
+                          handleChange('campaign_ends_at', target);
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-[11px] font-semibold text-gray-700 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-800 transition cursor-pointer"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Featured Deal Spotlight Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-brand-red">
+                      <Star className="w-4 h-4" />
+                    </span>
+                    <h2 className="font-display font-bold text-base text-dark">
+                      Featured Deal of the Day / Film Spotlight
+                    </h2>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Pin an ultra-special title on the campaign banner with an exclusive promotional price tag.
+                  </p>
+                </div>
+
+                <label className="flex items-center gap-3 bg-gray-50 border border-gray-200 hover:border-red-300 px-4 py-2.5 rounded-xl cursor-pointer transition select-none">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-brand-red rounded"
+                    checked={Boolean(settings.deal_is_active)}
+                    onChange={(e) => handleChange('deal_is_active', e.target.checked)}
+                  />
+                  <div className="text-left">
+                    <span className="block text-xs font-bold text-dark">
+                      {settings.deal_is_active ? 'Deal Spotlight Active' : 'Deal Spotlight Off'}
+                    </span>
+                    <span className="block text-[10px] text-gray-400">
+                      {settings.deal_is_active ? 'Highlighted on banner' : 'Banner shows countdown only'}
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Select Spotlight Film
+                  </label>
+                  <select
+                    value={settings.deal_product_id || ''}
+                    onChange={(e) => handleChange('deal_product_id', e.target.value || null)}
+                    className="w-full h-10 px-3 bg-white border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-brand-blue"
+                  >
+                    <option value="">No deal product selected</option>
+                    {products.map((prod) => (
+                      <option key={prod.id} value={prod.id}>
+                        {prod.title} — {formatGBP(prod.price)} ({prod.format})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Input
+                    label="Promotional Deal Price (£)"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={settings.deal_discount_price ?? 0}
+                    onChange={(e) => handleChange('deal_discount_price', e.target.value === '' ? 0 : Number(e.target.value))}
+                    placeholder="6.99"
+                    helperText="Special sale override price for this spotlight title."
+                  />
+                </div>
+              </div>
+
+              {/* Deal Product Summary Box */}
+              {selectedDealProduct && (
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={selectedDealProduct.cover_image_url}
+                      alt={selectedDealProduct.title}
+                      className="w-14 h-20 object-cover rounded shadow-xs border border-gray-200 shrink-0"
+                    />
+                    <div>
+                      <div className="font-bold text-dark text-sm">{selectedDealProduct.title}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {selectedDealProduct.format} • {selectedDealProduct.release_year} • SKU: {selectedDealProduct.sku}
+                      </div>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs">
+                        <span className="text-gray-400 line-through">
+                          Original: {formatGBP(selectedDealProduct.price)}
+                        </span>
+                        <span className="font-bold font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          Deal: {formatGBP(settings.deal_discount_price || selectedDealProduct.price)}
+                        </span>
+                        {settings.deal_discount_price > 0 && selectedDealProduct.price > settings.deal_discount_price && (
+                          <span className="text-[11px] font-bold text-brand-red">
+                            Save {formatGBP(selectedDealProduct.price - settings.deal_discount_price)} ({Math.round(((selectedDealProduct.price - settings.deal_discount_price) / selectedDealProduct.price) * 100)}% OFF)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Real-time Interactive Preview */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-brand-blue" />
+                  <span>Storefront Campaign Live Preview (As seen on /shop?filter=sale)</span>
+                </span>
+                <span className="text-xs text-gray-400">
+                  {onSaleProductsCount} catalogue items currently on sale
+                </span>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 p-4 bg-gray-900/5 dark:bg-black/20">
+                <ExclusiveCampaignBanner
+                  settings={settings}
+                  dealProduct={selectedDealProduct}
+                  saleCount={onSaleProductsCount}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==========================================
             TAB 2: DIRECTOR / CURATOR SPOTLIGHT
         ========================================== */}
         {activeTab === 'curator' && (
@@ -1437,14 +1747,14 @@ export const AdminStoreSettings: React.FC = () => {
                   type="email"
                   value={settings.support_email || ''}
                   onChange={(e) => handleChange('support_email', e.target.value)}
-                  placeholder="enquiries@dvdszone.co.uk"
+                  placeholder="azrayanltd@gmail.com"
                 />
 
                 <Input
                   label="Customer Support Phone"
                   value={settings.support_phone || ''}
                   onChange={(e) => handleChange('support_phone', e.target.value)}
-                  placeholder="+44 (0)121 496 0833"
+                  placeholder="00447400320038"
                 />
               </div>
             </div>
@@ -1459,23 +1769,22 @@ export const AdminStoreSettings: React.FC = () => {
         {activeTab === 'payments' && (
           <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-6 shadow-2xs">
             <div>
-              <h2 className="text-lg font-semibold text-dark">Payment Methods & Gateway Settings</h2>
+              <h2 className="text-lg font-semibold text-dark">Payment Methods &amp; Gateway Settings</h2>
               <p className="text-xs text-gray-500 mt-1">
-                Configure enabled payment options shown at checkout. Card and PayPal use automated webhooks; Bank Transfer enables customer direct wire transfer.
+                Configure enabled payment options shown at checkout. Customer payments are processed in real-time through Stripe and PayPal.
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid sm:grid-cols-2 gap-3">
               {([
-                ['payment_card_enabled', 'Card / Apple Pay / Stripe'],
-                ['payment_paypal_enabled', 'PayPal Express'],
-                ['payment_bank_transfer_enabled', 'Company Bank Transfer (Manual)'],
+                ['payment_card_enabled', 'Visa / Mastercard / Apple Pay (Stripe)'],
+                ['payment_paypal_enabled', 'PayPal Express Checkout'],
               ] as const).map(([field, label]) => (
                 <label key={field} className="flex items-center gap-3 border border-gray-200 rounded-xl p-4 text-xs font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
                   <input
                     type="checkbox"
                     className="w-4 h-4 accent-brand-blue rounded"
-                    checked={settings[field] ?? field !== 'payment_bank_transfer_enabled'}
+                    checked={Boolean(settings[field] ?? true)}
                     onChange={(e) => handleChange(field, e.target.checked)}
                   />
                   <span>{label}</span>
@@ -1483,65 +1792,12 @@ export const AdminStoreSettings: React.FC = () => {
               ))}
             </div>
 
-            <div className="border-t border-gray-100 pt-6">
-              <h3 className="font-semibold text-sm text-dark">Company Bank Account Details</h3>
-              <p className="text-xs text-gray-500 mt-1">
-                These details will be securely displayed to customers selecting Bank Transfer at checkout.
-              </p>
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-5">
-              <Input
-                label="Bank Name *"
-                value={settings.bank_name || ''}
-                onChange={(e) => handleChange('bank_name', e.target.value)}
-                placeholder="Barclays Bank UK"
-              />
-              <Input
-                label="Account Holder Name *"
-                value={settings.bank_account_name || ''}
-                onChange={(e) => handleChange('bank_account_name', e.target.value)}
-                placeholder="DVDs Zone Ltd"
-              />
-              <Input
-                label="Sort Code (6 digits) *"
-                value={settings.bank_sort_code || ''}
-                placeholder="20-00-00"
-                onChange={(e) => handleChange('bank_sort_code', e.target.value)}
-                helperText="Standard 6-digit UK bank sort code"
-              />
-              <Input
-                label="Account Number (8 digits) *"
-                value={settings.bank_account_number || ''}
-                placeholder="12345678"
-                onChange={(e) => handleChange('bank_account_number', e.target.value)}
-                helperText="Standard 8-digit UK account number"
-              />
-              <div className="sm:col-span-2">
-                <Input
-                  label="IBAN (Optional for International Payments)"
-                  value={settings.bank_iban || ''}
-                  placeholder="GB29BARC20000012345678"
-                  onChange={(e) => handleChange('bank_iban', e.target.value)}
-                />
+            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-start gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
+              <div>
+                <strong className="block mb-0.5">Active Payment Gateways:</strong>
+                <span>Checkout is restricted to Stripe (Credit/Debit Card, Apple Pay, Google Pay) and PayPal. Manual company bank transfers are disabled.</span>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Bank Transfer Instructions for Customers
-              </label>
-              <textarea
-                rows={3}
-                value={settings.bank_payment_instructions || ''}
-                onChange={(e) => handleChange('bank_payment_instructions', e.target.value)}
-                className="block w-full rounded-xl border border-gray-200 p-3 text-xs text-dark focus:border-brand-blue focus:outline-none"
-                placeholder="Provide instructions on referencing order numbers and uploading transfer receipts..."
-              />
-            </div>
-
-            <div className="text-xs text-amber-800 bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-2">
-              <span>Notice: When customers place orders via bank transfer, the inventory stock is reserved, and the order remains in &quot;awaiting payment&quot; until an admin verifies the incoming funds or receipts in the Admin Orders panel.</span>
             </div>
           </section>
         )}

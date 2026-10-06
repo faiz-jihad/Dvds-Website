@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Mail, LockKeyhole, Eye, EyeOff, User, ArrowRight, ShieldCheck, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Mail, LockKeyhole, Eye, EyeOff, User, ArrowRight, ShieldCheck, ArrowLeft, CheckCircle2, Phone as PhoneIcon, MapPin } from 'lucide-react';
 import { useCustomerAuth } from '../../auth/CustomerAuth';
 import { useUiStore } from '../../stores/useUiStore';
 
@@ -18,6 +18,8 @@ export const RegisterPage: React.FC = () => {
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -36,6 +38,28 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     setError('');
 
+    if (!fullName.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+
+    if (!phone.trim()) {
+      setError('Please enter your contact number.');
+      return;
+    }
+
+    // Basic phone validation
+    const cleanPhone = phone.replace(/[\s\-()]/g, '');
+    if (!/^\+?[0-9]{7,15}$/.test(cleanPhone)) {
+      setError('Please enter a valid contact number (e.g. +44 7400 320038).');
+      return;
+    }
+
+    if (!address.trim()) {
+      setError('Please enter your full address.');
+      return;
+    }
+
     if (password.length < 6) {
       setError('Password must be at least 6 characters long.');
       return;
@@ -50,7 +74,33 @@ export const RegisterPage: React.FC = () => {
     try {
       const res = await register(email, password, fullName);
       if (res.success) {
-        addToast('Account created successfully! Welcome to DVDs Zone.', 'success');
+        // After registration, save phone to profile if supabase is available
+        try {
+          const { supabase: sb } = await import('../../lib/supabase');
+          if (sb) {
+            const { data: { user } } = await sb.auth.getUser();
+            if (user) {
+              await sb.from('profiles').update({ phone: phone.trim() }).eq('id', user.id);
+              // Save address to addresses table
+              await sb.from('addresses').insert({
+                user_id: user.id,
+                label: 'Home',
+                full_name: fullName.trim(),
+                line1: address.trim(),
+                line2: null,
+                city: '',
+                county: '',
+                postcode: '',
+                country: 'GB',
+                phone: phone.trim(),
+                is_default: true,
+              });
+            }
+          }
+        } catch {
+          // Non-critical — address can be added later in account settings
+        }
+        addToast('Account created successfully! Welcome to DVD ZONE.', 'success');
         navigate(from, { replace: true });
       } else {
         setError(res.message || 'Registration could not be completed.');
@@ -105,15 +155,15 @@ export const RegisterPage: React.FC = () => {
               Create Customer Account
             </h1>
             <p className="mt-1.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              Join the collector community for seamless tracking &amp; member benefits.
+              Join the collector community for seamless tracking &amp; free UK delivery.
             </p>
           </div>
 
           {/* Member perks row */}
           <div className="mb-6 grid grid-cols-3 gap-2 bg-gray-50 dark:bg-[#141A26] rounded-xl p-3 border border-gray-100 dark:border-white/10 text-center">
             <div className="text-[10px] text-gray-600 dark:text-gray-400">
-              <span className="block font-bold text-dark dark:text-white text-xs">Royal Mail</span>
-              Live Tracking
+              <span className="block font-bold text-dark dark:text-white text-xs">Free Delivery</span>
+              UK Standard
             </div>
             <div className="text-[10px] text-gray-600 dark:text-gray-400 border-x border-gray-200 dark:border-white/10">
               <span className="block font-bold text-dark dark:text-white text-xs">Wishlist</span>
@@ -141,7 +191,7 @@ export const RegisterPage: React.FC = () => {
               <div>
                 <p className="font-bold text-blue-950 dark:text-blue-100 text-sm">Create an account to complete checkout</p>
                 <p className="text-blue-800/80 dark:text-blue-300 mt-1 leading-relaxed">
-                  Join DVDs Zone in seconds to finalize your order with tracked Royal Mail delivery and order protection.
+                  Join DVD ZONE in seconds to finalise your order with free UK delivery and order protection.
                 </p>
               </div>
             </div>
@@ -223,6 +273,44 @@ export const RegisterPage: React.FC = () => {
                   autoComplete="username"
                   placeholder="e.g. oliver.clarke@example.co.uk"
                   className="h-11 w-full rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] pl-10 pr-4 text-sm text-dark dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+                Contact Number
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 dark:text-gray-500">
+                  <PhoneIcon className="h-4 w-4" />
+                </div>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  placeholder="e.g. +44 7400 320038"
+                  className="h-11 w-full rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] pl-10 pr-4 text-sm text-dark dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+                Full Address
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-start pl-3.5 pt-3 text-gray-400 dark:text-gray-500">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                  rows={2}
+                  placeholder="e.g. 10 Downing Street, London, SW1A 2AA"
+                  className="w-full rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] pl-10 pr-4 py-3 text-sm text-dark dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10 resize-none"
                 />
               </div>
             </div>

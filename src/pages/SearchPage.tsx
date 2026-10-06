@@ -11,10 +11,12 @@ import { cn } from '../lib/formatters';
 import { Seo } from '../components/common/Seo';
 
 const FORMAT_FILTERS = [
-  { label: 'All Editions', value: 'all' },
+  { label: 'All Products', value: 'all' },
+  { label: 'Standard Items', value: 'standard' },
+  { label: 'Merchandise & Goods', value: 'merchandise' },
   { label: 'DVD Box Sets', value: 'box set' },
   { label: '4K Ultra HD', value: '4k' },
-  { label: 'Standard DVD', value: 'dvd' },
+  { label: 'DVD & Discs', value: 'dvd' },
 ];
 
 export const SearchPage: React.FC = () => {
@@ -90,10 +92,10 @@ export const SearchPage: React.FC = () => {
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
       <Seo
-        title={queryParam ? `Search results for "${queryParam}" — DVDs Zone` : 'Search DVDs — DVDs Zone'}
-        description={queryParam ? `Buy physical DVDs matching "${queryParam}" — UK delivery, Royal Mail Tracked. DVDs Zone.` : 'Search the DVDs Zone catalogue for box sets, TV series, and collector editions.'}
+        title={queryParam ? `Search results for "${queryParam}" — DVD ZONE` : 'Search DVDs — DVD ZONE'}
+        description={queryParam ? `Buy physical DVDs matching "${queryParam}" — 100% free UK delivery, same-day dispatch via Royal Mail. DVD ZONE.` : 'Search the DVD ZONE catalogue for box sets, TV series, and collector editions.'}
         noIndex={!queryParam}
-        siteName="DVDs Zone"
+        siteName="DVD ZONE"
       />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Breadcrumb & Navigation */}
@@ -120,7 +122,7 @@ export const SearchPage: React.FC = () => {
                 type="text"
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
-                placeholder="Search by title, director, actors, format, or genre..."
+                placeholder="Search by title, brand, format, or category..."
                 className="w-full h-11 pl-10 pr-10 rounded-xl border border-gray-200 dark:border-white/15 bg-gray-50 dark:bg-[#141A26] text-sm text-dark dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-brand-blue dark:focus:border-blue-500 focus:ring-1 focus:ring-brand-blue transition"
               />
               {inputVal && (
@@ -194,7 +196,7 @@ export const SearchPage: React.FC = () => {
                   Results for &ldquo;<span className="text-brand-blue dark:text-blue-400">{queryParam}</span>&rdquo;
                 </>
               ) : (
-                'All Catalogue Editions'
+                'All Catalogue Products'
               )}
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono">

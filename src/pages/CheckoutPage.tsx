@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
-  Building2,
   Check,
   CheckCircle2,
   Clock,
@@ -16,7 +15,6 @@ import {
   Plus,
   RefreshCw,
   Truck,
-  User,
   Wallet,
   X,
   Sun,
@@ -24,7 +22,11 @@ import {
 } from "lucide-react";
 import { useCartStore } from "../stores/useCartStore";
 import { useThemeStore } from "../stores/useThemeStore";
-import { checkoutApi, currentCheckoutAttempt } from "../lib/checkoutApi";
+import {
+  checkoutApi,
+  currentCheckoutAttempt,
+  forgetCheckoutAttempt,
+} from "../lib/checkoutApi";
 import { publicApi } from "../lib/publicApi";
 import { cn } from "../lib/formatters";
 import {
@@ -35,45 +37,115 @@ import {
   formatMoney,
   normalizeAddress,
 } from "../../shared/commerce.js";
-import { Address, PaymentMethodType } from "../types";
+import { Address, PaymentMethodType, UiPaymentMethod } from "../types";
 import { useCustomerAuth } from "../auth/CustomerAuth";
 import {
   clearCheckoutDraft,
   loadCheckoutDraft,
   saveCheckoutDraft,
 } from "../lib/checkoutDraft";
+import { FastPaymentSection } from "../components/checkout/FastPaymentSection";
 
 const fieldClass =
   "mt-1.5 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] px-3.5 py-3 text-sm text-dark dark:text-white outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 disabled:bg-gray-50 dark:disabled:bg-white/5 transition-colors";
+
+const isAppleDevice =
+  typeof navigator !== "undefined" &&
+  (/Macintosh|iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+
+const VisaCardIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
+  <div className="flex items-center gap-1.5 shrink-0">
+    <CreditCard size={18} className="text-gray-700 dark:text-gray-200" />
+    <span className="font-extrabold italic text-[11px] tracking-tight text-[#1A1F71] dark:text-[#5B7FFF] bg-blue-50 dark:bg-blue-900/40 px-1 py-0.2 rounded border border-blue-200/60 dark:border-blue-700/50">
+      VISA
+    </span>
+  </div>
+);
+
+const ApplePayIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.56.64-.97 1.7-0.85 2.73 1 .08 1.94-.48 2.56-1.23z" />
+  </svg>
+);
+
+const GooglePayIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+  </svg>
+);
+
+const AmazonPayIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path fill="#FF9900" d="M14.7 15.8c-2.3 1.6-5.6 2.5-8.5 2.5-4 0-7.6-1.5-10.3-4.1-.3-.3-.3-.5 0-.8.5-.4 1.1-.8 1.8-1.2.3-.2.5-.1.7.1 2.2 2 5.2 3.3 8.4 3.3 2.3 0 4.9-.7 7-2.1.4-.3.8 0 .9.4.2.5.2 1.1-.1 1.9h.1zm2.7-1.7c-.3-.4-.6-.5-1-.5-.4 0-.9.3-1.1.5-2.2 2-5.1 3.2-8.3 3.2-3.6 0-6.8-1.4-9.2-3.7-.3-.3-.6-.3-.9 0l-1 1c-.3.3-.3.6 0 .9 2.9 2.8 6.8 4.5 11.1 4.5 3.7 0 7.2-1.4 9.7-3.8.4-.3.4-.8 0-1.1l-.5-.5 1.2-1v.5zm9.6 6.1c-.4-.5-2.4-.3-3.3-.1-.3 0-.4-.3-.3-.4.8-1.1 2.4-4.3 2.2-4.7-.3-.3-3.3 1.3-4.6 1.9-.3.1-.4 0-.5-.1-.3-.6-1-2.3-1.5-2.8-.1-.3 0-.4.3-.5 3.4-1.1 7.9-1.5 8.3-1 .4.5-.1 5.7-.5 7.7 0 .3-.3.4-.5.2 0-.2.2-.1.4-.2z"/>
+  </svg>
+);
+
+const PaypalIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path fill="#003087" d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.789.789 0 0 1 .777-.665h6.634c3.15 0 5.485 1.34 5.992 4.238.455 2.603-.96 4.846-3.456 5.768-.13.048-.2.185-.164.321.41 1.547.012 3.018-1.127 3.821-1.18.831-2.98.831-4.872.831H7.81a.789.789 0 0 0-.734.723z"/>
+    <path fill="#0079C1" d="M9.13 18.064l1.107-7.016a.789.789 0 0 1 .778-.665h4.372c2.923 0 4.965 1.258 5.345 3.424.49 2.788-1.272 5.088-4.225 5.088h-2.825a.789.789 0 0 0-.777.665l-.777 4.93a.586.586 0 0 1-.578.497H8.56a.48.48 0 0 1-.473-.556l1.043-6.367z"/>
+  </svg>
+);
+
 const methods = [
   {
     id: "card" as const,
     name: "Visa debit or credit card",
-    icon: CreditCard,
+    icon: VisaCardIcon,
     description:
-      "Pay securely with a Visa debit or credit card. Apple Pay and Google Pay are also offered on supported devices.",
+      "Pay securely with any Visa, Mastercard, or debit/credit card.",
     detail:
-      "Your card details are entered securely on Stripe. Apple Pay and Google Pay are available where supported — you will return here after payment.",
+      "You will be redirected to Stripe's secure 256-bit bank-grade checkout to complete payment with your card.",
     badge: "Powered by Stripe",
+    provider: "stripe" as const,
+  },
+  {
+    id: "apple_pay" as const,
+    name: "Apple Pay",
+    icon: ApplePayIcon,
+    description:
+      "Fast 1-touch secure payment with Apple Wallet on supported devices.",
+    detail:
+      "Pay instantly with Apple Wallet via Stripe's encrypted secure checkout.",
+    badge: "Apple Wallet",
+    provider: "stripe" as const,
+  },
+  {
+    id: "google_pay" as const,
+    name: "Google Pay",
+    icon: GooglePayIcon,
+    description:
+      "Quick and frictionless checkout with cards saved to your Google account.",
+    detail:
+      "Pay securely with Google Pay via Stripe's encrypted secure checkout.",
+    badge: "Google Wallet",
+    provider: "stripe" as const,
+  },
+  {
+    id: "amazon_pay" as const,
+    name: "Amazon Pay",
+    icon: AmazonPayIcon,
+    description:
+      "Use your Amazon account payment credentials for a fast, trusted checkout.",
+    detail:
+      "Pay with Amazon Pay via Stripe's encrypted secure checkout.",
+    badge: "Amazon checkout",
+    provider: "stripe" as const,
   },
   {
     id: "paypal" as const,
     name: "PayPal",
-    icon: Wallet,
+    icon: PaypalIcon,
     description:
-      "Pay with your PayPal account or the options available at PayPal.",
+      "Pay with your PayPal balance, linked bank account, or PayPal credit.",
     detail:
-      "Continue to PayPal to approve your payment, then return to your order.",
+      "Continue to PayPal to approve your payment securely, then return to your order confirmation.",
     badge: "PayPal checkout",
-  },
-  {
-    id: "bank_transfer" as const,
-    name: "Company bank transfer",
-    icon: Building2,
-    description: "Transfer directly to our company bank account.",
-    detail:
-      "Place your order to receive bank details and a unique reference. Shipping begins after payment is confirmed.",
-    badge: "Manual confirmation",
+    provider: "paypal" as const,
   },
 ];
 
@@ -89,6 +161,7 @@ const CURRENCY_DISPLAY: Record<string, string> = {
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { customer, isLoading: authLoading } = useCustomerAuth();
   const items = useCartStore((state) => state.items);
   const appliedPromo = useCartStore((state) => state.appliedPromoCode);
@@ -136,9 +209,10 @@ export const CheckoutPage: React.FC = () => {
   const [tier, setTier] = useState<"standard" | "express">(
     () => savedDraft?.tier || "standard",
   );
-  const [method, setMethod] = useState<PaymentMethodType>(
-    () => savedDraft?.method || "card",
+  const [method, setMethod] = useState<UiPaymentMethod>(
+    () => ((savedDraft?.method as UiPaymentMethod) || "card"),
   );
+  const backendMethod: PaymentMethodType = method === "paypal" ? "paypal" : "card";
   const [promo, setPromo] = useState<string>(
     () => savedDraft?.promo ?? (appliedPromo || ""),
   );
@@ -148,13 +222,22 @@ export const CheckoutPage: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(currentCheckoutAttempt);
-  const [applePaySupported, setApplePaySupported] = useState(false);
-  const [googlePaySupported, setGooglePaySupported] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string>(
     () => savedDraft?.selectedAddressId || "initial",
   );
   const [saveNewAddress, setSaveNewAddress] = useState<boolean>(
     () => savedDraft?.saveNewAddress ?? true,
+  );
+  // Wallet methods detected by Stripe Express Checkout Element on this device/browser
+  const [fastMethods, setFastMethods] = useState<{
+    applePay?: boolean;
+    googlePay?: boolean;
+    link?: boolean;
+    amazonPay?: boolean;
+    paypal?: boolean;
+  } | null>(null);
+  const hasFastMethods = Boolean(
+    fastMethods && Object.values(fastMethods).some(Boolean),
   );
 
   const basket = items.map((item) => ({
@@ -178,7 +261,7 @@ export const CheckoutPage: React.FC = () => {
         country: address.country,
         currency,
       }),
-    enabled: items.length > 0 && !attempt,
+    enabled: items.length > 0,
     retry: false,
     staleTime: 0,
     refetchOnWindowFocus: true,
@@ -188,9 +271,13 @@ export const CheckoutPage: React.FC = () => {
     formatMoney(amount, quote?.currency || currency);
 
   useEffect(() => {
-    if (quote && !quote.methods[method]) {
-      const available = methods.find((option) => quote.methods[option.id]);
-      if (available) setMethod(available.id);
+    if (quote) {
+      const isCurrentAvailable =
+        method === "paypal" ? Boolean(quote.methods.paypal) : Boolean(quote.methods.card);
+      if (!isCurrentAvailable) {
+        if (quote.methods.card) setMethod("card");
+        else if (quote.methods.paypal) setMethod("paypal");
+      }
     }
   }, [quote, method]);
 
@@ -308,59 +395,6 @@ export const CheckoutPage: React.FC = () => {
     saveNewAddress,
     internationalAcknowledged,
   ]);
-  useEffect(() => {
-    // Apple Pay: available on Safari / iOS / macOS with a card enrolled in Wallet.
-    const applePay = (
-      window as Window & {
-        ApplePaySession?: { canMakePayments: () => boolean };
-      }
-    ).ApplePaySession;
-    setApplePaySupported(Boolean(applePay?.canMakePayments()));
-
-    // Google Pay detection is only a capability probe. Some browsers reject the
-    // Google payment method identifier when it is not allowed by the page CSP or
-    // payment method manifest, so we must ignore those failures instead of
-    // blowing up the checkout experience.
-    if (
-      typeof window === "undefined" ||
-      !window.PaymentRequest ||
-      !window.isSecureContext ||
-      location.protocol !== "https:"
-    ) {
-      setGooglePaySupported(false);
-      return;
-    }
-
-    try {
-      const request = new window.PaymentRequest(
-        [
-          {
-            supportedMethods: "https://google.com/pay",
-            data: {
-              apiVersion: 2,
-              apiVersionMinor: 0,
-              allowedPaymentMethods: [
-                {
-                  type: "CARD",
-                  parameters: {
-                    allowedAuthMethods: ["PAN_ONLY", "CRYPTOGRAM_3DS"],
-                    allowedCardNetworks: ["VISA", "MASTERCARD"],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-        { total: { label: "Total", amount: { currency: "GBP", value: "0" } } },
-      );
-      request
-        .canMakePayment()
-        .then((result) => setGooglePaySupported(Boolean(result)))
-        .catch(() => setGooglePaySupported(false));
-    } catch {
-      setGooglePaySupported(false);
-    }
-  }, []);
   const updateAddress = (key: keyof Address, value: string) => {
     if (key === "country") {
       setTier("standard");
@@ -408,7 +442,7 @@ export const CheckoutPage: React.FC = () => {
     setError("");
     try {
       const result = await checkoutApi.create(attempt.method, attempt.input);
-      if (result.completed || attempt.method === "bank_transfer") {
+      if (result.completed) {
         clearCheckoutDraft();
         navigate(`/order-success/${result.orderId}`);
       } else if (result.url) {
@@ -446,8 +480,7 @@ export const CheckoutPage: React.FC = () => {
       !quote ||
       quoteQuery.isFetching ||
       quoteQuery.isError ||
-      !quote.methods[method] ||
-      attempt
+      !quote.methods[backendMethod]
     )
       return;
     let validatedAddress;
@@ -455,38 +488,80 @@ export const CheckoutPage: React.FC = () => {
       validatedAddress = normalizeAddress({ ...address });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Check your address.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     if (international && !internationalAcknowledged) {
       setError("Acknowledge the international delivery notice to continue.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    // 1. IF PAYPAL: proceed with PayPal flow
+    if (method === "paypal") {
+      setBusy(true);
+      setError("");
+
+      if (attempt?.orderId) {
+        try {
+          await checkoutApi.cancel(attempt.orderId);
+        } catch {
+          // ignore cancellation error
+        }
+      }
+      forgetCheckoutAttempt();
+      setAttempt(null);
+
+      try {
+        const result = await checkoutApi.create("paypal", {
+          items: basket,
+          customerEmail: email,
+          shippingAddress: { ...address, ...validatedAddress },
+          deliveryTier: tier,
+          promoCode: promo,
+          expectedTotal: quote.total_amount,
+          currency: quote.currency || currency,
+          internationalAcknowledged,
+        });
+        setAttempt(currentCheckoutAttempt());
+        if (result.completed) {
+          clearCheckoutDraft();
+          navigate(`/order-success/${result.orderId}`);
+        } else if (result.url && new URL(result.url).protocol === "https:") {
+          window.location.assign(result.url);
+        } else {
+          throw new Error("Unable to open PayPal payment. Please retry.");
+        }
+      } catch (cause) {
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "PayPal payment could not be started. Please retry.",
+        );
+        setAttempt(currentCheckoutAttempt());
+        await quoteQuery.refetch();
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
+    // 2. STRIPE PAYMENT METHODS (card, google_pay, apple_pay, amazon_pay):
+    // Redirect securely to Stripe's official 256-bit encrypted checkout (checkout.stripe.com) with English locale!
     setBusy(true);
     setError("");
-    try {
-      if (
-        selectedAddressId === "custom" &&
-        saveNewAddress &&
-        customer &&
-        address.address_line_1
-      ) {
-        publicApi
-          .createMyAddress({
-            full_name: address.full_name,
-            phone: address.phone,
-            address_line_1: address.address_line_1,
-            address_line_2: address.address_line_2 || undefined,
-            city: address.city,
-            county: address.county || undefined,
-            postcode: address.postcode,
-            country: countryName(address.country),
-            is_default: savedAddresses.length === 0,
-          })
-          .catch((err) =>
-            console.warn("[checkout] Could not save address to account:", err),
-          );
+
+    if (attempt?.orderId) {
+      try {
+        await checkoutApi.cancel(attempt.orderId);
+      } catch {
+        // ignore cancellation error
       }
-      const result = await checkoutApi.create(method, {
+    }
+    forgetCheckoutAttempt();
+    setAttempt(null);
+
+    try {
+      const result = await checkoutApi.create("card", {
         items: basket,
         customerEmail: email,
         shippingAddress: { ...address, ...validatedAddress },
@@ -497,21 +572,19 @@ export const CheckoutPage: React.FC = () => {
         internationalAcknowledged,
       });
       setAttempt(currentCheckoutAttempt());
-      if (method === "bank_transfer" || result.completed) {
+      if (result.completed) {
         clearCheckoutDraft();
         navigate(`/order-success/${result.orderId}`);
-      } else if (result.url && new URL(result.url).protocol === "https:") {
+      } else if (result.url) {
         window.location.assign(result.url);
       } else {
-        throw new Error(
-          "The payment link is unavailable. Your order is saved; please retry from its status page.",
-        );
+        throw new Error("Unable to open secure Stripe checkout. Please retry.");
       }
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Payment could not be started. Please retry.",
+          : "Payment checkout could not be started. Please retry.",
       );
       setAttempt(currentCheckoutAttempt());
       await quoteQuery.refetch();
@@ -588,6 +661,27 @@ export const CheckoutPage: React.FC = () => {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        {(searchParams.get("cancelled") === "1" || searchParams.get("cancelled") === "true") && (
+          <div className="mb-6 p-4 rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 text-sm flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span>
+                <strong>Checkout cancelled:</strong> No payment was taken. Your basket items are saved and ready.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const url = new URL(window.location.href);
+                url.searchParams.delete("cancelled");
+                window.history.replaceState({}, "", url.pathname + (url.search ? url.search : ""));
+              }}
+              className="text-xs font-semibold underline text-amber-700 dark:text-amber-300 hover:text-amber-900 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
             <p className="text-xs uppercase tracking-widest text-brand-blue font-semibold">
@@ -681,7 +775,8 @@ export const CheckoutPage: React.FC = () => {
           className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-6 lg:gap-8 items-start"
         >
           <div className="rounded-2xl bg-white dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 p-5 sm:p-8 space-y-8 shadow-xs">
-            <fieldset disabled={busy || Boolean(attempt)}>
+
+            <fieldset id="checkout-step-1" disabled={busy}>
               <legend className="text-lg font-semibold mb-4 text-dark dark:text-white">
                 <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 dark:bg-brand-blue/20 text-brand-blue dark:text-blue-300 rounded-full text-xs mr-3 font-bold">
                   1
@@ -987,7 +1082,7 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </fieldset>
             <fieldset
-              disabled={busy || Boolean(attempt)}
+              disabled={busy}
               className="border-t border-gray-100 dark:border-white/10 pt-7"
             >
               <legend className="text-lg font-semibold float-left w-full mb-5 text-dark dark:text-white">
@@ -1041,127 +1136,222 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </fieldset>
             <fieldset
-              disabled={busy || Boolean(attempt)}
+              disabled={busy}
               className="border-t border-gray-100 dark:border-white/10 pt-7"
             >
-              <legend className="text-lg font-semibold float-left w-full mb-2 text-dark dark:text-white">
+              <legend className="text-lg font-semibold float-left w-full mb-1 text-dark dark:text-white">
                 <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 dark:bg-brand-blue/20 text-brand-blue dark:text-blue-300 rounded-full text-xs mr-3 font-bold">
                   3
                 </span>
                 Payment method
               </legend>
-              <p className="clear-both text-sm text-gray-500 dark:text-gray-400 mb-5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 clear-both">
                 Choose how you would like to pay.
               </p>
-              <div className="space-y-3">
+
+              {/* Express Checkout Element for 1-click wallets (only mounted if device supports them) */}
+              <div className="clear-both">
+                <FastPaymentSection
+                  items={basket}
+                  email={email}
+                  address={address}
+                  tier={tier}
+                  promo={promo}
+                  currency={quote?.currency || currency}
+                  totalAmount={quote?.total_amount || 0}
+                  isReady={Boolean(quote && !quoteQuery.isFetching && !quoteQuery.isError)}
+                  stripePublishableKey={configQuery.data?.stripePublishableKey}
+                  isDark={isDark}
+                  disabled={busy || Boolean(attempt)}
+                  onPaymentStart={() => {
+                    setBusy(true);
+                    setError("");
+                  }}
+                  onPaymentComplete={(orderId) => {
+                    clearCheckoutDraft();
+                    navigate(`/order-success/${orderId}`);
+                  }}
+                  onError={(err) => {
+                    setError(err);
+                    setBusy(false);
+                    setAttempt(currentCheckoutAttempt());
+                  }}
+                  onMethodsChange={(detected) => {
+                    setFastMethods(detected);
+                  }}
+                />
+
+                {hasFastMethods && (
+                  <div className="relative my-4 text-center" aria-hidden="true">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-200 dark:border-white/10" />
+                    </div>
+                    <div className="relative inline-flex items-center gap-2 px-4 bg-white dark:bg-[#0E131F] text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                      <span>OR CHOOSE PAYMENT METHOD</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Payment method card choices */}
+              <div
+                role="radiogroup"
+                aria-label="Payment method"
+                className="space-y-3 clear-both mt-1"
+              >
                 {methods.map((option) => {
-                  const available = option.id === "bank_transfer" ? true : Boolean(quote?.methods[option.id]);
-                  const selected = available && method === option.id;
+                  const isAvailable =
+                    option.provider === "paypal"
+                      ? (quote ? Boolean(quote.methods.paypal) : true)
+                      : (quote ? Boolean(quote.methods.card) : true);
+                  const selected = method === option.id;
                   const Icon = option.icon;
+
                   return (
-                    <label
+                    <div
                       key={option.id}
-                      className={`block rounded-xl border overflow-hidden transition-colors focus-within:ring-2 focus-within:ring-blue-200 dark:focus-within:ring-blue-900/40 ${
-                        !available
-                          ? "border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-400 cursor-not-allowed"
-                          : selected
-                            ? "border-brand-blue ring-1 ring-brand-blue bg-blue-50/20 dark:bg-blue-950/20 cursor-pointer"
-                            : "border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26]/50 hover:border-blue-300 dark:hover:border-blue-700 cursor-pointer"
-                      }`}
+                      className={cn(
+                        "rounded-xl border transition-all overflow-hidden text-left",
+                        selected
+                          ? "border-brand-blue bg-blue-50/30 dark:bg-blue-950/25 ring-2 ring-brand-blue/40 shadow-xs"
+                          : isAvailable
+                            ? "border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26]/60 hover:border-blue-300 dark:hover:border-blue-700/60"
+                            : "border-gray-200/50 dark:border-white/5 bg-gray-50/50 dark:bg-white/5 opacity-50 cursor-not-allowed"
+                      )}
                     >
-                      <div className="flex items-start gap-3 p-4 sm:p-5">
-                        <input
-                          type="radio"
-                          name="payment"
-                          value={option.id}
-                          checked={selected}
-                          disabled={!available}
-                          onChange={() => setMethod(option.id)}
-                          className="accent-blue-600 w-4 h-4 shrink-0 mt-1"
-                        />
+                      {/* Clickable Header Row */}
+                      <div
+                        onClick={() => {
+                          if (isAvailable && !busy) {
+                            setMethod(option.id);
+                          }
+                        }}
+                        className="p-4 flex items-start gap-3.5 cursor-pointer select-none"
+                      >
+                        {/* Native Radio Button */}
+                        <div className="pt-0.5 shrink-0">
+                          <input
+                            id={`payment-opt-${option.id}`}
+                            type="radio"
+                            name="payment_method_choice"
+                            value={option.id}
+                            checked={selected}
+                            disabled={!isAvailable || busy}
+                            onChange={() => setMethod(option.id)}
+                            className="w-4 h-4 text-brand-blue accent-blue-600 cursor-pointer"
+                          />
+                        </div>
+
+                        {/* Title, Badges & Description */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Icon size={18} className={selected ? "text-brand-blue" : "text-gray-500 dark:text-gray-400"} />
-                            <span
-                              className={`font-semibold text-dark dark:text-white ${option.id === "paypal" && available ? "text-blue-900 dark:text-blue-300 italic" : ""}`}
-                            >
-                              {option.name}
-                            </span>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-5 flex items-center justify-center">
+                                <Icon className="w-5 h-5 text-dark dark:text-white" />
+                              </div>
+                              <label
+                                htmlFor={`payment-opt-${option.id}`}
+                                className="text-sm font-bold text-dark dark:text-white cursor-pointer"
+                              >
+                                {option.name}
+                              </label>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded">
+                                {option.badge}
+                              </span>
+                              {isAvailable && (
+                                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 px-1.5 py-0.5 rounded">
+                                  ACTIVE
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-sm leading-relaxed mt-2 text-gray-500 dark:text-gray-400">
+
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
                             {option.description}
                           </p>
-                          <div className="flex flex-wrap items-center gap-2 mt-3">
-                            <span className="inline-block text-[11px] font-medium px-2 py-1 rounded bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300">
-                              {available
-                                ? option.id === "bank_transfer"
-                                  ? quote?.bank_name || option.badge
-                                  : option.badge
-                                : "Temporarily unavailable"}
-                            </span>
-                            {available && (
-                              <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-brand-blue dark:text-blue-300 border border-blue-200 dark:border-blue-800/40">
-                                ACTIVE
-                              </span>
-                            )}
-                            {option.id === "card" &&
-                              available &&
-                              applePaySupported && (
-                                <span
-                                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded bg-gray-900 dark:bg-white dark:text-dark text-white"
-                                  title="Apple Pay available on this device"
-                                >
-                                  <svg
-                                    width="11"
-                                    height="11"
-                                    viewBox="0 0 24 24"
-                                    fill="currentColor"
-                                    aria-hidden="true"
-                                  >
-                                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                                  </svg>
-                                  Apple Pay
-                                </span>
+                        </div>
+                      </div>
+
+                      {/* Selected Detail Strip */}
+                      {selected && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="bg-blue-50/70 dark:bg-blue-950/40 p-4 border-t border-blue-100 dark:border-blue-900/40 space-y-3 text-xs leading-relaxed text-blue-900 dark:text-blue-300"
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <Lock size={13} className="shrink-0 mt-0.5 text-brand-blue dark:text-blue-400" />
+                            <div className="space-y-1">
+                              <span>{option.detail}</span>
+                            </div>
+                          </div>
+
+                          {/* Payment Action Button */}
+                          <div className="pt-1">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const form = e.currentTarget.closest("form");
+                                if (form) {
+                                  if (typeof form.requestSubmit === "function") {
+                                    form.requestSubmit();
+                                  } else {
+                                    form.dispatchEvent(
+                                      new Event("submit", { cancelable: true, bubbles: true })
+                                    );
+                                  }
+                                }
+                              }}
+                              disabled={
+                                busy ||
+                                quoteQuery.isFetching ||
+                                (quote
+                                  ? option.provider === "paypal"
+                                    ? !quote.methods.paypal
+                                    : !quote.methods.card
+                                  : false)
+                              }
+                              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {busy ? (
+                                <>
+                                  <RefreshCw size={13} className="animate-spin" />
+                                  <span>Connecting to secure checkout...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>
+                                    {option.id === "paypal"
+                                      ? quote
+                                        ? `Proceed with PayPal • ${displayPrice(quote.total_amount)}`
+                                        : "Proceed with PayPal"
+                                      : option.id === "apple_pay"
+                                        ? quote
+                                          ? `Pay with Apple Pay • ${displayPrice(quote.total_amount)}`
+                                          : "Pay with Apple Pay"
+                                        : option.id === "google_pay"
+                                          ? quote
+                                            ? `Pay with Google Pay • ${displayPrice(quote.total_amount)}`
+                                            : "Pay with Google Pay"
+                                          : option.id === "amazon_pay"
+                                            ? quote
+                                              ? `Pay with Amazon Pay • ${displayPrice(quote.total_amount)}`
+                                              : "Pay with Amazon Pay"
+                                            : quote
+                                              ? `Pay with Card • ${displayPrice(quote.total_amount)}`
+                                              : "Pay with Card"}
+                                  </span>
+                                  <ArrowRight size={14} />
+                                </>
                               )}
-                            {option.id === "card" &&
-                              available &&
-                              googlePaySupported &&
-                              !applePaySupported && (
-                                <span
-                                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded bg-white dark:bg-[#141A26] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300"
-                                  title="Google Pay available on this device"
-                                >
-                                  <svg
-                                    width="11"
-                                    height="11"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    aria-hidden="true"
-                                  >
-                                    <path
-                                      d="M12 10.2v3.6h5.1c-.2 1.2-1.4 3.4-5.1 3.4-3.1 0-5.6-2.5-5.6-5.7s2.5-5.7 5.6-5.7c1.7 0 2.9.7 3.5 1.4l2.4-2.3C16.4 3.4 14.4 2.5 12 2.5 6.8 2.5 2.5 6.8 2.5 12s4.3 9.5 9.5 9.5c5.5 0 9.1-3.8 9.1-9.2 0-.6-.1-1.1-.2-1.6H12z"
-                                      fill="#4285F4"
-                                    />
-                                  </svg>
-                                  Google Pay
-                                </span>
-                              )}
+                            </button>
                           </div>
                         </div>
-                        {selected && (
-                          <Check
-                            size={17}
-                            className="text-brand-blue shrink-0 mt-1"
-                          />
-                        )}
-                      </div>
-                      {selected && (
-                        <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-950/30 px-4 sm:px-5 py-3 border-t border-blue-100 dark:border-blue-900/40 text-xs leading-relaxed text-blue-800 dark:text-blue-300">
-                          <Lock size={14} className="shrink-0 mt-0.5" />
-                          {option.detail}
-                        </div>
                       )}
-                    </label>
+                    </div>
                   );
                 })}
               </div>
@@ -1327,8 +1517,7 @@ export const CheckoutPage: React.FC = () => {
                 busy ||
                 quoteQuery.isFetching ||
                 quoteQuery.isError ||
-                (method !== "bank_transfer" && !quote?.methods[method]) ||
-                Boolean(attempt)
+                (quote ? !quote.methods[backendMethod] : false)
               }
               className="w-full flex items-center justify-center gap-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white border-2 border-brand-blue hover:border-brand-blue-hover px-5 py-4 mt-6 text-sm font-bold shadow-md transition-all active:scale-[0.99] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
             >
@@ -1337,18 +1526,30 @@ export const CheckoutPage: React.FC = () => {
                   ? "Please wait..."
                   : quoteQuery.isFetching
                     ? "Updating total..."
-                    : method === "bank_transfer"
-                      ? "Place Order — Pay by Bank Transfer"
-                      : method === "paypal"
-                        ? "Continue with PayPal"
-                        : "Continue to Secure Payment"}
+                    : method === "paypal"
+                      ? quote
+                        ? `Continue with PayPal • ${displayPrice(quote.total_amount)}`
+                        : "Continue with PayPal"
+                      : method === "apple_pay"
+                        ? quote
+                          ? `Pay with Apple Pay • ${displayPrice(quote.total_amount)}`
+                          : "Pay with Apple Pay"
+                        : method === "google_pay"
+                          ? quote
+                            ? `Pay with Google Pay • ${displayPrice(quote.total_amount)}`
+                            : "Pay with Google Pay"
+                          : method === "amazon_pay"
+                            ? quote
+                              ? `Pay with Amazon Pay • ${displayPrice(quote.total_amount)}`
+                              : "Pay with Amazon Pay"
+                            : quote
+                              ? `Pay with Card • ${displayPrice(quote.total_amount)}`
+                              : "Continue to Card Payment"}
               </span>
               <ArrowRight size={17} className="shrink-0" />
             </button>
             <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400 mt-3 text-center">
-              {method === "bank_transfer"
-                ? "Your order will await payment confirmation before shipping."
-                : "You will review and complete payment with your selected provider."}
+              You will review and complete payment securely {method === "paypal" ? "via PayPal" : "directly on this page"}.
             </p>
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-5 pt-5 border-t border-gray-100 dark:border-white/10">
               <Truck size={15} /> Delivery to {countryName(address.country)}

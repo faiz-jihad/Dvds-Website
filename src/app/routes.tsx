@@ -41,6 +41,7 @@ const Shop = lazyWithRetry(() => import('../pages/Shop'), 'Shop');
 const ProductDetail = lazyWithRetry(() => import('../pages/ProductDetail'), 'ProductDetail');
 const CartPage = lazyWithRetry(() => import('../pages/CartPage'), 'CartPage');
 const CheckoutPage = lazyWithRetry(() => import('../pages/CheckoutPage'), 'CheckoutPage');
+const CheckoutCancelPage = lazyWithRetry(() => import('../pages/CheckoutCancelPage'), 'CheckoutCancelPage');
 const OrderSuccessPage = lazyWithRetry(() => import('../pages/OrderSuccessPage'), 'OrderSuccessPage');
 const SearchPage = lazyWithRetry(() => import('../pages/SearchPage'), 'SearchPage');
 const FavouritesPage = lazyWithRetry(() => import('../pages/FavouritesPage'), 'FavouritesPage');
@@ -85,6 +86,8 @@ export const router = createBrowserRouter([
       { path: 'search', element: <SearchPage /> },
       { path: 'cart', element: <CartPage /> },
       { path: 'checkout', element: <CheckoutPage /> },
+      { path: 'checkout/success', element: <OrderSuccessPage /> },
+      { path: 'checkout/cancel', element: <CheckoutCancelPage /> },
       { path: 'order-success/:orderId', element: <OrderSuccessPage /> },
       { path: 'order-confirmation/:orderId', element: <OrderSuccessPage /> },
       { path: 'favourites', element: <FavouritesPage /> },

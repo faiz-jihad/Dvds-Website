@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ClipboardList,
@@ -119,6 +119,15 @@ export const AdminActivity: React.FC = () => {
     refetchInterval: 30_000,
   });
 
+  const activityData = activityQuery.data;
+  const audit = useMemo(() => activityData?.audit ?? [], [activityData?.audit]);
+  const orders = useMemo(() => activityData?.orders ?? [], [activityData?.orders]);
+  const inventory = useMemo(() => activityData?.inventory ?? [], [activityData?.inventory]);
+
+  const auditPagination = useAdminPagination(audit, 25);
+  const ordersPagination = useAdminPagination(orders, 25);
+  const inventoryPagination = useAdminPagination(inventory, 25);
+
   if (activityQuery.isLoading || activityQuery.error || !activityQuery.data) {
     return (
       <AdminDataState
@@ -128,12 +137,6 @@ export const AdminActivity: React.FC = () => {
       />
     );
   }
-
-  const { inventory, orders, audit } = activityQuery.data;
-
-  const auditPagination = useAdminPagination(audit, 25);
-  const ordersPagination = useAdminPagination(orders, 25);
-  const inventoryPagination = useAdminPagination(inventory, 25);
 
   const tabs: { id: ActivityTab; label: string; count: number }[] = [
     { id: 'audit', label: 'Admin Audit Log', count: audit.length },

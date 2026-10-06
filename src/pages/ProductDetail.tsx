@@ -1,7 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Heart, ShoppingBag, Truck, ShieldCheck, Check, ArrowLeft, Disc, Clock } from 'lucide-react';
+import {
+  Heart,
+  ShoppingBag,
+  Truck,
+  ShieldCheck,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Package,
+  Layers
+} from 'lucide-react';
 import { publicApi } from '../lib/publicApi';
 import { formatGBP, cn } from '../lib/formatters';
 import { Button } from '../components/common/Button';
@@ -29,6 +39,24 @@ export const ProductDetail: React.FC = () => {
   const product = productQuery.data;
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  // Collect up to 6 images for gallery
+  const productImages: string[] = useMemo(() => {
+    if (!product) return [];
+    const list: string[] = [];
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      list.push(...product.images);
+    }
+    if (product.cover_image_url) {
+      list.unshift(product.cover_image_url);
+    }
+    return Array.from(new Set(list.filter(Boolean))).slice(0, 6);
+  }, [product]);
+
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [product?.id]);
 
   useEffect(() => {
     if (product) {
@@ -48,13 +76,13 @@ export const ProductDetail: React.FC = () => {
   if (!product) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
-        <Disc className="w-12 h-12 text-gray-300 mb-4" />
-        <h2 className="font-display font-bold text-2xl text-dark mb-2">Film Not Found</h2>
-        <p className="text-gray-500 text-sm mb-6">
-          The requested edition might be out of print or the URL has changed.
+        <Package className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
+        <h2 className="font-display font-bold text-2xl text-dark dark:text-white mb-2">Product Not Found</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 max-w-sm">
+          The requested item might be unavailable, out of stock, or the link has changed.
         </p>
         <Link to="/shop">
-          <Button variant="primary">Return to DVD Catalogue</Button>
+          <Button variant="primary">Return to Catalogue</Button>
         </Link>
       </div>
     );
@@ -62,8 +90,10 @@ export const ProductDetail: React.FC = () => {
 
   const isFav = isFavourite(product.id);
   const hasDiscount = product.compare_at_price && product.compare_at_price > product.price;
+  const isVideoFormat = ['DVD', 'Blu-ray', '4K UHD', 'Box Set'].includes(product.format);
+  const activeImage = productImages[selectedImageIndex] || product.cover_image_url || '';
 
-  // Related products from same category
+  // Related products from same category or format
   const relatedProducts = (productsQuery.data || [])
     .filter((p) => p.id !== product.id && (p.category_id === product.category_id || p.format === product.format))
     .slice(0, 4);
@@ -87,21 +117,21 @@ export const ProductDetail: React.FC = () => {
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-12 transition-colors">
       <Seo
-        title={`${product.title} — Buy on DVD | DVDs Zone UK`}
-        description={`Buy ${product.title} on DVD. ${product.description ? product.description.slice(0, 130).replace(/\s\S+$/, '') + '...' : 'Region 2 UK edition.'} Free UK delivery. Royal Mail Tracked dispatch from London.`}
+        title={`${product.title} | DVD ZONE`}
+        description={`${product.title}. ${product.description ? product.description.slice(0, 130).replace(/\s\S+$/, '') + '...' : ''} All orders 100% free standard delivery across United Kingdom. Dispatched same day, delivered to your address within 2 working days via Royal Mail.`}
         canonicalPath={`/product/${product.slug}`}
-        image={product.cover_image_url}
+        image={activeImage}
         type="product"
-        siteName="DVDs Zone"
+        siteName="DVD ZONE"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'Product',
           name: product.title,
-          description: product.description || `${product.title} DVD – Region 2 UK edition.`,
-          image: `https://dvdszone.co.uk${product.cover_image_url}`,
+          description: product.description || product.title,
+          image: activeImage.startsWith('http') ? activeImage : `https://dvdszone.co.uk${activeImage}`,
           url: `https://dvdszone.co.uk/product/${product.slug}`,
-          sku: product.id,
-          brand: { '@type': 'Brand', name: 'DVDs Zone' },
+          sku: product.sku || product.id,
+          brand: { '@type': 'Brand', name: 'DVD ZONE' },
           offers: {
             '@type': 'Offer',
             url: `https://dvdszone.co.uk/product/${product.slug}`,
@@ -109,7 +139,7 @@ export const ProductDetail: React.FC = () => {
             price: product.price.toFixed(2),
             priceValidUntil: new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0],
             availability: product.stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            seller: { '@type': 'Organization', name: 'DVDs Zone' },
+            seller: { '@type': 'Organization', name: 'DVD ZONE' },
             shippingDetails: {
               '@type': 'OfferShippingDetails',
               shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'GBP' },
@@ -121,7 +151,7 @@ export const ProductDetail: React.FC = () => {
               },
             },
           },
-          ...(product.age_rating && { contentRating: product.age_rating }),
+          ...(isVideoFormat && product.age_rating && product.age_rating !== 'All' && { contentRating: product.age_rating }),
           ...(product.format && { additionalProperty: { '@type': 'PropertyValue', name: 'Format', value: product.format } }),
         }}
       />
@@ -130,44 +160,94 @@ export const ProductDetail: React.FC = () => {
         <nav className="flex min-w-0 items-center gap-2 overflow-hidden text-xs text-gray-500 dark:text-gray-400 mb-8 font-medium">
           <Link to="/" className="hover:text-dark dark:hover:text-white transition-colors">Home</Link>
           <span>/</span>
-          <Link to="/shop" className="hover:text-dark dark:hover:text-white transition-colors">Shop</Link>
+          <Link to="/shop" className="hover:text-dark dark:hover:text-white transition-colors">Catalogue</Link>
+          {product.category?.name && (
+            <>
+              <span>/</span>
+              <Link to={`/shop?category=${product.category.slug}`} className="hover:text-dark dark:hover:text-white transition-colors">
+                {product.category.name}
+              </Link>
+            </>
+          )}
           <span>/</span>
           <span className="text-dark dark:text-white truncate max-w-xs">{product.title}</span>
         </nav>
 
         {/* Product Layout: Left Gallery + Right Sticky Purchase Box */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-16">
-          {/* Left: Product Artwork Gallery */}
+          {/* Left: Product Artwork / Images Gallery (Up to 6 images) */}
           <div className="lg:col-span-6 flex flex-col items-center">
-            <div className="w-full max-w-md aspect-dvd rounded-sm overflow-hidden bg-gray-50 dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 shadow-dvd-subtle relative group">
+            <div className="w-full max-w-md aspect-square sm:aspect-[4/5] rounded-xl overflow-hidden bg-white dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 shadow-sm relative group flex items-center justify-center p-3 sm:p-4">
               <img
-                src={product.cover_image_url}
-                alt={`${product.title} DVD Cover`}
-                className="w-full h-full object-cover"
+                src={activeImage}
+                alt={`${product.title} view ${selectedImageIndex + 1}`}
+                className="w-full h-full object-contain transition-all duration-300"
               />
-              {/* Disc highlight spine sheen */}
-              <div className="absolute top-0 bottom-0 right-0 w-1 bg-gradient-to-b from-white/60 via-white/10 to-transparent pointer-events-none" />
 
-              {/* Criterion-style Spine Number Overlay */}
+              {/* Prev / Next Navigation Controls for Multi-Image */}
+              {productImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : productImages.length - 1))}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-xs transition opacity-80 group-hover:opacity-100 shadow-md cursor-pointer"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedImageIndex((prev) => (prev < productImages.length - 1 ? prev + 1 : 0))}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-xs transition opacity-80 group-hover:opacity-100 shadow-md cursor-pointer"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+
+              {/* Image Counter Badge */}
+              {productImages.length > 1 && (
+                <div className="absolute bottom-3 right-3 bg-dark/80 backdrop-blur-xs text-white px-2 py-0.5 rounded-full text-[11px] font-mono font-medium">
+                  {selectedImageIndex + 1} / {productImages.length}
+                </div>
+              )}
+
+              {/* Spine Number Overlay if present */}
               {product.spine_number && (
-                <div className="absolute top-4 right-4 bg-dark/95 backdrop-blur-xs text-white px-2.5 py-1 rounded-xs border border-white/20 font-mono text-[11px] font-bold tracking-widest uppercase shadow-md">
+                <div className="absolute top-3 right-3 bg-dark/95 backdrop-blur-xs text-white px-2.5 py-1 rounded-xs border border-white/20 font-mono text-[10px] font-bold tracking-widest uppercase shadow-md">
                   SPINE #{product.spine_number}
                 </div>
               )}
 
               {hasDiscount && (
-                <div className="absolute top-4 left-4">
+                <div className="absolute top-3 left-3">
                   <Badge variant="sale">SPECIAL OFFER</Badge>
                 </div>
               )}
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-400 dark:text-gray-500 font-mono sm:gap-6">
-              <span className="flex items-center gap-1.5">
-                <Disc className="w-4 h-4 text-brand-blue" />
-                Original PAL DVD Edition
-              </span>
-            </div>
+            {/* Thumbnail Strip (Up to 6 images) */}
+            {productImages.length > 1 && (
+              <div className="mt-3.5 grid grid-cols-6 gap-2 w-full max-w-md">
+                {productImages.map((imgUrl, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={cn(
+                      'aspect-square rounded-lg overflow-hidden border-2 transition-all p-1 bg-white dark:bg-[#141A26] cursor-pointer flex items-center justify-center',
+                      selectedImageIndex === index
+                        ? 'border-brand-blue ring-2 ring-brand-blue/30 scale-105'
+                        : 'border-gray-200 dark:border-white/10 opacity-70 hover:opacity-100 hover:border-gray-400'
+                    )}
+                    aria-label={`View image ${index + 1}`}
+                  >
+                    <img src={imgUrl} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-contain rounded-xs" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right: Sticky Purchase Panel */}
@@ -176,27 +256,39 @@ export const ProductDetail: React.FC = () => {
               {/* Title & Eyebrow */}
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  {product.spine_number && (
-                    <span className="px-2 py-0.5 rounded-xs bg-dark text-white font-mono text-[10px] font-bold tracking-widest uppercase">
-                      SPINE #{product.spine_number}
+                  {product.category?.name && (
+                    <span className="px-2 py-0.5 rounded-xs bg-brand-blue/10 text-brand-blue dark:bg-blue-900/30 dark:text-blue-400 font-mono text-[10px] font-bold uppercase tracking-wider">
+                      {product.category.name}
                     </span>
                   )}
-                  <Badge variant="format">{product.format}</Badge>
-                  <span className="text-xs text-gray-400 font-mono">•</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{product.release_year}</span>
-                  <span className="text-xs text-gray-400 font-mono">•</span>
-                  <BbfcBadge rating={product.age_rating} size="sm" showLabel />
-                  <span className="text-xs text-gray-400 font-mono">•</span>
-                  <ImdbBadge product={product} size="sm" showTenSuffix asLink />
+                  {product.format && <Badge variant="format">{product.format}</Badge>}
+                  {product.release_year && product.release_year > 1900 && (
+                    <>
+                      <span className="text-xs text-gray-400 font-mono">•</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{product.release_year}</span>
+                    </>
+                  )}
+                  {isVideoFormat && product.age_rating && product.age_rating !== 'All' && (
+                    <>
+                      <span className="text-xs text-gray-400 font-mono">•</span>
+                      <BbfcBadge rating={product.age_rating} size="sm" showLabel />
+                    </>
+                  )}
+                  {product.imdb_rating != null && product.imdb_rating > 0 && (
+                    <>
+                      <span className="text-xs text-gray-400 font-mono">•</span>
+                      <ImdbBadge product={product} size="sm" showTenSuffix asLink />
+                    </>
+                  )}
                 </div>
 
-                <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-dark dark:text-white tracking-tight leading-tight">
+                <h1 className="font-display font-extrabold text-2xl sm:text-3xl md:text-4xl text-dark dark:text-white tracking-tight leading-tight">
                   {product.title}
                 </h1>
 
                 {product.director && (
                   <p className="text-sm font-medium text-brand-blue dark:text-blue-400 mt-1">
-                    Directed by {product.director}
+                    Creator / Director: {product.director}
                   </p>
                 )}
 
@@ -296,22 +388,14 @@ export const ProductDetail: React.FC = () => {
                   <Truck className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-dark dark:text-white font-semibold">UK Delivery: </strong>
-                    {settingsQuery.data!.free_shipping_threshold <= 0 || settingsQuery.data!.standard_shipping_fee === 0 ? (
-                      <>
-                        <span className="text-brand-blue dark:text-blue-400 font-bold">100% Free UK Delivery</span> on all orders via {settingsQuery.data!.standard_shipping_name} ({settingsQuery.data!.standard_shipping_eta}).
-                      </>
-                    ) : (
-                      <>
-                        {settingsQuery.data!.standard_shipping_name}. Free on orders over {formatGBP(settingsQuery.data!.free_shipping_threshold)}; otherwise {formatGBP(settingsQuery.data!.standard_shipping_fee)}. Estimated {settingsQuery.data!.standard_shipping_eta}.
-                      </>
-                    )}
+                    <span className="text-brand-blue dark:text-blue-400 font-bold">100% Free Standard Delivery</span> across United Kingdom. Dispatched same day, delivered to your address within 2 working days via Royal Mail.
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-dark dark:text-white font-semibold">30-Day Money Back Guarantee: </strong>
-                    Returned discs must be in unblemished packaging. Free return labels available.
+                    Returned items must be in original condition. Free return labels available.
                   </div>
                 </div>
               </div>
@@ -319,14 +403,14 @@ export const ProductDetail: React.FC = () => {
               {/* Description Narrative */}
               <div className="pt-6 border-t border-gray-200 dark:border-white/10">
                 <h3 className="font-display font-bold text-base text-dark dark:text-white mb-2">
-                  Synopsis &amp; Edition Overview
+                  Product Description &amp; Overview
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-normal">
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-normal whitespace-pre-line">
                   {product.description}
                 </p>
               </div>
 
-              {/* Physical Disc Technical Specs */}
+              {/* Technical & Product Specs */}
               <div className="pt-4">
                 <DvdSpecsTable product={product} />
               </div>
@@ -340,14 +424,14 @@ export const ProductDetail: React.FC = () => {
             <div className="flex flex-col items-start gap-4 mb-8 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
               <div>
                 <span className="text-xs font-mono uppercase tracking-widest text-brand-blue dark:text-blue-400">
-                  Complementary Viewing
+                  Recommended For You
                 </span>
                 <h3 className="font-display font-bold text-2xl text-dark dark:text-white tracking-tight mt-1">
-                  You May Also Cherish
+                  You May Also Like
                 </h3>
               </div>
               <Link to="/shop" className="text-xs font-semibold text-dark dark:text-gray-300 hover:text-brand-blue dark:hover:text-blue-400 transition-colors">
-                View All Vault Titles →
+                View Full Catalogue →
               </Link>
             </div>
 

@@ -34,19 +34,44 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 }
 
 
+function getCachedProductImages(productId: string): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('dvdszone_product_images_cache');
+    if (!raw) return [];
+    const map = JSON.parse(raw);
+    return Array.isArray(map[productId]) ? map[productId] : [];
+  } catch {
+    return [];
+  }
+}
+
 function normalizeProduct(row: any): Product {
+  const cached = getCachedProductImages(row.id);
+  const rawImages: string[] = [];
+  if (Array.isArray(row.images)) rawImages.push(...row.images);
+  if (Array.isArray(row.product_images)) {
+    const sorted = [...row.product_images].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    rawImages.push(...sorted.map((item: any) => item.image_url));
+  }
+  if (cached.length > 0) rawImages.push(...cached);
+  if (row.cover_image_url) rawImages.unshift(row.cover_image_url);
+
+  const cleanImages = Array.from(new Set(rawImages.filter(Boolean))).slice(0, 6);
+
   return {
     ...row,
     price: Number(row.price),
     compare_at_price: row.compare_at_price == null ? null : Number(row.compare_at_price),
     genres: (row.product_genres || []).map((link: any) => link.genre).filter(Boolean),
+    images: cleanImages.length > 0 ? cleanImages : (row.cover_image_url ? [row.cover_image_url] : []),
   } as Product;
 }
 
 export const publicApi = {
   async getProducts(): Promise<Product[]> {
     const sb = client();
-    if (!sb) return DEFAULT_PRODUCTS;
+    if (!sb) return DEFAULT_PRODUCTS.map(normalizeProduct);
     const { data, error } = await sb.from('products')
       .select('*, category:categories(*), product_genres(genre:genres(*))')
       .eq('status', 'active').order('created_at', { ascending: false });
@@ -56,12 +81,31 @@ export const publicApi = {
 
   async getProductBySlug(slug: string): Promise<Product | null> {
     const sb = client();
-    if (!sb) return DEFAULT_PRODUCTS.find((product) => product.slug === slug) || null;
+    if (!sb) {
+      const found = DEFAULT_PRODUCTS.find((product) => product.slug === slug);
+      return found ? normalizeProduct(found) : null;
+    }
     const { data, error } = await sb.from('products')
       .select('*, category:categories(*), product_genres(genre:genres(*))')
       .eq('slug', slug).eq('status', 'active').maybeSingle();
-    if (error) throw new Error('This title could not be loaded. Please retry.');
-    return data ? normalizeProduct(data) : null;
+    if (error) throw new Error('This product could not be loaded. Please retry.');
+    if (!data) return null;
+
+    let extraImages: string[] = [];
+    try {
+      const { data: imgData } = await sb.from('product_images').select('image_url').eq('product_id', data.id).order('sort_order', { ascending: true });
+      if (imgData && imgData.length > 0) {
+        extraImages = imgData.map((r: any) => r.image_url).filter(Boolean);
+      }
+    } catch {
+      // optional product_images table
+    }
+
+    const norm = normalizeProduct(data);
+    if (extraImages.length > 0) {
+      norm.images = Array.from(new Set([norm.cover_image_url, ...extraImages, ...(norm.images || [])].filter(Boolean))).slice(0, 6);
+    }
+    return norm;
   },
 
   async getCategories(): Promise<Category[]> {
@@ -92,7 +136,7 @@ export const publicApi = {
     const { data, error } = await sb.from('store_settings').select('*').eq('singleton', true).maybeSingle();
     if (error || !data) throw new Error('Store settings are unavailable. Please retry.');
 
-    return {
+    const result = {
       ...DEFAULT_STORE_SETTINGS,
       ...data,
       hero_youtube_enabled: data.hero_youtube_enabled ?? DEFAULT_STORE_SETTINGS.hero_youtube_enabled ?? false,
@@ -108,6 +152,23 @@ export const publicApi = {
       vip_promo_discount: Number(data.vip_promo_discount),
       vip_min_spend: Number(data.vip_min_spend),
     } as StoreSettings;
+
+    // Strict privacy protection: never expose personal home address
+    if (!result.registered_office_address || result.registered_office_address.includes('Ryland') || result.registered_office_address.includes('Apartment')) {
+      result.registered_office_address = 'West Midlands, Birmingham, United Kingdom';
+    }
+    if (!result.warehouse_location || result.warehouse_location.includes('Ryland') || result.warehouse_location.includes('Apartment') || result.warehouse_location.includes('London')) {
+      result.warehouse_location = 'West Midlands, Birmingham, United Kingdom';
+    }
+    if (!result.store_name || result.store_name === 'AZ Rayan DVDs') {
+      result.store_name = 'DVD ZONE';
+    }
+    if (!result.registered_company_name || result.registered_company_name === 'AZ Rayan DVDs') {
+      result.registered_company_name = 'AZ Rayan LTD & DVD Zone';
+    }
+    result.support_email = 'azrayanltd@gmail.com';
+    result.support_phone = '00447400320038';
+    return result;
   },
 
   async getActivePromotions(): Promise<Promotion[]> {

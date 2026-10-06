@@ -57,7 +57,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
         <Link to={`/product/${product.slug}`} className="block w-full h-full">
           <img
             src={product.cover_image_url}
-            alt={`${product.title} DVD Cover`}
+            alt={product.title}
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
           />
@@ -134,7 +134,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
           <div className="flex items-center gap-1.5 min-w-0">
             <BbfcBadge rating={product.age_rating} size="xs" />
             <span className="font-mono uppercase tracking-wider">{product.format}</span>
-            {product.region_code && (
+            {product.region_code && product.region_code !== 'All Region' && (
               <>
                 <span className="text-gray-300 dark:text-gray-600 font-mono text-[10px]">•</span>
                 <span className="font-mono text-[10px] text-gray-400 uppercase truncate">{product.region_code}</span>
@@ -143,8 +143,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <ImdbBadge product={product} size="xs" />
-            <span className="text-gray-300 dark:text-gray-600 font-mono text-[10px]">•</span>
-            <span className="font-mono text-[11px] text-gray-400">{product.release_year}</span>
+            {product.release_year && product.release_year > 1900 && (
+              <>
+                {product.imdb_rating != null && product.imdb_rating > 0 && (
+                  <span className="text-gray-300 dark:text-gray-600 font-mono text-[10px]">•</span>
+                )}
+                <span className="font-mono text-[11px] text-gray-400">{product.release_year}</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -156,7 +162,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
 
         {product.director && (
           <span className="text-[11px] text-gray-400 font-light truncate mt-0.5">
-            Dir. {product.director}
+            {product.director}
           </span>
         )}
 

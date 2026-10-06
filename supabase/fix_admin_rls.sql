@@ -227,10 +227,10 @@ INSERT INTO public.store_settings (
   'DPD Next Day Priority', '1 working day (Order by 2PM)',
   5, 8.00, '14:00 GMT',
   'RAYAN10', 10.00, 20.00,
-  'AZ Rayan DVDs',
-  'Unit 4B, Bermondsey Trading Estate, Rotherhithe, London SE16 3LL',
-  'concierge@azrayan.co.uk',
-  '+44 (0)20 7946 0912'
+  'DVD ZONE',
+  'West Midlands, Birmingham, United Kingdom',
+  'azrayanltd@gmail.com',
+  '00447400320038'
 )
 ON CONFLICT (singleton) WHERE singleton = TRUE DO NOTHING;
 

@@ -15,7 +15,12 @@ export const BbfcBadge: React.FC<BbfcBadgeProps> = ({
   showLabel = false,
   className,
 }) => {
-  const cleanRating = (rating || '15').toString().toUpperCase().trim();
+  const cleanRating = (rating || '').toString().toUpperCase().trim();
+
+  // If rating is All, N/A, None, or empty, do not render BBFC badge
+  if (!cleanRating || cleanRating === 'ALL' || cleanRating === 'N/A' || cleanRating === 'NONE' || cleanRating === 'NOT APPLICABLE') {
+    return null;
+  }
 
   // Official UK BBFC color standards
   const getColors = () => {

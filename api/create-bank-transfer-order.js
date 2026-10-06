@@ -1,5 +1,4 @@
-import { dbClient, endpoint, initializeOrder } from './_checkout.js';
-export default endpoint(async (req) => {
-  const order = await initializeOrder(dbClient(), req, 'bank_transfer');
-  return { orderId: order.id, orderNumber: order.order_number, payment_status: order.payment_status, total: Number(order.total_amount), currency: order.currency };
+import { endpoint, CheckoutError } from './_checkout.js';
+export default endpoint(async () => {
+  throw new CheckoutError('Direct bank transfer is disabled. Please checkout using Card (Stripe) or PayPal.', 400, 'METHOD_DISABLED');
 }, 'POST', { max: 15, windowMs: 60000 });

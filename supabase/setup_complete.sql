@@ -42,14 +42,14 @@ CREATE TABLE IF NOT EXISTS public.products (
   description TEXT,
   short_description TEXT,
   category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
-  format TEXT NOT NULL DEFAULT 'DVD' CHECK (format IN ('DVD', 'Blu-ray', '4K UHD', 'Box Set')),
+  format TEXT NOT NULL DEFAULT 'Standard' CHECK (format IN ('DVD', 'Blu-ray', '4K UHD', 'Box Set', 'Standard', 'Merchandise', 'Physical')),
   release_year INT NOT NULL DEFAULT 2024,
-  runtime_minutes INT DEFAULT 120,
-  age_rating TEXT NOT NULL DEFAULT '12' CHECK (age_rating IN ('U', 'PG', '12', '15', '18')),
-  region_code TEXT NOT NULL DEFAULT 'Region 2' CHECK (region_code IN ('Region 2', 'Region 0 (All Region)', 'Region B')),
+  runtime_minutes INT DEFAULT 0,
+  age_rating TEXT NOT NULL DEFAULT 'All' CHECK (age_rating IN ('U', 'PG', '12', '15', '18', 'All')),
+  region_code TEXT NOT NULL DEFAULT 'Region 2',
   language TEXT NOT NULL DEFAULT 'English',
-  subtitles TEXT NOT NULL DEFAULT 'English SDH',
-  condition TEXT NOT NULL DEFAULT 'New' CHECK (condition IN ('New', 'Like New', 'Collector Edition')),
+  subtitles TEXT NOT NULL DEFAULT 'None',
+  condition TEXT NOT NULL DEFAULT 'New',
   price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
   compare_at_price NUMERIC(10, 2) CHECK (compare_at_price >= price),
   stock_quantity INT NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
@@ -64,6 +64,16 @@ CREATE TABLE IF NOT EXISTS public.products (
   director TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Product Images Table (Up to 6 images per product)
+CREATE TABLE IF NOT EXISTS public.product_images (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  alt_text TEXT,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Genres Table
@@ -122,14 +132,14 @@ CREATE TABLE IF NOT EXISTS public.store_settings (
   vip_promo_code TEXT NOT NULL DEFAULT 'RAYAN10',
   vip_promo_discount NUMERIC(5,2) NOT NULL DEFAULT 10.00 CHECK (vip_promo_discount BETWEEN 0 AND 100),
   vip_min_spend NUMERIC(10,2) NOT NULL DEFAULT 20.00 CHECK (vip_min_spend >= 0),
-  store_name TEXT NOT NULL DEFAULT 'AZ Rayan DVDs',
-  registered_company_name TEXT NOT NULL DEFAULT 'AZ Rayan Ltd',
+  store_name TEXT NOT NULL DEFAULT 'DVD ZONE',
+  registered_company_name TEXT NOT NULL DEFAULT 'AZ Rayan LTD & DVD ZONE',
   company_number TEXT NOT NULL DEFAULT '13894195' CHECK (company_number ~ '^[A-Z0-9]{8}$'),
-  registered_office_address TEXT NOT NULL DEFAULT 'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
+  registered_office_address TEXT NOT NULL DEFAULT 'West Midlands, Birmingham, United Kingdom',
   companies_house_url TEXT NOT NULL DEFAULT 'https://find-and-update.company-information.service.gov.uk/company/13894195',
-  warehouse_location TEXT NOT NULL DEFAULT 'Unit 4B, Bermondsey Trading Estate, Rotherhithe, London SE16 3LL',
-  support_email TEXT NOT NULL DEFAULT 'concierge@azrayan.co.uk',
-  support_phone TEXT NOT NULL DEFAULT '+44 (0)20 7946 0912',
+  warehouse_location TEXT NOT NULL DEFAULT 'West Midlands, Birmingham, United Kingdom',
+  support_email TEXT NOT NULL DEFAULT 'azrayanltd@gmail.com',
+  support_phone TEXT NOT NULL DEFAULT '+44 7400 320038',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -701,14 +711,14 @@ INSERT INTO public.store_settings (
   'DPD Next Day Priority', '1 working day (Order by 2PM)',
   5, 8.00, '14:00 GMT',
   'RAYAN10', 10.00, 20.00,
-  'AZ Rayan DVDs',
-  'AZ Rayan Ltd',
+  'DVD ZONE',
+  'AZ Rayan LTD & DVD ZONE',
   '13894195',
-  'Apartment 18, 34 Ryland Street, Birmingham, B16 8DB, United Kingdom',
+  'West Midlands, Birmingham, United Kingdom',
   'https://find-and-update.company-information.service.gov.uk/company/13894195',
-  'Unit 4B, Bermondsey Trading Estate, Rotherhithe, London SE16 3LL',
-  'concierge@azrayan.co.uk',
-  '+44 (0)20 7946 0912'
+  'West Midlands, Birmingham, United Kingdom',
+  'azrayanltd@gmail.com',
+  '+44 7400 320038'
 )
 ON CONFLICT (singleton) WHERE singleton = TRUE DO NOTHING;
 

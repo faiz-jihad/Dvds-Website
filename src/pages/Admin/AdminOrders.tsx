@@ -1193,7 +1193,7 @@ export const AdminOrders: React.FC = () => {
                           </div>
                           <div>
                             <span className="text-[9px] uppercase font-bold text-gray-400 block">Account Name</span>
-                            <span className="font-semibold text-dark truncate block">{selectedOrder.bank_details.bank_account_name || 'AZ Rayan Ltd'}</span>
+                            <span className="font-semibold text-dark truncate block">{selectedOrder.bank_details.bank_account_name || 'DVDs Zone'}</span>
                           </div>
                           <div>
                             <span className="text-[9px] uppercase font-bold text-gray-400 block">Sort Code</span>

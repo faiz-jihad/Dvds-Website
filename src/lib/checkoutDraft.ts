@@ -1,4 +1,4 @@
-import { Address, PaymentMethodType } from '../types';
+import { Address, PaymentMethodType, UiPaymentMethod } from '../types';
 
 export interface CheckoutDraft {
   customerId?: string;
@@ -6,7 +6,7 @@ export interface CheckoutDraft {
   address?: Address;
   currency?: string;
   tier?: 'standard' | 'express';
-  method?: PaymentMethodType;
+  method?: PaymentMethodType | UiPaymentMethod;
   promo?: string;
   promoDraft?: string;
   selectedAddressId?: string;

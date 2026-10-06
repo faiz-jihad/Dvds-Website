@@ -12,15 +12,12 @@ const createFaqs = (freeShippingThreshold: number, dispatchCutoff: string, stand
     a: 'Yes, 100%. All our standard DVD releases are official PAL Region 2 UK/European releases, or Region 0 (All Region), which play seamlessly in any standard UK DVD player, PlayStation, Xbox, or PC drive.',
   },
   {
-    q: 'How fast is UK dispatch?',
-    a: `Orders placed before ${dispatchCutoff} Monday to Friday are prepared for same-business-day dispatch, subject to live stock and fulfilment checks.`,
+    q: 'How fast is UK dispatch and delivery?',
+    a: `All orders qualify for 100% free standard delivery across United Kingdom. Orders are dispatched the same day and will be delivered to your address within 2 working days via Royal Mail.`,
   },
   {
     q: 'How do I qualify for Free UK Delivery?',
-    a:
-      freeShippingThreshold <= 0
-        ? `All orders shipped to any UK address qualify for 100% Free Tracked UK Delivery via ${standardService} — with no minimum spend required.`
-        : `Any eligible basket total of ${formatGBP(freeShippingThreshold)} or higher automatically qualifies for ${standardService} at no charge.`,
+    a: 'All orders shipped to any UK address qualify for 100% Free Standard UK Delivery via Royal Mail — with no minimum spend required.',
   },
   {
     q: 'Are the DVD covers original studio artwork?',
@@ -43,10 +40,10 @@ export const FaqPage: React.FC = () => {
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] min-h-screen py-8 sm:py-16 text-dark dark:text-white transition-colors">
       <Seo
-        title="FAQ — DVD Regions, Delivery & Returns | DVDs Zone UK"
-        description="Answers to common questions about DVD regions, UK delivery times, free shipping, returns and our physical media collection at DVDs Zone."
+        title="FAQ — DVD Regions, Delivery & Returns | DVD ZONE"
+        description="Answers to common questions about DVD regions, UK delivery times, free shipping, same-day dispatch via Royal Mail, and returns at DVD ZONE."
         canonicalPath="/faq"
-        siteName="DVDs Zone"
+        siteName="DVD ZONE"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'FAQPage',

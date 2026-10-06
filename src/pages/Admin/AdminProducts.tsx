@@ -5,12 +5,13 @@ import {
   Upload, Loader2, Star, Layers, DollarSign, BookOpen,
   Link2, Sparkles, TrendingUp, CheckCircle2, FileEdit, Archive,
   Wand2, ArrowLeft, ArrowRight, Save, Eye, ChevronDown,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Package
 } from 'lucide-react';
 import { adminApi } from '../../lib/adminApi';
 import { uploadAdminImage } from '../../lib/adminMedia';
 import { Product, DvdFormat, AgeRating, ProductStatus } from '../../types';
 import { formatGBP } from '../../lib/formatters';
+import { MAX_PRODUCT_PRICE } from '../../data/defaultStoreSettings';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { BbfcBadge } from '../../components/common/BbfcBadge';
@@ -22,8 +23,8 @@ import { AdminDataState } from '../../components/admin/AdminDataState';
 type FormTab = 'essentials' | 'media' | 'pricing' | 'publishing';
 
 const FORM_TABS: { id: FormTab; label: string; icon: React.ComponentType<{ className?: string }>; desc: string }[] = [
-  { id: 'essentials', label: 'Essentials', icon: Film, desc: 'Title, cover, genres' },
-  { id: 'media',     label: 'Media Specs', icon: Layers, desc: 'Format, specs, ratings' },
+  { id: 'essentials', label: 'Essentials', icon: Package, desc: 'Title, images, category' },
+  { id: 'media',     label: 'Specs & Format', icon: Layers, desc: 'Format, specs, attributes' },
   { id: 'pricing',   label: 'Pricing & Stock', icon: DollarSign, desc: 'Price, stock, discounts' },
   { id: 'publishing',label: 'Publishing',  icon: BookOpen, desc: 'Status, badges, preview' },
 ];
@@ -186,6 +187,14 @@ export const AdminProducts: React.FC = () => {
   const products = productsQuery.data || [];
   const categories = categoriesQuery.data || [];
   const genres = genresQuery.data || [];
+  const storeSettings = settingsQuery.data;
+
+  // Dynamically configured formats from Admin Taxonomy + existing catalog products
+  const availableFormats = React.useMemo(() => {
+    const configured = storeSettings?.custom_formats || ['Standard', 'DVD', 'Blu-ray', '4K UHD', 'Box Set', 'Merchandise', 'Physical'];
+    const fromProducts = products.map((p) => p.format);
+    return Array.from(new Set([...configured, ...fromProducts].filter(Boolean)));
+  }, [storeSettings?.custom_formats, products]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterFormat, setFilterFormat] = useState('all');
@@ -223,6 +232,8 @@ export const AdminProducts: React.FC = () => {
   const [subtitles, setSubtitles] = useState('English');
   const [condition, setCondition] = useState('Brand New (Sealed)');
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [productImages, setProductImages] = useState<string[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<ProductStatus | ''>('active');
   const [isFeatured, setIsFeatured] = useState(false);
@@ -263,31 +274,79 @@ export const AdminProducts: React.FC = () => {
   };
 
   const handleImageFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      addToast('Please select a valid image file (PNG, JPG, WEBP)', 'error');
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    const remainingSlots = 6 - productImages.length;
+    if (remainingSlots <= 0) {
+      addToast('Maximum 6 images reached. Please remove an image first.', 'info');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      addToast('Image size exceeds 5MB limit', 'error');
-      return;
-    }
+    const toUpload = files.slice(0, remainingSlots);
     setIsUploadingImage(true);
     try {
-      const url = await uploadAdminImage(file);
-      setCoverImageUrl(url);
-      addToast('Cover image uploaded successfully', 'success');
+      const urls: string[] = [];
+      for (const file of toUpload) {
+        if (!file.type.startsWith('image/')) {
+          addToast(`"${file.name}" is not a valid image`, 'error');
+          continue;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          addToast(`"${file.name}" exceeds 5MB limit`, 'error');
+          continue;
+        }
+        const url = await uploadAdminImage(file);
+        urls.push(url);
+      }
+      if (urls.length > 0) {
+        setProductImages((prev) => {
+          const updated = [...prev, ...urls].slice(0, 6);
+          setCoverImageUrl(updated[0] || '');
+          return updated;
+        });
+        addToast(`Uploaded ${urls.length} image(s)`, 'success');
+      }
     } catch (err: any) {
-      addToast(err?.message || 'Failed to upload image', 'error');
+      addToast(err?.message || 'Failed to upload images', 'error');
     } finally {
       setIsUploadingImage(false);
+      event.target.value = '';
     }
   };
 
+  const handleAddImageUrl = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const url = imageUrlInput.trim();
+    if (!url) return;
+    if (productImages.length >= 6) {
+      addToast('Maximum 6 images reached. Please remove an image first.', 'info');
+      return;
+    }
+    const updated = [...productImages, url].slice(0, 6);
+    setProductImages(updated);
+    setCoverImageUrl(updated[0] || '');
+    setImageUrlInput('');
+    addToast('Image URL added', 'success');
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    const updated = productImages.filter((_, i) => i !== indexToRemove);
+    setProductImages(updated);
+    setCoverImageUrl(updated[0] || '');
+  };
+
+  const handleSetPrimaryImage = (indexToMain: number) => {
+    if (indexToMain === 0) return;
+    const selected = productImages[indexToMain];
+    const rest = productImages.filter((_, i) => i !== indexToMain);
+    const updated = [selected, ...rest];
+    setProductImages(updated);
+    setCoverImageUrl(updated[0]);
+    addToast('Main cover image updated', 'info');
+  };
+
   const autoGenerateSku = () => {
-    const prefix = format === 'Blu-ray' ? 'BR' : format === '4K UHD' ? 'UHD' : format === 'Box Set' ? 'BOX' : 'DVD';
-    const clean = (title.trim() || 'FILM')
+    const prefix = format === 'Blu-ray' ? 'BR' : format === '4K UHD' ? 'UHD' : format === 'Box Set' ? 'BOX' : format === 'Merchandise' ? 'MERCH' : format === 'Standard' ? 'PROD' : 'DVD';
+    const clean = (title.trim() || 'PROD')
       .replace(/[^a-zA-Z0-9]/g, '')
       .slice(0, 4)
       .toUpperCase();
@@ -303,7 +362,7 @@ export const AdminProducts: React.FC = () => {
     setSku('');
     setCategoryId('');
     setSelectedGenreIds([]);
-    setFormat('DVD');
+    setFormat('Standard');
     setSpineNumber('');
     setDirector('');
     setAspectRatio('16:9 Anamorphic Widescreen');
@@ -313,13 +372,15 @@ export const AdminProducts: React.FC = () => {
     setComparePrice('');
     setStockQuantity('20');
     setReleaseYear(new Date().getFullYear().toString());
-    setRuntimeMinutes('110');
-    setAgeRating('15');
-    setRegionCode('2 (UK/Europe)');
+    setRuntimeMinutes('0');
+    setAgeRating('All');
+    setRegionCode('All Region');
     setLanguage('English');
-    setSubtitles('English');
+    setSubtitles('None');
     setCondition('Brand New (Sealed)');
     setCoverImageUrl('');
+    setProductImages([]);
+    setImageUrlInput('');
     setDescription('');
     setStatus('active');
     setIsFeatured(false);
@@ -341,7 +402,7 @@ export const AdminProducts: React.FC = () => {
     setSku(prod.sku || '');
     setCategoryId(prod.category_id || '');
     setSelectedGenreIds((prod.genres || []).map((g) => g.id));
-    setFormat(prod.format || 'DVD');
+    setFormat(prod.format || 'Standard');
     setSpineNumber(prod.spine_number || '');
     setDirector(prod.director || '');
     setAspectRatio(prod.aspect_ratio || '16:9 Anamorphic Widescreen');
@@ -351,13 +412,22 @@ export const AdminProducts: React.FC = () => {
     setComparePrice(prod.compare_at_price != null ? prod.compare_at_price.toString() : '');
     setStockQuantity(prod.stock_quantity != null ? prod.stock_quantity.toString() : '20');
     setReleaseYear(prod.release_year ? prod.release_year.toString() : new Date().getFullYear().toString());
-    setRuntimeMinutes(prod.runtime_minutes ? prod.runtime_minutes.toString() : '110');
-    setAgeRating(prod.age_rating || '15');
-    setRegionCode(prod.region_code || '2 (UK/Europe)');
+    setRuntimeMinutes(prod.runtime_minutes ? prod.runtime_minutes.toString() : '0');
+    setAgeRating(prod.age_rating || 'All');
+    setRegionCode(prod.region_code || 'All Region');
     setLanguage(prod.language || 'English');
-    setSubtitles(prod.subtitles || 'English');
+    setSubtitles(prod.subtitles || 'None');
     setCondition(prod.condition || 'Brand New (Sealed)');
-    setCoverImageUrl(prod.cover_image_url || '');
+
+    const existingImgs = (
+      prod.images && prod.images.length > 0
+        ? prod.images
+        : [prod.cover_image_url]
+    ).filter(Boolean).slice(0, 6);
+    setProductImages(existingImgs);
+    setCoverImageUrl(existingImgs[0] || prod.cover_image_url || '');
+    setImageUrlInput('');
+
     setDescription(prod.description || '');
     setStatus(prod.status || 'active');
     setIsFeatured(Boolean(prod.is_featured));
@@ -369,45 +439,50 @@ export const AdminProducts: React.FC = () => {
 
   // Completion check per tab
   const tabCompleted: Record<FormTab, boolean> = {
-    essentials: Boolean(title.trim() && sku.trim() && coverImageUrl.trim()),
-    media: Boolean(format && ageRating && language.trim() && subtitles.trim() && releaseYear && runtimeMinutes),
+    essentials: Boolean(title.trim() && sku.trim() && (coverImageUrl.trim() || productImages.length > 0)),
+    media: Boolean(format),
     pricing: Boolean(price && Number(price) > 0 && (editingProduct || (stockQuantity && Number(stockQuantity) >= 0))),
     publishing: Boolean(status),
   };
 
   // Step-by-step navigation validation
-  const handleNextStep = () => {
+  const handleNextStep = (e?: React.MouseEvent | React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (activeTab === 'essentials') {
       if (!title.trim()) {
-        addToast('Please enter the film title.', 'error');
+        addToast('Please enter the product title.', 'error');
         return;
       }
       if (!sku.trim()) {
         autoGenerateSku();
       }
-      if (!coverImageUrl.trim()) {
-        addToast('Please upload a cover image or enter an image URL.', 'error');
+      if (!coverImageUrl.trim() && productImages.length === 0) {
+        addToast('Please upload at least one image or enter an image URL.', 'error');
         return;
       }
       setActiveTab('media');
     } else if (activeTab === 'media') {
-      if (!format) setFormat('DVD');
-      if (!ageRating) setAgeRating('15');
-      if (!regionCode.trim()) setRegionCode('2 (UK/Europe)');
+      const isVideo = ['DVD', 'Blu-ray', '4K UHD', 'Box Set'].includes(format || '');
+      if (!format) setFormat('Standard');
+      if (!ageRating) setAgeRating(isVideo ? '15' : 'All');
+      if (!regionCode.trim()) setRegionCode(isVideo ? '2 (UK/Europe)' : 'All Region');
       if (!language.trim()) setLanguage('English');
-      if (!subtitles.trim()) setSubtitles('English');
-      if (!releaseYear.trim() || Number(releaseYear) < 1888) {
+      if (!subtitles.trim()) setSubtitles(isVideo ? 'English' : 'None');
+      if (isVideo && (!releaseYear.trim() || Number(releaseYear) < 1888)) {
         setReleaseYear(new Date().getFullYear().toString());
       }
-      if (!runtimeMinutes.trim() || Number(runtimeMinutes) < 1) {
-        setRuntimeMinutes('110');
+      if (!runtimeMinutes.trim()) {
+        setRuntimeMinutes('0');
       }
       setActiveTab('pricing');
     } else if (activeTab === 'pricing') {
       const cleanPriceStr = price.toString().replace(/[^0-9.]/g, '').trim();
       const parsedPrice = cleanPriceStr ? Number(cleanPriceStr) : 0;
       if (status === 'active' && parsedPrice <= 0) {
-        addToast('Active films require a price greater than £0.00. Please enter a valid sale price.', 'error');
+        addToast('Active products require a price greater than £0.00. Please enter a valid sale price.', 'error');
         return;
       }
       const parsedCompareNum = comparePrice.trim() ? Number(comparePrice.replace(/[^0-9.]/g, '')) : null;
@@ -422,13 +497,22 @@ export const AdminProducts: React.FC = () => {
     }
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (activeTab !== 'publishing') {
+      handleNextStep(e);
+      return;
+    }
+    handleSaveProduct(e);
+  };
+
   const handleSaveProduct = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     // 1. Tab Essentials Validation
     if (!title.trim()) {
       setActiveTab('essentials');
-      addToast('Please enter the film title in Essentials.', 'error');
+      addToast('Please enter the product title in Essentials.', 'error');
       return;
     }
     if (!sku.trim()) {
@@ -436,35 +520,21 @@ export const AdminProducts: React.FC = () => {
       addToast('Please enter or auto-generate a SKU code in Essentials.', 'error');
       return;
     }
-    if (!coverImageUrl.trim()) {
+    const finalCover = productImages[0] || coverImageUrl.trim();
+    if (!finalCover) {
       setActiveTab('essentials');
-      addToast('Please upload a cover image or provide an image URL in Essentials.', 'error');
+      addToast('Please upload at least one image or provide an image URL in Essentials.', 'error');
       return;
     }
 
-    // 2. Tab Media Specs Validation
+    // 2. Tab Media / Specs Validation
     if (!format) {
       setActiveTab('media');
-      addToast('Please select the media format in Media Specs.', 'error');
+      addToast('Please select the product format in Specifications.', 'error');
       return;
     }
-    if (!ageRating) {
-      setActiveTab('media');
-      addToast('Please select the BBFC age rating in Media Specs.', 'error');
-      return;
-    }
-    const parsedYear = Number(releaseYear);
-    if (!releaseYear.trim() || !Number.isInteger(parsedYear) || parsedYear < 1888) {
-      setActiveTab('media');
-      addToast('Please enter a valid release year (e.g. 2023) in Media Specs.', 'error');
-      return;
-    }
-    const parsedRuntime = Number(runtimeMinutes);
-    if (!runtimeMinutes.trim() || !Number.isInteger(parsedRuntime) || parsedRuntime < 1) {
-      setActiveTab('media');
-      addToast('Please enter runtime in minutes in Media Specs.', 'error');
-      return;
-    }
+    const parsedYear = Number(releaseYear) || new Date().getFullYear();
+    const parsedRuntime = Number(runtimeMinutes) || 0;
 
     // 3. Tab Pricing Validation
     const cleanPriceStr = price.toString().replace(/[^0-9.]/g, '').trim();
@@ -472,7 +542,7 @@ export const AdminProducts: React.FC = () => {
     if (status === 'active') {
       if (!cleanPriceStr || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
         setActiveTab('pricing');
-        addToast('Active films require a price greater than £0.00. Please enter a valid sale price in Pricing or select Draft status.', 'error');
+        addToast('Active products require a price greater than £0.00. Please enter a valid sale price in Pricing or select Draft status.', 'error');
         return;
       }
     } else {
@@ -481,6 +551,12 @@ export const AdminProducts: React.FC = () => {
         addToast('Please enter a valid sale price in Pricing.', 'error');
         return;
       }
+    }
+    // Maximum product price enforcement
+    if (parsedPrice > MAX_PRODUCT_PRICE) {
+      setActiveTab('pricing');
+      addToast(`Product price cannot exceed £${MAX_PRODUCT_PRICE.toFixed(2)}. Please enter a lower price.`, 'error');
+      return;
     }
     const parsedComparePrice = comparePrice.trim() ? Number(comparePrice.replace(/[^0-9.]/g, '')) : null;
     if (parsedComparePrice !== null && (!Number.isFinite(parsedComparePrice) || parsedComparePrice <= parsedPrice)) {
@@ -514,12 +590,13 @@ export const AdminProducts: React.FC = () => {
     setIsSaving(true);
 
     try {
+      const allImgs = productImages.length > 0 ? productImages : [finalCover];
       const saved = await adminApi.saveProductWithGenres(editingProduct?.id || null, {
         title: title.trim(),
         sku: sku.trim(),
         slug,
         category_id: categoryId || null,
-        format: format as DvdFormat,
+        format: (format as DvdFormat) || 'Standard',
         spine_number: spineNumber.trim() || null,
         director: director.trim() || null,
         aspect_ratio: aspectRatio.trim() || null,
@@ -530,19 +607,19 @@ export const AdminProducts: React.FC = () => {
         ...(!editingProduct ? { stock_quantity: parsedStock } : {}),
         release_year: parsedYear,
         runtime_minutes: parsedRuntime,
-        age_rating: ageRating as AgeRating,
-        region_code: regionCode || 'Region 2',
-        language,
-        subtitles,
-        condition,
-        cover_image_url: coverImageUrl,
+        age_rating: (ageRating as AgeRating) || '12',
+        region_code: regionCode || 'All Region',
+        language: language || 'English',
+        subtitles: subtitles || 'None',
+        condition: condition || 'Brand New (Sealed)',
+        cover_image_url: finalCover,
         description,
         short_description: description.trim().slice(0, 160) || null,
         status: status as ProductStatus,
         is_featured: isFeatured,
         is_new_release: isNewRelease,
         is_best_seller: isBestSeller,
-      }, selectedGenreIds);
+      }, selectedGenreIds, allImgs);
 
       addToast(`${editingProduct ? 'Updated' : 'Added'} "${saved.title}" successfully`, 'success');
       await queryClient.invalidateQueries({ queryKey: ['admin'] });
@@ -654,10 +731,9 @@ export const AdminProducts: React.FC = () => {
           className="h-10 px-3 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:border-brand-blue"
         >
           <option value="all">All Formats</option>
-          <option value="DVD">DVD</option>
-          <option value="Box Set">Box Set</option>
-          <option value="Blu-ray">Blu-ray</option>
-          <option value="4K UHD">4K UHD</option>
+          {availableFormats.map((fmt) => (
+            <option key={fmt} value={fmt}>{fmt}</option>
+          ))}
         </select>
       </div>
 
@@ -920,11 +996,11 @@ export const AdminProducts: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingProduct ? `Edit Title: ${editingProduct.title}` : 'Add New Title'}
-        description={editingProduct ? 'Update catalogue entry, technical details, pricing, and merchandising.' : 'Quick 4-step wizard to register a new film in your inventory.'}
+        title={editingProduct ? `Edit Product: ${editingProduct.title}` : 'Add New Product'}
+        description={editingProduct ? 'Update catalogue entry, technical details, pricing, and images.' : 'Quick 4-step wizard to register a new product in your inventory.'}
         maxWidth="2xl"
       >
-        <form onSubmit={handleSaveProduct}>
+        <form onSubmit={handleFormSubmit}>
           {/* Tab Navigation */}
           <TabBar
             tabs={FORM_TABS}
@@ -939,12 +1015,12 @@ export const AdminProducts: React.FC = () => {
               {/* Title & SKU */}
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
                 <div>
-                  <FieldLabel label="Film Title" required hint="Full official title" />
+                  <FieldLabel label="Product Title" required hint="Full official name / title" />
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. The Dark Knight (Special Edition)"
+                    placeholder="e.g. Standard Edition Box Set or Product Name"
                     className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                     required
                   />
@@ -956,7 +1032,7 @@ export const AdminProducts: React.FC = () => {
                       type="button"
                       onClick={autoGenerateSku}
                       className="text-[10px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
-                      title="Auto-generate SKU from Title and Format"
+                      title="Auto-generate SKU"
                     >
                       <Wand2 className="w-3 h-3" />
                       <span>Auto</span>
@@ -966,98 +1042,151 @@ export const AdminProducts: React.FC = () => {
                     type="text"
                     value={sku}
                     onChange={(e) => setSku(e.target.value.toUpperCase())}
-                    placeholder="DVD-DKNI-104"
+                    placeholder="PROD-ITEM-101"
                     className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs font-mono text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                     required
                   />
                 </div>
               </div>
 
-              {/* Cover Image */}
+              {/* Product Images (Max 6 Images) */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <FieldLabel label="Cover Artwork" required hint="Standard DVD / Blu-ray ratio" />
-                  <div className="flex rounded-lg bg-gray-100 p-0.5 text-[11px]">
-                    <button
-                      type="button"
-                      onClick={() => setUploadMode('upload')}
-                      className={`flex items-center gap-1 px-3 py-1 rounded-md font-semibold transition cursor-pointer ${
-                        uploadMode === 'upload' ? 'bg-white text-blue-600 shadow-xs' : 'text-gray-500 hover:text-dark'
-                      }`}
-                    >
-                      <Upload className="w-3 h-3" />
-                      <span>Upload File</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setUploadMode('url')}
-                      className={`flex items-center gap-1 px-3 py-1 rounded-md font-semibold transition cursor-pointer ${
-                        uploadMode === 'url' ? 'bg-white text-blue-600 shadow-xs' : 'text-gray-500 hover:text-dark'
-                      }`}
-                    >
-                      <Link2 className="w-3 h-3" />
-                      <span>Image URL</span>
-                    </button>
+                  <div className="flex items-center gap-2">
+                    <FieldLabel label="Product Images" required />
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">
+                      {productImages.length} / 6 Images
+                    </span>
                   </div>
+                  {productImages.length < 6 && (
+                    <div className="flex rounded-lg bg-gray-100 p-0.5 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setUploadMode('upload')}
+                        className={`flex items-center gap-1 px-3 py-1 rounded-md font-semibold transition cursor-pointer ${
+                          uploadMode === 'upload' ? 'bg-white text-blue-600 shadow-xs' : 'text-gray-500 hover:text-dark'
+                        }`}
+                      >
+                        <Upload className="w-3 h-3" />
+                        <span>Upload File</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUploadMode('url')}
+                        className={`flex items-center gap-1 px-3 py-1 rounded-md font-semibold transition cursor-pointer ${
+                          uploadMode === 'url' ? 'bg-white text-blue-600 shadow-xs' : 'text-gray-500 hover:text-dark'
+                        }`}
+                      >
+                        <Link2 className="w-3 h-3" />
+                        <span>Image URL</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {uploadMode === 'upload' ? (
-                  <label className="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition group">
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif"
-                      onChange={handleImageFileChange}
-                      disabled={isUploadingImage}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                    {isUploadingImage ? (
-                      <div className="flex flex-col items-center gap-2 text-blue-600 py-2">
-                        <Loader2 className="h-7 w-7 animate-spin" />
-                        <span className="text-xs font-medium">Uploading image...</span>
-                      </div>
+                {/* Upload or URL input if slots available */}
+                {productImages.length < 6 && (
+                  <div className="mb-3">
+                    {uploadMode === 'upload' ? (
+                      <label className="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-5 cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition group">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/gif"
+                          multiple
+                          onChange={handleImageFileChange}
+                          disabled={isUploadingImage}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        {isUploadingImage ? (
+                          <div className="flex flex-col items-center gap-2 text-blue-600 py-1">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                            <span className="text-xs font-medium">Uploading image(s)...</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-1.5 pointer-events-none text-center">
+                            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+                              <Upload className="w-4 h-4" />
+                            </div>
+                            <p className="text-xs font-semibold text-gray-700">Click or drag &amp; drop product images</p>
+                            <p className="text-[10px] text-gray-400">Select multiple files (PNG, JPG, WEBP) · Add up to {6 - productImages.length} more</p>
+                          </div>
+                        )}
+                      </label>
                     ) : (
-                      <div className="flex flex-col items-center gap-2 pointer-events-none">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
-                          <Upload className="w-5 h-5" />
-                        </div>
-                        <p className="text-xs font-semibold text-gray-700">Click or drag &amp; drop artwork</p>
-                        <p className="text-[10px] text-gray-400">PNG, JPG or WEBP · Max 5MB</p>
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          value={imageUrlInput}
+                          onChange={(e) => setImageUrlInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddImageUrl(); } }}
+                          placeholder="https://images.example.com/products/item.jpg"
+                          className="flex-1 h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddImageUrl}
+                          disabled={!imageUrlInput.trim()}
+                          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs transition cursor-pointer"
+                        >
+                          Add Image
+                        </button>
                       </div>
                     )}
-                  </label>
-                ) : (
-                  <input
-                    type="url"
-                    value={coverImageUrl}
-                    onChange={(e) => setCoverImageUrl(e.target.value)}
-                    placeholder="https://images.example.com/covers/film.jpg"
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                  />
+                  </div>
                 )}
 
-                {/* Image Preview */}
-                {coverImageUrl && (
-                  <div className="flex items-center gap-3 mt-2.5 p-2.5 bg-white border border-gray-200 rounded-lg shadow-xs">
-                    <img src={coverImageUrl} alt="Preview" className="h-14 w-10 object-cover rounded border border-gray-200 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="block text-xs font-semibold text-emerald-700">Artwork ready</span>
-                      <span className="block font-mono text-[10px] text-gray-400 truncate">{coverImageUrl}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setCoverImageUrl('')}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition cursor-pointer"
-                      title="Remove image"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                {/* Display Grid of Current Images (1 to 6) */}
+                {productImages.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+                    {productImages.map((imgUrl, idx) => (
+                      <div
+                        key={idx}
+                        className={`relative aspect-square rounded-lg border overflow-hidden group bg-white shadow-2xs flex items-center justify-center p-1 ${
+                          idx === 0 ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'
+                        }`}
+                      >
+                        <img src={imgUrl} alt={`Product ${idx + 1}`} className="w-full h-full object-contain rounded-xs" />
+
+                        {/* Cover Badge on first image */}
+                        {idx === 0 ? (
+                          <span className="absolute top-1 left-1 bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-xs">
+                            Cover
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSetPrimaryImage(idx)}
+                            className="absolute top-1 left-1 bg-gray-800/80 hover:bg-blue-600 text-white text-[9px] font-medium px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition shadow-xs cursor-pointer"
+                            title="Set as main cover"
+                          >
+                            Set Main
+                          </button>
+                        )}
+
+                        {/* Remove Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-xs cursor-pointer"
+                          title="Remove image"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+
+                        <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-mono px-1 rounded">
+                          #{idx + 1}
+                        </span>
+                      </div>
+                    ))}
                   </div>
+                ) : (
+                  <p className="text-[11px] text-gray-500 italic mt-1">No images added yet. Please add at least 1 image (up to 6).</p>
                 )}
               </div>
 
-              {/* Genres */}
+              {/* Genres / Tags */}
               <div>
-                <FieldLabel label="Genres" hint="Click to select multiple" />
+                <FieldLabel label="Categories &amp; Tags" hint="Click to select multiple" />
                 {genres.length ? (
                   <GenrePills
                     genres={genres}
@@ -1067,24 +1196,24 @@ export const AdminProducts: React.FC = () => {
                     }
                   />
                 ) : (
-                  <p className="text-xs text-gray-400">No genres found in system.</p>
+                  <p className="text-xs text-gray-400">No tags found in system.</p>
                 )}
               </div>
 
-              {/* Director & Category */}
+              {/* Brand/Director & Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <FieldLabel label="Director" hint="Optional" />
+                  <FieldLabel label="Brand / Creator / Director" hint="Optional" />
                   <input
                     type="text"
                     value={director}
                     onChange={(e) => setDirector(e.target.value)}
-                    placeholder="e.g. Christopher Nolan"
+                    placeholder="e.g. Brand, Manufacturer or Director"
                     className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                   />
                 </div>
                 <div>
-                  <FieldLabel label="Category" hint="Primary catalogue shelf" />
+                  <FieldLabel label="Category" hint="Primary catalogue department" />
                   <StyledSelect value={categoryId} onChange={setCategoryId}>
                     <option value="">No specific category</option>
                     {categories.map((c) => (
@@ -1096,35 +1225,40 @@ export const AdminProducts: React.FC = () => {
 
               {/* Description */}
               <div>
-                <FieldLabel label="Synopsis & Special Features" hint="Displayed on the film detail page" />
+                <FieldLabel label="Product Description &amp; Details" hint="Displayed on the product detail page" />
                 <textarea
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Official synopsis, disc bonus materials, audio commentary details..."
+                  placeholder="Detailed description, package contents, materials, features, or notes..."
                   className="w-full p-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition resize-none"
                 />
               </div>
             </div>
           )}
 
-          {/* ── TAB 2: MEDIA INFO ───────────────────────────────── */}
+          {/* ── TAB 2: SPECS & FORMAT ───────────────────────────── */}
           {activeTab === 'media' && (
             <div className="space-y-5">
-              {/* Format, BBFC Rating */}
+              {/* Format, Age Rating */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <FieldLabel label="Media Format" required />
+                  <FieldLabel label="Product Format / Type" required hint="Synced from Admin Taxonomy" />
                   <StyledSelect value={format} onChange={(v) => setFormat(v as DvdFormat)}>
-                    <option value="DVD">DVD</option>
-                    <option value="Box Set">Box Set</option>
-                    <option value="Blu-ray">Blu-ray</option>
-                    <option value="4K UHD">4K UHD</option>
+                    {availableFormats.map((fmt) => (
+                      <option key={fmt} value={fmt}>{fmt}</option>
+                    ))}
                   </StyledSelect>
+                  <QuickChips
+                    options={availableFormats.slice(0, 6)}
+                    current={format}
+                    onSelect={(val) => setFormat(val as DvdFormat)}
+                  />
                 </div>
                 <div>
-                  <FieldLabel label="BBFC Age Rating" required />
+                  <FieldLabel label="Age Rating / Classification" />
                   <StyledSelect value={ageRating} onChange={(v) => setAgeRating(v as AgeRating)}>
+                    <option value="All">All / Not Applicable</option>
                     <option value="U">U — Universal (All Ages)</option>
                     <option value="PG">PG — Parental Guidance</option>
                     <option value="12">12 — Suitable for 12+</option>
@@ -1134,10 +1268,10 @@ export const AdminProducts: React.FC = () => {
                 </div>
               </div>
 
-              {/* Release Year, Runtime, IMDb */}
+              {/* Release Year, Runtime / Dimensions, IMDb */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <FieldLabel label="Release Year" required hint="Film release year" />
+                  <FieldLabel label="Release / Production Year" hint="Optional" />
                   <input
                     type="number"
                     min="1888"
@@ -1148,24 +1282,42 @@ export const AdminProducts: React.FC = () => {
                     className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                   />
                 </div>
+                {['DVD', 'Blu-ray', '4K UHD', 'Box Set'].includes(format || '') ? (
+                  <div>
+                    <FieldLabel label="Runtime (minutes)" hint="For media items" />
+                    <input
+                      type="number"
+                      min="0"
+                      value={runtimeMinutes}
+                      onChange={(e) => setRuntimeMinutes(e.target.value)}
+                      placeholder="120"
+                      className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+                    />
+                    <QuickChips
+                      options={['90', '105', '120', '145']}
+                      current={runtimeMinutes}
+                      onSelect={setRuntimeMinutes}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <FieldLabel label="Origin / Region" hint="e.g. UK, EU, Global" />
+                    <input
+                      type="text"
+                      value={regionCode}
+                      onChange={(e) => setRegionCode(e.target.value)}
+                      placeholder="UK / Europe"
+                      className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+                    />
+                    <QuickChips
+                      options={['UK Standard', 'Global', 'Europe']}
+                      current={regionCode}
+                      onSelect={setRegionCode}
+                    />
+                  </div>
+                )}
                 <div>
-                  <FieldLabel label="Runtime (minutes)" required />
-                  <input
-                    type="number"
-                    min="1"
-                    value={runtimeMinutes}
-                    onChange={(e) => setRuntimeMinutes(e.target.value)}
-                    placeholder="120"
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                  />
-                  <QuickChips
-                    options={['90', '105', '120', '145']}
-                    current={runtimeMinutes}
-                    onSelect={setRuntimeMinutes}
-                  />
-                </div>
-                <div>
-                  <FieldLabel label="IMDb Rating" hint="1.0 – 10.0 (optional)" />
+                  <FieldLabel label="Rating / Score" hint="Optional (1.0 – 10.0)" />
                   <input
                     type="number"
                     step="0.1"
@@ -1179,51 +1331,52 @@ export const AdminProducts: React.FC = () => {
                 </div>
               </div>
 
-              {/* Technical Specifications */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <FieldLabel label="Aspect Ratio" hint="Video transfer ratio" />
-                  <input
-                    type="text"
-                    value={aspectRatio}
-                    onChange={(e) => setAspectRatio(e.target.value)}
-                    placeholder="16:9 Anamorphic Widescreen"
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                  />
-                  <QuickChips
-                    options={['16:9 Anamorphic Widescreen', '2.39:1 Anamorphic Widescreen', '4:3 Full Frame']}
-                    current={aspectRatio}
-                    onSelect={setAspectRatio}
-                  />
+              {/* Technical Specifications (Only shown or optional) */}
+              {['DVD', 'Blu-ray', '4K UHD', 'Box Set'].includes(format || '') && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <FieldLabel label="Aspect Ratio" hint="Video transfer ratio" />
+                    <input
+                      type="text"
+                      value={aspectRatio}
+                      onChange={(e) => setAspectRatio(e.target.value)}
+                      placeholder="16:9 Anamorphic Widescreen"
+                      className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+                    />
+                    <QuickChips
+                      options={['16:9 Anamorphic Widescreen', '2.39:1 Anamorphic Widescreen', '4:3 Full Frame']}
+                      current={aspectRatio}
+                      onSelect={setAspectRatio}
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel label="Audio Format" hint="Soundtrack specification" />
+                    <input
+                      type="text"
+                      value={audioFormat}
+                      onChange={(e) => setAudioFormat(e.target.value)}
+                      placeholder="Dolby Digital 5.1"
+                      className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+                    />
+                    <QuickChips
+                      options={['Dolby Digital 5.1', 'Stereo 2.0', 'DTS-HD Master Audio 5.1', 'Dolby Atmos']}
+                      current={audioFormat}
+                      onSelect={setAudioFormat}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <FieldLabel label="Audio Format" hint="Soundtrack specification" />
-                  <input
-                    type="text"
-                    value={audioFormat}
-                    onChange={(e) => setAudioFormat(e.target.value)}
-                    placeholder="Dolby Digital 5.1"
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                  />
-                  <QuickChips
-                    options={['Dolby Digital 5.1', 'Stereo 2.0', 'DTS-HD Master Audio 5.1', 'Dolby Atmos']}
-                    current={audioFormat}
-                    onSelect={setAudioFormat}
-                  />
-                </div>
-              </div>
+              )}
 
               {/* Language, Subtitles, Condition */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <FieldLabel label="Audio Language" required />
+                  <FieldLabel label="Primary Language" hint="Audio or documentation" />
                   <input
                     type="text"
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
                     placeholder="English"
                     className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                    required
                   />
                   <QuickChips
                     options={['English', 'English 5.1', 'Japanese', 'French']}
@@ -1232,34 +1385,35 @@ export const AdminProducts: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <FieldLabel label="Subtitles" required />
+                  <FieldLabel label="Subtitles / Extras" hint="Optional" />
                   <input
                     type="text"
                     value={subtitles}
                     onChange={(e) => setSubtitles(e.target.value)}
-                    placeholder="English"
+                    placeholder="None"
                     className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                    required
                   />
                   <QuickChips
-                    options={['English', 'English (SDH)', 'English, French', 'None']}
+                    options={['None', 'English', 'English (SDH)', 'Included']}
                     current={subtitles}
                     onSelect={setSubtitles}
                   />
                 </div>
                 <div>
-                  <FieldLabel label="Disc Condition" required />
+                  <FieldLabel label="Item Condition" required />
                   <StyledSelect value={condition} onChange={setCondition}>
                     <option value="Brand New (Sealed)">Brand New (Sealed)</option>
                     <option value="Like New">Like New</option>
+                    <option value="Very Good">Very Good</option>
+                    <option value="Good">Good</option>
                     <option value="Collector Edition">Collector Edition</option>
                   </StyledSelect>
                 </div>
               </div>
 
-              {/* Spine Number */}
+              {/* Spine Number / Identifier */}
               <div className="sm:w-1/2">
-                <FieldLabel label="Collector Spine Number" hint="Optional boutique index (e.g. 024)" />
+                <FieldLabel label="Collector / Spine Number" hint="Optional index or reference (e.g. 024)" />
                 <input
                   type="text"
                   value={spineNumber}
@@ -1439,7 +1593,7 @@ export const AdminProducts: React.FC = () => {
                   checked={isFeatured}
                   onChange={setIsFeatured}
                   label="Featured on Homepage"
-                  desc="Pins the film to the curated homepage showcase"
+                  desc="Pins the product to the curated homepage showcase"
                   icon={<Star className="w-4 h-4" />}
                 />
               </div>
@@ -1452,19 +1606,19 @@ export const AdminProducts: React.FC = () => {
                 </div>
                 <div className="flex items-start gap-4 bg-white p-3 rounded-lg border border-gray-200">
                   {coverImageUrl ? (
-                    <img src={coverImageUrl} alt={title || 'Preview'} className="w-14 aspect-dvd object-cover rounded border border-gray-200 shrink-0" />
+                    <img src={coverImageUrl} alt={title || 'Preview'} className="w-14 aspect-square sm:aspect-[4/5] object-contain rounded border border-gray-200 shrink-0 p-1" />
                   ) : (
-                    <div className="w-14 aspect-dvd bg-gray-100 rounded border border-dashed border-gray-300 flex items-center justify-center text-gray-400 shrink-0">
-                      <Film className="w-5 h-5" />
+                    <div className="w-14 aspect-square sm:aspect-[4/5] bg-gray-100 rounded border border-dashed border-gray-300 flex items-center justify-center text-gray-400 shrink-0">
+                      <Package className="w-5 h-5" />
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                      <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[9px] font-bold uppercase">{format || 'DVD'}</span>
+                      <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[9px] font-bold uppercase">{format || 'Standard'}</span>
                       {ageRating && <BbfcBadge rating={ageRating as AgeRating} size="xs" />}
                     </div>
-                    <h4 className="text-xs font-bold text-dark truncate">{title || 'Untitled Film'}</h4>
-                    <p className="text-[11px] text-gray-500 font-mono mt-0.5">SKU: {sku || 'DVD-XXXX-000'}</p>
+                    <h4 className="text-xs font-bold text-dark truncate">{title || 'Untitled Product'}</h4>
+                    <p className="text-[11px] text-gray-500 font-mono mt-0.5">SKU: {sku || 'PROD-XXXX-000'}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-sm font-black text-dark">£{price ? Number(price).toFixed(2) : '0.00'}</span>
                       {comparePrice && Number(comparePrice) > Number(price) && (
@@ -1518,16 +1672,24 @@ export const AdminProducts: React.FC = () => {
 
               {activeTab !== 'publishing' ? (
                 <Button
+                  key="btn-next-step"
                   variant="primary"
                   type="button"
-                  onClick={handleNextStep}
+                  onClick={(e) => handleNextStep(e)}
                   className="gap-1.5"
                 >
                   <span>Next</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
               ) : (
-                <Button variant="primary" type="submit" isLoading={isSaving} disabled={isUploadingImage} className="gap-1.5">
+                <Button
+                  key="btn-submit-publish"
+                  variant="primary"
+                  type="submit"
+                  isLoading={isSaving}
+                  disabled={isUploadingImage}
+                  className="gap-1.5"
+                >
                   <Save className="w-3.5 h-3.5" />
                   <span>{editingProduct ? 'Save Changes' : 'Publish Film'}</span>
                 </Button>

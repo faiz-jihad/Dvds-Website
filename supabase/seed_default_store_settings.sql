@@ -88,9 +88,9 @@ INSERT INTO public.store_settings (
   'WELCOME10',
   10.00,
   20.00,
-  'Unit 4B, Bermondsey Trading Estate, London SE16 3LL',
-  'support@azrayan.co.uk',
-  '+44 (0)20 7946 0912',
+  'West Midlands, Birmingham, United Kingdom',
+  'azrayanltd@gmail.com',
+  '00447400320038',
   NOW()
 )
 ON CONFLICT (singleton) WHERE singleton = TRUE 

@@ -1,9 +1,10 @@
-export type AgeRating = 'U' | 'PG' | '12' | '15' | '18';
-export type DvdFormat = 'DVD' | 'Blu-ray' | '4K UHD' | 'Box Set';
+export type AgeRating = 'U' | 'PG' | '12' | '15' | '18' | 'All';
+export type DvdFormat = 'DVD' | 'Blu-ray' | '4K UHD' | 'Box Set' | 'Standard' | 'Merchandise' | 'Physical' | (string & {});
 export type ProductStatus = 'draft' | 'active' | 'archived';
 export type OrderStatus = 'pending' | 'processing' | 'dispatched' | 'delivered' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'pending' | 'awaiting_payment' | 'paid' | 'failed' | 'refunded' | 'partially_refunded' | 'unpaid';
 export type PaymentMethodType = 'card' | 'paypal' | 'bank_transfer';
+export type UiPaymentMethod = 'card' | 'apple_pay' | 'google_pay' | 'amazon_pay' | 'paypal';
 export type PaymentProviderType = 'stripe' | 'paypal' | 'manual_bank';
 export type FulfilmentStatus = 'unfulfilled' | 'fulfilled' | 'returned';
 export type UserRole = 'customer' | 'admin' | 'staff';
@@ -45,6 +46,7 @@ export interface Product {
   compare_at_price: number | null;
   stock_quantity: number;
   cover_image_url: string;
+  images?: string[];
   status: ProductStatus;
   is_featured: boolean;
   is_new_release: boolean;
@@ -232,11 +234,18 @@ export interface StoreSettings {
   announcement_center: string;
   announcement_link: string;
 
-  // Flash Deal of the Day
+  // Flash Deal of the Day & Exclusive Campaign
   deal_product_id: string | null;
   deal_discount_price: number;
   deal_ends_at: string | null;
   deal_is_active: boolean;
+  campaign_is_active?: boolean;
+  campaign_title?: string;
+  campaign_badge?: string;
+  campaign_tagline?: string;
+  campaign_discount_text?: string;
+  campaign_ends_at?: string | null;
+  custom_formats?: string[];
 
   // Director / Curator Spotlight
   director_badge: string;

@@ -69,7 +69,7 @@ const getInitialNotifications = (): AppNotification[] => {
           target: 'customer',
           type: 'promo',
           title: 'Welcome to DVDs Zone',
-          message: 'Enjoy 10% off your first physical media order with voucher code RAYAN10.',
+          message: 'Enjoy 10% off your first physical media order with voucher code ZONE10.',
           link: '/shop',
           read: false,
           createdAt: new Date().toISOString(),
