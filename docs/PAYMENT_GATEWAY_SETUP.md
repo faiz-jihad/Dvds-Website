@@ -2,7 +2,7 @@
 
 ## Deployment requirements
 
-Apply every pending SQL file in `supabase/migrations` in filename order, including `20260915000001_admin_reliability.sql` and `20260915000002_checkout_sync.sql`. Deploy the frontend and `/api` handlers together. The Vite development server loads these same handlers; it does not simulate payments.
+Apply every pending SQL file in `supabase/migrations` in filename order, including `20260915000001_admin_reliability.sql`, `20260915000002_checkout_sync.sql`, and `20261007000001_business_reports_and_expenses.sql`. Deploy the frontend and `/api` handlers together. The Vite development server loads these same handlers; it does not simulate payments.
 
 Configure these variables on the server (see `.env.example`):
 
@@ -10,8 +10,9 @@ Configure these variables on the server (see `.env.example`):
 | --- | --- |
 | All checkout methods | `SUPABASE_URL` (or `VITE_SUPABASE_URL`), `SUPABASE_SERVICE_ROLE_KEY` |
 | Provider redirects | `SITE_URL`, the canonical HTTPS storefront origin |
-| Card | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
+| Card & Webhooks | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
 | PayPal | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_ENVIRONMENT=sandbox` or `live` |
+| Email & Reports | `ADMIN_EMAIL`, `EMAIL_FROM`, `RESEND_API_KEY` (or `SENDGRID_API_KEY`), `CRON_SECRET` |
 
 The browser uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Never prefix service-role keys or payment secrets with `VITE_`. Hosted Stripe Checkout does not require Stripe.js or a publishable key in the payment page.
 
@@ -36,15 +37,16 @@ Delivery service names, estimates, standard fees, express fees, and free-deliver
 3. `create_checkout_order` creates one order, its actual line items, status history and stock reservation atomically. Repeating the request UUID returns the same order. Prices and stock are rechecked while the products are locked.
 4. Card and PayPal orders start `pending`. Bank orders start `awaiting_payment`. A redirect or locally saved receipt never marks an order paid.
 5. A verified provider payment or an administrator's bank confirmation changes the same database order to `paid` / `processing`. Payment reference and received time are saved. Retried events do not duplicate stock changes or reset dispatch status.
-6. Admin order changes invalidate customer status queries. Bank/paid orders also poll every 15 seconds; pending online payments poll every 5 seconds. Guest customers use the protected status API; account owners can also access their own orders.
-7. Failed provider requests preserve the original checkout attempt. The customer can retry it or cancel a saved unpaid order. Stripe cancellation expires its provider session first. Cancellation/expiry releases inventory once.
-8. If a payment arrives after cancellation, it is recorded as paid with `payment_review_required`; dispatch is blocked until the exception is resolved. Refund through the corresponding provider dashboard when the order cannot be fulfilled.
+6. Once payment is verified by the webhook, the system automatically sends a professional payment receipt email to the customer's email address (with idempotency checks). See [docs/EMAIL_AND_REPORTS_SYSTEM.md](EMAIL_AND_REPORTS_SYSTEM.md).
+7. Admin order changes invalidate customer status queries. Bank/paid orders also poll every 15 seconds; pending online payments poll every 5 seconds. Guest customers use the protected status API; account owners can also access their own orders.
+8. Failed provider requests preserve the original checkout attempt. The customer can retry it or cancel a saved unpaid order. Stripe cancellation expires its provider session first. Cancellation/expiry releases inventory once.
+9. If a payment arrives after cancellation, it is recorded as paid with `payment_review_required`; dispatch is blocked until the exception is resolved. Refund through the corresponding provider dashboard when the order cannot be fulfilled.
 
-Checkout guest-access tokens are stored in `sessionStorage`, with only their hashes saved in the database. Guest receipts must be opened in the browser session used for checkout. Signed-in customers can open their own orders from their account. There is no email-delivery implementation in this flow, so the UI does not claim an email was sent.
+Checkout guest-access tokens are stored in `sessionStorage`, with only their hashes saved in the database. Guest receipts must be opened in the browser session used for checkout. Signed-in customers can open their own orders from their account.
 
 Bank transfers and abandoned PayPal orders have no automatic expiry timer. Administrators can cancel unpaid orders with a reason to release reserved stock. Refunds do not automatically restock physically shipped goods; use the inventory adjustment workflow after checking returned stock.
 
-## Stripe webhook
+## Stripe webhook & Customer Receipt
 
 Point a Stripe endpoint to `https://YOUR-SITE/api/stripe-webhook` and set its signing secret as `STRIPE_WEBHOOK_SECRET`. Subscribe to:
 
@@ -53,7 +55,9 @@ Point a Stripe endpoint to `https://YOUR-SITE/api/stripe-webhook` and set its si
 - `checkout.session.expired`
 - `charge.refunded`
 
-The handler verifies the signature against the raw body. Both checkout session metadata and PaymentIntent metadata contain the local order ID. Return verification checks session ownership, amount and currency. Refunds check the stored payment reference and use the cumulative refunded amount, so duplicate/out-of-order notifications do not subtract money twice.
+The handler verifies the signature against the raw body. Both checkout session metadata and PaymentIntent metadata contain the local order ID. Return verification checks session ownership, amount and currency.
+Upon signature verification and payment confirmation, the system dispatches an official branded customer receipt email via Resend/SendGrid, logs the delivery in `email_logs`, and marks `orders.receipt_sent_at`.
+Refunds check the stored payment reference and use the cumulative refunded amount, so duplicate/out-of-order notifications do not subtract money twice.
 
 See [Stripe Checkout fulfilment](https://docs.stripe.com/checkout/fulfillment) and [Stripe webhook signatures](https://docs.stripe.com/webhooks?lang=node).
 
@@ -69,16 +73,17 @@ The handler verifies PayPal's transmission headers through the signature verific
 
 See [PayPal webhook verification](https://developer.paypal.com/api/webhooks/v1/verify-webhook-signature-post/) and [PayPal request idempotency](https://developer.paypal.com/reference/guidelines/idempotency/).
 
-## Admin operations
+## Admin operations & Reports
 
 - **Bank payment:** Match the exact order reference and received amount against the receiving account, then use **Orders > Confirm payment**. Only administrators can confirm; staff cannot. Confirmation is atomic and audited.
 - **Dispatch:** Requires a paid processing order, carrier and tracking number. Those details appear on the customer's order page.
 - **Refund:** Perform the refund in Stripe/PayPal. Verified refund notifications update `refunded_amount`, payment status, order status for full refunds, and admin revenue. Revenue is payment-date sales net of recorded refunds; it is not a settlement-date cash-flow report.
-- **Receipt:** Shows order totals, the current payment status, delivery and any refund. It does not fabricate VAT details, company registration data or internal admin notes.
+- **Reports & Expenses:** Access `/admin/reports` for executive sales performance, weekly/monthly digests, expense management, and report history. See [docs/EMAIL_AND_REPORTS_SYSTEM.md](EMAIL_AND_REPORTS_SYSTEM.md).
+- **Printable Receipt:** High-fidelity A4 and PDF receipt available in customer order history and order success page, isolated from screen elements via `#print-only-container`.
 
 ## Verification
 
-Run `npm test` and `npm run build`. Tests cover quote rounding, delivery, promotions, guest authorization, safe retries, payment state rendering, RLS, atomic stock reservation, bank confirmation, webhook prerequisites, provider matching, late payment handling and refund deduplication.
+Run `npm test` and `npm run build`. Tests cover quote rounding, delivery, promotions, guest authorization, safe retries, payment state rendering, RLS, atomic stock reservation, bank confirmation, webhook prerequisites, provider matching, late payment handling, refund deduplication, customer receipts, and admin reports.
 
 Before live use, also check with provider sandbox accounts and a migrated Supabase project:
 

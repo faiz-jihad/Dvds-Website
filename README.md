@@ -1,6 +1,6 @@
 # AZ Rayan DVDs
 
-Platform e-commerce physical media premium berbasis React 19, TypeScript, Vite, Supabase, dan Stripe Hosted Checkout. Menggabungkan kurasi film fisik berkualitas (DVD, Blu-ray, 4K UHD) dengan arsitektur operasional real-time, manajemen inventaris atomik, dan portal akun pelanggan yang lengkap.
+Platform e-commerce physical media premium berbasis React 19, TypeScript, Vite, Supabase, Stripe Hosted Checkout, dan automated business intelligence. Menggabungkan kurasi film fisik berkualitas (DVD, Blu-ray, 4K UHD) dengan arsitektur operasional real-time, manajemen inventaris atomik, sistem email terpisah (Customer Receipts & Admin Business Reports), dan portal akun pelanggan yang lengkap.
 
 ---
 
@@ -31,39 +31,56 @@ Platform e-commerce physical media premium berbasis React 19, TypeScript, Vite, 
 - **Animasi Halus**: Didukung oleh `framer-motion` dengan indikator progres visual, transisi status dinamis, dan tampilan detail kurir/resi.
 - Ditampilkan pada halaman konfirmasi sukses order (`/order-success`) dan riwayat akun pelanggan (`/account/orders`).
 
-### 4. Official UK Tax Invoice & Printable Receipt
-- **Desain Faktur Resmi UK**: Dilengkapi identitas toko AZ Rayan DVDs, nomor registrasi VAT UK, nomor registrasi perusahaan, dan jaminan keaslian BBFC.
-- **Rincian Finansial Transparan**: Kalkulasi Subtotal, PPN/VAT 20%, Ongkir (Standard/Express), Diskon kupon, dan Grand Total.
-- **Isolasi Cetak Bersih (@media print)**: Menggunakan container portal mandiri (`#print-only-container`) yang otomatis menyembunyikan `#root` dan modal backdrop untuk hasil cetak A4 atau ekspor PDF yang rapi tanpa terpotong.
+### 4. Official AZ Rayan DVDs Struk & Printable Receipt
+- **Desain Struk & Invoice Resmi**: Dilengkapi identitas resmi AZ Rayan DVDs, nomor referensi order `#ORD-XXXX`, status pembayaran (`PAID`), metode transaksi, rincian produk, dan barcode simulasi.
+- **Null-Safety & Tahan Crash**: Penanganan aman terhadap data alamat, item, maupun status pembayaran parsial.
+- **Aksi 1-Klik di Halaman Order Success**:
+  - Tombol **"Cetak Struk / Print Receipt"** langsung membuka native print dialog browser (*Print / Save as PDF*).
+  - Tombol **"Lihat Struk / Preview"** membuka modal interaktif kertas A4 dengan efek bayangan dan status pembayaran.
+  - Tombol pintas **Ctrl+P / Cmd+P** otomatis mencetak struk bersih yang terisolasi.
+- **Isolasi Cetak Bersih (@media print)**: Menggunakan portal `#print-only-container` yang otomatis menyembunyikan antarmuka web, modal, dan tombol, memastikan hasil cetak A4 atau PDF rapi dan presisi tanpa terpotong.
 
-### 5. Backoffice & Administrasi Toko (/admin)
+### 5. Sistem Email Terpisah (Customer Receipts vs Admin Reports)
+Sistem email memisahkan dua peruntukan secara ketat:
+- **CUSTOMER (Bukti Pembelian / Struk Email)**:
+  - Dikirimkan secara otomatis **hanya** setelah webhook Stripe diverifikasi (`stripe.webhooks.constructEvent`).
+  - Tidak pernah dipicu dari navigasi frontend.
+  - Desain kuitansi e-commerce profesional, mobile-friendly, tanpa memuat nomor kartu lengkap atau CVV.
+  - Dilengkapi tombol *"View Order"* dan proteksi idempotensi via `email_logs`.
+- **ADMIN (Laporan Kinerja Bisnis Mingguan & Bulanan)**:
+  - Admin **tidak** menerima email per transaksi satuan.
+  - Laporan eksekutif berkala otomatis:
+    - **Laporan Mingguan**: Setiap Senin pagi (periode Senin s/d Minggu lalu).
+    - **Laporan Bulanan**: Setiap tanggal 1 (periode bulan kalender lalu).
+  - Merangkum Total Pendapatan, Jumlah Pesanan, AOV, Unit Terjual, Produk Terlaris, dan Pengeluaran Operasional.
+  - Pembedaan akuntansi transparan antara **"Net Revenue After Recorded Expenses"** vs **"Estimated Profit"** berdasarkan ketersediaan data modal (`cost_price` / COGS).
+  - Lihat panduan lengkap di [docs/EMAIL_AND_REPORTS_SYSTEM.md](docs/EMAIL_AND_REPORTS_SYSTEM.md).
+
+### 6. Backoffice & Administrasi Toko (/admin)
 - **Role-Based Access Control**: Akses terproteksi untuk role `admin` dan `staff` via Supabase RLS.
+- **Laporan & Finansial (`/admin/reports`)**:
+  - Dashboard performa bisnis dengan filter rentang waktu (*This Week*, *Last Week*, *This Month*, *Last Month*, *Custom*).
+  - Manajemen pencatatan pengeluaran (*Expenses*) per kategori (*Shipping*, *Packaging*, *Payment Fees*, *Inventory*, *Marketing*, *Hosting*, dll).
+  - Riwayat pengiriman laporan (*Report History*) dengan fitur *Resend* manual jika email gagal terkirim.
+  - Tombol *Trigger Report Now* untuk pengujian instan.
 - **Katalog & Stok**: CRUD produk, pengarsipan aman (tanpa merusak histori transaksi), dan penyesuaian stok atomik wajib alasan.
 - **Order Fulfilment**: Pengaturan status pemenuhan, input kurir/resi Royal Mail, dan pencatatan riwayat status pesanan.
 - **Promosi & Diskon**: Kupon promo bertanggal dengan batas minimum belanja dan validasi server.
 - **CMS & Pengaturan Toko**: Kontrol banner beranda, ongkir, batas waktu dispatch (cutoff time), dan kontak toko.
 - **Audit & Inventory Ledger**: Log mutasi stok dan aktivitas admin append-only.
 
-### 6. Keamanan & Gateway Stripe
-- **Stripe Hosted Checkout**: Perhitungan harga, diskon, ongkir, dan ketersediaan stok diverifikasi ulang di Supabase Edge Function.
-- **Reservasi Stok Otomatis**: Stok direservasi saat sesi checkout dibuka dan otomatis dilepaskan kembali jika sesi kedaluwarsa (`checkout.session.expired`).
-
----
-
-## Arah Desain & UX
-
-Antarmuka storefront didesain dengan estetika editorial fisik modern yang terinspirasi oleh standar kuratorial media fisik kelas dunia ([Criterion Collection](https://www.criterion.com/shop), [BFI Shop](https://shop.bfi.org.uk/), [Arrow Films UK](https://www.arrowfilms.com/c/specialist/arrow-exclusives/), dan [A24 Shop](https://shop.a24films.com/)):
-- Tipografi tajam dan hierarki visual yang elegan.
-- Palette gelap premium dengan aksen sinematik (*gold & warm dark tones*).
-- Kartu rilisan fisik dengan proporsi rasio presisi, badge format, dan micro-interactions yang responsif.
+### 7. Keamanan & Gateway Pembayaran
+- **Stripe Hosted Checkout & Webhooks**: Perhitungan harga, diskon, ongkir, dan ketersediaan stok diverifikasi ulang di backend `/api/checkout-session` dan `/api/stripe-webhook`.
+- **Reservasi Stok Otomatis**: Stok direservasi saat sesi checkout dibuka dan otomatis dilepaskan kembali jika sesi kedaluwarsa (`checkout.session.expired`) atau dibatalkan.
+- **Batas Serverless Function Vercel**: Seluruh endpoint API serverless dirancang efisien dan terkonsolidasi (11 fungsi aktif, di bawah batas 12 fungsi paket Vercel Hobby).
 
 ---
 
 ## Menjalankan Aplikasi Secara Lokal
 
 ### Prasyarat
-- Node.js versi 18+ (atau v20+ disarankan)
-- NPM atau PNPM
+- Node.js versi 20+ (atau v24+ disarankan)
+- NPM
 
 ### Instalasi & Menjalankan Dev Server
 
@@ -75,12 +92,12 @@ npm install
 npm run dev
 ```
 
-Server lokal akan aktif di `http://localhost:5173` (atau port berikutnya jika port sedang terpakai).
+Server lokal akan aktif di `http://localhost:5173`.
 
 ### Menjalankan Pengujian (Testing)
 
 ```bash
-npm test
+node --test tests/checkout.test.mjs tests/security.test.mjs tests/admin-api.test.mjs tests/reports-and-email.test.mjs
 ```
 
 ### Validasi Build Produksi
@@ -96,28 +113,45 @@ npm run build
 Salin `.env.example` menjadi `.env` lalu lengkapi variabel berikut:
 
 ```env
+# Frontend Client Public Keys
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# Serverless Backend & Database Keys
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SITE_URL=https://your-site.com
+
+# Stripe Payment Gateway
+STRIPE_SECRET_KEY=sk_live_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+
+# PayPal Payment Gateway
+PAYPAL_CLIENT_ID=your-paypal-client-id
+PAYPAL_CLIENT_SECRET=your-paypal-client-secret
+PAYPAL_WEBHOOK_ID=your-paypal-webhook-id
+PAYPAL_ENVIRONMENT=sandbox
+
+# Email & Automated Business Reports
+ADMIN_EMAIL=admin@azrayan.co.uk
+EMAIL_FROM="AZ Rayan DVDs <orders@azrayan.co.uk>"
+RESEND_API_KEY=re_xxxxxxxxxxxx
+# atau: SENDGRID_API_KEY=SG.xxxxxxxxxxxx
+CRON_SECRET=your-random-cron-secret-token
 ```
 
-> **Keamanan**: Jangan pernah memasukkan `SUPABASE_SERVICE_ROLE_KEY` atau `STRIPE_SECRET_KEY` ke dalam berkas `.env` frontend atau variabel yang berawalan `VITE_`.
+> **Keamanan**: Jangan pernah memasukkan `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, atau API key email ke variabel yang berawalan `VITE_`.
 
 ---
 
 ## Menyiapkan Supabase Database
 
 1. Terapkan seluruh migration database secara berurutan:
-   ```bash
-   supabase db push
-   ```
-   Migration ini secara otomatis menyiapkan skema tabel, RLS policy, fungsi RPC atomik untuk stok/order, dan trigger audit log.
+   - `20260915000001_admin_reliability.sql`
+   - `20260915000002_checkout_sync.sql`
+   - `20261007000001_business_reports_and_expenses.sql`
 
-2. Verifikasi integritas tabel:
-   ```bash
-   node src/scripts/testDb.js
-   ```
-
-3. Promosikan akun admin pertama melalui SQL Editor Supabase:
+2. Promosikan akun admin pertama melalui SQL Editor Supabase:
    ```sql
    UPDATE public.profiles
    SET role = 'admin'
@@ -128,38 +162,10 @@ Lihat panduan lengkap di [docs/ADMIN_VERIFICATION.md](docs/ADMIN_VERIFICATION.md
 
 ---
 
-## Menyiapkan Stripe & Edge Functions
+## Dokumentasi Terkait
 
-1. Konfigurasikan secret di Supabase:
-   ```bash
-   supabase secrets set STRIPE_SECRET_KEY=sk_live_xxx
-   supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_xxx
-   supabase secrets set SITE_URL=https://your-store.example
-   ```
-
-2. Deploy Edge Functions:
-   ```bash
-   supabase functions deploy create-checkout-session
-   supabase functions deploy stripe-webhook --no-verify-jwt
-   supabase functions deploy get-order-status
-   ```
-
-3. Daftarkan endpoint webhook Stripe:
-   ```text
-   https://PROJECT_ID.supabase.co/functions/v1/stripe-webhook
-   ```
-   Event wajib:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-
-Lihat panduan lengkap di [docs/PAYMENT_GATEWAY_SETUP.md](docs/PAYMENT_GATEWAY_SETUP.md).
-
----
-
-## Batas Keamanan Sistem
-
-1. **Integritas Transaksi**: Browser tidak dapat membuat pesanan atau mengubah status transaksi secara langsung; seluruh pembuatan pesanan divalidasi oleh Edge Function berbasis service-role.
-2. **Kalkulasi Harga Server-Side**: Harga akhir, diskon promo, ongkos kirim, dan stok dihitung ulang secara independen di server database.
-3. **Proteksi Role & RLS**: Seluruh mutasi data katalog, stok, dan pengaturan toko diisolasi dengan Row Level Security Supabase.
-4. **Validasi Dispatch**: Order tidak dapat ditandai sebagai *Dispatched* tanpa mengisi kurir pengiriman dan nomor resi tracking yang valid.
-5. **Audit Immutable**: Riwayat status pesanan, ledger stok barang, dan log audit admin bersifat *append-only*.
+- [docs/EMAIL_AND_REPORTS_SYSTEM.md](docs/EMAIL_AND_REPORTS_SYSTEM.md) — Panduan lengkap sistem email kuitansi pelanggan, laporan performa admin, manajemen pengeluaran, dan Vercel Cron.
+- [docs/PAYMENT_GATEWAY_SETUP.md](docs/PAYMENT_GATEWAY_SETUP.md) — Panduan konfigurasi Stripe, PayPal, Direct Bank Transfer, dan webhook lifecycle.
+- [docs/ADMIN_VERIFICATION.md](docs/ADMIN_VERIFICATION.md) — Verifikasi hak akses admin dan integritas database.
+- [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md) — Panduan integrasi keamanan Cloudflare dan Turnstile bot protection.
+- [SECURITY.md](SECURITY.md) — Standar mitigasi OWASP Top 10, IDOR, CSP, dan rate limiting.
