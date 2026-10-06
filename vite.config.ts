@@ -15,18 +15,16 @@ const devApiPlugin = () => ({
       'create-checkout-session',
       'create-payment-intent',
       'create-paypal-order',
-      'create-bank-transfer-order',
       'upload-payment-proof',
       'order-status',
-      'verify-stripe-payment',
-      'capture-paypal-order',
       'stripe-webhook',
-      'stripe/webhook',
       'paypal-webhook',
       'verify-turnstile',
     ]);
     server.middlewares.use(async (req: any, res: any, next: any) => {
-      const route = req.url?.split('?')[0]?.replace('/api/', '');
+      let route = req.url?.split('?')[0]?.replace('/api/', '');
+      if (route === 'stripe/webhook') route = 'stripe-webhook';
+      if (route === 'verify-stripe-payment' || route === 'capture-paypal-order') route = 'order-status';
       const filePath = path.resolve(__dirname, `api/${route}.js`);
       if (!req.url?.startsWith('/api/') || (!endpoints.has(route) && !fs.existsSync(filePath))) return next();
       dotenv.config({ override: true });

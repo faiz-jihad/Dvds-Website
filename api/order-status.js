@@ -66,5 +66,12 @@ export default endpoint(async (req) => {
   }
 
   // The order status reflects verified backend / provider data.
-  return { order: publicOrder(order) };
+  return {
+    order: publicOrder(order),
+    verified: order.payment_status === 'paid',
+    orderId: order.id,
+    orderNumber: order.order_number,
+    payment_status: order.payment_status,
+  };
 }, 'POST', { max: 120, windowMs: 60000 });
+

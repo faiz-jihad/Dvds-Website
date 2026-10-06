@@ -121,7 +121,7 @@ export const checkoutApi = {
     return response.order;
   },
   async verifyStripePayment(orderId: string, sessionId?: string): Promise<{ verified: boolean; orderId: string; payment_status: string }> {
-    return post<{ verified: boolean; orderId: string; payment_status: string }>('verify-stripe-payment', { orderId, sessionId }, orderId);
+    return post<{ verified: boolean; orderId: string; payment_status: string }>('order-status', { orderId, sessionId }, orderId);
   },
   async cancel(orderId: string) {
     await post('cancel-checkout', { orderId }, orderId);
