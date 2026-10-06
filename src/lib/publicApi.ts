@@ -212,6 +212,10 @@ export const publicApi = {
     if (!joined.error && joined.data) {
       rawOrders = joined.data;
     } else {
+      const isRelationError = joined.error?.message?.includes('relationship') || joined.error?.code === 'PGRST200';
+      if (joined.error && !isRelationError) {
+        throw new Error('Your orders could not be loaded. Please retry.');
+      }
       // Fallback query if nested relation fails
       const fallback = await sb
         .from('orders')
