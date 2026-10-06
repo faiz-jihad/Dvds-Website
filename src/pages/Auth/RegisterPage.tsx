@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Mail, LockKeyhole, Eye, EyeOff, User, ArrowRight, ShieldCheck, ArrowLeft, CheckCircle2, Phone as PhoneIcon, MapPin } from 'lucide-react';
+import { Mail, LockKeyhole, Eye, EyeOff, User, ArrowRight, ShieldCheck, ArrowLeft, CheckCircle2, Phone as PhoneIcon, MapPin, Sun, Moon } from 'lucide-react';
 import { useCustomerAuth } from '../../auth/CustomerAuth';
 import { useUiStore } from '../../stores/useUiStore';
+import { useThemeStore } from '../../stores/useThemeStore';
 
 export const RegisterPage: React.FC = () => {
   const { register, loginWithGoogle, customer } = useCustomerAuth();
+  const { theme, toggleTheme } = useThemeStore();
+  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const location = useLocation();
   const addToast = useUiStore((state) => state.addToast);
@@ -133,7 +136,7 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white transition-colors duration-200">
       <div className="max-w-md w-full">
-        {/* Header link */}
+        {/* Header link & theme toggle */}
         <div className="mb-6 flex items-center justify-between">
           <Link
             to="/"
@@ -142,9 +145,20 @@ export const RegisterPage: React.FC = () => {
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Store</span>
           </Link>
-          <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-            Secure Registration
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline text-xs text-gray-400 dark:text-gray-500 font-medium">
+              Secure Registration
+            </span>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors shadow-2xs cursor-pointer"
+              title={isDark ? "Switch to Light theme" : "Switch to Dark theme"}
+              aria-label="Toggle color theme"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
         {/* Card */}

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, AlertCircle, Sun, Moon } from 'lucide-react';
 import { useAdminAuth } from '../../auth/AdminAuth';
 import { sanitizeRedirectPath } from '../../lib/utils';
 import { useThemeStore } from '../../stores/useThemeStore';
 
 export const AdminLogin: React.FC = () => {
   const { user, isLoading, login } = useAdminAuth();
-  const { theme } = useThemeStore();
+  const { theme, toggleTheme } = useThemeStore();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
   const location = useLocation();
@@ -108,8 +108,8 @@ export const AdminLogin: React.FC = () => {
       {/* Right Column: Clean White Authentication Form */}
       <section className="flex min-h-screen items-center justify-center p-4 sm:p-8 md:p-12 bg-gray-50 dark:bg-[#07090E]">
         <div className="w-full max-w-md">
-          {/* Back link */}
-          <div className="mb-6">
+          {/* Back link & Theme toggle */}
+          <div className="mb-6 flex items-center justify-between">
             <Link
               to="/"
               className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-dark dark:hover:text-white transition-colors"
@@ -117,6 +117,16 @@ export const AdminLogin: React.FC = () => {
               <ArrowLeft className="w-4 h-4" />
               <span>Back to storefront</span>
             </Link>
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors shadow-2xs cursor-pointer"
+              title={isDark ? "Switch to Light theme" : "Switch to Dark theme"}
+              aria-label="Toggle color theme"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
           </div>
 
           {/* Clean Login Card */}
@@ -124,7 +134,7 @@ export const AdminLogin: React.FC = () => {
             <div className="mb-6">
               <div className="mb-4">
                 <img
-                  src={isDark ? "/brand/logo-dark-theme.png" : "/brand/logo.png"}
+                  src={isDark ? "/brand/logo-dark-theme.png" : "/brand/logo-transparent.png"}
                   alt="DVDs Zone"
                   className="h-10 w-auto object-contain"
                 />

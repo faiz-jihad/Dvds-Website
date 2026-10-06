@@ -16,11 +16,11 @@ export const Badge: React.FC<BadgeProps> = ({
   const variants = {
     new: 'bg-brand-blue text-white font-bold',
     sale: 'bg-brand-red text-white font-bold',
-    'best-seller': 'bg-dark text-white',
+    'best-seller': 'bg-dark text-white dark:bg-white/15 dark:text-white',
     'low-stock': 'bg-brand-red text-white font-bold',
-    format: 'bg-gray-100 text-dark border border-gray-200 font-medium',
-    neutral: 'bg-gray-100 text-gray-700',
-    age: 'border border-gray-400 text-dark font-mono text-[10px] w-6 h-6 rounded-full p-0 flex items-center justify-center',
+    format: 'bg-gray-100 text-dark border border-gray-200 dark:bg-white/10 dark:text-white dark:border-white/15 font-medium',
+    neutral: 'bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-gray-300',
+    age: 'border border-gray-400 dark:border-white/20 text-dark dark:text-white font-mono text-[10px] w-6 h-6 rounded-full p-0 flex items-center justify-center',
   };
 
   return (

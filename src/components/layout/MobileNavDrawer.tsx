@@ -93,7 +93,7 @@ export const MobileNavDrawer: React.FC = () => {
               <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-white/10">
                 <div className="flex items-center gap-2.5">
                   <img
-                    src={isDark ? "/brand/logo-dark-theme.png" : "/brand/logo.png"}
+                    src={isDark ? "/brand/logo-dark-theme.png" : "/brand/logo-transparent.png"}
                     alt="DVDs Zone"
                     className="h-10 w-auto max-w-[9.5rem] object-contain"
                   />

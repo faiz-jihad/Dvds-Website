@@ -1,12 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Mail, Phone, Truck } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useThemeStore } from '../../stores/useThemeStore';
+import { publicApi } from '../../lib/publicApi';
+import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
 import { cn } from '../../lib/formatters';
 
 export const AzDarkLandingFooter: React.FC = () => {
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === 'dark';
+
+  const settingsQuery = useQuery({
+    queryKey: ['store', 'settings'],
+    queryFn: publicApi.getStoreSettings,
+    staleTime: 60_000,
+  });
+
+  const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
+  const storeName = settings.store_name || 'DVD ZONE';
+  const registeredCompanyName = settings.registered_company_name || 'DVD Zone';
+  const warehouseLocation = settings.warehouse_location || 'West Midlands, Birmingham, United Kingdom';
+  const supportEmail = settings.support_email || 'azrayanltd@gmail.com';
+  const supportPhone = settings.support_phone || '00447400320038';
+  const cutoffTime = settings.dispatch_cutoff_time || '2:00 PM';
 
   return (
     <footer
@@ -25,28 +42,34 @@ export const AzDarkLandingFooter: React.FC = () => {
             <Link to="/" className="inline-block">
               <img
                 src={isDark ? '/brand/logo-dark-theme.png' : '/brand/logo-transparent.png'}
-                alt="DVD ZONE"
+                alt={storeName}
                 className="h-9 w-auto object-contain"
               />
             </Link>
-            <p className="text-xs text-gray-400 leading-relaxed max-w-xs">
-              DVD ZONE — Quality DVDs & Entertainment. Active since 2021, operated by company based in 2022 AZ Rayan LTD & DVD Zone.
+            <p className={cn('text-xs leading-relaxed max-w-xs', isDark ? 'text-gray-400' : 'text-gray-600')}>
+              {storeName} — Quality DVDs &amp; Entertainment. Active since 2021, operated by company based in 2022 AZ Rayan LTD &amp; {registeredCompanyName}.
             </p>
-            <div className="flex items-center gap-1.5 text-xs text-gray-400 pt-1">
+            <div className={cn('flex items-center gap-1.5 text-xs pt-1', isDark ? 'text-gray-400' : 'text-gray-600')}>
               <MapPin size={13} className="text-brand-blue shrink-0" />
-              <span>West Midlands, Birmingham, United Kingdom</span>
+              <span>{warehouseLocation}</span>
             </div>
             <div className="space-y-1.5 pt-1">
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <div className={cn('flex items-center gap-1.5 text-xs', isDark ? 'text-gray-400' : 'text-gray-600')}>
                 <Mail size={13} className="text-brand-blue shrink-0" />
-                <a href="mailto:azrayanltd@gmail.com" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
-                  azrayanltd@gmail.com
+                <a
+                  href={`mailto:${supportEmail}`}
+                  className={cn('transition-colors', isDark ? 'hover:text-white' : 'hover:text-gray-900')}
+                >
+                  {supportEmail}
                 </a>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <div className={cn('flex items-center gap-1.5 text-xs', isDark ? 'text-gray-400' : 'text-gray-600')}>
                 <Phone size={13} className="text-brand-blue shrink-0" />
-                <a href="tel:+447400320038" className={isDark ? 'hover:text-white font-mono' : 'hover:text-gray-900 font-mono'}>
-                  00447400320038
+                <a
+                  href={`tel:${supportPhone}`}
+                  className={cn('font-mono transition-colors', isDark ? 'hover:text-white' : 'hover:text-gray-900')}
+                >
+                  {supportPhone}
                 </a>
               </div>
             </div>
@@ -59,27 +82,27 @@ export const AzDarkLandingFooter: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link to="/shop" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/shop" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   Complete Store
                 </Link>
               </li>
               <li>
-                <Link to="/shop?filter=new" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/shop?filter=new" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   New Releases
                 </Link>
               </li>
               <li>
-                <Link to="/shop?filter=trending" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/shop?filter=trending" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   Top 10 Chart
                 </Link>
               </li>
               <li>
-                <Link to="/shop?format=box-set" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/shop?format=box-set" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   TV Series Box Sets
                 </Link>
               </li>
               <li>
-                <Link to="/shop?filter=sale" className="text-brand-red hover:text-red-400 font-semibold">
+                <Link to="/shop?filter=sale" className="text-brand-red hover:text-red-400 font-semibold transition-colors">
                   Special Offers
                 </Link>
               </li>
@@ -89,31 +112,31 @@ export const AzDarkLandingFooter: React.FC = () => {
           {/* Customer Service */}
           <div>
             <h4 className={cn('text-xs font-black uppercase tracking-wider mb-3', isDark ? 'text-white' : 'text-gray-900')}>
-              Help & Support
+              Help &amp; Support
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link to="/delivery" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/delivery" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   Delivery Information
                 </Link>
               </li>
               <li>
-                <Link to="/returns" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
-                  Returns & Refund Policy
+                <Link to="/returns" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
+                  Returns &amp; Refund Policy
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/faq" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   Frequently Asked Questions
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/contact" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   Contact Us
                 </Link>
               </li>
               <li>
-                <Link to="/account/orders" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/account/orders" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   Track Your Order
                 </Link>
               </li>
@@ -123,46 +146,46 @@ export const AzDarkLandingFooter: React.FC = () => {
           {/* Legal & Account */}
           <div>
             <h4 className={cn('text-xs font-black uppercase tracking-wider mb-3', isDark ? 'text-white' : 'text-gray-900')}>
-              Account & Legal
+              Account &amp; Legal
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link to="/login" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/login" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   Customer Sign In
                 </Link>
               </li>
               <li>
-                <Link to="/register" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/register" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   Create Account
                 </Link>
               </li>
               <li>
-                <Link to="/favourites" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/favourites" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   Saved Wishlist
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
-                  Terms & Conditions
+                <Link to="/terms" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
+                  Terms &amp; Conditions
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className={isDark ? 'hover:text-white' : 'hover:text-gray-900'}>
+                <Link to="/privacy" className={cn('transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}>
                   Privacy Policy
                 </Link>
               </li>
             </ul>
 
             {/* Delivery highlight */}
-            <div className="mt-5 pt-4 border-t border-white/5">
+            <div className={cn('mt-5 pt-4 border-t', isDark ? 'border-white/5' : 'border-gray-200')}>
               <div className="flex items-start gap-2 text-[11px]">
                 <Truck size={14} className="text-brand-blue shrink-0 mt-0.5" />
                 <div>
                   <span className={cn('font-bold text-xs block mb-1', isDark ? 'text-white' : 'text-gray-900')}>
                     FREE UK DELIVERY
                   </span>
-                  <span className="text-gray-400 leading-relaxed">
-                    Same-day dispatch. Delivery within 2 working days via Royal Mail.
+                  <span className={cn('leading-relaxed', isDark ? 'text-gray-400' : 'text-gray-600')}>
+                    Same-day dispatch (orders before {cutoffTime}). Delivery within 2 working days via Royal Mail.
                   </span>
                 </div>
               </div>
@@ -173,14 +196,14 @@ export const AzDarkLandingFooter: React.FC = () => {
         {/* Bottom Strip */}
         <div
           className={cn(
-            'pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500',
-            isDark ? 'border-white/10' : 'border-gray-200'
+            'pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-xs transition-colors',
+            isDark ? 'border-white/10 text-gray-400' : 'border-gray-200 text-gray-600'
           )}
         >
           <p>
-            &copy; {new Date().getFullYear()} AZ Rayan LTD & DVD Zone. All rights reserved. Registered in England &amp; Wales.
+            &copy; {new Date().getFullYear()} AZ Rayan LTD &amp; {registeredCompanyName}. All rights reserved. Registered in England &amp; Wales.
           </p>
-          <div className="flex items-center gap-4 text-gray-400">
+          <div className={cn('flex items-center gap-4 text-xs', isDark ? 'text-gray-400' : 'text-gray-600')}>
             <span>Stripe Verified</span>
             <span>&bull;</span>
             <span>PayPal</span>
@@ -192,4 +215,5 @@ export const AzDarkLandingFooter: React.FC = () => {
     </footer>
   );
 };
+
 export default AzDarkLandingFooter;
