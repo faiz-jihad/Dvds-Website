@@ -18,6 +18,13 @@ interface BucketItem {
   orders: number;
 }
 
+interface ActiveMonthTarget {
+  month: number;
+  year: number;
+  amount: number;
+  label: string;
+}
+
 interface RevenueTrendChartProps {
   dailyRevenue?: { date: string; amount: number; orders: number }[];
   allPaidOrders?: { id: string; date: string; amount: number; rawDate?: string }[];
@@ -124,7 +131,7 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
   }, [allPaidOrders, selectedYear]);
 
   // Dynamically detect the most recent month with paid revenue for instant navigation
-  const latestActiveMonth = useMemo(() => {
+  const latestActiveMonth = useMemo<ActiveMonthTarget | null>(() => {
     const ordersList = Array.isArray(allPaidOrders) ? allPaidOrders : [];
     const monthTotals = new Map<string, { month: number; year: number; amount: number; time: number }>();
 
@@ -142,7 +149,7 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
       }
     });
 
-    let best: { month: number; year: number; amount: number; label: string } | null = null;
+    let best: ActiveMonthTarget | null = null;
     let maxTime = 0;
     monthTotals.forEach((val) => {
       if (val.time > maxTime) {
@@ -158,6 +165,21 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
 
     return best;
   }, [allPaidOrders]);
+
+  const targetActiveMonth = useMemo<ActiveMonthTarget | null>(() => {
+    if (!latestActiveMonth) return null;
+    if (selectedMonth === latestActiveMonth.month && selectedYear === latestActiveMonth.year) {
+      return null;
+    }
+    return latestActiveMonth;
+  }, [latestActiveMonth, selectedMonth, selectedYear]);
+
+  const handleJumpToLatestMonth = () => {
+    if (!latestActiveMonth) return;
+    setPeriod('month');
+    setSelectedMonth(latestActiveMonth.month);
+    setSelectedYear(latestActiveMonth.year);
+  };
 
   // Generate chart data buckets based on selected period
   const buckets: BucketItem[] = useMemo(() => {
@@ -563,25 +585,21 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
             <Info className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0" />
             <span>
               No settled customer transactions recorded for <strong>{title}</strong>.
-              {latestActiveMonth && (
+              {latestActiveMonth ? (
                 <span className="hidden sm:inline"> Historical settled orders exist in <strong>{latestActiveMonth.label}</strong>.</span>
-              )}
+              ) : null}
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {latestActiveMonth && (selectedMonth !== latestActiveMonth.month || selectedYear !== latestActiveMonth.year) && (
+            {targetActiveMonth ? (
               <button
                 type="button"
-                onClick={() => {
-                  setPeriod('month');
-                  setSelectedMonth(latestActiveMonth.month);
-                  setSelectedYear(latestActiveMonth.year);
-                }}
+                onClick={handleJumpToLatestMonth}
                 className="px-2.5 py-1 text-xs font-semibold bg-brand-blue text-white rounded-md hover:bg-brand-blue-hover transition cursor-pointer shadow-xs"
               >
-                View {latestActiveMonth.label} (£{latestActiveMonth.amount.toFixed(2)}) →
+                View {targetActiveMonth.label} (£{targetActiveMonth.amount.toFixed(2)}) →
               </button>
-            )}
+            ) : null}
             {period !== 'year' && (
               <button
                 type="button"
