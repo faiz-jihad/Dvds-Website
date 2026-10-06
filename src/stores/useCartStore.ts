@@ -62,13 +62,20 @@ export const useCartStore = create<CartState>()(
           fixedDiscount: stillValid && current.type === 'fixed_amount' ? Number(current.value) : 0,
         };
       }),
-      syncCatalogue: (products) => set((state) => {
+      syncCatalogue: (products, settings) => set((state) => {
         const productsById = new Map(products.map((product) => [product.id, product]));
+        const now = Date.now();
+        const dealEnds = settings?.deal_ends_at || settings?.campaign_ends_at;
+        const dealNotExpired = !dealEnds || !Number.isNaN(Date.parse(String(dealEnds))) ? Date.parse(String(dealEnds)) > now : true;
+        const isDealActive = Boolean(settings?.deal_is_active && dealNotExpired && Number(settings?.deal_discount_price) > 0);
+
         return {
           items: state.items.flatMap((item) => {
             const product = productsById.get(item.product_id);
             if (!product || product.status !== 'active' || product.stock_quantity <= 0) return [];
-            return [{ ...item, product, unit_price: product.price, quantity: Math.min(item.quantity, product.stock_quantity) }];
+            const isDeal = isDealActive && settings?.deal_product_id === product.id;
+            const effectivePrice = isDeal ? Math.min(product.price, Number(settings.deal_discount_price)) : product.price;
+            return [{ ...item, product, unit_price: effectivePrice, quantity: Math.min(item.quantity, product.stock_quantity) }];
           }),
         };
       }),

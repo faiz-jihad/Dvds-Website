@@ -104,12 +104,14 @@ export const DeliveryPage: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-xs text-gray-600 dark:text-gray-300">
-                  Delivered within 2 working days. Orders placed before 2:00 PM are dispatched the same day.
+                  {settings.standard_shipping_eta || 'Delivered within 2 working days'}. Orders placed before {settings.dispatch_cutoff_time || '2:00 PM'} are dispatched the same day.
                 </p>
               </div>
               <div className="text-left sm:text-right shrink-0">
                 <span className="font-display font-extrabold text-base text-emerald-700 dark:text-emerald-400">
-                  FREE
+                  {settings.free_shipping_threshold != null && settings.free_shipping_threshold > 0
+                    ? `FREE over ${formatGBP(settings.free_shipping_threshold)}`
+                    : 'FREE'}
                 </span>
               </div>
             </div>
@@ -126,11 +128,11 @@ export const DeliveryPage: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  {settings.express_shipping_eta || '1 working day (Order by 2:00 PM)'} via Royal Mail Tracked 24.
+                  {settings.express_shipping_eta || '1 working day'} (Order by {settings.dispatch_cutoff_time || '2:00 PM'}).
                 </p>
               </div>
               <div className="text-left sm:text-right shrink-0 font-mono font-bold text-dark dark:text-white text-sm">
-                {formatGBP(settings.express_shipping_fee || 5.99)}
+                {formatGBP(settings.express_shipping_fee || 4.99)}
               </div>
             </div>
           </div>
@@ -158,7 +160,7 @@ export const DeliveryPage: React.FC = () => {
               Same-Day Dispatch Cut-Off
             </h3>
             <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-              We dispatch Monday to Friday. Orders received before 2:00 PM are carefully packed and handed to Royal Mail that afternoon. Weekend orders leave first thing Monday.
+              We dispatch Monday to Friday. Orders received before {settings.dispatch_cutoff_time || '2:00 PM'} are carefully packed and handed to Royal Mail that afternoon. Weekend orders leave first thing Monday.
             </p>
           </div>
         </div>
@@ -174,8 +176,8 @@ export const DeliveryPage: React.FC = () => {
                 <MapPin className="w-3.5 h-3.5 text-brand-blue dark:text-blue-400" />
                 <span>Headquarter &amp; Vault</span>
               </div>
-              <p>DVD ZONE</p>
-              <p>West Midlands, Birmingham, United Kingdom</p>
+              <p>{settings.store_name || 'DVD ZONE'}</p>
+              <p>{settings.warehouse_location || settings.registered_office_address || 'West Midlands, Birmingham, United Kingdom'}</p>
             </div>
 
             <div className="space-y-1">
@@ -183,8 +185,8 @@ export const DeliveryPage: React.FC = () => {
                 <Mail className="w-3.5 h-3.5 text-brand-blue dark:text-blue-400" />
                 <span>Email Inquiries</span>
               </div>
-              <a href="mailto:azrayanltd@gmail.com" className="text-brand-blue dark:text-blue-400 hover:underline block font-mono">
-                azrayanltd@gmail.com
+              <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline block font-mono">
+                {settings.support_email || 'azrayanltd@gmail.com'}
               </a>
               <p className="text-[11px] text-gray-500 dark:text-gray-400">Replies usually within a few hours</p>
             </div>
@@ -194,8 +196,8 @@ export const DeliveryPage: React.FC = () => {
                 <Phone className="w-3.5 h-3.5 text-brand-blue dark:text-blue-400" />
                 <span>Customer Line</span>
               </div>
-              <a href="tel:+447400320038" className="text-brand-blue dark:text-blue-400 hover:underline block font-mono">
-                00447400320038
+              <a href={`tel:${settings.support_phone || '00447400320038'}`} className="text-brand-blue dark:text-blue-400 hover:underline block font-mono">
+                {settings.support_phone || '00447400320038'}
               </a>
               <p className="text-[11px] text-gray-500 dark:text-gray-400">Mon–Fri 9:00 AM – 5:00 PM</p>
             </div>

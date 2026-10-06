@@ -1,10 +1,10 @@
-import React from 'react';
-import { createPortal } from 'react-dom';
-import { Order } from '../../types';
-import { Modal } from '../common/Modal';
-import { Button } from '../common/Button';
-import { PrintableReceipt } from './PrintableReceipt';
-import { Printer, Download, CheckCircle2 } from 'lucide-react';
+import React from "react";
+import { createPortal } from "react-dom";
+import { Order } from "../../types";
+import { Modal } from "../common/Modal";
+import { Button } from "../common/Button";
+import { PrintableReceipt } from "./PrintableReceipt";
+import { Printer, Download, CheckCircle2 } from "lucide-react";
 
 interface OrderReceiptModalProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
     }, 50);
   };
 
-  const isPaid = order.payment_status === 'paid';
+  const isPaid = order.payment_status === "paid";
 
   return (
     <>
@@ -47,8 +47,8 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
               <span
                 className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded border ${
                   isPaid
-                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
-                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800'
+                    ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800"
+                    : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800"
                 }`}
               >
                 {isPaid && <CheckCircle2 className="w-3 h-3" />}
@@ -89,12 +89,13 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
       </Modal>
 
       {/* Dedicated Portal for Clean, Isolated A4 Print Output */}
-      {typeof document !== 'undefined' && createPortal(
-        <div id="print-only-container">
-          <PrintableReceipt order={order} />
-        </div>,
-        document.body
-      )}
+      {typeof document !== "undefined" &&
+        createPortal(
+          <div id="print-only-container">
+            <PrintableReceipt order={order} />
+          </div>,
+          document.body,
+        )}
     </>
   );
 };

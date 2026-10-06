@@ -89,7 +89,15 @@ export const ProductDetail: React.FC = () => {
   }
 
   const isFav = isFavourite(product.id);
-  const hasDiscount = product.compare_at_price && product.compare_at_price > product.price;
+  const isDeal = Boolean(
+    settingsQuery.data?.deal_is_active &&
+    settingsQuery.data?.deal_product_id === product.id &&
+    (!settingsQuery.data?.campaign_ends_at || Date.parse(settingsQuery.data.campaign_ends_at) > Date.now()) &&
+    Number(settingsQuery.data?.deal_discount_price) > 0
+  );
+  const effectivePrice = isDeal ? Math.min(product.price, Number(settingsQuery.data!.deal_discount_price)) : product.price;
+  const hasDiscount = (product.compare_at_price && product.compare_at_price > product.price) || isDeal;
+  const originalPrice = isDeal ? product.price : product.compare_at_price;
   const isVideoFormat = ['DVD', 'Blu-ray', '4K UHD', 'Box Set'].includes(product.format);
   const activeImage = productImages[selectedImageIndex] || product.cover_image_url || '';
 
@@ -99,7 +107,7 @@ export const ProductDetail: React.FC = () => {
     .slice(0, 4);
 
   const handleAddToBasket = () => {
-    addItem(product, quantity);
+    addItem(isDeal ? { ...product, price: effectivePrice } : product, quantity);
     setIsAdded(true);
     addToast(`Added ${quantity}x "${product.title}" to basket`, 'success');
     openCartDrawer();
@@ -220,11 +228,15 @@ export const ProductDetail: React.FC = () => {
                 </div>
               )}
 
-              {hasDiscount && (
+              {isDeal ? (
+                <div className="absolute top-3 left-3">
+                  <Badge variant="sale">SPOTLIGHT DEAL</Badge>
+                </div>
+              ) : hasDiscount ? (
                 <div className="absolute top-3 left-3">
                   <Badge variant="sale">SPECIAL OFFER</Badge>
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* Thumbnail Strip (Up to 6 images) */}
@@ -302,15 +314,15 @@ export const ProductDetail: React.FC = () => {
               {/* Price Block with Red Sale treatment */}
               <div className="flex flex-wrap items-baseline gap-3 pb-6 border-b border-gray-200 dark:border-white/10">
                 <span className={cn('text-3xl font-extrabold font-mono tracking-tight', hasDiscount ? 'text-brand-red dark:text-red-400' : 'text-dark dark:text-white')}>
-                  {formatGBP(product.price)}
+                  {formatGBP(effectivePrice)}
                 </span>
                 {hasDiscount && (
                   <>
                     <span className="text-sm text-gray-400 line-through font-mono">
-                      {formatGBP(product.compare_at_price)}
+                      {formatGBP(originalPrice)}
                     </span>
                     <span className="text-xs font-bold text-brand-red uppercase tracking-wider bg-brand-red-soft dark:bg-red-950/40 dark:text-red-400 px-2 py-0.5 rounded-sm">
-                      Save {formatGBP(product.compare_at_price! - product.price)}
+                      Save {formatGBP(originalPrice! - effectivePrice)}
                     </span>
                   </>
                 )}

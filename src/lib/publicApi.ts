@@ -143,14 +143,14 @@ export const publicApi = {
       hero_youtube_url: data.hero_youtube_url ?? DEFAULT_STORE_SETTINGS.hero_youtube_url ?? '',
       hero_trailers: Array.isArray(data.hero_trailers) ? data.hero_trailers : (DEFAULT_STORE_SETTINGS.hero_trailers || []),
       ...localOverride,
-      deal_discount_price: Number(data.deal_discount_price),
-      free_shipping_threshold: Number(data.free_shipping_threshold),
-      standard_shipping_fee: Number(data.standard_shipping_fee),
-      express_shipping_fee: Number(data.express_shipping_fee),
-      low_stock_threshold: Number(data.low_stock_threshold),
-      budget_collection_threshold: Number(data.budget_collection_threshold),
-      vip_promo_discount: Number(data.vip_promo_discount),
-      vip_min_spend: Number(data.vip_min_spend),
+      deal_discount_price: Number(localOverride.deal_discount_price ?? data.deal_discount_price ?? 0),
+      free_shipping_threshold: Number(localOverride.free_shipping_threshold ?? data.free_shipping_threshold ?? 0),
+      standard_shipping_fee: Number(localOverride.standard_shipping_fee ?? data.standard_shipping_fee ?? 0),
+      express_shipping_fee: Number(localOverride.express_shipping_fee ?? data.express_shipping_fee ?? 0),
+      low_stock_threshold: Number(localOverride.low_stock_threshold ?? data.low_stock_threshold ?? 5),
+      budget_collection_threshold: Number(localOverride.budget_collection_threshold ?? data.budget_collection_threshold ?? 15),
+      vip_promo_discount: Number(localOverride.vip_promo_discount ?? data.vip_promo_discount ?? 0),
+      vip_min_spend: Number(localOverride.vip_min_spend ?? data.vip_min_spend ?? 0),
     } as StoreSettings;
 
     // Strict privacy protection: never expose personal home address
@@ -166,8 +166,8 @@ export const publicApi = {
     if (!result.registered_company_name || result.registered_company_name === 'AZ Rayan DVDs') {
       result.registered_company_name = 'AZ Rayan LTD & DVD Zone';
     }
-    result.support_email = 'azrayanltd@gmail.com';
-    result.support_phone = '00447400320038';
+    result.support_email = data.support_email?.trim() || localOverride.support_email?.trim() || 'azrayanltd@gmail.com';
+    result.support_phone = data.support_phone?.trim() || localOverride.support_phone?.trim() || '00447400320038';
     return result;
   },
 

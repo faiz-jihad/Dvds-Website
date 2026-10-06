@@ -158,9 +158,9 @@ export const ContactPage: React.FC = () => {
                 <MapPin className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-dark dark:text-white block font-semibold mb-0.5">Headquarter &amp; Vault</strong>
-                  <div className="font-bold text-dark dark:text-white">DVD ZONE</div>
+                  <div className="font-bold text-dark dark:text-white">{settings.store_name || 'DVD ZONE'}</div>
                   <span className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                    West Midlands, Birmingham, United Kingdom
+                    {settings.warehouse_location || settings.registered_office_address || 'West Midlands, Birmingham, United Kingdom'}
                   </span>
                 </div>
               </div>
@@ -169,8 +169,8 @@ export const ContactPage: React.FC = () => {
                 <Mail className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-dark dark:text-white block font-semibold mb-0.5">Customer service and inquiry email address</strong>
-                  <a href="mailto:azrayanltd@gmail.com" className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">
-                    azrayanltd@gmail.com
+                  <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">
+                    {settings.support_email || 'azrayanltd@gmail.com'}
                   </a>
                 </div>
               </div>
@@ -179,11 +179,11 @@ export const ContactPage: React.FC = () => {
                 <Phone className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-dark dark:text-white block font-semibold mb-0.5">Customer Line</strong>
-                  <a href="tel:+447400320038" className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">
-                    00447400320038
+                  <a href={`tel:${settings.support_phone || '00447400320038'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">
+                    {settings.support_phone || '00447400320038'}
                   </a>
                   <span className="block text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                    International: +44 7400 320038
+                    Direct UK Customer Support
                   </span>
                 </div>
               </div>

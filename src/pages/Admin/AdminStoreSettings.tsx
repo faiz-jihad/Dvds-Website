@@ -229,6 +229,8 @@ export const AdminStoreSettings: React.FC = () => {
         director_product_ids: Array.isArray(settings.director_product_ids)
           ? settings.director_product_ids.filter(Boolean)
           : [],
+        deal_ends_at: settings.campaign_ends_at || settings.deal_ends_at || null,
+        campaign_ends_at: settings.campaign_ends_at || settings.deal_ends_at || null,
         bank_sort_code: settings.bank_sort_code
           ? (settings.bank_sort_code.replace(/\D/g, '').length === 6
               ? `${settings.bank_sort_code.replace(/\D/g, '').slice(0, 2)}-${settings.bank_sort_code.replace(/\D/g, '').slice(2, 4)}-${settings.bank_sort_code.replace(/\D/g, '').slice(4, 6)}`

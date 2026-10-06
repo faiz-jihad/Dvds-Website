@@ -184,7 +184,9 @@ export function calculateQuote(items, products, settings, promo, promoCode, deli
     if (!product || product.status !== 'active') throw new CheckoutError('A selected title is no longer available. Please update your basket.');
     if (product.stock_quantity < item.quantity) throw new CheckoutError(`Only ${product.stock_quantity} copies of ${product.title} are available.`, 409, 'STOCK_CHANGED');
     const base = money(product.price);
-    const deal = settings.deal_is_active && settings.deal_product_id === product.id && Date.parse(settings.deal_ends_at) > now && Number(settings.deal_discount_price) > 0;
+    const dealEnds = settings.deal_ends_at || settings.campaign_ends_at;
+    const dealNotExpired = !dealEnds || !Number.isNaN(Date.parse(dealEnds)) ? Date.parse(dealEnds) > now : true;
+    const deal = Boolean(settings.deal_is_active && settings.deal_product_id === product.id && dealNotExpired && Number(settings.deal_discount_price) > 0);
     const unit = deal ? Math.min(base, money(settings.deal_discount_price)) : base;
     if (!Number.isSafeInteger(unit) || unit < 0) throw new CheckoutError('A selected title has an invalid price.');
     if (unit > 15000) {

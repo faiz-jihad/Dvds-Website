@@ -176,9 +176,14 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
     } catch {}
   }, []);
 
-  // Cover the video with poster on film change until actively playing
+  // Cover the video with poster on film change, then fade smoothly once playing or safety timer expires
   useEffect(() => {
     setPosterFaded(false);
+    // Safety fallback: Ensure video is revealed even if YouTube postMessage is blocked or delayed by browser security
+    const fallbackTimer = setTimeout(() => {
+      setPosterFaded(true);
+    }, 1000);
+    return () => clearTimeout(fallbackTimer);
   }, [videoId, currentId, cycle]);
 
   // Handle Mute/Unmute dynamically without destroying the iframe
@@ -205,7 +210,7 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
 
   // Listen to YouTube API postMessage:
   // - ONLY reveal video (fade poster) when playerState === 1 (actively playing)
-  // - If paused (playerState === 2), IMMEDIATELY re-cover with poster to hide pause button & auto-resume
+  // - If paused (playerState === 2), auto-resume
   useEffect(() => {
     const handleMessage = (e: MessageEvent) => {
       try {
@@ -221,12 +226,10 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
           // Actively playing frames -> fade out cover poster smoothly
           setPosterFaded(true);
         } else if (playerState === 2) {
-          // Paused -> IMMEDIATELY re-cover with poster so YouTube pause button is NEVER visible
-          setPosterFaded(false);
+          // Paused -> auto-resume
           sendCommand('playVideo');
         } else if (playerState === 0) {
-          // Video ended -> re-cover and restart loop smoothly
-          setPosterFaded(false);
+          // Video ended -> restart loop smoothly
           if (isLoop) {
             sendCommand('seekTo', [startSec, true]);
             sendCommand('playVideo');
@@ -257,17 +260,17 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
     };
   }, [sendCommand]);
 
-  // Removed &origin= because raw IP/local network domains (e.g. 192.168.x.x on mobile) cause YouTube API security blocks
-  // Removed &playlist= to avoid playlist UI
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&cc_load_policy=0`;
+  // YouTube embed URL respecting startSec and endSec from Store Settings
+  const endParam = endSec > startSec ? `&end=${endSec}` : '';
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}${endParam}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1&cc_load_policy=0`;
 
   return (
     <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
       {/* 1. YouTube Iframe Video: Active at z-[1] */}
       <iframe
         ref={iframeRef}
-        key={`${currentId}-${videoId}-${startSec}`}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] scale-[1.25] sm:w-[max(135%,200vh)] sm:h-[max(135%,65vw)] sm:scale-[1.3] origin-center pointer-events-none select-none opacity-100 z-[1]"
+        key={`${currentId}-${videoId}-${startSec}-${cycle}`}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-[max(120%,190%)] h-[max(120%,62%)] scale-[1.25] sm:scale-[1.3] origin-center aspect-video pointer-events-none select-none opacity-100 z-[1]"
         style={{ pointerEvents: 'none', touchAction: 'none' }}
         tabIndex={-1}
         aria-hidden="true"
@@ -286,8 +289,14 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
           } catch {}
           sendCommand('mute');
           sendCommand('playVideo');
-          setTimeout(() => sendCommand('playVideo'), 300);
-          setTimeout(() => sendCommand('playVideo'), 800);
+          setTimeout(() => {
+            sendCommand('playVideo');
+            setPosterFaded(true);
+          }, 300);
+          setTimeout(() => {
+            sendCommand('playVideo');
+            setPosterFaded(true);
+          }, 700);
           if (!isMuted) {
             sendCommand('unMute');
             sendCommand('setVolume', [100]);
@@ -295,7 +304,7 @@ const HeroYouTubeBackdrop: React.FC<HeroYouTubeBackdropProps> = ({
         }}
       />
 
-      {/* 2. Cover Poster: Sits in front of iframe at z-[2] to 100% mask initial buffer/pause icon, then dissolves away only when playing */}
+      {/* 2. Cover Poster: Sits in front of iframe at z-[2] to mask initial buffer, then dissolves away cleanly */}
       {fallbackImageUrl && (
         <div
           className={cn(
@@ -361,17 +370,31 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
   const [isMuted, setIsMuted] = useState(settings?.hero_youtube_mute ?? true);
   const isLoop = settings?.hero_youtube_loop ?? true;
 
+  // Sync mute state when store settings update dynamically
+  useEffect(() => {
+    if (settings?.hero_youtube_mute !== undefined) {
+      setIsMuted(settings.hero_youtube_mute);
+    }
+  }, [settings?.hero_youtube_mute]);
+
   // Prioritize films specifically selected by admin in hero_trailers, otherwise fall back to active featured
   const featured = React.useMemo(() => {
+    const active = products.filter((p) => p.status === 'active');
+    const inStock = active.filter((p) => p.stock_quantity > 0);
+    const pool = inStock.length > 0 ? inStock : active;
+
     if (settings?.hero_trailers && settings.hero_trailers.length > 0) {
       const configured = settings.hero_trailers
-        .map((t) => products.find((p) => p.id === t.product_id))
+        .map((t) => products.find((p) => p.id === t.product_id || p.slug === t.product_id))
         .filter(Boolean) as Product[];
-      if (configured.length > 0) return configured;
+      if (configured.length > 0) {
+        // Keep configured hero films first, then fill up remaining carousel slides with other titles
+        const others = pool.filter((p) => !configured.some((c) => c.id === p.id));
+        return [...configured, ...others].slice(0, 6);
+      }
     }
-    const list = products.filter((p) => p.status === 'active' && p.stock_quantity > 0);
-    const highlighted = list.filter((p) => p.is_featured || p.is_best_seller || p.is_new_release);
-    return (highlighted.length >= 3 ? highlighted : list).slice(0, 6);
+    const highlighted = pool.filter((p) => p.is_featured || p.is_best_seller || p.is_new_release);
+    return (highlighted.length >= 3 ? highlighted : pool).slice(0, 6);
   }, [products, settings?.hero_trailers]);
 
   const addItem = useCartStore((s) => s.addItem);
@@ -565,28 +588,25 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
           </div>
         )}
 
-        {/* Soft Cinematic Bottom Dissolve: seamlessly melts the video into the theme background with NO harsh cutoff */}
+        {/* Soft Cinematic Bottom Dissolve: seamlessly melts the video into the theme background without obscuring playback */}
         <div
           className={cn(
-            'absolute bottom-0 left-0 right-0 h-20 sm:h-44 bg-gradient-to-t pointer-events-none z-[5] transition-colors duration-300',
+            'absolute bottom-0 left-0 right-0 h-16 sm:h-28 bg-gradient-to-t pointer-events-none z-[5] transition-colors duration-300',
             isDark
-              ? 'from-[#07090E] via-[#07090E]/85 to-transparent'
-              : 'from-[#F8FAFC] via-[#F8FAFC]/90 to-transparent'
+              ? 'from-[#07090E] via-[#07090E]/60 to-transparent'
+              : 'from-[#F8FAFC] via-[#F8FAFC]/70 to-transparent'
           )}
         />
 
-        {/* Left text readability protection gradient (adapts to active theme) */}
+        {/* Left text readability protection gradient (protects headline text while leaving video vibrant) */}
         <div
           className={cn(
-            'hidden sm:block absolute inset-0 sm:w-4/5 lg:w-3/5 pointer-events-none z-[4] transition-colors duration-300',
+            'hidden sm:block absolute inset-0 sm:w-3/5 lg:w-1/2 pointer-events-none z-[4] transition-colors duration-300',
             isDark
-              ? 'bg-gradient-to-r from-[#07090E] via-[#07090E]/85 to-transparent'
-              : 'bg-gradient-to-r from-[#F8FAFC] via-[#F8FAFC]/95 to-transparent'
+              ? 'bg-gradient-to-r from-[#07090E] via-[#07090E]/80 to-transparent'
+              : 'bg-gradient-to-r from-[#F8FAFC] via-[#F8FAFC]/90 to-transparent'
           )}
         />
-        {isDark && (
-          <div className="hidden sm:block absolute inset-0 bg-radial from-transparent via-[#07090E]/40 to-[#07090E] pointer-events-none z-[4]" />
-        )}
 
         {/* Interaction shield: blocks clicks on desktop without blocking mobile touches/swipes */}
         <div
@@ -754,6 +774,18 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
               </>
             )}
           </div>
+
+          {/* Editorial Synopsis / Subheadline */}
+          {(settings?.hero_subheadline?.trim() || current.description) && (
+            <p
+              className={cn(
+                'text-xs sm:text-sm line-clamp-2 max-w-xl mb-3.5 sm:mb-5 leading-relaxed transition-colors duration-200',
+                isDark ? 'text-gray-300/90' : 'text-gray-600'
+              )}
+            >
+              {settings?.hero_subheadline?.trim() || current.description}
+            </p>
+          )}
 
           {/* CTA Buttons Row: Side-by-side 1-row grid on mobile, flex on desktop */}
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-4 w-full sm:w-auto">

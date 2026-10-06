@@ -65,6 +65,11 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
     () => active.filter((p) => p.compare_at_price && p.compare_at_price > p.price),
     [active]
   );
+  const budgetThreshold = Number(settings?.budget_collection_threshold ?? 15);
+  const shelfBudget = useMemo(
+    () => (budgetThreshold > 0 ? active.filter((p) => p.price <= budgetThreshold) : []),
+    [active, budgetThreshold]
+  );
 
   // Dynamic Genre Shelves
   const dynamicGenreShelves = useMemo(() => {
@@ -87,6 +92,8 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
         return active.filter((p) => p.format?.toLowerCase().includes('box'));
       case 'sale':
         return active.filter((p) => p.compare_at_price && p.compare_at_price > p.price);
+      case 'budget':
+        return active.filter((p) => p.price <= budgetThreshold);
       default:
         if (activeFilter.startsWith('format:')) {
           const fmt = activeFilter.replace('format:', '').toLowerCase();
@@ -98,13 +105,14 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
         }
         return active;
     }
-  }, [active, activeFilter]);
+  }, [active, activeFilter, budgetThreshold]);
 
   const filterTitle = useMemo(() => {
     if (activeFilter === 'trending') return 'Trending & Top Rated';
     if (activeFilter === 'new') return 'New Arrivals & Fresh Pressings';
     if (activeFilter === 'box_set') return 'Definitive Collector Box Sets';
     if (activeFilter === 'sale') return 'Special Offers & Clearance Deals';
+    if (activeFilter === 'budget') return `Under £${Math.round(budgetThreshold)} Collector's Vault`;
     if (activeFilter.startsWith('format:'))
       return `${activeFilter.replace('format:', '').toUpperCase()} Editions`;
     if (activeFilter.startsWith('genre:')) {
@@ -112,12 +120,12 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
       return g ? `${g.name} Cinema` : 'Genre Titles';
     }
     return 'All Physical Media';
-  }, [activeFilter, genres]);
+  }, [activeFilter, genres, budgetThreshold]);
 
   return (
     <div className="flex-1 min-w-0 flex flex-col select-none">
       {/* ── 1. Cinematic Hero Movie Section + Automatic Slider ── */}
-      <AzCinematicHero products={featured} settings={settings} />
+      <AzCinematicHero products={products} settings={settings} />
 
       {/* ── 3. Movie Category Section Chips ── */}
       <AzCategoryChips
@@ -126,6 +134,7 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
         products={active}
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
+        budgetThreshold={budgetThreshold}
       />
 
       {/* ── 4. Main Catalogue Body ── */}
@@ -249,6 +258,16 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 title="Special Offers &amp; Limited Discs"
                 products={shelfSale}
                 viewAllHref="/shop?filter=sale"
+              />
+            )}
+
+            {/* Shelf 7: Budget Collection Vault (Configured in Storefront Settings) */}
+            {shelfBudget.length > 0 && budgetThreshold > 0 && (
+              <AzMovieShelfRow
+                badge="VALUE VAULT"
+                title={`Under £${Math.round(budgetThreshold)} Collector's Vault`}
+                products={shelfBudget}
+                viewAllHref={`/shop?max_price=${budgetThreshold}`}
               />
             )}
           </div>

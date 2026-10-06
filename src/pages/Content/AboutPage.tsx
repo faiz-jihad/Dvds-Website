@@ -56,7 +56,7 @@ export const AboutPage: React.FC = () => {
               <MapPin className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-dark dark:text-white">Headquarter &amp; Vault:</span>
-                <p>DVD ZONE — West Midlands, Birmingham, United Kingdom</p>
+                <p>{settings.store_name || 'DVD ZONE'} — {settings.warehouse_location || settings.registered_office_address || 'West Midlands, Birmingham, United Kingdom'}</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
@@ -64,8 +64,8 @@ export const AboutPage: React.FC = () => {
               <div>
                 <span className="font-semibold text-dark dark:text-white">Customer service and inquiry email address:</span>
                 <br />
-                <a href="mailto:azrayanltd@gmail.com" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">
-                  azrayanltd@gmail.com
+                <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">
+                  {settings.support_email || 'azrayanltd@gmail.com'}
                 </a>
               </div>
             </div>
@@ -74,11 +74,11 @@ export const AboutPage: React.FC = () => {
               <div>
                 <span className="font-semibold text-dark dark:text-white">Customer Line:</span>
                 <br />
-                <a href="tel:+447400320038" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">
-                  00447400320038
+                <a href={`tel:${settings.support_phone || '00447400320038'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">
+                  {settings.support_phone || '00447400320038'}
                 </a>
                 <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                  (+44 7400 320038)
+                  (Direct Customer Support)
                 </span>
               </div>
             </div>

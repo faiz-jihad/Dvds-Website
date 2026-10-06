@@ -28,10 +28,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
 
   const isFav = isFavourite(product.id);
 
+  const isDeal = Boolean(
+    settingsQuery.data?.deal_is_active &&
+    settingsQuery.data?.deal_product_id === product.id &&
+    (!settingsQuery.data?.campaign_ends_at || Date.parse(settingsQuery.data.campaign_ends_at) > Date.now()) &&
+    Number(settingsQuery.data?.deal_discount_price) > 0
+  );
+  const effectivePrice = isDeal ? Math.min(product.price, Number(settingsQuery.data!.deal_discount_price)) : product.price;
+  const hasDiscount = (product.compare_at_price && product.compare_at_price > product.price) || isDeal;
+  const originalPrice = isDeal ? product.price : product.compare_at_price;
+
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem(product, 1);
+    addItem(isDeal ? { ...product, price: effectivePrice } : product, 1);
     setIsAdded(true);
     addToast(`Added "${product.title}" to basket`, 'success');
     openCartDrawer();
@@ -47,8 +57,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
       'info'
     );
   };
-
-  const hasDiscount = product.compare_at_price && product.compare_at_price > product.price;
 
   return (
     <div className={cn('group flex flex-col relative', className)}>
@@ -73,7 +81,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
               SPINE #{product.spine_number}
             </span>
           )}
-          {hasDiscount && <Badge variant="sale">SALE</Badge>}
+          {isDeal ? (
+            <Badge variant="sale">SPOTLIGHT DEAL</Badge>
+          ) : hasDiscount ? (
+            <Badge variant="sale">SALE</Badge>
+          ) : null}
           {product.is_new_release && !hasDiscount && <Badge variant="new">NEW</Badge>}
           {product.is_best_seller && !hasDiscount && !product.is_new_release && (
             <Badge variant="best-seller">BEST SELLER</Badge>
@@ -169,11 +181,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
         {/* Price display with strict British currency & Red sale price */}
         <div className="mt-1.5 flex items-baseline gap-2">
           <span className={cn('font-bold text-sm tracking-tight', hasDiscount ? 'text-brand-red dark:text-red-400' : 'text-dark dark:text-white')}>
-            {formatGBP(product.price)}
+            {formatGBP(effectivePrice)}
           </span>
           {hasDiscount && (
             <span className="text-xs text-gray-400 line-through font-mono">
-              {formatGBP(product.compare_at_price)}
+              {formatGBP(originalPrice)}
             </span>
           )}
         </div>

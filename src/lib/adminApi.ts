@@ -452,8 +452,8 @@ export const adminApi = {
     if (!settings.registered_company_name || settings.registered_company_name === 'AZ Rayan DVDs') {
       settings.registered_company_name = 'AZ Rayan LTD & DVD Zone';
     }
-    settings.support_email = 'azrayanltd@gmail.com';
-    settings.support_phone = '00447400320038';
+    settings.support_email = data.support_email?.trim() || localOverride.support_email?.trim() || 'azrayanltd@gmail.com';
+    settings.support_phone = data.support_phone?.trim() || localOverride.support_phone?.trim() || '00447400320038';
     return settings;
   },
 
@@ -476,8 +476,8 @@ export const adminApi = {
     if (!values.registered_company_name || values.registered_company_name === 'AZ Rayan DVDs') {
       values.registered_company_name = 'AZ Rayan LTD & DVD Zone';
     }
-    values.support_email = 'azrayanltd@gmail.com';
-    values.support_phone = '00447400320038';
+    values.support_email = values.support_email?.trim() || 'azrayanltd@gmail.com';
+    values.support_phone = values.support_phone?.trim() || '00447400320038';
     const payload = { ...values, singleton: true, updated_at: new Date().toISOString() };
 
     // Always persist to localStorage for instant UI updates & fallback

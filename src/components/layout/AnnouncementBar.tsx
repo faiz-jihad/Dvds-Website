@@ -63,9 +63,19 @@ export const AnnouncementBar: React.FC = () => {
         </div>
 
         {/* Desktop View: Full announcement bar */}
-        <div className="hidden sm:flex items-center gap-2 mx-0 font-medium truncate">
-          <Truck className="w-3.5 h-3.5 shrink-0 text-brand-blue" />
-          <span className="truncate">{text}</span>
+        <div className="hidden sm:flex items-center gap-3 mx-0 font-medium truncate">
+          {settings?.announcement_left && (
+            <div className="flex items-center gap-1.5 shrink-0 bg-white/10 dark:bg-black/30 px-2 py-0.5 rounded-full border border-white/15">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[11px] font-semibold text-white truncate max-w-[200px]">
+                {settings.announcement_left}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 truncate">
+            <Truck className="w-3.5 h-3.5 shrink-0 text-brand-blue" />
+            <span className="truncate">{text}</span>
+          </div>
         </div>
 
         <div className="hidden sm:flex items-center gap-4 text-xs shrink-0 font-mono opacity-80 hover:opacity-100 transition-opacity">

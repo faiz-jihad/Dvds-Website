@@ -22,6 +22,7 @@ interface AzCategoryChipsProps {
   products: Product[];
   activeFilter: string;
   onFilterChange: (filter: string) => void;
+  budgetThreshold?: number;
 }
 
 export const AzCategoryChips: React.FC<AzCategoryChipsProps> = ({
@@ -30,6 +31,7 @@ export const AzCategoryChips: React.FC<AzCategoryChipsProps> = ({
   products,
   activeFilter,
   onFilterChange,
+  budgetThreshold,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -77,6 +79,9 @@ export const AzCategoryChips: React.FC<AzCategoryChipsProps> = ({
     { id: 'box_set', label: 'Box Sets', filter: 'box_set', icon: Package },
     { id: 'format:4k', label: '4K Ultra HD', filter: 'format:4k', icon: Disc },
     { id: 'sale', label: 'Special Offers', filter: 'sale', icon: Tag },
+    ...(budgetThreshold && budgetThreshold > 0
+      ? [{ id: 'budget', label: `Under £${Math.round(budgetThreshold)}`, filter: 'budget', icon: Tag }]
+      : []),
   ];
 
   // Dynamic genre chips from database
