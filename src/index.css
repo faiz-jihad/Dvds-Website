@@ -517,5 +517,17 @@
   animation-play-state: paused;
 }
 
+/* Print Styles for Financial Statements & Invoices */
+@media print {
+  @page {
+    size: auto;
+    margin: 12mm 15mm;
+  }
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}
+
 
 

@@ -235,7 +235,7 @@ export const AdminLayout: React.FC = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#07090E] font-sans text-slate-900 dark:text-white antialiased">
       {/* ── Clean White Desktop Sidebar ─────────────────────────────────── */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#0E131F] md:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#0E131F] md:flex print:hidden">
         {/* Brand Header */}
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 dark:border-white/10 px-5">
           <Link to="/admin" className="flex items-center gap-3 group">
@@ -296,7 +296,7 @@ export const AdminLayout: React.FC = () => {
       {/* ── Main Area (Clean White Header + Content) ──────────────────── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Clean White Top Header Bar */}
-        <header className="relative z-30 flex h-16 min-w-0 shrink-0 items-center justify-between border-b border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#0E131F] px-4 sm:px-6">
+        <header className="relative z-30 flex h-16 min-w-0 shrink-0 items-center justify-between border-b border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#0E131F] px-4 sm:px-6 print:hidden">
           {/* Left: mobile menu trigger + breadcrumbs */}
           <div className="flex min-w-0 items-center gap-3">
             <button
@@ -549,7 +549,7 @@ export const AdminLayout: React.FC = () => {
         </header>
 
         {/* Content Viewport */}
-        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#07090E] p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#07090E] p-4 sm:p-6 lg:p-8 print:p-0 print:overflow-visible print:bg-white print:text-black">
           {schemaQuery.error &&
           (schemaQuery.error as any)?.code === "BACKEND_NOT_CONFIGURED" ? (
             <AdminDataState
