@@ -697,7 +697,7 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
                       isHovered
                         ? 'font-bold text-brand-blue dark:text-blue-400'
                         : hasRevenue
-                        ? 'font-bold text-dark dark:text-white'
+                        ? 'font-bold text-gray-900 dark:text-white'
                         : 'text-gray-400 dark:text-gray-500'
                     }`}
                     title={item.fullDate}
