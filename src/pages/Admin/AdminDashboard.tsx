@@ -16,6 +16,7 @@ import { adminApi } from '../../lib/adminApi';
 import { formatGBP, formatDateUK } from '../../lib/formatters';
 import { Button } from '../../components/common/Button';
 import { AdminDataState } from '../../components/admin/AdminDataState';
+import { RevenueTrendChart } from '../../components/admin/RevenueTrendChart';
 
 export const AdminDashboard: React.FC = () => {
   const { data: stats, isLoading, error, refetch } = useQuery({
@@ -27,8 +28,6 @@ export const AdminDashboard: React.FC = () => {
   if (isLoading || error || !stats) {
     return <AdminDataState loading={isLoading} error={error} onRetry={() => refetch()} />;
   }
-
-  const maxDailyRevenue = Math.max(...stats.dailyRevenue.map((d) => d.amount), 50);
 
   return (
     <div className="space-y-8 max-w-6xl">
@@ -142,42 +141,10 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Financial Revenue Trend Visualization */}
-      <div className="bg-white dark:bg-[#0E131F] p-6 rounded-lg border border-gray-200 dark:border-white/10 shadow-xs space-y-6">
-        <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10">
-          <div>
-            <h3 className="font-display font-bold text-base text-dark dark:text-white">
-              7-Day Daily Revenue Trend
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Financial performance based on processed customer payments
-            </p>
-          </div>
-          <span className="font-mono text-xs font-bold text-dark dark:text-white bg-gray-100 dark:bg-[#141A26] border border-transparent dark:border-white/10 px-2.5 py-1 rounded-sm">
-            GBP (£)
-          </span>
-        </div>
-
-        {/* Styled Bar Chart */}
-        <div className="h-44 flex items-end justify-between gap-4 pt-4 px-2">
-          {stats.dailyRevenue.map((day) => {
-            const heightPercent = Math.max(8, Math.round((day.amount / maxDailyRevenue) * 100));
-            return (
-              <div key={day.date} className="flex-1 flex flex-col items-center gap-2 group">
-                <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {formatGBP(day.amount)}
-                </span>
-                <div className="w-full max-w-[48px] bg-gray-100 dark:bg-[#141A26] rounded-t-sm overflow-hidden flex items-end h-32">
-                  <div
-                    className="w-full bg-brand-blue hover:bg-brand-blue-hover transition-all duration-300 rounded-t-sm"
-                    style={{ height: `${heightPercent}%` }}
-                  />
-                </div>
-                <span className="text-[11px] font-mono text-gray-600 dark:text-gray-400">{day.date}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <RevenueTrendChart
+        dailyRevenue={stats.dailyRevenue}
+        allPaidOrders={stats.allPaidOrders}
+      />
 
       {/* Recent Orders Overview */}
       <div className="bg-white dark:bg-[#0E131F] rounded-lg border border-gray-200 dark:border-white/10 shadow-xs overflow-hidden">

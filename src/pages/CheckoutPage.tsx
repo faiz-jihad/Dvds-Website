@@ -1279,75 +1279,13 @@ export const CheckoutPage: React.FC = () => {
                       {selected && (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="bg-blue-50/70 dark:bg-blue-950/40 p-4 border-t border-blue-100 dark:border-blue-900/40 space-y-3 text-xs leading-relaxed text-blue-900 dark:text-blue-300"
+                          className="bg-blue-50/70 dark:bg-blue-950/40 p-4 border-t border-blue-100 dark:border-blue-900/40 text-xs leading-relaxed text-blue-900 dark:text-blue-300"
                         >
                           <div className="flex items-start gap-2.5">
                             <Lock size={13} className="shrink-0 mt-0.5 text-brand-blue dark:text-blue-400" />
                             <div className="space-y-1">
                               <span>{option.detail}</span>
                             </div>
-                          </div>
-
-                          {/* Payment Action Button */}
-                          <div className="pt-1">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const form = e.currentTarget.closest("form");
-                                if (form) {
-                                  if (typeof form.requestSubmit === "function") {
-                                    form.requestSubmit();
-                                  } else {
-                                    form.dispatchEvent(
-                                      new Event("submit", { cancelable: true, bubbles: true })
-                                    );
-                                  }
-                                }
-                              }}
-                              disabled={
-                                busy ||
-                                quoteQuery.isFetching ||
-                                (quote
-                                  ? option.provider === "paypal"
-                                    ? !quote.methods.paypal
-                                    : !quote.methods.card
-                                  : false)
-                              }
-                              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {busy ? (
-                                <>
-                                  <RefreshCw size={13} className="animate-spin" />
-                                  <span>Connecting to secure checkout...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <span>
-                                    {option.id === "paypal"
-                                      ? quote
-                                        ? `Proceed with PayPal • ${displayPrice(quote.total_amount)}`
-                                        : "Proceed with PayPal"
-                                      : option.id === "apple_pay"
-                                        ? quote
-                                          ? `Pay with Apple Pay • ${displayPrice(quote.total_amount)}`
-                                          : "Pay with Apple Pay"
-                                        : option.id === "google_pay"
-                                          ? quote
-                                            ? `Pay with Google Pay • ${displayPrice(quote.total_amount)}`
-                                            : "Pay with Google Pay"
-                                          : option.id === "amazon_pay"
-                                            ? quote
-                                              ? `Pay with Amazon Pay • ${displayPrice(quote.total_amount)}`
-                                              : "Pay with Amazon Pay"
-                                            : quote
-                                              ? `Pay with Card • ${displayPrice(quote.total_amount)}`
-                                              : "Pay with Card"}
-                                  </span>
-                                  <ArrowRight size={14} />
-                                </>
-                              )}
-                            </button>
                           </div>
                         </div>
                       )}

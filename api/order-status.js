@@ -1,14 +1,16 @@
-import { authorizeOrder, check, CheckoutError, dbClient, endpoint, loadOrder, publicOrder } from './_checkout.js';
+import { authorizeOrder, check, CheckoutError, dbClient, endpoint, loadOrder, publicOrder, verifyStripe } from './_checkout.js';
 import { capturePayPal } from './_paypal.js';
 
 export default endpoint(async (req) => {
   const db = dbClient();
   let order = null;
 
-  if (req.body?.orderId) {
-    order = await loadOrder(db, req.body.orderId);
-  } else if (req.body?.sessionId || req.body?.paymentIntentId) {
-    const queryId = req.body?.sessionId || req.body?.paymentIntentId;
+  const orderId = typeof req.body?.orderId === 'string' && req.body.orderId.trim() ? req.body.orderId.trim() : null;
+  const queryId = req.body?.sessionId || req.body?.paymentIntentId;
+
+  if (orderId) {
+    order = await loadOrder(db, orderId);
+  } else if (queryId) {
     const matched = check(
       await db
         .from('orders')
@@ -32,12 +34,37 @@ export default endpoint(async (req) => {
 
   await authorizeOrder(db, req, order);
 
-  // PayPal capture when returning from PayPal redirect
-  if (order.payment_provider === 'paypal' && req.body?.paypalOrderId && order.status !== 'cancelled') {
-    await capturePayPal(db, order, req.body.paypalOrderId);
-    order = await loadOrder(db, order.id);
+  // Active Stripe verification: check Stripe directly if customer returned from checkout and order is still pending
+  if (order.payment_provider === 'stripe' && order.payment_status !== 'paid' && order.status !== 'cancelled') {
+    const stripeIdentifier =
+      req.body?.sessionId ||
+      req.body?.paymentIntentId ||
+      order.checkout_session_id ||
+      order.payment_reference;
+
+    if (stripeIdentifier) {
+      try {
+        await verifyStripe(db, order, stripeIdentifier);
+        order = await loadOrder(db, order.id);
+      } catch (err) {
+        console.warn('[order-status] Stripe verification attempt note:', err.message);
+      }
+    }
   }
 
-  // The order status reflects verified backend / webhook data.
+  // Active PayPal capture: capture and verify if returning from PayPal redirect
+  if (order.payment_provider === 'paypal' && order.payment_status !== 'paid' && order.status !== 'cancelled') {
+    const paypalId = req.body?.paypalOrderId || req.body?.token || order.paypal_order_id;
+    if (paypalId) {
+      try {
+        await capturePayPal(db, order, paypalId);
+        order = await loadOrder(db, order.id);
+      } catch (err) {
+        console.warn('[order-status] PayPal capture attempt note:', err.message);
+      }
+    }
+  }
+
+  // The order status reflects verified backend / provider data.
   return { order: publicOrder(order) };
 }, 'POST', { max: 120, windowMs: 60000 });

@@ -328,7 +328,7 @@ export const ProductDetail: React.FC = () => {
                 ) : (
                   <>
                     <span className="w-2 h-2 rounded-full bg-brand-red" />
-                    <span className="font-semibold text-brand-red dark:text-red-400">Temporarily Out of Stock</span>
+                    <span className="font-semibold text-brand-red dark:text-red-400">Sold Out</span>
                   </>
                 )}
               </div>

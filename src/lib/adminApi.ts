@@ -590,6 +590,12 @@ export const adminApi = {
         date: new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
         ...value,
       })),
+      allPaidOrders: paidOrders.map((order) => ({
+        id: order.id,
+        date: String(order.paid_at || order.created_at || '').slice(0, 10),
+        rawDate: String(order.paid_at || order.created_at || ''),
+        amount: netAmount(order),
+      })),
       recentOrders: orders.slice(0, 8),
     };
   },

@@ -132,9 +132,9 @@ export const AzDvdMovieCard: React.FC<AzDvdMovieCardProps> = ({ product, classNa
 
         {/* Out of Stock overlay */}
         {outOfStock && (
-          <div className="absolute inset-0 bg-black/70 flex items-center justify-center p-2 text-center pointer-events-none">
-            <span className="text-[10px] font-black uppercase tracking-wider text-red-400 bg-red-950/80 border border-red-800/60 px-2 py-1 rounded">
-              Awaiting Stock
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-[2px] flex items-center justify-center p-2 text-center pointer-events-none">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-white bg-red-600/90 border border-red-500/50 px-2.5 py-1 rounded-md shadow-lg">
+              Sold Out
             </span>
           </div>
         )}

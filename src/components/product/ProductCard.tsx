@@ -117,7 +117,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
                 Added
               </>
             ) : product.stock_quantity <= 0 ? (
-              'Out of Stock'
+              'Sold Out'
             ) : (
               <>
                 <ShoppingBag className="w-3.5 h-3.5" />

@@ -65,23 +65,34 @@ export const OrderSuccessPage: React.FC = () => {
   const [proofError, setProofError] = useState<string>("");
   const [uploadingProof, setUploadingProof] = useState<boolean>(false);
   const [proofSuccess, setProofSuccess] = useState<boolean>(false);
+  const stripeSessionId =
+    search.get("session_id") ||
+    search.get("payment_intent") ||
+    search.get("payment_intent_client_secret") ||
+    undefined;
+  const paypalToken =
+    search.get("token") ||
+    search.get("paypal_order_id") ||
+    search.get("PayerID") ||
+    undefined;
+
   const query = useQuery({
-    queryKey: ["order", orderId, search.get("session_id"), search.get("token")],
+    queryKey: ["order", orderId, stripeSessionId, paypalToken],
     queryFn: () =>
       checkoutApi.orderStatus(
         orderId || "",
-        search.get("session_id") || undefined,
-        search.get("token") || search.get("paypal_order_id") || undefined,
+        stripeSessionId,
+        paypalToken,
       ),
-    enabled: Boolean(orderId || search.get("session_id")),
-    retry: 2,
+    enabled: Boolean(orderId || stripeSessionId),
+    retry: 3,
     refetchInterval: (state) => {
       const order = state.state.data;
       if (state.state.error) return false;
-      if (!order) return 3000;
+      if (!order) return 2500;
       if (["cancelled", "refunded", "delivered"].includes(order.status))
         return false;
-      return order.payment_status === "pending" ? 3000 : 15000;
+      return order.payment_status === "pending" ? 2500 : 15000;
     },
   });
   const order = query.data;
@@ -479,6 +490,33 @@ export const OrderSuccessPage: React.FC = () => {
             >
               {message}
             </p>
+          )}
+
+          {order.payment_status === "pending" && !bankPending && !closed && (
+            <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-blue-200/80 dark:border-blue-900/50 bg-gradient-to-r from-blue-50/90 via-sky-50/70 to-indigo-50/80 dark:from-[#0E1726] dark:via-[#111B2E] dark:to-[#0F1829] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left shadow-xs">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-brand-blue/10 dark:bg-brand-blue/20 flex items-center justify-center text-brand-blue dark:text-blue-400 shrink-0">
+                  <RefreshCw size={18} className="animate-spin" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-dark dark:text-white">
+                    Confirming Payment Status
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
+                    Synchronizing confirmation with {order.payment_provider === "stripe" ? "Stripe" : order.payment_provider === "paypal" ? "PayPal" : "payment provider"}. If you have already completed payment, click below to verify immediately.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => query.refetch()}
+                disabled={query.isFetching}
+                className="shrink-0 px-4 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center gap-2"
+              >
+                <RefreshCw size={13} className={query.isFetching ? "animate-spin" : ""} />
+                <span>{query.isFetching ? "Verifying..." : "Verify Payment Now"}</span>
+              </button>
+            </div>
           )}
 
           {isCancelledOrExpired && (

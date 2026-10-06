@@ -1,41 +1,99 @@
-import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Plus, Search, Edit2, Trash2, Check, X, Film, AlertTriangle,
-  Upload, Loader2, Star, Layers, DollarSign, BookOpen,
-  Link2, Sparkles, TrendingUp, CheckCircle2, FileEdit, Archive,
-  Wand2, ArrowLeft, ArrowRight, Save, Eye, ChevronDown,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Package
-} from 'lucide-react';
-import { adminApi } from '../../lib/adminApi';
-import { uploadAdminImage } from '../../lib/adminMedia';
-import { Product, DvdFormat, AgeRating, ProductStatus } from '../../types';
-import { formatGBP } from '../../lib/formatters';
-import { MAX_PRODUCT_PRICE } from '../../data/defaultStoreSettings';
-import { Button } from '../../components/common/Button';
-import { Modal } from '../../components/common/Modal';
-import { BbfcBadge } from '../../components/common/BbfcBadge';
-import { ImdbBadge } from '../../components/common/ImdbBadge';
-import { useUiStore } from '../../stores/useUiStore';
-import { AdminDataState } from '../../components/admin/AdminDataState';
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  Check,
+  X,
+  Film,
+  AlertTriangle,
+  Upload,
+  Loader2,
+  Star,
+  Layers,
+  DollarSign,
+  BookOpen,
+  Link2,
+  Sparkles,
+  TrendingUp,
+  CheckCircle2,
+  FileEdit,
+  Archive,
+  Wand2,
+  ArrowLeft,
+  ArrowRight,
+  Save,
+  Eye,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Package,
+} from "lucide-react";
+import { adminApi } from "../../lib/adminApi";
+import { uploadAdminImage } from "../../lib/adminMedia";
+import { Product, DvdFormat, AgeRating, ProductStatus } from "../../types";
+import { formatGBP } from "../../lib/formatters";
+import { MAX_PRODUCT_PRICE } from "../../data/defaultStoreSettings";
+import { Button } from "../../components/common/Button";
+import { Modal } from "../../components/common/Modal";
+import { BbfcBadge } from "../../components/common/BbfcBadge";
+import { ImdbBadge } from "../../components/common/ImdbBadge";
+import { useUiStore } from "../../stores/useUiStore";
+import { AdminDataState } from "../../components/admin/AdminDataState";
 
 // ─── Form Tab definition ──────────────────────────────────────────────────────
-type FormTab = 'essentials' | 'media' | 'pricing' | 'publishing';
+type FormTab = "essentials" | "media" | "pricing" | "publishing";
 
-const FORM_TABS: { id: FormTab; label: string; icon: React.ComponentType<{ className?: string }>; desc: string }[] = [
-  { id: 'essentials', label: 'Essentials', icon: Package, desc: 'Title, images, category' },
-  { id: 'media',     label: 'Specs & Format', icon: Layers, desc: 'Format, specs, attributes' },
-  { id: 'pricing',   label: 'Pricing & Stock', icon: DollarSign, desc: 'Price, stock, discounts' },
-  { id: 'publishing',label: 'Publishing',  icon: BookOpen, desc: 'Status, badges, preview' },
+const FORM_TABS: {
+  id: FormTab;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  desc: string;
+}[] = [
+  {
+    id: "essentials",
+    label: "Essentials",
+    icon: Package,
+    desc: "Title, images, category",
+  },
+  {
+    id: "media",
+    label: "Specs & Format",
+    icon: Layers,
+    desc: "Format, specs, attributes",
+  },
+  {
+    id: "pricing",
+    label: "Pricing & Stock",
+    icon: DollarSign,
+    desc: "Price, stock, discounts",
+  },
+  {
+    id: "publishing",
+    label: "Publishing",
+    icon: BookOpen,
+    desc: "Status, badges, preview",
+  },
 ];
 
 // ─── Subcomponents ────────────────────────────────────────────────────────────
-const FieldLabel: React.FC<{ label: string; required?: boolean; hint?: string }> = ({ label, required, hint }) => (
+const FieldLabel: React.FC<{
+  label: string;
+  required?: boolean;
+  hint?: string;
+}> = ({ label, required, hint }) => (
   <div className="mb-1.5 flex items-baseline justify-between">
     <span className="block text-[11px] font-bold uppercase tracking-wider text-gray-600">
-      {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      {label}
+      {required && <span className="text-red-500 ml-0.5">*</span>}
     </span>
-    {hint && <span className="text-[10px] text-gray-400 font-normal">{hint}</span>}
+    {hint && (
+      <span className="text-[10px] text-gray-400 font-normal">{hint}</span>
+    )}
   </div>
 );
 
@@ -68,8 +126,8 @@ const QuickChips: React.FC<{
         onClick={() => onSelect(opt)}
         className={`px-2 py-0.5 rounded text-[10px] font-medium transition cursor-pointer border ${
           current === opt
-            ? 'bg-blue-50 text-blue-700 border-blue-300 font-semibold'
-            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 hover:text-gray-700'
+            ? "bg-blue-50 text-blue-700 border-blue-300 font-semibold"
+            : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 hover:text-gray-700"
         }`}
       >
         {opt}
@@ -93,8 +151,8 @@ const GenrePills: React.FC<{
           onClick={() => onToggle(g.id)}
           className={`px-3 py-1 rounded-full text-[11px] font-medium border transition-all cursor-pointer select-none flex items-center gap-1 ${
             active
-              ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600'
+              ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+              : "bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600"
           }`}
         >
           {active && <Check className="w-3 h-3 shrink-0" />}
@@ -114,7 +172,9 @@ const ToggleFlag: React.FC<{
 }> = ({ checked, onChange, label, desc, icon }) => (
   <label className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:border-blue-300 hover:bg-blue-50/20 transition group">
     <div className="flex items-center gap-3">
-      <div className={`p-2 rounded-lg transition-colors ${checked ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+      <div
+        className={`p-2 rounded-lg transition-colors ${checked ? "bg-blue-50 text-blue-600" : "bg-gray-100 text-gray-500"}`}
+      >
         {icon}
       </div>
       <div>
@@ -123,11 +183,11 @@ const ToggleFlag: React.FC<{
       </div>
     </div>
     <div
-      className={`relative w-10 h-5 rounded-full transition-colors ${checked ? 'bg-blue-600' : 'bg-gray-200'}`}
+      className={`relative w-10 h-5 rounded-full transition-colors ${checked ? "bg-blue-600" : "bg-gray-200"}`}
       onClick={() => onChange(!checked)}
     >
       <span
-        className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-xs transition-transform ${checked ? 'translate-x-5' : ''}`}
+        className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-xs transition-transform ${checked ? "translate-x-5" : ""}`}
       />
     </div>
   </label>
@@ -151,17 +211,17 @@ const TabBar: React.FC<{
           onClick={() => onSelect(tab.id)}
           className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition-all cursor-pointer ${
             isActive
-              ? 'border-blue-600 text-blue-700 bg-white shadow-xs'
-              : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/60'
+              ? "border-blue-600 text-blue-700 bg-white shadow-xs"
+              : "border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/60"
           }`}
         >
           <span
             className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold transition-colors ${
               isActive
-                ? 'bg-blue-600 text-white'
+                ? "bg-blue-600 text-white"
                 : isDone
-                ? 'bg-emerald-600 text-white'
-                : 'bg-gray-200 text-gray-500'
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-200 text-gray-500"
             }`}
           >
             {isDone && !isActive ? <Check className="w-3 h-3" /> : idx + 1}
@@ -179,10 +239,22 @@ const TabBar: React.FC<{
 // ─── Main AdminProducts Component ─────────────────────────────────────────────
 export const AdminProducts: React.FC = () => {
   const queryClient = useQueryClient();
-  const productsQuery = useQuery({ queryKey: ['admin', 'products'], queryFn: () => adminApi.getProducts() });
-  const categoriesQuery = useQuery({ queryKey: ['admin', 'categories'], queryFn: () => adminApi.getCategories() });
-  const genresQuery = useQuery({ queryKey: ['admin', 'genres'], queryFn: () => adminApi.getGenres() });
-  const settingsQuery = useQuery({ queryKey: ['admin', 'settings'], queryFn: () => adminApi.getStoreSettings() });
+  const productsQuery = useQuery({
+    queryKey: ["admin", "products"],
+    queryFn: () => adminApi.getProducts(),
+  });
+  const categoriesQuery = useQuery({
+    queryKey: ["admin", "categories"],
+    queryFn: () => adminApi.getCategories(),
+  });
+  const genresQuery = useQuery({
+    queryKey: ["admin", "genres"],
+    queryFn: () => adminApi.getGenres(),
+  });
+  const settingsQuery = useQuery({
+    queryKey: ["admin", "settings"],
+    queryFn: () => adminApi.getStoreSettings(),
+  });
 
   const products = productsQuery.data || [];
   const categories = categoriesQuery.data || [];
@@ -191,18 +263,28 @@ export const AdminProducts: React.FC = () => {
 
   // Dynamically configured formats from Admin Taxonomy + existing catalog products
   const availableFormats = React.useMemo(() => {
-    const configured = storeSettings?.custom_formats || ['Standard', 'DVD', 'Blu-ray', '4K UHD', 'Box Set', 'Merchandise', 'Physical'];
+    const configured = storeSettings?.custom_formats || [
+      "Standard",
+      "DVD",
+      "Blu-ray",
+      "4K UHD",
+      "Box Set",
+      "Merchandise",
+      "Physical",
+    ];
     const fromProducts = products.map((p) => p.format);
-    return Array.from(new Set([...configured, ...fromProducts].filter(Boolean)));
+    return Array.from(
+      new Set([...configured, ...fromProducts].filter(Boolean)),
+    );
   }, [storeSettings?.custom_formats, products]);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterFormat, setFilterFormat] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterFormat, setFilterFormat] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const addToast = useUiStore((state) => state.addToast);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<FormTab>('essentials');
+  const [activeTab, setActiveTab] = useState<FormTab>("essentials");
 
   // Modal State for Create / Edit
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -211,46 +293,57 @@ export const AdminProducts: React.FC = () => {
   const [isDeletingProd, setIsDeletingProd] = useState(false);
 
   // Form State
-  const [title, setTitle] = useState('');
-  const [sku, setSku] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [title, setTitle] = useState("");
+  const [sku, setSku] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [selectedGenreIds, setSelectedGenreIds] = useState<string[]>([]);
-  const [format, setFormat] = useState<DvdFormat | ''>('DVD');
-  const [spineNumber, setSpineNumber] = useState('');
-  const [director, setDirector] = useState('');
-  const [aspectRatio, setAspectRatio] = useState('16:9 Anamorphic Widescreen');
-  const [audioFormat, setAudioFormat] = useState('Dolby Digital 5.1');
-  const [imdbRating, setImdbRating] = useState('');
-  const [price, setPrice] = useState('9.99');
-  const [comparePrice, setComparePrice] = useState('');
-  const [stockQuantity, setStockQuantity] = useState('20');
-  const [releaseYear, setReleaseYear] = useState(new Date().getFullYear().toString());
-  const [runtimeMinutes, setRuntimeMinutes] = useState('110');
-  const [ageRating, setAgeRating] = useState<AgeRating | ''>('15');
-  const [regionCode, setRegionCode] = useState('2 (UK/Europe)');
-  const [language, setLanguage] = useState('English');
-  const [subtitles, setSubtitles] = useState('English');
-  const [condition, setCondition] = useState('Brand New (Sealed)');
-  const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [format, setFormat] = useState<DvdFormat | "">("DVD");
+  const [spineNumber, setSpineNumber] = useState("");
+  const [director, setDirector] = useState("");
+  const [aspectRatio, setAspectRatio] = useState("16:9 Anamorphic Widescreen");
+  const [audioFormat, setAudioFormat] = useState("Dolby Digital 5.1");
+  const [imdbRating, setImdbRating] = useState("");
+  const [price, setPrice] = useState("9.99");
+  const [comparePrice, setComparePrice] = useState("");
+  const [stockQuantity, setStockQuantity] = useState("20");
+  const [releaseYear, setReleaseYear] = useState(
+    new Date().getFullYear().toString(),
+  );
+  const [runtimeMinutes, setRuntimeMinutes] = useState("110");
+  const [ageRating, setAgeRating] = useState<AgeRating | "">("15");
+  const [regionCode, setRegionCode] = useState("2 (UK/Europe)");
+  const [language, setLanguage] = useState("English");
+  const [subtitles, setSubtitles] = useState("English");
+  const [condition, setCondition] = useState("Brand New (Sealed)");
+  const [coverImageUrl, setCoverImageUrl] = useState("");
   const [productImages, setProductImages] = useState<string[]>([]);
-  const [imageUrlInput, setImageUrlInput] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<ProductStatus | ''>('active');
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<ProductStatus | "">("active");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isNewRelease, setIsNewRelease] = useState(true);
   const [isBestSeller, setIsBestSeller] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [uploadMode, setUploadMode] = useState<'upload' | 'url'>('upload');
+  const [uploadMode, setUploadMode] = useState<"upload" | "url">("upload");
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [statusMenuOpenId, setStatusMenuOpenId] = useState<string | null>(null);
 
-  const handleUpdateStatus = async (product: Product, newStatus: ProductStatus) => {
+  const handleUpdateStatus = async (
+    product: Product,
+    newStatus: ProductStatus,
+  ) => {
     if (product.status === newStatus) {
       setStatusMenuOpenId(null);
       return;
     }
-    if (newStatus === 'active' && (!product.price || Number(product.price) <= 0)) {
-      addToast(`Cannot set "${product.title}" to Active: price must be greater than £0.00. Please edit and specify a price first.`, 'error');
+    if (
+      newStatus === "active" &&
+      (!product.price || Number(product.price) <= 0)
+    ) {
+      addToast(
+        `Cannot set "${product.title}" to Active: price must be greater than £0.00. Please edit and specify a price first.`,
+        "error",
+      );
       setStatusMenuOpenId(null);
       return;
     }
@@ -258,27 +351,36 @@ export const AdminProducts: React.FC = () => {
     setStatusMenuOpenId(null);
     try {
       await adminApi.updateProduct(product.id, { status: newStatus });
-      await queryClient.invalidateQueries({ queryKey: ['admin'] });
-      await queryClient.invalidateQueries({ queryKey: ['store'] });
-      addToast(`"${product.title}" is now ${newStatus}.`, 'success');
+      await queryClient.invalidateQueries({ queryKey: ["admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["store"] });
+      addToast(`"${product.title}" is now ${newStatus}.`, "success");
     } catch (err) {
-      addToast(err instanceof Error ? err.message : 'Failed to update status', 'error');
+      addToast(
+        err instanceof Error ? err.message : "Failed to update status",
+        "error",
+      );
     } finally {
       setUpdatingStatusId(null);
     }
   };
 
   const handleToggleProductStatus = (product: Product) => {
-    const nextStatus: ProductStatus = product.status === 'active' ? 'draft' : 'active';
+    const nextStatus: ProductStatus =
+      product.status === "active" ? "draft" : "active";
     handleUpdateStatus(product, nextStatus);
   };
 
-  const handleImageFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
     const remainingSlots = 6 - productImages.length;
     if (remainingSlots <= 0) {
-      addToast('Maximum 6 images reached. Please remove an image first.', 'info');
+      addToast(
+        "Maximum 6 images reached. Please remove an image first.",
+        "info",
+      );
       return;
     }
     const toUpload = files.slice(0, remainingSlots);
@@ -286,12 +388,12 @@ export const AdminProducts: React.FC = () => {
     try {
       const urls: string[] = [];
       for (const file of toUpload) {
-        if (!file.type.startsWith('image/')) {
-          addToast(`"${file.name}" is not a valid image`, 'error');
+        if (!file.type.startsWith("image/")) {
+          addToast(`"${file.name}" is not a valid image`, "error");
           continue;
         }
         if (file.size > 5 * 1024 * 1024) {
-          addToast(`"${file.name}" exceeds 5MB limit`, 'error');
+          addToast(`"${file.name}" exceeds 5MB limit`, "error");
           continue;
         }
         const url = await uploadAdminImage(file);
@@ -300,16 +402,16 @@ export const AdminProducts: React.FC = () => {
       if (urls.length > 0) {
         setProductImages((prev) => {
           const updated = [...prev, ...urls].slice(0, 6);
-          setCoverImageUrl(updated[0] || '');
+          setCoverImageUrl(updated[0] || "");
           return updated;
         });
-        addToast(`Uploaded ${urls.length} image(s)`, 'success');
+        addToast(`Uploaded ${urls.length} image(s)`, "success");
       }
     } catch (err: any) {
-      addToast(err?.message || 'Failed to upload images', 'error');
+      addToast(err?.message || "Failed to upload images", "error");
     } finally {
       setIsUploadingImage(false);
-      event.target.value = '';
+      event.target.value = "";
     }
   };
 
@@ -318,20 +420,23 @@ export const AdminProducts: React.FC = () => {
     const url = imageUrlInput.trim();
     if (!url) return;
     if (productImages.length >= 6) {
-      addToast('Maximum 6 images reached. Please remove an image first.', 'info');
+      addToast(
+        "Maximum 6 images reached. Please remove an image first.",
+        "info",
+      );
       return;
     }
     const updated = [...productImages, url].slice(0, 6);
     setProductImages(updated);
-    setCoverImageUrl(updated[0] || '');
-    setImageUrlInput('');
-    addToast('Image URL added', 'success');
+    setCoverImageUrl(updated[0] || "");
+    setImageUrlInput("");
+    addToast("Image URL added", "success");
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
     const updated = productImages.filter((_, i) => i !== indexToRemove);
     setProductImages(updated);
-    setCoverImageUrl(updated[0] || '');
+    setCoverImageUrl(updated[0] || "");
   };
 
   const handleSetPrimaryImage = (indexToMain: number) => {
@@ -341,52 +446,63 @@ export const AdminProducts: React.FC = () => {
     const updated = [selected, ...rest];
     setProductImages(updated);
     setCoverImageUrl(updated[0]);
-    addToast('Main cover image updated', 'info');
+    addToast("Main cover image updated", "info");
   };
 
   const autoGenerateSku = () => {
-    const prefix = format === 'Blu-ray' ? 'BR' : format === '4K UHD' ? 'UHD' : format === 'Box Set' ? 'BOX' : format === 'Merchandise' ? 'MERCH' : format === 'Standard' ? 'PROD' : 'DVD';
-    const clean = (title.trim() || 'PROD')
-      .replace(/[^a-zA-Z0-9]/g, '')
+    const prefix =
+      format === "Blu-ray"
+        ? "BR"
+        : format === "4K UHD"
+          ? "UHD"
+          : format === "Box Set"
+            ? "BOX"
+            : format === "Merchandise"
+              ? "MERCH"
+              : format === "Standard"
+                ? "PROD"
+                : "DVD";
+    const clean = (title.trim() || "PROD")
+      .replace(/[^a-zA-Z0-9]/g, "")
       .slice(0, 4)
       .toUpperCase();
     const rand = Math.floor(100 + Math.random() * 900);
     const newSku = `${prefix}-${clean}-${rand}`;
     setSku(newSku);
-    addToast(`Generated SKU: ${newSku}`, 'info');
+    addToast(`Generated SKU: ${newSku}`, "info");
   };
 
   const resetForm = () => {
-    setActiveTab('essentials');
-    setTitle('');
-    setSku('');
-    setCategoryId('');
+    setActiveTab("essentials");
+    setTitle("");
+    setSku("");
+    setCategoryId("");
     setSelectedGenreIds([]);
-    setFormat('Standard');
-    setSpineNumber('');
-    setDirector('');
-    setAspectRatio('16:9 Anamorphic Widescreen');
-    setAudioFormat('Dolby Digital 5.1');
-    setImdbRating('');
-    setPrice('9.99');
-    setComparePrice('');
-    setStockQuantity('20');
+    setFormat("Standard");
+    setSpineNumber("");
+    setDirector("");
+    setAspectRatio("16:9 Anamorphic Widescreen");
+    setAudioFormat("Dolby Digital 5.1");
+    setImdbRating("");
+    setPrice("9.99");
+    setComparePrice("");
+    setStockQuantity("20");
     setReleaseYear(new Date().getFullYear().toString());
-    setRuntimeMinutes('0');
-    setAgeRating('All');
-    setRegionCode('All Region');
-    setLanguage('English');
-    setSubtitles('None');
-    setCondition('Brand New (Sealed)');
-    setCoverImageUrl('');
+    setRuntimeMinutes("0");
+    setAgeRating("All");
+    setRegionCode("All Region");
+    setLanguage("English");
+    setSubtitles("None");
+    setCondition("Brand New (Sealed)");
+    setCoverImageUrl("");
     setProductImages([]);
-    setImageUrlInput('');
-    setDescription('');
-    setStatus('active');
+    setImageUrlInput("");
+    setDescription("");
+    setStatus("active");
     setIsFeatured(false);
     setIsNewRelease(true);
     setIsBestSeller(false);
-    setUploadMode('upload');
+    setUploadMode("upload");
   };
 
   const openCreateModal = () => {
@@ -397,51 +513,71 @@ export const AdminProducts: React.FC = () => {
 
   const openEditModal = (prod: Product) => {
     setEditingProduct(prod);
-    setActiveTab('essentials');
-    setTitle(prod.title || '');
-    setSku(prod.sku || '');
-    setCategoryId(prod.category_id || '');
+    setActiveTab("essentials");
+    setTitle(prod.title || "");
+    setSku(prod.sku || "");
+    setCategoryId(prod.category_id || "");
     setSelectedGenreIds((prod.genres || []).map((g) => g.id));
-    setFormat(prod.format || 'Standard');
-    setSpineNumber(prod.spine_number || '');
-    setDirector(prod.director || '');
-    setAspectRatio(prod.aspect_ratio || '16:9 Anamorphic Widescreen');
-    setAudioFormat(prod.audio_format || 'Dolby Digital 5.1');
-    setImdbRating(prod.imdb_rating != null ? prod.imdb_rating.toString() : '');
-    setPrice(prod.price != null ? prod.price.toString() : '9.99');
-    setComparePrice(prod.compare_at_price != null ? prod.compare_at_price.toString() : '');
-    setStockQuantity(prod.stock_quantity != null ? prod.stock_quantity.toString() : '20');
-    setReleaseYear(prod.release_year ? prod.release_year.toString() : new Date().getFullYear().toString());
-    setRuntimeMinutes(prod.runtime_minutes ? prod.runtime_minutes.toString() : '0');
-    setAgeRating(prod.age_rating || 'All');
-    setRegionCode(prod.region_code || 'All Region');
-    setLanguage(prod.language || 'English');
-    setSubtitles(prod.subtitles || 'None');
-    setCondition(prod.condition || 'Brand New (Sealed)');
+    setFormat(prod.format || "Standard");
+    setSpineNumber(prod.spine_number || "");
+    setDirector(prod.director || "");
+    setAspectRatio(prod.aspect_ratio || "16:9 Anamorphic Widescreen");
+    setAudioFormat(prod.audio_format || "Dolby Digital 5.1");
+    setImdbRating(prod.imdb_rating != null ? prod.imdb_rating.toString() : "");
+    setPrice(prod.price != null ? prod.price.toString() : "9.99");
+    setComparePrice(
+      prod.compare_at_price != null ? prod.compare_at_price.toString() : "",
+    );
+    setStockQuantity(
+      prod.stock_quantity != null ? prod.stock_quantity.toString() : "20",
+    );
+    setReleaseYear(
+      prod.release_year
+        ? prod.release_year.toString()
+        : new Date().getFullYear().toString(),
+    );
+    setRuntimeMinutes(
+      prod.runtime_minutes ? prod.runtime_minutes.toString() : "0",
+    );
+    setAgeRating(prod.age_rating || "All");
+    setRegionCode(prod.region_code || "All Region");
+    setLanguage(prod.language || "English");
+    setSubtitles(prod.subtitles || "None");
+    setCondition(prod.condition || "Brand New (Sealed)");
 
     const existingImgs = (
       prod.images && prod.images.length > 0
         ? prod.images
         : [prod.cover_image_url]
-    ).filter(Boolean).slice(0, 6);
+    )
+      .filter(Boolean)
+      .slice(0, 6);
     setProductImages(existingImgs);
-    setCoverImageUrl(existingImgs[0] || prod.cover_image_url || '');
-    setImageUrlInput('');
+    setCoverImageUrl(existingImgs[0] || prod.cover_image_url || "");
+    setImageUrlInput("");
 
-    setDescription(prod.description || '');
-    setStatus(prod.status || 'active');
+    setDescription(prod.description || "");
+    setStatus(prod.status || "active");
     setIsFeatured(Boolean(prod.is_featured));
     setIsNewRelease(Boolean(prod.is_new_release));
     setIsBestSeller(Boolean(prod.is_best_seller));
-    setUploadMode('upload');
+    setUploadMode("upload");
     setIsModalOpen(true);
   };
 
   // Completion check per tab
   const tabCompleted: Record<FormTab, boolean> = {
-    essentials: Boolean(title.trim() && sku.trim() && (coverImageUrl.trim() || productImages.length > 0)),
+    essentials: Boolean(
+      title.trim() &&
+      sku.trim() &&
+      (coverImageUrl.trim() || productImages.length > 0),
+    ),
     media: Boolean(format),
-    pricing: Boolean(price && Number(price) > 0 && (editingProduct || (stockQuantity && Number(stockQuantity) >= 0))),
+    pricing: Boolean(
+      price &&
+      Number(price) > 0 &&
+      (editingProduct || (stockQuantity && Number(stockQuantity) >= 0)),
+    ),
     publishing: Boolean(status),
   };
 
@@ -451,55 +587,80 @@ export const AdminProducts: React.FC = () => {
       e.preventDefault();
       e.stopPropagation();
     }
-    if (activeTab === 'essentials') {
+    if (activeTab === "essentials") {
       if (!title.trim()) {
-        addToast('Please enter the product title.', 'error');
+        addToast("Please enter the product title.", "error");
         return;
       }
       if (!sku.trim()) {
         autoGenerateSku();
       }
       if (!coverImageUrl.trim() && productImages.length === 0) {
-        addToast('Please upload at least one image or enter an image URL.', 'error');
+        addToast(
+          "Please upload at least one image or enter an image URL.",
+          "error",
+        );
         return;
       }
-      setActiveTab('media');
-    } else if (activeTab === 'media') {
-      const isVideo = ['DVD', 'Blu-ray', '4K UHD', 'Box Set'].includes(format || '');
-      if (!format) setFormat('Standard');
-      if (!ageRating) setAgeRating(isVideo ? '15' : 'All');
-      if (!regionCode.trim()) setRegionCode(isVideo ? '2 (UK/Europe)' : 'All Region');
-      if (!language.trim()) setLanguage('English');
-      if (!subtitles.trim()) setSubtitles(isVideo ? 'English' : 'None');
+      setActiveTab("media");
+    } else if (activeTab === "media") {
+      const isVideo = ["DVD", "Blu-ray", "4K UHD", "Box Set"].includes(
+        format || "",
+      );
+      if (!format) setFormat("Standard");
+      if (!ageRating) setAgeRating(isVideo ? "15" : "All");
+      if (!regionCode.trim())
+        setRegionCode(isVideo ? "2 (UK/Europe)" : "All Region");
+      if (!language.trim()) setLanguage("English");
+      if (!subtitles.trim()) setSubtitles(isVideo ? "English" : "None");
       if (isVideo && (!releaseYear.trim() || Number(releaseYear) < 1888)) {
         setReleaseYear(new Date().getFullYear().toString());
       }
       if (!runtimeMinutes.trim()) {
-        setRuntimeMinutes('0');
+        setRuntimeMinutes("0");
       }
-      setActiveTab('pricing');
-    } else if (activeTab === 'pricing') {
-      const cleanPriceStr = price.toString().replace(/[^0-9.]/g, '').trim();
+      setActiveTab("pricing");
+    } else if (activeTab === "pricing") {
+      const cleanPriceStr = price
+        .toString()
+        .replace(/[^0-9.]/g, "")
+        .trim();
       const parsedPrice = cleanPriceStr ? Number(cleanPriceStr) : 0;
-      if (status === 'active' && parsedPrice <= 0) {
-        addToast('Active products require a price greater than £0.00. Please enter a valid sale price.', 'error');
+      if (status === "active" && parsedPrice <= 0) {
+        addToast(
+          "Active products require a price greater than £0.00. Please enter a valid sale price.",
+          "error",
+        );
         return;
       }
-      const parsedCompareNum = comparePrice.trim() ? Number(comparePrice.replace(/[^0-9.]/g, '')) : null;
-      if (parsedCompareNum && parsedCompareNum > 0 && parsedPrice > 0 && parsedCompareNum <= parsedPrice) {
-        addToast('Compare-at price must be greater than sale price, or leave it blank.', 'error');
+      const parsedCompareNum = comparePrice.trim()
+        ? Number(comparePrice.replace(/[^0-9.]/g, ""))
+        : null;
+      if (
+        parsedCompareNum &&
+        parsedCompareNum > 0 &&
+        parsedPrice > 0 &&
+        parsedCompareNum <= parsedPrice
+      ) {
+        addToast(
+          "Compare-at price must be greater than sale price, or leave it blank.",
+          "error",
+        );
         return;
       }
-      if (!editingProduct && (!stockQuantity.trim() || Number(stockQuantity) < 0)) {
-        setStockQuantity('20');
+      if (
+        !editingProduct &&
+        (!stockQuantity.trim() || Number(stockQuantity) < 0)
+      ) {
+        setStockQuantity("20");
       }
-      setActiveTab('publishing');
+      setActiveTab("publishing");
     }
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeTab !== 'publishing') {
+    if (activeTab !== "publishing") {
       handleNextStep(e);
       return;
     }
@@ -511,122 +672,170 @@ export const AdminProducts: React.FC = () => {
 
     // 1. Tab Essentials Validation
     if (!title.trim()) {
-      setActiveTab('essentials');
-      addToast('Please enter the product title in Essentials.', 'error');
+      setActiveTab("essentials");
+      addToast("Please enter the product title in Essentials.", "error");
       return;
     }
     if (!sku.trim()) {
-      setActiveTab('essentials');
-      addToast('Please enter or auto-generate a SKU code in Essentials.', 'error');
+      setActiveTab("essentials");
+      addToast(
+        "Please enter or auto-generate a SKU code in Essentials.",
+        "error",
+      );
       return;
     }
     const finalCover = productImages[0] || coverImageUrl.trim();
     if (!finalCover) {
-      setActiveTab('essentials');
-      addToast('Please upload at least one image or provide an image URL in Essentials.', 'error');
+      setActiveTab("essentials");
+      addToast(
+        "Please upload at least one image or provide an image URL in Essentials.",
+        "error",
+      );
       return;
     }
 
     // 2. Tab Media / Specs Validation
     if (!format) {
-      setActiveTab('media');
-      addToast('Please select the product format in Specifications.', 'error');
+      setActiveTab("media");
+      addToast("Please select the product format in Specifications.", "error");
       return;
     }
     const parsedYear = Number(releaseYear) || new Date().getFullYear();
     const parsedRuntime = Number(runtimeMinutes) || 0;
 
     // 3. Tab Pricing Validation
-    const cleanPriceStr = price.toString().replace(/[^0-9.]/g, '').trim();
+    const cleanPriceStr = price
+      .toString()
+      .replace(/[^0-9.]/g, "")
+      .trim();
     const parsedPrice = cleanPriceStr ? Number(cleanPriceStr) : 0;
-    if (status === 'active') {
+    if (status === "active") {
       if (!cleanPriceStr || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-        setActiveTab('pricing');
-        addToast('Active products require a price greater than £0.00. Please enter a valid sale price in Pricing or select Draft status.', 'error');
+        setActiveTab("pricing");
+        addToast(
+          "Active products require a price greater than £0.00. Please enter a valid sale price in Pricing or select Draft status.",
+          "error",
+        );
         return;
       }
     } else {
       if (cleanPriceStr && (!Number.isFinite(parsedPrice) || parsedPrice < 0)) {
-        setActiveTab('pricing');
-        addToast('Please enter a valid sale price in Pricing.', 'error');
+        setActiveTab("pricing");
+        addToast("Please enter a valid sale price in Pricing.", "error");
         return;
       }
     }
     // Maximum product price enforcement
     if (parsedPrice > MAX_PRODUCT_PRICE) {
-      setActiveTab('pricing');
-      addToast(`Product price cannot exceed £${MAX_PRODUCT_PRICE.toFixed(2)}. Please enter a lower price.`, 'error');
+      setActiveTab("pricing");
+      addToast(
+        `Product price cannot exceed £${MAX_PRODUCT_PRICE.toFixed(2)}. Please enter a lower price.`,
+        "error",
+      );
       return;
     }
-    const parsedComparePrice = comparePrice.trim() ? Number(comparePrice.replace(/[^0-9.]/g, '')) : null;
-    if (parsedComparePrice !== null && (!Number.isFinite(parsedComparePrice) || parsedComparePrice <= parsedPrice)) {
-      setActiveTab('pricing');
-      addToast('Compare-at price must be greater than sale price.', 'error');
+    const parsedComparePrice = comparePrice.trim()
+      ? Number(comparePrice.replace(/[^0-9.]/g, ""))
+      : null;
+    if (
+      parsedComparePrice !== null &&
+      (!Number.isFinite(parsedComparePrice) ||
+        parsedComparePrice <= parsedPrice)
+    ) {
+      setActiveTab("pricing");
+      addToast("Compare-at price must be greater than sale price.", "error");
       return;
     }
     const parsedStock = Number(stockQuantity);
-    if (!editingProduct && (!stockQuantity.trim() || !Number.isInteger(parsedStock) || parsedStock < 0)) {
-      setActiveTab('pricing');
-      addToast('Please enter a valid initial stock quantity in Pricing.', 'error');
+    if (
+      !editingProduct &&
+      (!stockQuantity.trim() ||
+        !Number.isInteger(parsedStock) ||
+        parsedStock < 0)
+    ) {
+      setActiveTab("pricing");
+      addToast(
+        "Please enter a valid initial stock quantity in Pricing.",
+        "error",
+      );
       return;
     }
 
     // 4. Tab Publishing Validation
     if (!status) {
-      setActiveTab('publishing');
-      addToast('Please select a publication status in Publishing.', 'error');
+      setActiveTab("publishing");
+      addToast("Please select a publication status in Publishing.", "error");
       return;
     }
 
     const parsedImdb = imdbRating.trim() ? Number(imdbRating) : null;
-    if (parsedImdb !== null && (!Number.isFinite(parsedImdb) || parsedImdb < 0 || parsedImdb > 10)) {
-      setActiveTab('media');
-      addToast('IMDb rating must be between 1.0 and 10.0.', 'error');
+    if (
+      parsedImdb !== null &&
+      (!Number.isFinite(parsedImdb) || parsedImdb < 0 || parsedImdb > 10)
+    ) {
+      setActiveTab("media");
+      addToast("IMDb rating must be between 1.0 and 10.0.", "error");
       return;
     }
 
-    const slug = title.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
+    const slug = title
+      .toLowerCase()
+      .replace(/[^\w ]+/g, "")
+      .replace(/ +/g, "-");
     if (isUploadingImage || isSaving) return;
     setIsSaving(true);
 
     try {
       const allImgs = productImages.length > 0 ? productImages : [finalCover];
-      const saved = await adminApi.saveProductWithGenres(editingProduct?.id || null, {
-        title: title.trim(),
-        sku: sku.trim(),
-        slug,
-        category_id: categoryId || null,
-        format: (format as DvdFormat) || 'Standard',
-        spine_number: spineNumber.trim() || null,
-        director: director.trim() || null,
-        aspect_ratio: aspectRatio.trim() || null,
-        audio_format: audioFormat.trim() || null,
-        imdb_rating: parsedImdb,
-        price: parsedPrice,
-        compare_at_price: parsedComparePrice,
-        ...(!editingProduct ? { stock_quantity: parsedStock } : {}),
-        release_year: parsedYear,
-        runtime_minutes: parsedRuntime,
-        age_rating: (ageRating as AgeRating) || '12',
-        region_code: regionCode || 'All Region',
-        language: language || 'English',
-        subtitles: subtitles || 'None',
-        condition: condition || 'Brand New (Sealed)',
-        cover_image_url: finalCover,
-        description,
-        short_description: description.trim().slice(0, 160) || null,
-        status: status as ProductStatus,
-        is_featured: isFeatured,
-        is_new_release: isNewRelease,
-        is_best_seller: isBestSeller,
-      }, selectedGenreIds, allImgs);
+      const saved = await adminApi.saveProductWithGenres(
+        editingProduct?.id || null,
+        {
+          title: title.trim(),
+          sku: sku.trim(),
+          slug,
+          category_id: categoryId || null,
+          format: (format as DvdFormat) || "Standard",
+          spine_number: spineNumber.trim() || null,
+          director: director.trim() || null,
+          aspect_ratio: aspectRatio.trim() || null,
+          audio_format: audioFormat.trim() || null,
+          imdb_rating: parsedImdb,
+          price: parsedPrice,
+          compare_at_price: parsedComparePrice,
+          ...(!editingProduct ? { stock_quantity: parsedStock } : {}),
+          release_year: parsedYear,
+          runtime_minutes: parsedRuntime,
+          age_rating: (ageRating as AgeRating) || "12",
+          region_code: regionCode || "All Region",
+          language: language || "English",
+          subtitles: subtitles || "None",
+          condition: condition || "Brand New (Sealed)",
+          cover_image_url: finalCover,
+          description,
+          short_description: description.trim().slice(0, 160) || null,
+          status: status as ProductStatus,
+          is_featured: isFeatured,
+          is_new_release: isNewRelease,
+          is_best_seller: isBestSeller,
+        },
+        selectedGenreIds,
+        allImgs,
+      );
 
-      addToast(`${editingProduct ? 'Updated' : 'Added'} "${saved.title}" successfully`, 'success');
-      await queryClient.invalidateQueries({ queryKey: ['admin'] });
-      await queryClient.invalidateQueries({ queryKey: ['store'] });
+      addToast(
+        `${editingProduct ? "Updated" : "Added"} "${saved.title}" successfully`,
+        "success",
+      );
+      await queryClient.invalidateQueries({ queryKey: ["admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["store"] });
       setIsModalOpen(false);
     } catch (saveError) {
-      addToast(saveError instanceof Error ? saveError.message : 'Product could not be saved', 'error');
+      addToast(
+        saveError instanceof Error
+          ? saveError.message
+          : "Product could not be saved",
+        "error",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -637,12 +846,15 @@ export const AdminProducts: React.FC = () => {
     setIsDeletingProd(true);
     try {
       await adminApi.archiveProduct(productToDelete.id);
-      await queryClient.invalidateQueries({ queryKey: ['admin'] });
-      await queryClient.invalidateQueries({ queryKey: ['store'] });
-      addToast(`Archived "${productToDelete.title}"`, 'info');
+      await queryClient.invalidateQueries({ queryKey: ["admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["store"] });
+      addToast(`Archived "${productToDelete.title}"`, "info");
       setProductToDelete(null);
     } catch (err) {
-      addToast(err instanceof Error ? err.message : 'Product could not be archived', 'error');
+      addToast(
+        err instanceof Error ? err.message : "Product could not be archived",
+        "error",
+      );
     } finally {
       setIsDeletingProd(false);
     }
@@ -653,12 +865,15 @@ export const AdminProducts: React.FC = () => {
     setIsDeletingProd(true);
     try {
       await adminApi.deleteProduct(productToDelete.id);
-      await queryClient.invalidateQueries({ queryKey: ['admin'] });
-      await queryClient.invalidateQueries({ queryKey: ['store'] });
-      addToast(`Permanently deleted "${productToDelete.title}"`, 'success');
+      await queryClient.invalidateQueries({ queryKey: ["admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["store"] });
+      addToast(`Permanently deleted "${productToDelete.title}"`, "success");
       setProductToDelete(null);
     } catch (err) {
-      addToast(err instanceof Error ? err.message : 'Product could not be deleted', 'error');
+      addToast(
+        err instanceof Error ? err.message : "Product could not be deleted",
+        "error",
+      );
     } finally {
       setIsDeletingProd(false);
     }
@@ -666,8 +881,10 @@ export const AdminProducts: React.FC = () => {
 
   const filteredProducts = products.filter((p) => {
     const q = searchQuery.toLowerCase();
-    return (p.title.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
-      && (filterFormat === 'all' || p.format === filterFormat);
+    return (
+      (p.title.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)) &&
+      (filterFormat === "all" || p.format === filterFormat)
+    );
   });
 
   const totalItems = filteredProducts.length;
@@ -677,11 +894,24 @@ export const AdminProducts: React.FC = () => {
   const endIndex = Math.min(startIndex + pageSize, totalItems);
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-  if (productsQuery.isLoading || categoriesQuery.isLoading || genresQuery.isLoading || productsQuery.error || categoriesQuery.error || genresQuery.error) {
+  if (
+    productsQuery.isLoading ||
+    categoriesQuery.isLoading ||
+    genresQuery.isLoading ||
+    productsQuery.error ||
+    categoriesQuery.error ||
+    genresQuery.error
+  ) {
     return (
       <AdminDataState
-        loading={productsQuery.isLoading || categoriesQuery.isLoading || genresQuery.isLoading}
-        error={productsQuery.error || categoriesQuery.error || genresQuery.error}
+        loading={
+          productsQuery.isLoading ||
+          categoriesQuery.isLoading ||
+          genresQuery.isLoading
+        }
+        error={
+          productsQuery.error || categoriesQuery.error || genresQuery.error
+        }
         onRetry={() => {
           productsQuery.refetch();
           categoriesQuery.refetch();
@@ -696,14 +926,16 @@ export const AdminProducts: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">CATALOGUE MANAGEMENT</span>
+          <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
+            CATALOGUE MANAGEMENT
+          </span>
           <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-dark tracking-tight mt-0.5">
             Products &amp; Media Inventory ({products.length})
           </h1>
         </div>
         <Button variant="primary" onClick={openCreateModal} className="gap-2">
           <Plus className="w-4 h-4" />
-          <span>Add New Film</span>
+          <span>Add New Products</span>
         </Button>
       </div>
 
@@ -732,7 +964,9 @@ export const AdminProducts: React.FC = () => {
         >
           <option value="all">All Formats</option>
           {availableFormats.map((fmt) => (
-            <option key={fmt} value={fmt}>{fmt}</option>
+            <option key={fmt} value={fmt}>
+              {fmt}
+            </option>
           ))}
         </select>
       </div>
@@ -757,13 +991,23 @@ export const AdminProducts: React.FC = () => {
               {paginatedProducts.map((p) => (
                 <tr key={p.id} className="hover:bg-gray-50/70">
                   <td className="p-3.5">
-                    <img src={p.cover_image_url} alt={p.title} className="w-10 aspect-dvd object-cover rounded-xs border border-gray-200" />
+                    <img
+                      src={p.cover_image_url}
+                      alt={p.title}
+                      className="w-10 aspect-dvd object-cover rounded-xs border border-gray-200"
+                    />
                   </td>
                   <td className="p-3.5">
-                    <div className="font-semibold text-dark line-clamp-1 max-w-xs">{p.title}</div>
+                    <div className="font-semibold text-dark line-clamp-1 max-w-xs">
+                      {p.title}
+                    </div>
                     <div className="text-[11px] text-gray-400 font-mono mt-0.5 flex items-center gap-2">
                       <span>{p.sku}</span>
-                      {p.spine_number && <span className="text-brand-blue font-bold">#SPINE {p.spine_number}</span>}
+                      {p.spine_number && (
+                        <span className="text-brand-blue font-bold">
+                          #SPINE {p.spine_number}
+                        </span>
+                      )}
                       {p.director && <span>• Dir. {p.director}</span>}
                     </div>
                   </td>
@@ -774,9 +1018,13 @@ export const AdminProducts: React.FC = () => {
                       <ImdbBadge product={p} size="xs" />
                     </div>
                   </td>
-                  <td className="p-3.5 font-mono font-bold text-dark">{formatGBP(p.price)}</td>
+                  <td className="p-3.5 font-mono font-bold text-dark">
+                    {formatGBP(p.price)}
+                  </td>
                   <td className="p-3.5">
-                    <span className={`font-mono font-bold ${settingsQuery.data && p.stock_quantity <= settingsQuery.data.low_stock_threshold ? 'text-amber-600' : 'text-emerald-700'}`}>
+                    <span
+                      className={`font-mono font-bold ${settingsQuery.data && p.stock_quantity <= settingsQuery.data.low_stock_threshold ? "text-amber-600" : "text-emerald-700"}`}
+                    >
                       {p.stock_quantity}
                     </span>
                   </td>
@@ -787,18 +1035,18 @@ export const AdminProducts: React.FC = () => {
                         onClick={() => handleToggleProductStatus(p)}
                         disabled={updatingStatusId === p.id}
                         title={
-                          p.status === 'active'
-                            ? 'Click to set as Draft (hide from storefront)'
-                            : p.status === 'draft'
-                            ? 'Click to set as Active (show in storefront)'
-                            : 'Click to restore as Active'
+                          p.status === "active"
+                            ? "Click to set as Draft (hide from storefront)"
+                            : p.status === "draft"
+                              ? "Click to set as Active (show in storefront)"
+                              : "Click to restore as Active"
                         }
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-l-full text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border-y border-l ${
-                          p.status === 'active'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                            : p.status === 'draft'
-                            ? 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-                            : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                          p.status === "active"
+                            ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
+                            : p.status === "draft"
+                              ? "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
+                              : "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
                         }`}
                       >
                         {updatingStatusId === p.id ? (
@@ -806,11 +1054,11 @@ export const AdminProducts: React.FC = () => {
                         ) : (
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
-                              p.status === 'active'
-                                ? 'bg-emerald-600'
-                                : p.status === 'draft'
-                                ? 'bg-gray-400'
-                                : 'bg-amber-500'
+                              p.status === "active"
+                                ? "bg-emerald-600"
+                                : p.status === "draft"
+                                  ? "bg-gray-400"
+                                  : "bg-amber-500"
                             }`}
                           />
                         )}
@@ -818,15 +1066,19 @@ export const AdminProducts: React.FC = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setStatusMenuOpenId(statusMenuOpenId === p.id ? null : p.id)}
+                        onClick={() =>
+                          setStatusMenuOpenId(
+                            statusMenuOpenId === p.id ? null : p.id,
+                          )
+                        }
                         disabled={updatingStatusId === p.id}
                         title="Change status"
                         className={`px-1.5 py-1 rounded-r-full text-[10px] font-bold border transition-colors cursor-pointer ${
-                          p.status === 'active'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                            : p.status === 'draft'
-                            ? 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-                            : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                          p.status === "active"
+                            ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
+                            : p.status === "draft"
+                              ? "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
+                              : "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
                         }`}
                       >
                         <ChevronDown className="w-3 h-3" />
@@ -839,29 +1091,43 @@ export const AdminProducts: React.FC = () => {
                             onClick={() => setStatusMenuOpenId(null)}
                           />
                           <div className="absolute left-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 text-xs">
-                            {(['active', 'draft', 'archived'] as const).map((st) => (
-                              <button
-                                key={st}
-                                type="button"
-                                onClick={() => handleUpdateStatus(p, st)}
-                                className={`w-full text-left px-3 py-1.5 flex items-center justify-between text-[11px] font-medium hover:bg-gray-50 cursor-pointer capitalize ${
-                                  p.status === st ? 'text-blue-600 font-bold bg-blue-50/50' : 'text-gray-700'
-                                }`}
-                              >
-                                <span>{st}</span>
-                                {p.status === st && <Check className="w-3 h-3 text-blue-600" />}
-                              </button>
-                            ))}
+                            {(["active", "draft", "archived"] as const).map(
+                              (st) => (
+                                <button
+                                  key={st}
+                                  type="button"
+                                  onClick={() => handleUpdateStatus(p, st)}
+                                  className={`w-full text-left px-3 py-1.5 flex items-center justify-between text-[11px] font-medium hover:bg-gray-50 cursor-pointer capitalize ${
+                                    p.status === st
+                                      ? "text-blue-600 font-bold bg-blue-50/50"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span>{st}</span>
+                                  {p.status === st && (
+                                    <Check className="w-3 h-3 text-blue-600" />
+                                  )}
+                                </button>
+                              ),
+                            )}
                           </div>
                         </>
                       )}
                     </div>
                   </td>
                   <td className="p-3.5 text-right space-x-2">
-                    <button onClick={() => openEditModal(p)} className="p-1.5 text-gray-500 hover:text-brand-blue hover:bg-gray-100 rounded transition-colors" title="Edit Product">
+                    <button
+                      onClick={() => openEditModal(p)}
+                      className="p-1.5 text-gray-500 hover:text-brand-blue hover:bg-gray-100 rounded transition-colors"
+                      title="Edit Product"
+                    >
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => setProductToDelete(p)} className="p-1.5 text-gray-500 hover:text-brand-red hover:bg-gray-100 rounded transition-colors" title="Remove / Archive">
+                    <button
+                      onClick={() => setProductToDelete(p)}
+                      className="p-1.5 text-gray-500 hover:text-brand-red hover:bg-gray-100 rounded transition-colors"
+                      title="Remove / Archive"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </td>
@@ -875,11 +1141,13 @@ export const AdminProducts: React.FC = () => {
         {filteredProducts.length === 0 && (
           <div className="text-center py-12 px-4">
             <Film className="w-8 h-8 mx-auto text-gray-300 mb-2" />
-            <p className="text-xs font-semibold text-gray-700">No films found</p>
+            <p className="text-xs font-semibold text-gray-700">
+              No films found
+            </p>
             <p className="text-[11px] text-gray-400 mt-0.5">
-              {searchQuery || filterFormat !== 'all'
-                ? 'Try adjusting your search query or format filter.'
-                : 'Get started by adding your first title to the catalogue.'}
+              {searchQuery || filterFormat !== "all"
+                ? "Try adjusting your search query or format filter."
+                : "Get started by adding your first title to the catalogue."}
             </p>
           </div>
         )}
@@ -890,9 +1158,13 @@ export const AdminProducts: React.FC = () => {
             {/* Left: Summary and Page Size */}
             <div className="flex items-center gap-4">
               <span className="text-[11px] text-gray-500">
-                Showing <strong className="font-bold text-dark">{startIndex + 1}</strong> to{' '}
-                <strong className="font-bold text-dark">{endIndex}</strong> of{' '}
-                <strong className="font-bold text-dark">{totalItems}</strong> titles
+                Showing{" "}
+                <strong className="font-bold text-dark">
+                  {startIndex + 1}
+                </strong>{" "}
+                to <strong className="font-bold text-dark">{endIndex}</strong>{" "}
+                of <strong className="font-bold text-dark">{totalItems}</strong>{" "}
+                titles
               </span>
 
               <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
@@ -938,17 +1210,25 @@ export const AdminProducts: React.FC = () => {
               {/* Page Number Buttons */}
               <div className="flex items-center gap-1 px-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 1)
-                  .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                  .filter(
+                    (p) =>
+                      p === 1 ||
+                      p === totalPages ||
+                      Math.abs(p - safeCurrentPage) <= 1,
+                  )
+                  .reduce<(number | "ellipsis")[]>((acc, p, idx, arr) => {
                     if (idx > 0 && p - (arr[idx - 1] as number) > 1) {
-                      acc.push('ellipsis');
+                      acc.push("ellipsis");
                     }
                     acc.push(p);
                     return acc;
                   }, [])
                   .map((item, idx) =>
-                    item === 'ellipsis' ? (
-                      <span key={`ell-${idx}`} className="px-1 text-gray-400 font-mono">
+                    item === "ellipsis" ? (
+                      <span
+                        key={`ell-${idx}`}
+                        className="px-1 text-gray-400 font-mono"
+                      >
                         ...
                       </span>
                     ) : (
@@ -958,19 +1238,21 @@ export const AdminProducts: React.FC = () => {
                         onClick={() => setCurrentPage(item)}
                         className={`min-w-[28px] h-7 px-2 rounded text-xs font-bold transition cursor-pointer ${
                           safeCurrentPage === item
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
                         }`}
                       >
                         {item}
                       </button>
-                    )
+                    ),
                   )}
               </div>
 
               <button
                 type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={safeCurrentPage === totalPages}
                 className="p-1.5 rounded border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer"
                 title="Next Page"
@@ -996,8 +1278,16 @@ export const AdminProducts: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingProduct ? `Edit Product: ${editingProduct.title}` : 'Add New Product'}
-        description={editingProduct ? 'Update catalogue entry, technical details, pricing, and images.' : 'Quick 4-step wizard to register a new product in your inventory.'}
+        title={
+          editingProduct
+            ? `Edit Product: ${editingProduct.title}`
+            : "Add New Product"
+        }
+        description={
+          editingProduct
+            ? "Update catalogue entry, technical details, pricing, and images."
+            : "Quick 4-step wizard to register a new product in your inventory."
+        }
         maxWidth="2xl"
       >
         <form onSubmit={handleFormSubmit}>
@@ -1010,12 +1300,16 @@ export const AdminProducts: React.FC = () => {
           />
 
           {/* ── TAB 1: ESSENTIALS ─────────────────────────────── */}
-          {activeTab === 'essentials' && (
+          {activeTab === "essentials" && (
             <div className="space-y-5">
               {/* Title & SKU */}
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
                 <div>
-                  <FieldLabel label="Product Title" required hint="Full official name / title" />
+                  <FieldLabel
+                    label="Product Title"
+                    required
+                    hint="Full official name / title"
+                  />
                   <input
                     type="text"
                     value={title}
@@ -1062,9 +1356,11 @@ export const AdminProducts: React.FC = () => {
                     <div className="flex rounded-lg bg-gray-100 p-0.5 text-[11px]">
                       <button
                         type="button"
-                        onClick={() => setUploadMode('upload')}
+                        onClick={() => setUploadMode("upload")}
                         className={`flex items-center gap-1 px-3 py-1 rounded-md font-semibold transition cursor-pointer ${
-                          uploadMode === 'upload' ? 'bg-white text-blue-600 shadow-xs' : 'text-gray-500 hover:text-dark'
+                          uploadMode === "upload"
+                            ? "bg-white text-blue-600 shadow-xs"
+                            : "text-gray-500 hover:text-dark"
                         }`}
                       >
                         <Upload className="w-3 h-3" />
@@ -1072,9 +1368,11 @@ export const AdminProducts: React.FC = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setUploadMode('url')}
+                        onClick={() => setUploadMode("url")}
                         className={`flex items-center gap-1 px-3 py-1 rounded-md font-semibold transition cursor-pointer ${
-                          uploadMode === 'url' ? 'bg-white text-blue-600 shadow-xs' : 'text-gray-500 hover:text-dark'
+                          uploadMode === "url"
+                            ? "bg-white text-blue-600 shadow-xs"
+                            : "text-gray-500 hover:text-dark"
                         }`}
                       >
                         <Link2 className="w-3 h-3" />
@@ -1087,7 +1385,7 @@ export const AdminProducts: React.FC = () => {
                 {/* Upload or URL input if slots available */}
                 {productImages.length < 6 && (
                   <div className="mb-3">
-                    {uploadMode === 'upload' ? (
+                    {uploadMode === "upload" ? (
                       <label className="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-5 cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition group">
                         <input
                           type="file"
@@ -1100,15 +1398,22 @@ export const AdminProducts: React.FC = () => {
                         {isUploadingImage ? (
                           <div className="flex flex-col items-center gap-2 text-blue-600 py-1">
                             <Loader2 className="h-6 w-6 animate-spin" />
-                            <span className="text-xs font-medium">Uploading image(s)...</span>
+                            <span className="text-xs font-medium">
+                              Uploading image(s)...
+                            </span>
                           </div>
                         ) : (
                           <div className="flex flex-col items-center gap-1.5 pointer-events-none text-center">
                             <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
                               <Upload className="w-4 h-4" />
                             </div>
-                            <p className="text-xs font-semibold text-gray-700">Click or drag &amp; drop product images</p>
-                            <p className="text-[10px] text-gray-400">Select multiple files (PNG, JPG, WEBP) · Add up to {6 - productImages.length} more</p>
+                            <p className="text-xs font-semibold text-gray-700">
+                              Click or drag &amp; drop product images
+                            </p>
+                            <p className="text-[10px] text-gray-400">
+                              Select multiple files (PNG, JPG, WEBP) · Add up to{" "}
+                              {6 - productImages.length} more
+                            </p>
                           </div>
                         )}
                       </label>
@@ -1118,7 +1423,12 @@ export const AdminProducts: React.FC = () => {
                           type="url"
                           value={imageUrlInput}
                           onChange={(e) => setImageUrlInput(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddImageUrl(); } }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddImageUrl();
+                            }
+                          }}
                           placeholder="https://images.example.com/products/item.jpg"
                           className="flex-1 h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                         />
@@ -1142,10 +1452,16 @@ export const AdminProducts: React.FC = () => {
                       <div
                         key={idx}
                         className={`relative aspect-square rounded-lg border overflow-hidden group bg-white shadow-2xs flex items-center justify-center p-1 ${
-                          idx === 0 ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'
+                          idx === 0
+                            ? "border-blue-500 ring-2 ring-blue-100"
+                            : "border-gray-200"
                         }`}
                       >
-                        <img src={imgUrl} alt={`Product ${idx + 1}`} className="w-full h-full object-contain rounded-xs" />
+                        <img
+                          src={imgUrl}
+                          alt={`Product ${idx + 1}`}
+                          className="w-full h-full object-contain rounded-xs"
+                        />
 
                         {/* Cover Badge on first image */}
                         {idx === 0 ? (
@@ -1180,30 +1496,44 @@ export const AdminProducts: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-gray-500 italic mt-1">No images added yet. Please add at least 1 image (up to 6).</p>
+                  <p className="text-[11px] text-gray-500 italic mt-1">
+                    No images added yet. Please add at least 1 image (up to 6).
+                  </p>
                 )}
               </div>
 
               {/* Genres / Tags */}
               <div>
-                <FieldLabel label="Categories &amp; Tags" hint="Click to select multiple" />
+                <FieldLabel
+                  label="Categories &amp; Tags"
+                  hint="Click to select multiple"
+                />
                 {genres.length ? (
                   <GenrePills
                     genres={genres}
                     selected={selectedGenreIds}
                     onToggle={(id) =>
-                      setSelectedGenreIds((cur) => cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id])
+                      setSelectedGenreIds((cur) =>
+                        cur.includes(id)
+                          ? cur.filter((x) => x !== id)
+                          : [...cur, id],
+                      )
                     }
                   />
                 ) : (
-                  <p className="text-xs text-gray-400">No tags found in system.</p>
+                  <p className="text-xs text-gray-400">
+                    No tags found in system.
+                  </p>
                 )}
               </div>
 
               {/* Brand/Director & Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <FieldLabel label="Brand / Creator / Director" hint="Optional" />
+                  <FieldLabel
+                    label="Brand / Creator / Director"
+                    hint="Optional"
+                  />
                   <input
                     type="text"
                     value={director}
@@ -1213,11 +1543,16 @@ export const AdminProducts: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <FieldLabel label="Category" hint="Primary catalogue department" />
+                  <FieldLabel
+                    label="Category"
+                    hint="Primary catalogue department"
+                  />
                   <StyledSelect value={categoryId} onChange={setCategoryId}>
                     <option value="">No specific category</option>
                     {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
                     ))}
                   </StyledSelect>
                 </div>
@@ -1225,7 +1560,10 @@ export const AdminProducts: React.FC = () => {
 
               {/* Description */}
               <div>
-                <FieldLabel label="Product Description &amp; Details" hint="Displayed on the product detail page" />
+                <FieldLabel
+                  label="Product Description &amp; Details"
+                  hint="Displayed on the product detail page"
+                />
                 <textarea
                   rows={3}
                   value={description}
@@ -1238,15 +1576,24 @@ export const AdminProducts: React.FC = () => {
           )}
 
           {/* ── TAB 2: SPECS & FORMAT ───────────────────────────── */}
-          {activeTab === 'media' && (
+          {activeTab === "media" && (
             <div className="space-y-5">
               {/* Format, Age Rating */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <FieldLabel label="Product Format / Type" required hint="Synced from Admin Taxonomy" />
-                  <StyledSelect value={format} onChange={(v) => setFormat(v as DvdFormat)}>
+                  <FieldLabel
+                    label="Product Format / Type"
+                    required
+                    hint="Synced from Admin Taxonomy"
+                  />
+                  <StyledSelect
+                    value={format}
+                    onChange={(v) => setFormat(v as DvdFormat)}
+                  >
                     {availableFormats.map((fmt) => (
-                      <option key={fmt} value={fmt}>{fmt}</option>
+                      <option key={fmt} value={fmt}>
+                        {fmt}
+                      </option>
                     ))}
                   </StyledSelect>
                   <QuickChips
@@ -1257,7 +1604,10 @@ export const AdminProducts: React.FC = () => {
                 </div>
                 <div>
                   <FieldLabel label="Age Rating / Classification" />
-                  <StyledSelect value={ageRating} onChange={(v) => setAgeRating(v as AgeRating)}>
+                  <StyledSelect
+                    value={ageRating}
+                    onChange={(v) => setAgeRating(v as AgeRating)}
+                  >
                     <option value="All">All / Not Applicable</option>
                     <option value="U">U — Universal (All Ages)</option>
                     <option value="PG">PG — Parental Guidance</option>
@@ -1271,7 +1621,10 @@ export const AdminProducts: React.FC = () => {
               {/* Release Year, Runtime / Dimensions, IMDb */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <FieldLabel label="Release / Production Year" hint="Optional" />
+                  <FieldLabel
+                    label="Release / Production Year"
+                    hint="Optional"
+                  />
                   <input
                     type="number"
                     min="1888"
@@ -1282,9 +1635,14 @@ export const AdminProducts: React.FC = () => {
                     className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                   />
                 </div>
-                {['DVD', 'Blu-ray', '4K UHD', 'Box Set'].includes(format || '') ? (
+                {["DVD", "Blu-ray", "4K UHD", "Box Set"].includes(
+                  format || "",
+                ) ? (
                   <div>
-                    <FieldLabel label="Runtime (minutes)" hint="For media items" />
+                    <FieldLabel
+                      label="Runtime (minutes)"
+                      hint="For media items"
+                    />
                     <input
                       type="number"
                       min="0"
@@ -1294,14 +1652,17 @@ export const AdminProducts: React.FC = () => {
                       className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                     />
                     <QuickChips
-                      options={['90', '105', '120', '145']}
+                      options={["90", "105", "120", "145"]}
                       current={runtimeMinutes}
                       onSelect={setRuntimeMinutes}
                     />
                   </div>
                 ) : (
                   <div>
-                    <FieldLabel label="Origin / Region" hint="e.g. UK, EU, Global" />
+                    <FieldLabel
+                      label="Origin / Region"
+                      hint="e.g. UK, EU, Global"
+                    />
                     <input
                       type="text"
                       value={regionCode}
@@ -1310,14 +1671,17 @@ export const AdminProducts: React.FC = () => {
                       className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                     />
                     <QuickChips
-                      options={['UK Standard', 'Global', 'Europe']}
+                      options={["UK Standard", "Global", "Europe"]}
                       current={regionCode}
                       onSelect={setRegionCode}
                     />
                   </div>
                 )}
                 <div>
-                  <FieldLabel label="Rating / Score" hint="Optional (1.0 – 10.0)" />
+                  <FieldLabel
+                    label="Rating / Score"
+                    hint="Optional (1.0 – 10.0)"
+                  />
                   <input
                     type="number"
                     step="0.1"
@@ -1332,10 +1696,15 @@ export const AdminProducts: React.FC = () => {
               </div>
 
               {/* Technical Specifications (Only shown or optional) */}
-              {['DVD', 'Blu-ray', '4K UHD', 'Box Set'].includes(format || '') && (
+              {["DVD", "Blu-ray", "4K UHD", "Box Set"].includes(
+                format || "",
+              ) && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <FieldLabel label="Aspect Ratio" hint="Video transfer ratio" />
+                    <FieldLabel
+                      label="Aspect Ratio"
+                      hint="Video transfer ratio"
+                    />
                     <input
                       type="text"
                       value={aspectRatio}
@@ -1344,13 +1713,20 @@ export const AdminProducts: React.FC = () => {
                       className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                     />
                     <QuickChips
-                      options={['16:9 Anamorphic Widescreen', '2.39:1 Anamorphic Widescreen', '4:3 Full Frame']}
+                      options={[
+                        "16:9 Anamorphic Widescreen",
+                        "2.39:1 Anamorphic Widescreen",
+                        "4:3 Full Frame",
+                      ]}
                       current={aspectRatio}
                       onSelect={setAspectRatio}
                     />
                   </div>
                   <div>
-                    <FieldLabel label="Audio Format" hint="Soundtrack specification" />
+                    <FieldLabel
+                      label="Audio Format"
+                      hint="Soundtrack specification"
+                    />
                     <input
                       type="text"
                       value={audioFormat}
@@ -1359,7 +1735,12 @@ export const AdminProducts: React.FC = () => {
                       className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                     />
                     <QuickChips
-                      options={['Dolby Digital 5.1', 'Stereo 2.0', 'DTS-HD Master Audio 5.1', 'Dolby Atmos']}
+                      options={[
+                        "Dolby Digital 5.1",
+                        "Stereo 2.0",
+                        "DTS-HD Master Audio 5.1",
+                        "Dolby Atmos",
+                      ]}
                       current={audioFormat}
                       onSelect={setAudioFormat}
                     />
@@ -1370,7 +1751,10 @@ export const AdminProducts: React.FC = () => {
               {/* Language, Subtitles, Condition */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <FieldLabel label="Primary Language" hint="Audio or documentation" />
+                  <FieldLabel
+                    label="Primary Language"
+                    hint="Audio or documentation"
+                  />
                   <input
                     type="text"
                     value={language}
@@ -1379,7 +1763,7 @@ export const AdminProducts: React.FC = () => {
                     className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                   />
                   <QuickChips
-                    options={['English', 'English 5.1', 'Japanese', 'French']}
+                    options={["English", "English 5.1", "Japanese", "French"]}
                     current={language}
                     onSelect={setLanguage}
                   />
@@ -1394,7 +1778,7 @@ export const AdminProducts: React.FC = () => {
                     className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                   />
                   <QuickChips
-                    options={['None', 'English', 'English (SDH)', 'Included']}
+                    options={["None", "English", "English (SDH)", "Included"]}
                     current={subtitles}
                     onSelect={setSubtitles}
                   />
@@ -1402,7 +1786,9 @@ export const AdminProducts: React.FC = () => {
                 <div>
                   <FieldLabel label="Item Condition" required />
                   <StyledSelect value={condition} onChange={setCondition}>
-                    <option value="Brand New (Sealed)">Brand New (Sealed)</option>
+                    <option value="Brand New (Sealed)">
+                      Brand New (Sealed)
+                    </option>
                     <option value="Like New">Like New</option>
                     <option value="Very Good">Very Good</option>
                     <option value="Good">Good</option>
@@ -1413,7 +1799,10 @@ export const AdminProducts: React.FC = () => {
 
               {/* Spine Number / Identifier */}
               <div className="sm:w-1/2">
-                <FieldLabel label="Collector / Spine Number" hint="Optional index or reference (e.g. 024)" />
+                <FieldLabel
+                  label="Collector / Spine Number"
+                  hint="Optional index or reference (e.g. 024)"
+                />
                 <input
                   type="text"
                   value={spineNumber}
@@ -1426,14 +1815,20 @@ export const AdminProducts: React.FC = () => {
           )}
 
           {/* ── TAB 3: PRICING ─────────────────────────────────── */}
-          {activeTab === 'pricing' && (
+          {activeTab === "pricing" && (
             <div className="space-y-5">
               {/* Pricing Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 bg-blue-50/50 border border-blue-200 rounded-xl">
-                  <FieldLabel label="Sale Price (GBP)" required hint="Price charged at checkout" />
+                  <FieldLabel
+                    label="Sale Price (GBP)"
+                    required
+                    hint="Price charged at checkout"
+                  />
                   <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-blue-600 font-bold text-sm">£</span>
+                    <span className="absolute left-3 top-2.5 text-blue-600 font-bold text-sm">
+                      £
+                    </span>
                     <input
                       type="number"
                       step="0.01"
@@ -1446,16 +1841,21 @@ export const AdminProducts: React.FC = () => {
                     />
                   </div>
                   <QuickChips
-                    options={['7.99', '9.99', '14.99', '19.99', '24.99']}
+                    options={["7.99", "9.99", "14.99", "19.99", "24.99"]}
                     current={price}
                     onSelect={setPrice}
                   />
                 </div>
 
                 <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
-                  <FieldLabel label="Compare-at Price (GBP)" hint="Original RRP for strikethrough" />
+                  <FieldLabel
+                    label="Compare-at Price (GBP)"
+                    hint="Original RRP for strikethrough"
+                  />
                   <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-gray-400 font-bold text-sm">£</span>
+                    <span className="absolute left-3 top-2.5 text-gray-400 font-bold text-sm">
+                      £
+                    </span>
                     <input
                       type="number"
                       step="0.01"
@@ -1466,18 +1866,35 @@ export const AdminProducts: React.FC = () => {
                       className="w-full h-10 pl-7 pr-3 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                     />
                   </div>
-                  {comparePrice && price && Number(comparePrice) > Number(price) && (
-                    <p className="text-[10px] text-emerald-600 font-semibold mt-1">
-                      {Math.round(((Number(comparePrice) - Number(price)) / Number(comparePrice)) * 100)}% discount badge will show
-                    </p>
-                  )}
+                  {comparePrice &&
+                    price &&
+                    Number(comparePrice) > Number(price) && (
+                      <p className="text-[10px] text-emerald-600 font-semibold mt-1">
+                        {Math.round(
+                          ((Number(comparePrice) - Number(price)) /
+                            Number(comparePrice)) *
+                            100,
+                        )}
+                        % discount badge will show
+                      </p>
+                    )}
                 </div>
 
-                <div className={`p-4 border rounded-xl ${editingProduct ? 'bg-gray-50 border-gray-200 opacity-70' : 'bg-emerald-50/60 border-emerald-200'}`}>
+                <div
+                  className={`p-4 border rounded-xl ${editingProduct ? "bg-gray-50 border-gray-200 opacity-70" : "bg-emerald-50/60 border-emerald-200"}`}
+                >
                   <FieldLabel
-                    label={editingProduct ? 'Stock (Managed in Inventory)' : 'Initial Stock Qty'}
+                    label={
+                      editingProduct
+                        ? "Stock (Managed in Inventory)"
+                        : "Initial Stock Qty"
+                    }
                     required={!editingProduct}
-                    hint={editingProduct ? 'Use Inventory section for adjustments' : 'Physical units available'}
+                    hint={
+                      editingProduct
+                        ? "Use Inventory section for adjustments"
+                        : "Physical units available"
+                    }
                   />
                   <input
                     type="number"
@@ -1490,7 +1907,7 @@ export const AdminProducts: React.FC = () => {
                   />
                   {!editingProduct && (
                     <QuickChips
-                      options={['10', '25', '50', '100']}
+                      options={["10", "25", "50", "100"]}
                       current={stockQuantity}
                       onSelect={setStockQuantity}
                     />
@@ -1502,17 +1919,24 @@ export const AdminProducts: React.FC = () => {
               {price && (
                 <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl text-sm">
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Customer View</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      Customer View
+                    </span>
                     <div className="flex items-baseline gap-2 mt-0.5">
-                      <span className="text-xl font-black text-dark">£{Number(price).toFixed(2)}</span>
+                      <span className="text-xl font-black text-dark">
+                        £{Number(price).toFixed(2)}
+                      </span>
                       {comparePrice && Number(comparePrice) > Number(price) && (
-                        <span className="text-gray-400 line-through text-sm">£{Number(comparePrice).toFixed(2)}</span>
+                        <span className="text-gray-400 line-through text-sm">
+                          £{Number(comparePrice).toFixed(2)}
+                        </span>
                       )}
                     </div>
                   </div>
                   {comparePrice && Number(comparePrice) > Number(price) && (
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">
-                      Customer saves £{(Number(comparePrice) - Number(price)).toFixed(2)}
+                      Customer saves £
+                      {(Number(comparePrice) - Number(price)).toFixed(2)}
                     </span>
                   )}
                 </div>
@@ -1521,33 +1945,41 @@ export const AdminProducts: React.FC = () => {
           )}
 
           {/* ── TAB 4: PUBLISHING ──────────────────────────────── */}
-          {activeTab === 'publishing' && (
+          {activeTab === "publishing" && (
             <div className="space-y-6">
               {/* Publication Status */}
               <div>
-                <FieldLabel label="Publication Status" required hint="Controls storefront visibility" />
+                <FieldLabel
+                  label="Publication Status"
+                  required
+                  hint="Controls storefront visibility"
+                />
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
                     {
-                      v: 'draft' as const,
-                      label: 'Draft',
-                      desc: 'Hidden from storefront',
+                      v: "draft" as const,
+                      label: "Draft",
+                      desc: "Hidden from storefront",
                       icon: <FileEdit className="w-5 h-5 text-gray-500" />,
-                      activeClass: 'border-blue-500 bg-blue-50/50 text-blue-900',
+                      activeClass:
+                        "border-blue-500 bg-blue-50/50 text-blue-900",
                     },
                     {
-                      v: 'active' as const,
-                      label: 'Active',
-                      desc: 'Live and available to purchase',
-                      icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" />,
-                      activeClass: 'border-emerald-500 bg-emerald-50/50 text-emerald-900',
+                      v: "active" as const,
+                      label: "Active",
+                      desc: "Live and available to purchase",
+                      icon: (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      ),
+                      activeClass:
+                        "border-emerald-500 bg-emerald-50/50 text-emerald-900",
                     },
                     {
-                      v: 'archived' as const,
-                      label: 'Archived',
-                      desc: 'Removed from catalogue',
+                      v: "archived" as const,
+                      label: "Archived",
+                      desc: "Removed from catalogue",
                       icon: <Archive className="w-5 h-5 text-amber-600" />,
-                      activeClass: 'border-gray-400 bg-gray-100 text-gray-800',
+                      activeClass: "border-gray-400 bg-gray-100 text-gray-800",
                     },
                   ].map(({ v, label, desc, icon, activeClass }) => (
                     <button
@@ -1557,15 +1989,19 @@ export const AdminProducts: React.FC = () => {
                       className={`flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition cursor-pointer ${
                         status === v
                           ? activeClass
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                          : "border-gray-200 hover:border-gray-300 bg-white"
                       }`}
                     >
                       <div className="p-2 rounded-lg bg-white border border-gray-100 shadow-xs">
                         {icon}
                       </div>
                       <div>
-                        <span className="text-xs font-bold text-dark block">{label}</span>
-                        <span className="text-[10px] text-gray-500">{desc}</span>
+                        <span className="text-xs font-bold text-dark block">
+                          {label}
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          {desc}
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -1574,7 +2010,10 @@ export const AdminProducts: React.FC = () => {
 
               {/* Merchandising Flags */}
               <div className="space-y-2">
-                <FieldLabel label="Merchandising Flags" hint="Controls homepage display and promotional filters" />
+                <FieldLabel
+                  label="Merchandising Flags"
+                  hint="Controls homepage display and promotional filters"
+                />
                 <ToggleFlag
                   checked={isNewRelease}
                   onChange={setIsNewRelease}
@@ -1606,7 +2045,11 @@ export const AdminProducts: React.FC = () => {
                 </div>
                 <div className="flex items-start gap-4 bg-white p-3 rounded-lg border border-gray-200">
                   {coverImageUrl ? (
-                    <img src={coverImageUrl} alt={title || 'Preview'} className="w-14 aspect-square sm:aspect-[4/5] object-contain rounded border border-gray-200 shrink-0 p-1" />
+                    <img
+                      src={coverImageUrl}
+                      alt={title || "Preview"}
+                      className="w-14 aspect-square sm:aspect-[4/5] object-contain rounded border border-gray-200 shrink-0 p-1"
+                    />
                   ) : (
                     <div className="w-14 aspect-square sm:aspect-[4/5] bg-gray-100 rounded border border-dashed border-gray-300 flex items-center justify-center text-gray-400 shrink-0">
                       <Package className="w-5 h-5" />
@@ -1614,15 +2057,27 @@ export const AdminProducts: React.FC = () => {
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                      <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[9px] font-bold uppercase">{format || 'Standard'}</span>
-                      {ageRating && <BbfcBadge rating={ageRating as AgeRating} size="xs" />}
+                      <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[9px] font-bold uppercase">
+                        {format || "Standard"}
+                      </span>
+                      {ageRating && (
+                        <BbfcBadge rating={ageRating as AgeRating} size="xs" />
+                      )}
                     </div>
-                    <h4 className="text-xs font-bold text-dark truncate">{title || 'Untitled Product'}</h4>
-                    <p className="text-[11px] text-gray-500 font-mono mt-0.5">SKU: {sku || 'PROD-XXXX-000'}</p>
+                    <h4 className="text-xs font-bold text-dark truncate">
+                      {title || "Untitled Product"}
+                    </h4>
+                    <p className="text-[11px] text-gray-500 font-mono mt-0.5">
+                      SKU: {sku || "PROD-XXXX-000"}
+                    </p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-sm font-black text-dark">£{price ? Number(price).toFixed(2) : '0.00'}</span>
+                      <span className="text-sm font-black text-dark">
+                        £{price ? Number(price).toFixed(2) : "0.00"}
+                      </span>
                       {comparePrice && Number(comparePrice) > Number(price) && (
-                        <span className="text-xs text-gray-400 line-through">£{Number(comparePrice).toFixed(2)}</span>
+                        <span className="text-xs text-gray-400 line-through">
+                          £{Number(comparePrice).toFixed(2)}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -1634,7 +2089,7 @@ export const AdminProducts: React.FC = () => {
           {/* ── Navigation Footer ────────────────────────────────── */}
           <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
             <div>
-              {activeTab !== 'essentials' ? (
+              {activeTab !== "essentials" ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -1652,11 +2107,15 @@ export const AdminProducts: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+              >
                 Cancel
               </Button>
               {/* Direct Save Changes button on any tab when editing an existing product */}
-              {editingProduct && activeTab !== 'publishing' && (
+              {editingProduct && activeTab !== "publishing" && (
                 <Button
                   variant="secondary"
                   type="button"
@@ -1670,7 +2129,7 @@ export const AdminProducts: React.FC = () => {
                 </Button>
               )}
 
-              {activeTab !== 'publishing' ? (
+              {activeTab !== "publishing" ? (
                 <Button
                   key="btn-next-step"
                   variant="primary"
@@ -1691,7 +2150,9 @@ export const AdminProducts: React.FC = () => {
                   className="gap-1.5"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>{editingProduct ? 'Save Changes' : 'Publish Film'}</span>
+                  <span>
+                    {editingProduct ? "Save Changes" : "Publish Film"}
+                  </span>
                 </Button>
               )}
             </div>
@@ -1710,21 +2171,40 @@ export const AdminProducts: React.FC = () => {
           <div className="flex items-start gap-3 rounded-lg bg-amber-50 p-3 text-amber-800">
             <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
             <div className="text-xs">
-              <p className="font-semibold">Manage removal for &ldquo;{productToDelete?.title}&rdquo;</p>
-              <p className="mt-1 text-amber-700 font-mono">SKU: {productToDelete?.sku}</p>
+              <p className="font-semibold">
+                Manage removal for &ldquo;{productToDelete?.title}&rdquo;
+              </p>
+              <p className="mt-1 text-amber-700 font-mono">
+                SKU: {productToDelete?.sku}
+              </p>
               <p className="mt-2 text-gray-600">
-                <strong>Archive</strong> (hides from storefront, preserves history) or <strong>Delete Permanently</strong>.
+                <strong>Archive</strong> (hides from storefront, preserves
+                history) or <strong>Delete Permanently</strong>.
               </p>
             </div>
           </div>
           <div className="flex flex-col gap-2 pt-2">
-            <Button type="button" variant="secondary" onClick={confirmArchiveProduct} isLoading={isDeletingProd}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={confirmArchiveProduct}
+              isLoading={isDeletingProd}
+            >
               Archive Title (Recommended)
             </Button>
-            <Button type="button" onClick={confirmPermanentDeleteProduct} isLoading={isDeletingProd} className="bg-red-600 hover:bg-red-700 text-white focus:ring-red-500">
+            <Button
+              type="button"
+              onClick={confirmPermanentDeleteProduct}
+              isLoading={isDeletingProd}
+              className="bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
+            >
               Delete Permanently
             </Button>
-            <button type="button" onClick={() => setProductToDelete(null)} className="mt-1 text-xs text-gray-400 hover:text-gray-600 text-center cursor-pointer">
+            <button
+              type="button"
+              onClick={() => setProductToDelete(null)}
+              className="mt-1 text-xs text-gray-400 hover:text-gray-600 text-center cursor-pointer"
+            >
               Cancel
             </button>
           </div>

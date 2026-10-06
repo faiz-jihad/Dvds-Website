@@ -100,7 +100,7 @@ export function useAdminAuth() {
 export const ProtectedAdminRoute: React.FC<React.PropsWithChildren<{ adminOnly?: boolean }>> = ({ children, adminOnly }) => {
   const { user, isLoading } = useAdminAuth();
   const location = useLocation();
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center" role="status">Memverifikasi sesi admin...</div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center" role="status">Verifying administrator session...</div>;
   if (!user) return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
   if (adminOnly && user.role !== 'admin') return <Navigate to="/admin" replace />;
   return <>{children}</>;

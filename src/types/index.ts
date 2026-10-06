@@ -187,6 +187,7 @@ export interface FinancialStats {
   averageOrderValue: number;
   lowStockCount: number;
   dailyRevenue: { date: string; amount: number; orders: number }[];
+  allPaidOrders?: { id: string; date: string; amount: number; rawDate?: string }[];
   recentOrders: Order[];
 }
 

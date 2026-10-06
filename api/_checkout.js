@@ -362,6 +362,10 @@ export async function authorizeOrder(db, req, order) {
   if (validAccess(order, req.headers['x-order-token'])) return;
   const user = await requestUser(db, req);
   if (user && order.user_id === user.id) return;
+  const stripeId = req.body?.sessionId || req.body?.paymentIntentId;
+  if (stripeId && (order.checkout_session_id === stripeId || order.payment_reference === stripeId)) return;
+  const paypalId = req.body?.paypalOrderId || req.body?.token;
+  if (paypalId && order.paypal_order_id === paypalId) return;
   throw new CheckoutError('Open this order in the browser used for checkout, or sign in to the account that placed it.', 403);
 }
 export function publicOrder(order) {
@@ -422,33 +426,77 @@ export async function initializeOrder(db, req, method) {
   return order;
 }
 export async function recordPayment(db, order, providerOrderId, reference, amount, currency) {
-  if (minorAmount(amount, order.currency || 'GBP') !== minorAmount(order.total_amount, order.currency || 'GBP') || String(currency).toUpperCase() !== (order.currency || 'GBP')) throw new CheckoutError('Payment amount or currency did not match this order.', 409, 'PAYMENT_MISMATCH');
+  if (minorAmount(amount, order.currency || 'GBP') !== minorAmount(order.total_amount, order.currency || 'GBP') || String(currency).toUpperCase() !== String(order.currency || 'GBP').toUpperCase()) throw new CheckoutError('Payment amount or currency did not match this order.', 409, 'PAYMENT_MISMATCH');
   check(await db.rpc('record_checkout_payment', { p_order_id: order.id, p_provider: order.payment_provider, p_provider_order_id: providerOrderId, p_reference: reference, p_amount: amount, p_currency: String(currency).toUpperCase() }));
 }
 export async function verifyStripe(db, order, sessionId) {
-  if (sessionId && sessionId.startsWith('pi_')) {
-    const paymentIntent = await stripeClient().paymentIntents.retrieve(sessionId);
-    if (order.payment_provider !== 'stripe' || paymentIntent.metadata?.order_id !== order.id) {
+  const targetId = sessionId || order.checkout_session_id || order.payment_reference;
+  if (!targetId) return null;
+
+  if (targetId.startsWith('pi_')) {
+    const paymentIntent = await stripeClient().paymentIntents.retrieve(targetId);
+    const matchesOrder =
+      paymentIntent.metadata?.order_id === order.id ||
+      paymentIntent.metadata?.order_number === order.order_number ||
+      order.checkout_session_id === paymentIntent.id ||
+      order.payment_reference === paymentIntent.id;
+
+    if (order.payment_provider !== 'stripe' || !matchesOrder) {
       throw new CheckoutError('Payment does not belong to this order.', 403, 'PAYMENT_MISMATCH');
     }
-    if (paymentIntent.status === 'succeeded') {
+    if (paymentIntent.status === 'succeeded' && order.payment_status !== 'paid') {
       const numericAmount = Number(
-        ((paymentIntent.amount_received || paymentIntent.amount) / (order.currency === 'JPY' ? 1 : 100)).toFixed(2)
+        ((paymentIntent.amount_received || paymentIntent.amount) / (order.currency === 'JPY' ? 1 : 100)).toFixed(currencyDigits(order.currency))
       );
-      await recordPayment(db, order, paymentIntent.id, paymentIntent.id, numericAmount, paymentIntent.currency);
+      await recordPayment(
+        db,
+        order,
+        paymentIntent.id,
+        paymentIntent.id,
+        numericAmount,
+        String(paymentIntent.currency || order.currency || 'GBP').toUpperCase()
+      );
     }
     return {
       id: paymentIntent.id,
+      status: paymentIntent.status === 'succeeded' ? 'complete' : paymentIntent.status,
       payment_status: paymentIntent.status === 'succeeded' ? 'paid' : paymentIntent.status,
       amount_total: paymentIntent.amount,
       currency: paymentIntent.currency,
     };
   }
 
-  const session = await stripeClient().checkout.sessions.retrieve(sessionId);
-  if (order.payment_provider !== 'stripe' || session.metadata?.order_id !== order.id || (order.checkout_session_id && order.checkout_session_id !== session.id)) throw new CheckoutError('Payment does not belong to this order.', 403, 'PAYMENT_MISMATCH');
-  if (session.payment_status === 'paid') await recordPayment(db, order, session.id, typeof session.payment_intent === 'string' ? session.payment_intent : session.id, session.amount_total / (order.currency === 'JPY' ? 1 : 100), session.currency);
-  if (session.status === 'expired' && order.payment_status !== 'paid') check(await db.rpc('expire_checkout_order', { p_order_id: order.id, p_provider_order_id: session.id }));
+  const session = await stripeClient().checkout.sessions.retrieve(targetId);
+  const matchesOrder =
+    session.metadata?.order_id === order.id ||
+    session.metadata?.order_number === order.order_number ||
+    session.client_reference_id === order.id ||
+    order.checkout_session_id === session.id;
+
+  if (order.payment_provider !== 'stripe' || !matchesOrder) {
+    throw new CheckoutError('Payment does not belong to this order.', 403, 'PAYMENT_MISMATCH');
+  }
+
+  if (session.payment_status === 'paid' && order.payment_status !== 'paid') {
+    const paymentReference =
+      typeof session.payment_intent === 'string'
+        ? session.payment_intent
+        : (session.payment_intent?.id || session.id);
+    const numericAmount = Number(
+      ((session.amount_total || 0) / (order.currency === 'JPY' ? 1 : 100)).toFixed(currencyDigits(order.currency))
+    );
+    await recordPayment(
+      db,
+      order,
+      session.id,
+      paymentReference,
+      numericAmount,
+      String(session.currency || order.currency || 'GBP').toUpperCase()
+    );
+  }
+  if (session.status === 'expired' && order.payment_status !== 'paid') {
+    check(await db.rpc('expire_checkout_order', { p_order_id: order.id, p_provider_order_id: session.id }));
+  }
   return session;
 }
 

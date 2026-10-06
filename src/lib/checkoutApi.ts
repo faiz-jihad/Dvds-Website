@@ -120,6 +120,9 @@ export const checkoutApi = {
     const response = await post<{ order: Order }>('order-status', { orderId, sessionId, paypalOrderId }, orderId);
     return response.order;
   },
+  async verifyStripePayment(orderId: string, sessionId?: string): Promise<{ verified: boolean; orderId: string; payment_status: string }> {
+    return post<{ verified: boolean; orderId: string; payment_status: string }>('verify-stripe-payment', { orderId, sessionId }, orderId);
+  },
   async cancel(orderId: string) {
     await post('cancel-checkout', { orderId }, orderId);
     if (currentCheckoutAttempt()?.orderId === orderId) forgetCheckoutAttempt();
