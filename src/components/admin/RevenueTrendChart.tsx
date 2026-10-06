@@ -108,6 +108,57 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
     return Array.from(yearsSet).sort((a, b) => b - a);
   }, [allPaidOrders, currentYear]);
 
+  // Dynamic monthly revenue sum for the month picker dropdown
+  const monthlyRevenueSummary = useMemo(() => {
+    const ordersList = Array.isArray(allPaidOrders) ? allPaidOrders : [];
+    const map = new Map<number, number>();
+    ordersList.forEach((o) => {
+      const dateStr = String(o?.rawDate || o?.date || '');
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime()) && d.getFullYear() === selectedYear) {
+        const m = d.getMonth();
+        map.set(m, (map.get(m) || 0) + (Number(o?.amount) || 0));
+      }
+    });
+    return map;
+  }, [allPaidOrders, selectedYear]);
+
+  // Dynamically detect the most recent month with paid revenue for instant navigation
+  const latestActiveMonth = useMemo(() => {
+    const ordersList = Array.isArray(allPaidOrders) ? allPaidOrders : [];
+    const monthTotals = new Map<string, { month: number; year: number; amount: number; time: number }>();
+
+    ordersList.forEach((o) => {
+      const amount = Number(o?.amount) || 0;
+      if (amount <= 0) return;
+      const dateStr = String(o?.rawDate || o?.date || '');
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        const existing = monthTotals.get(key) || { month: d.getMonth(), year: d.getFullYear(), amount: 0, time: d.getTime() };
+        existing.amount += amount;
+        if (d.getTime() > existing.time) existing.time = d.getTime();
+        monthTotals.set(key, existing);
+      }
+    });
+
+    let best: { month: number; year: number; amount: number; label: string } | null = null;
+    let maxTime = 0;
+    monthTotals.forEach((val) => {
+      if (val.time > maxTime) {
+        maxTime = val.time;
+        best = {
+          month: val.month,
+          year: val.year,
+          amount: Math.round(val.amount * 100) / 100,
+          label: `${MONTHS[val.month]?.label || ''} ${val.year}`,
+        };
+      }
+    });
+
+    return best;
+  }, [allPaidOrders]);
+
   // Generate chart data buckets based on selected period
   const buckets: BucketItem[] = useMemo(() => {
     const ordersList = Array.isArray(allPaidOrders) ? allPaidOrders : [];
@@ -362,11 +413,14 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
                 className="bg-transparent text-dark dark:text-white font-medium focus:outline-none cursor-pointer py-1 pr-1 text-xs"
               >
-                {MONTHS.map((m) => (
-                  <option key={m.value} value={m.value} className="bg-white dark:bg-[#0E131F]">
-                    {m.label}
-                  </option>
-                ))}
+                {MONTHS.map((m) => {
+                  const rev = monthlyRevenueSummary.get(m.value) || 0;
+                  return (
+                    <option key={m.value} value={m.value} className="bg-white dark:bg-[#0E131F]">
+                      {m.label} {rev > 0 ? `(£${rev.toFixed(0)})` : ''}
+                    </option>
+                  );
+                })}
               </select>
               <select
                 value={selectedYear}
@@ -502,10 +556,66 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
         </span>
       </div>
 
-      {/* Styled Responsive Bar Chart */}
+      {/* Contextual Banner when selected range has £0 revenue */}
+      {totalPeriodRevenue === 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 text-xs">
+          <div className="flex items-center gap-2.5 text-gray-700 dark:text-gray-300">
+            <Info className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0" />
+            <span>
+              No settled customer transactions recorded for <strong>{title}</strong>.
+              {latestActiveMonth && (
+                <span className="hidden sm:inline"> Historical settled orders exist in <strong>{latestActiveMonth.label}</strong>.</span>
+              )}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {latestActiveMonth && (selectedMonth !== latestActiveMonth.month || selectedYear !== latestActiveMonth.year) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPeriod('month');
+                  setSelectedMonth(latestActiveMonth.month);
+                  setSelectedYear(latestActiveMonth.year);
+                }}
+                className="px-2.5 py-1 text-xs font-semibold bg-brand-blue text-white rounded-md hover:bg-brand-blue-hover transition cursor-pointer shadow-xs"
+              >
+                View {latestActiveMonth.label} (£{latestActiveMonth.amount.toFixed(2)}) →
+              </button>
+            )}
+            {period !== 'year' && (
+              <button
+                type="button"
+                onClick={() => setPeriod('year')}
+                className="px-2.5 py-1 text-xs font-semibold bg-gray-200 dark:bg-white/10 text-dark dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-white/20 transition cursor-pointer"
+              >
+                View 1 Year Trend →
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Styled Responsive Bar Chart with Horizontal Reference Grid */}
       <div className="relative pt-2">
+        {/* Horizontal Background Reference Grid Behind Bars */}
+        <div className="absolute inset-x-0 top-12 bottom-9 flex flex-col justify-between pointer-events-none px-1 z-0">
+          <div className="border-b border-dashed border-gray-200/80 dark:border-white/10 flex items-center justify-between pb-0.5">
+            <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">{formatGBP(maxRevenue)}</span>
+            <span className="text-[9px] font-mono text-gray-400/70 dark:text-gray-600">Peak</span>
+          </div>
+          <div className="border-b border-dashed border-gray-200/50 dark:border-white/5 flex items-center justify-between pb-0.5">
+            <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">{formatGBP(maxRevenue / 2)}</span>
+            <span className="text-[9px] font-mono text-gray-400/50 dark:text-gray-600">50%</span>
+          </div>
+          <div className="border-b border-gray-200 dark:border-white/10 flex items-center justify-between pb-0.5">
+            <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">£0.00</span>
+            <span className="text-[9px] font-mono text-gray-400/70 dark:text-gray-600">Baseline</span>
+          </div>
+        </div>
+
+        {/* Scrollable Bars Area */}
         <div
-          className={`overflow-x-auto pb-2 ${
+          className={`overflow-x-auto pb-2 relative z-10 ${
             period === '30d' || period === 'month' ? 'scrollbar-thin' : ''
           }`}
         >
@@ -518,8 +628,8 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
               const isHovered = hoveredIndex === idx;
               const hasRevenue = item.amount > 0;
               const heightPercent = hasRevenue
-                ? Math.max(12, Math.round((item.amount / maxRevenue) * 100))
-                : 6;
+                ? Math.max(14, Math.round((item.amount / maxRevenue) * 100))
+                : 0;
 
               // Display day number cleanly for 30d/month, or full label for 7d/year
               const displayLabel =
@@ -538,9 +648,9 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
                 >
                   {/* Floating Tooltip Bubble on Hover */}
                   {isHovered && (
-                    <div className="absolute -top-9 z-30 whitespace-nowrap bg-gray-900 text-white text-[10px] font-mono py-1 px-2 rounded-md shadow-lg pointer-events-none flex items-center gap-1.5">
-                      <span className="font-bold">{formatGBP(item.amount)}</span>
-                      <span className="text-gray-400 text-[9px]">({item.orders} ord)</span>
+                    <div className="absolute -top-9 z-30 whitespace-nowrap bg-gray-900 text-white text-[10px] font-mono py-1 px-2.5 rounded-md shadow-lg pointer-events-none flex items-center gap-1.5 border border-white/10">
+                      <span className="font-bold text-sky-400">{formatGBP(item.amount)}</span>
+                      <span className="text-gray-300 text-[9px]">({item.orders} ord)</span>
                     </div>
                   )}
 
@@ -548,22 +658,37 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
                   <div
                     className={`w-full max-w-[48px] rounded-t-md overflow-hidden flex items-end h-32 transition-all duration-200 ${
                       isHovered
-                        ? 'bg-blue-100/70 dark:bg-blue-950/60 ring-2 ring-brand-blue'
-                        : 'bg-gray-100 dark:bg-[#141A26]'
+                        ? 'bg-blue-100/60 dark:bg-blue-950/60 ring-2 ring-brand-blue'
+                        : hasRevenue
+                        ? 'bg-blue-50/50 dark:bg-blue-950/20'
+                        : 'bg-gray-100/40 dark:bg-white/[0.03]'
                     }`}
                   >
-                    <div
-                      className={`w-full rounded-t-md transition-all duration-300 ease-out ${
-                        hasRevenue
-                          ? isHovered
-                            ? 'bg-gradient-to-t from-blue-700 to-indigo-500 shadow-md'
-                            : 'bg-gradient-to-t from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400'
-                          : isHovered
-                          ? 'bg-gray-300 dark:bg-white/20'
-                          : 'bg-gray-200/70 dark:bg-white/10'
-                      }`}
-                      style={{ height: `${heightPercent}%` }}
-                    />
+                    {hasRevenue ? (
+                      <div
+                        className={`w-full rounded-t-md transition-all duration-300 ease-out relative ${
+                          isHovered
+                            ? 'bg-gradient-to-t from-blue-700 via-brand-blue to-sky-400 shadow-[0_0_16px_rgba(23,105,224,0.7)]'
+                            : 'bg-gradient-to-t from-brand-blue via-blue-600 to-sky-400 shadow-[0_2px_8px_rgba(23,105,224,0.4)]'
+                        }`}
+                        style={{
+                          height: `${heightPercent}%`,
+                          minHeight: '14px',
+                          backgroundColor: '#1769E0',
+                        }}
+                      >
+                        {/* Glossy top edge cap */}
+                        <div className="absolute top-0 inset-x-0 h-1 bg-white/40 rounded-t-md pointer-events-none" />
+                      </div>
+                    ) : (
+                      <div
+                        className={`w-full transition-all duration-200 ${
+                          isHovered
+                            ? 'h-2 bg-blue-300 dark:bg-blue-700/50 rounded-t-sm'
+                            : 'h-1 bg-gray-200/80 dark:bg-white/10 rounded-full'
+                        }`}
+                      />
+                    )}
                   </div>
 
                   {/* Bottom Label (Date/Month) */}
@@ -572,7 +697,7 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
                       isHovered
                         ? 'font-bold text-brand-blue dark:text-blue-400'
                         : hasRevenue
-                        ? 'font-semibold text-gray-700 dark:text-gray-300'
+                        ? 'font-bold text-dark dark:text-white'
                         : 'text-gray-400 dark:text-gray-500'
                     }`}
                     title={item.fullDate}
