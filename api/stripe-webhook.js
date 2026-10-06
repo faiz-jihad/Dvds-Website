@@ -1,5 +1,6 @@
 import { check, CheckoutError, dbClient, endpoint, loadOrder, recordPayment, stripeClient } from './_checkout.js';
 import { minorAmount } from '../shared/commerce.js';
+import { sendCustomerPaymentReceipt } from './_email.js';
 
 export const config = {
   api: {
@@ -180,6 +181,16 @@ export default async function stripeWebhookHandler(req, res) {
             })
             .maybeSingle()
             .catch(() => {});
+
+          // Automatically send verified customer payment receipt
+          try {
+            await sendCustomerPaymentReceipt(db, order, {
+              paymentReference,
+              paidAt: new Date().toISOString(),
+            });
+          } catch (receiptErr) {
+            console.error('[stripe-webhook] Customer receipt dispatch note:', receiptErr.message);
+          }
         } else {
           console.log(
             `[stripe-webhook] Session ${session.id} payment_status is '${session.payment_status}' (not paid). Order remains pending.`
@@ -373,6 +384,16 @@ export default async function stripeWebhookHandler(req, res) {
           })
           .maybeSingle()
           .catch(() => {});
+
+        // Automatically send verified customer payment receipt
+        try {
+          await sendCustomerPaymentReceipt(db, order, {
+            paymentReference,
+            paidAt: new Date().toISOString(),
+          });
+        } catch (receiptErr) {
+          console.error('[stripe-webhook] Customer receipt dispatch note:', receiptErr.message);
+        }
         break;
       }
 

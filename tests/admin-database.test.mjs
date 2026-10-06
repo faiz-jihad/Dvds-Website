@@ -22,6 +22,8 @@ before(async () => {
     CREATE TABLE auth.users(id UUID PRIMARY KEY, email TEXT, raw_user_meta_data JSONB DEFAULT '{}');
     CREATE FUNCTION auth.uid() RETURNS UUID LANGUAGE sql STABLE AS
       $$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::UUID $$;
+    CREATE FUNCTION auth.jwt() RETURNS JSONB LANGUAGE sql STABLE AS
+      $$ SELECT '{}'::JSONB $$;
     CREATE TABLE storage.buckets(id TEXT PRIMARY KEY, name TEXT, public BOOLEAN, file_size_limit BIGINT, allowed_mime_types TEXT[]);
     CREATE TABLE storage.objects(id UUID DEFAULT gen_random_uuid(), bucket_id TEXT, name TEXT);
     ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;

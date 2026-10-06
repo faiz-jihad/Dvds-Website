@@ -20,6 +20,7 @@ const devApiPlugin = () => ({
       'stripe-webhook',
       'paypal-webhook',
       'verify-turnstile',
+      'cron-reports',
     ]);
     server.middlewares.use(async (req: any, res: any, next: any) => {
       let route = req.url?.split('?')[0]?.replace('/api/', '');

@@ -85,5 +85,11 @@
       "source": "/((?!api/.*).*)",
       "destination": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron-reports",
+      "schedule": "0 8 * * *"
+    }
   ]
 }
