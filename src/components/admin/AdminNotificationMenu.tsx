@@ -115,13 +115,13 @@ export const AdminNotificationMenu: React.FC = () => {
         className={cn(
           'relative flex h-9 w-9 items-center justify-center rounded-lg border transition-all duration-150',
           isOpen
-            ? 'border-slate-300 bg-slate-100 text-slate-900 shadow-xs'
-            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 shadow-2xs'
+            ? 'border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white shadow-xs'
+            : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#131826] text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white shadow-2xs'
         )}
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-xs ring-2 ring-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-xs ring-2 ring-white dark:ring-[#0E131F]">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -129,13 +129,13 @@ export const AdminNotificationMenu: React.FC = () => {
 
       {/* Notification Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[340px] sm:w-[420px] rounded-xl border border-slate-200/90 bg-white text-slate-900 shadow-xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
+        <div className="absolute right-0 mt-2 w-[340px] sm:w-[420px] rounded-xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0E131F] text-slate-900 dark:text-white shadow-xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#141A26] px-4 py-3">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-sm tracking-tight text-slate-900">Store Notifications</h3>
+              <h3 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">Store Notifications</h3>
               {unreadCount > 0 && (
-                <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600 border border-rose-200/80">
+                <span className="rounded-full bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/40">
                   {unreadCount} new
                 </span>
               )}
@@ -145,10 +145,10 @@ export const AdminNotificationMenu: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => markAllAsRead('admin')}
-                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                   title="Mark all as read"
                 >
-                  <CheckCheck className="h-3.5 w-3.5 text-blue-600" />
+                  <CheckCheck className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Mark all read</span>
                 </button>
               )}
@@ -156,7 +156,7 @@ export const AdminNotificationMenu: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => clearAll('admin')}
-                  className="rounded-md p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                  className="rounded-md p-1 text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                   title="Clear history"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -167,15 +167,15 @@ export const AdminNotificationMenu: React.FC = () => {
 
           {/* Desktop Push Notification Permission Banner */}
           {permission !== 'granted' && (
-            <div className="border-b border-blue-100 bg-blue-50/60 px-4 py-2.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-xs text-blue-900 font-medium">
-                <Radio className="h-3.5 w-3.5 text-blue-600 animate-pulse shrink-0" />
+            <div className="border-b border-blue-100 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-950/30 px-4 py-2.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs text-blue-900 dark:text-blue-300 font-medium">
+                <Radio className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 animate-pulse shrink-0" />
                 <span>Enable push notifications for live store alerts</span>
               </div>
               <button
                 type="button"
                 onClick={() => requestPermission()}
-                className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-blue-700 transition-colors shadow-2xs"
+                className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-blue-700 transition-colors shadow-2xs cursor-pointer"
               >
                 Enable
               </button>
@@ -183,7 +183,7 @@ export const AdminNotificationMenu: React.FC = () => {
           )}
 
           {/* Filter Tabs */}
-          <div className="flex border-b border-slate-100 bg-slate-50/40 px-3 pt-2">
+          <div className="flex border-b border-slate-100 dark:border-white/10 bg-slate-50/40 dark:bg-[#111622] px-3 pt-2">
             {[
               { key: 'all', label: 'All' },
               { key: 'order', label: 'Orders' },
@@ -195,10 +195,10 @@ export const AdminNotificationMenu: React.FC = () => {
                 type="button"
                 onClick={() => setActiveTab(tab.key as any)}
                 className={cn(
-                  'pb-2 px-3 text-xs font-medium border-b-2 transition-colors -mb-px',
+                  'pb-2 px-3 text-xs font-medium border-b-2 transition-colors -mb-px cursor-pointer',
                   activeTab === tab.key
-                    ? 'border-blue-600 text-blue-600 font-bold'
-                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                    ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 font-bold'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 )}
               >
                 {tab.label}
@@ -207,11 +207,11 @@ export const AdminNotificationMenu: React.FC = () => {
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 overscroll-contain">
+          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-white/5 overscroll-contain">
             {filteredNotifications.length === 0 ? (
               <div className="py-12 text-center text-slate-400">
-                <Bell className="mx-auto h-8 w-8 text-slate-300 mb-2" />
-                <p className="text-xs font-semibold text-slate-600">No notifications in {activeTab !== 'all' ? activeTab : 'inbox'}</p>
+                <Bell className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600 mb-2" />
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">No notifications in {activeTab !== 'all' ? activeTab : 'inbox'}</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">New operational activity will appear here in real-time</p>
               </div>
             ) : (
@@ -221,7 +221,9 @@ export const AdminNotificationMenu: React.FC = () => {
                   onClick={() => handleItemClick(notif)}
                   className={cn(
                     'group relative flex items-start gap-3 p-3.5 transition-colors cursor-pointer text-left',
-                    notif.read ? 'bg-white hover:bg-slate-50/80' : 'bg-blue-50/30 hover:bg-blue-50/60'
+                    notif.read
+                      ? 'bg-white dark:bg-[#0E131F] hover:bg-slate-50/80 dark:hover:bg-white/5'
+                      : 'bg-blue-50/30 dark:bg-blue-950/20 hover:bg-blue-50/60 dark:hover:bg-blue-950/30'
                   )}
                 >
                   {/* Icon Indicator */}
@@ -235,14 +237,14 @@ export const AdminNotificationMenu: React.FC = () => {
                   {/* Content */}
                   <div className="flex-1 min-w-0 pr-4">
                     <div className="flex items-center gap-1.5">
-                      <span className={cn('text-xs font-bold truncate', notif.read ? 'text-slate-700' : 'text-slate-900')}>
+                      <span className={cn('text-xs font-bold truncate', notif.read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-900 dark:text-white')}>
                         {notif.title}
                       </span>
                       {!notif.read && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-600 shrink-0" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shrink-0" />
                       )}
                     </div>
-                    <p className="text-[12px] leading-relaxed text-slate-600 line-clamp-2 mt-0.5">
+                    <p className="text-[12px] leading-relaxed text-slate-600 dark:text-slate-400 line-clamp-2 mt-0.5">
                       {notif.message}
                     </p>
                     <div className="mt-1.5 flex items-center gap-2 text-[10px] text-slate-400 font-medium">
@@ -250,7 +252,7 @@ export const AdminNotificationMenu: React.FC = () => {
                       {notif.link && (
                         <>
                           <span>•</span>
-                          <span className="text-blue-600 group-hover:underline inline-flex items-center gap-0.5 font-semibold">
+                          <span className="text-blue-600 dark:text-blue-400 group-hover:underline inline-flex items-center gap-0.5 font-semibold">
                             View details <ExternalLink className="h-2.5 w-2.5" />
                           </span>
                         </>
@@ -265,7 +267,7 @@ export const AdminNotificationMenu: React.FC = () => {
                       e.stopPropagation();
                       clearNotification(notif.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all rounded-md"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all rounded-md cursor-pointer"
                     title="Dismiss notification"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -276,7 +278,7 @@ export const AdminNotificationMenu: React.FC = () => {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/80 px-4 py-2.5 text-[11px] text-slate-500">
+          <div className="flex items-center justify-between border-t border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#141A26] px-4 py-2.5 text-[11px] text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1.5 font-medium">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-blue animate-pulse" />
               <span>Real-time Sync Active</span>
@@ -288,7 +290,7 @@ export const AdminNotificationMenu: React.FC = () => {
                   setIsOpen(false);
                   navigate('/admin/orders');
                 }}
-                className="font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                className="font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
               >
                 All Orders →
               </button>

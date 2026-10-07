@@ -389,22 +389,22 @@ export const AdminTaxonomy: React.FC = () => {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* ================= CATEGORIES SECTION ================= */}
-        <section className="flex flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-xs">
+        <section className="flex flex-col rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-5 shadow-xs">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-blue">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400">
                 <FolderTree className="h-4 w-4" />
               </div>
               <div>
-                <h2 className="font-display font-bold text-dark">Categories</h2>
+                <h2 className="font-display font-bold text-dark dark:text-white">Categories</h2>
                 <p className="text-xs text-gray-400">Main departmental navigation</p>
               </div>
             </div>
-            <span className="text-xs font-semibold text-gray-500">{categories.length} items</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{categories.length} items</span>
           </div>
 
           {/* New Category Form */}
-          <form onSubmit={handleCreateCategory} className="mb-4 space-y-2 rounded-lg border border-gray-100 bg-gray-50/70 p-3">
+          <form onSubmit={handleCreateCategory} className="mb-4 space-y-2 rounded-lg border border-gray-100 dark:border-white/10 bg-gray-50/70 dark:bg-white/5 p-3">
             <div className="flex items-end gap-2">
               <div className="flex-1">
                 <Input
@@ -420,7 +420,7 @@ export const AdminTaxonomy: React.FC = () => {
               </Button>
             </div>
             {newCatName.trim() && (
-              <p className="font-mono text-[11px] text-gray-500">
+              <p className="font-mono text-[11px] text-gray-500 dark:text-gray-400">
                 Slug preview: <span className="font-semibold text-brand-blue">/{makeSlug(newCatName)}</span>
               </p>
             )}
@@ -435,13 +435,13 @@ export const AdminTaxonomy: React.FC = () => {
                 value={categorySearch}
                 onChange={(e) => setCategorySearch(e.target.value)}
                 placeholder="Search categories..."
-                className="h-9 w-full rounded-md border border-gray-200 bg-white pl-8 pr-3 text-xs outline-none focus:border-brand-blue"
+                className="h-9 w-full rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-[#131826] text-gray-900 dark:text-white pl-8 pr-3 text-xs outline-none focus:border-brand-blue"
               />
             </div>
           )}
 
           {/* Categories List */}
-          <div className="flex-1 divide-y divide-gray-100 rounded-lg border border-gray-100 bg-white">
+          <div className="flex-1 divide-y divide-gray-100 dark:divide-white/5 rounded-lg border border-gray-100 dark:border-white/10 bg-white dark:bg-[#131826]">
             {filteredCategories.length === 0 ? (
               <div className="p-6 text-center text-xs text-gray-400">
                 {categorySearch ? 'No categories matching search' : 'No categories created yet'}

@@ -19,11 +19,14 @@ import {
   Disc,
   Sparkles,
   Gamepad2,
+  ShieldCheck,
+  ArrowRight,
 } from 'lucide-react';
 import { useCartStore } from '../../stores/useCartStore';
 import { useUiStore } from '../../stores/useUiStore';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { useCustomerAuth } from '../../auth/CustomerAuth';
+import { useAdminAuth } from '../../auth/AdminAuth';
 import { CustomerNotificationMenu } from '../common/CustomerNotificationMenu';
 import { publicApi } from '../../lib/publicApi';
 import { cn } from '../../lib/formatters';
@@ -82,8 +85,22 @@ export const AzDarkLandingNav: React.FC = () => {
   const { openCartDrawer, openSearch } = useUiStore();
   const cartCount = useCartStore((s) => s.getItemCount());
   const { customer, isAuthenticated, logout } = useCustomerAuth();
+  const { user: adminUser } = useAdminAuth();
   const { theme, setTheme, toggleTheme } = useThemeStore();
   const isDark = theme === 'dark';
+
+  const isPrivilegedUser = Boolean(
+    customer?.role === 'admin' ||
+    customer?.role === 'staff' ||
+    adminUser?.role === 'admin' ||
+    adminUser?.role === 'staff' ||
+    (customer?.email && customer.email.toLowerCase() === 'admin@azrayan.co.uk')
+  );
+  const roleLabel = (
+    customer?.role ||
+    adminUser?.role ||
+    (customer?.email?.toLowerCase() === 'admin@azrayan.co.uk' ? 'admin' : '')
+  ).toUpperCase();
 
   // Sync selected category label with URL
   useEffect(() => {
@@ -316,6 +333,23 @@ export const AzDarkLandingNav: React.FC = () => {
             {isDark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
 
+          {/* Quick Admin Portal Button (Desktop) */}
+          {isPrivilegedUser && (
+            <Link
+              to="/admin"
+              className={cn(
+                'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-xs border',
+                isDark
+                  ? 'bg-brand-blue/20 hover:bg-brand-blue text-blue-300 hover:text-white border-brand-blue/40 hover:shadow-brand-blue/20'
+                  : 'bg-brand-blue/10 hover:bg-brand-blue text-brand-blue hover:text-white border-brand-blue/30 hover:shadow-brand-blue/20'
+              )}
+              title="Open Admin Console"
+            >
+              <ShieldCheck size={14} className="shrink-0" />
+              <span>Admin Console</span>
+            </Link>
+          )}
+
           {/* ── Customer Account Menu with Dark/Light Mode Toggle (Item 6) ── */}
           <div ref={accountRef} className="relative">
             <button
@@ -325,15 +359,25 @@ export const AzDarkLandingNav: React.FC = () => {
                 'flex items-center gap-1 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 rounded-full border text-xs sm:text-[13px] font-semibold transition-colors cursor-pointer shadow-xs',
                 isDark
                   ? 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-200 hover:text-white'
-                  : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-800 hover:text-gray-900'
+                  : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-800 hover:text-gray-900',
+                isPrivilegedUser && 'border-brand-blue/40 ring-1 ring-brand-blue/20'
               )}
               aria-label="Customer account menu"
               aria-expanded={accountMenuOpen}
             >
-              <User size={15} className={isDark ? 'text-gray-300' : 'text-gray-600'} />
+              {isPrivilegedUser ? (
+                <ShieldCheck size={15} className="text-brand-blue shrink-0" />
+              ) : (
+                <User size={15} className={isDark ? 'text-gray-300' : 'text-gray-600'} />
+              )}
               <span className="hidden sm:inline max-w-[95px] truncate">
                 {isAuthenticated ? customer?.full_name?.split(' ')[0] || 'Account' : 'Sign In'}
               </span>
+              {isPrivilegedUser && (
+                <span className="hidden lg:inline-block px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-brand-blue/15 text-brand-blue border border-brand-blue/30">
+                  {roleLabel || 'ADMIN'}
+                </span>
+              )}
               <ChevronDown
                 size={13}
                 className={cn('text-gray-400 transition-transform duration-200', accountMenuOpen && 'rotate-180')}
@@ -343,20 +387,65 @@ export const AzDarkLandingNav: React.FC = () => {
             {accountMenuOpen && (
               <div
                 className={cn(
-                  'fixed sm:absolute top-[64px] sm:top-full mt-2 left-3 right-3 sm:left-auto sm:right-0 w-auto sm:w-64 rounded-2xl border p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150',
+                  'fixed sm:absolute top-[64px] sm:top-full mt-2 left-3 right-3 sm:left-auto sm:right-0 w-auto sm:w-68 rounded-2xl border p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150',
                   isDark ? 'bg-[#0E131F] border-white/15 text-white' : 'bg-white border-gray-200 text-gray-900'
                 )}
               >
                 {/* User Header */}
                 {isAuthenticated ? (
-                  <div className={cn('px-3 py-2 border-b mb-1', isDark ? 'border-white/10' : 'border-gray-100')}>
-                    <p className="text-xs font-bold truncate">{customer?.full_name || 'Customer'}</p>
-                    <p className="text-[11px] text-gray-400 truncate">{customer?.email}</p>
+                  <div className={cn('px-3 py-2 border-b mb-1.5', isDark ? 'border-white/10' : 'border-gray-100')}>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-bold truncate text-dark dark:text-white">
+                        {customer?.full_name || 'Customer'}
+                      </p>
+                      {isPrivilegedUser && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-brand-blue/15 text-brand-blue dark:text-blue-400 border border-brand-blue/30 dark:border-blue-500/30 shrink-0">
+                          {roleLabel || 'ADMIN'}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-400 truncate mt-0.5">{customer?.email}</p>
                   </div>
                 ) : (
                   <div className={cn('px-3 py-2 border-b mb-1', isDark ? 'border-white/10' : 'border-gray-100')}>
                     <p className="text-xs font-bold">DVDs Zone Club</p>
                     <p className="text-[11px] text-gray-400">Sign in to track orders &amp; media library</p>
+                  </div>
+                )}
+
+                {/* ── ADMIN / BACKOFFICE ACCESS PANEL ── */}
+                {isPrivilegedUser && (
+                  <div className="mb-2">
+                    <Link
+                      to="/admin"
+                      onClick={() => setAccountMenuOpen(false)}
+                      className={cn(
+                        "group relative flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all duration-200 shadow-sm",
+                        isDark
+                          ? "bg-gradient-to-r from-blue-950/70 via-indigo-950/60 to-blue-900/40 border-blue-500/40 hover:border-blue-400 hover:shadow-blue-500/10"
+                          : "bg-gradient-to-r from-blue-50 via-indigo-50/70 to-blue-100/60 border-blue-300 hover:border-brand-blue hover:shadow-blue-500/10 text-gray-900"
+                      )}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-brand-blue text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                          <ShieldCheck className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="min-w-0 text-left">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-display font-extrabold text-xs text-dark dark:text-white leading-tight">
+                              Admin Console
+                            </span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          </div>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight truncate mt-0.5">
+                            Store management &amp; backoffice
+                          </p>
+                        </div>
+                      </div>
+                      <div className="w-6 h-6 rounded-lg bg-black/5 dark:bg-white/10 flex items-center justify-center text-gray-500 dark:text-gray-300 group-hover:bg-brand-blue group-hover:text-white transition-all shrink-0">
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </div>
+                    </Link>
                   </div>
                 )}
 

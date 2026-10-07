@@ -173,7 +173,7 @@ export const AdminActivity: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex snap-x gap-2 overflow-x-auto rounded-2xl border border-gray-200 bg-white p-2 shadow-xs">
+      <div className="flex snap-x gap-2 overflow-x-auto rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-2 shadow-xs">
         {tabs.map((item) => (
           <button
             key={item.id}
@@ -183,14 +183,14 @@ export const AdminActivity: React.FC = () => {
               'min-h-11 shrink-0 snap-start whitespace-nowrap rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer flex items-center gap-2',
               tab === item.id
                 ? 'bg-brand-blue text-white shadow-xs'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
             )}
           >
             <span>{item.label}</span>
             <span
               className={cn(
                 'rounded-full px-2 py-0.5 text-[10px] font-mono',
-                tab === item.id ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
+                tab === item.id ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-slate-300'
               )}
             >
               {item.count}
@@ -569,7 +569,7 @@ const Cell: React.FC<React.PropsWithChildren<{ mono?: boolean; className?: strin
   className = '',
   title,
 }) => (
-  <td title={title} className={`p-3.5 align-middle text-xs text-gray-600 ${mono ? 'font-mono' : ''} ${className}`}>
+  <td title={title} className={`p-3.5 align-middle text-xs text-gray-600 dark:text-gray-300 ${mono ? 'font-mono' : ''} ${className}`}>
     {children}
   </td>
 );
@@ -580,18 +580,18 @@ const ActivityTable: React.FC<React.PropsWithChildren<{ headers: string[]; empty
   pagination,
   children,
 }) => (
-  <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xs">
+  <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] shadow-xs">
     {empty ? (
-      <div className="flex flex-col items-center gap-2 p-12 text-center text-gray-500">
-        <PackageSearch className="h-7 w-7 text-gray-300" />
-        <p className="text-sm font-semibold text-dark">No activity recorded yet</p>
+      <div className="flex flex-col items-center gap-2 p-12 text-center text-gray-500 dark:text-gray-400">
+        <PackageSearch className="h-7 w-7 text-gray-300 dark:text-slate-600" />
+        <p className="text-sm font-semibold text-dark dark:text-white">No activity recorded yet</p>
         <p className="text-xs">Events appear here after an authorised operational change.</p>
       </div>
     ) : (
       <>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[850px] text-left">
-            <thead className="bg-gray-50/80 border-b border-gray-200 text-[10px] font-bold uppercase tracking-wider text-gray-500 select-none">
+            <thead className="bg-gray-50/80 dark:bg-[#141A26] border-b border-gray-200 dark:border-white/10 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 select-none">
               <tr>
                 {headers.map((header) => (
                   <th key={header} className="p-3.5">
@@ -600,7 +600,7 @@ const ActivityTable: React.FC<React.PropsWithChildren<{ headers: string[]; empty
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">{children}</tbody>
+            <tbody className="divide-y divide-gray-100 dark:divide-white/5">{children}</tbody>
           </table>
         </div>
         {pagination}

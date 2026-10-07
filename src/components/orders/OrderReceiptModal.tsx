@@ -33,7 +33,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title="Official Order Receipt / Struk Pembelian"
+        title="Official Order Receipt"
         description="A4 print & PDF formatted invoice with full order, payment, and delivery details."
         maxWidth="4xl"
       >
@@ -65,7 +65,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
                 className="gap-1.5 shadow-sm cursor-pointer bg-brand-blue hover:bg-brand-blue-hover text-white font-bold"
               >
                 <Printer className="w-4 h-4" />
-                <span>Cetak / Print Receipt</span>
+                <span>Print Receipt</span>
               </Button>
               <Button
                 type="button"
@@ -74,7 +74,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
                 onClick={onClose}
                 className="cursor-pointer"
               >
-                Tutup / Close
+                Close
               </Button>
             </div>
           </div>

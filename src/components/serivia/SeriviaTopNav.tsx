@@ -15,10 +15,12 @@ import {
   CheckCheck,
   Tag,
   Info,
+  ShieldCheck,
 } from 'lucide-react';
 import { useCartStore } from '../../stores/useCartStore';
 import { useUiStore } from '../../stores/useUiStore';
 import { useCustomerAuth } from '../../auth/CustomerAuth';
+import { useAdminAuth } from '../../auth/AdminAuth';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { cn } from '../../lib/formatters';
 
@@ -53,6 +55,15 @@ export const SeriviaTopNav: React.FC<SeriviaTopNavProps> = ({
   const { openCartDrawer, openSearch } = useUiStore();
   const cartCount = useCartStore((s) => s.getItemCount());
   const { customer, isAuthenticated, logout } = useCustomerAuth();
+  const { user: adminUser } = useAdminAuth();
+
+  const isPrivilegedUser = Boolean(
+    customer?.role === 'admin' ||
+    customer?.role === 'staff' ||
+    adminUser?.role === 'admin' ||
+    adminUser?.role === 'staff' ||
+    (customer?.email && customer.email.toLowerCase() === 'admin@azrayan.co.uk')
+  );
 
   // Notification store
   const allNotifications = useNotificationStore((s) => s.notifications);
@@ -360,6 +371,16 @@ export const SeriviaTopNav: React.FC<SeriviaTopNavProps> = ({
                 </div>
 
                 <div className="py-1">
+                  {isPrivilegedUser && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-bold text-brand-blue hover:text-white hover:bg-brand-blue/20 transition-colors border-b border-white/[0.06] mb-1"
+                    >
+                      <ShieldCheck size={14} className="text-brand-blue" />
+                      <span>Admin Console</span>
+                    </Link>
+                  )}
                   <Link
                     to="/account/profile"
                     onClick={() => setUserMenuOpen(false)}

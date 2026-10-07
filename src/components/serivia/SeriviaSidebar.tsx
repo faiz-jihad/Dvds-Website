@@ -19,6 +19,7 @@ import {
 import { cn } from "../../lib/formatters";
 import { useFavouritesStore, useActiveFavouritesCount } from "../../stores/useFavouritesStore";
 import { useCustomerAuth } from "../../auth/CustomerAuth";
+import { useAdminAuth } from "../../auth/AdminAuth";
 import { Product, Category, Genre } from "../../types";
 
 interface SeriviaSidebarProps {
@@ -262,6 +263,15 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
 }) => {
   const favourites = useFavouritesStore((s) => s.favourites);
   const { customer, isAuthenticated, logout } = useCustomerAuth();
+  const { user: adminUser } = useAdminAuth();
+
+  const isPrivilegedUser = Boolean(
+    customer?.role === 'admin' ||
+    customer?.role === 'staff' ||
+    adminUser?.role === 'admin' ||
+    adminUser?.role === 'staff' ||
+    (customer?.email && customer.email.toLowerCase() === 'admin@azrayan.co.uk')
+  );
   const { pathname } = useLocation();
 
   if (!isOpen) return null;
@@ -451,6 +461,19 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
                   {customer.email}
                 </p>
               </div>
+              {isPrivilegedUser && (
+                <Link
+                  to="/admin"
+                  onClick={onClose}
+                  className="flex items-center justify-between p-2 rounded-xl bg-brand-blue/10 text-brand-blue font-bold text-xs hover:bg-brand-blue hover:text-white transition-colors border border-brand-blue/20"
+                >
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck size={15} />
+                    <span>Admin Console</span>
+                  </div>
+                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-brand-blue/20 font-black">Admin</span>
+                </Link>
+              )}
               <Link
                 to="/account/orders"
                 onClick={onClose}

@@ -34,8 +34,8 @@ export const AdminDashboard: React.FC = () => {
       {/* Header & Quick Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-mono uppercase tracking-widest text-brand-blue">
-            FINANCIAL & STORE INTELLIGENCE
+          <span className="text-xs font-mono uppercase tracking-widest text-slate-500 dark:text-slate-400 font-semibold">
+            FINANCIAL OVERVIEW · STORE PERFORMANCE
           </span>
           <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-dark tracking-tight mt-0.5">
             Admin Overview & Finances

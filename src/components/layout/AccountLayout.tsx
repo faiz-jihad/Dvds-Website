@@ -1,12 +1,27 @@
 import React from 'react';
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
-import { User, Package, MapPin, Heart, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { User, Package, MapPin, Heart, LogOut, LogIn, UserPlus, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { cn } from '../../lib/formatters';
 import { useCustomerAuth } from '../../auth/CustomerAuth';
+import { useAdminAuth } from '../../auth/AdminAuth';
 
 export const AccountLayout: React.FC = () => {
   const { customer, isAuthenticated, isLoading, logout } = useCustomerAuth();
+  const { user: adminUser } = useAdminAuth();
   const location = useLocation();
+
+  const isPrivilegedUser = Boolean(
+    customer?.role === 'admin' ||
+    customer?.role === 'staff' ||
+    adminUser?.role === 'admin' ||
+    adminUser?.role === 'staff' ||
+    (customer?.email && customer.email.toLowerCase() === 'admin@azrayan.co.uk')
+  );
+  const roleLabel = (
+    customer?.role ||
+    adminUser?.role ||
+    (customer?.email?.toLowerCase() === 'admin@azrayan.co.uk' ? 'admin' : '')
+  ).toUpperCase();
 
   const links = [
     { label: 'Profile Details', href: '/account', icon: User, end: true },
@@ -30,9 +45,20 @@ export const AccountLayout: React.FC = () => {
 
           {/* Quick status on top right */}
           {isAuthenticated && customer ? (
-            <div className="text-xs text-gray-500 dark:text-gray-400 sm:text-right">
-              <span className="font-semibold text-dark dark:text-white">{customer.full_name || customer.email}</span>
-              <span className="block text-[11px] text-gray-400 dark:text-gray-500 capitalize">{customer.role} Account</span>
+            <div className="flex items-center gap-3 sm:text-right">
+              <div>
+                <span className="font-semibold text-dark dark:text-white block">{customer.full_name || customer.email}</span>
+                <span className="text-[11px] text-gray-400 dark:text-gray-500 capitalize">{roleLabel || customer.role} Account</span>
+              </div>
+              {isPrivilegedUser && (
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-blue/10 dark:bg-brand-blue/20 hover:bg-brand-blue text-brand-blue dark:text-blue-400 hover:text-white text-xs font-bold border border-brand-blue/30 transition shadow-xs"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Admin Console</span>
+                </Link>
+              )}
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -93,6 +119,20 @@ export const AccountLayout: React.FC = () => {
                     <span className="truncate">{link.label}</span>
                   </NavLink>
                 ))}
+
+                {/* Backoffice Admin Console Shortcut for Admin & Staff */}
+                {isPrivilegedUser && (
+                  <Link
+                    to="/admin"
+                    className="col-span-2 flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-bold bg-brand-blue/10 hover:bg-brand-blue dark:bg-brand-blue/20 dark:hover:bg-brand-blue text-brand-blue dark:text-blue-300 hover:text-white dark:hover:text-white border border-brand-blue/30 transition-all shadow-2xs group mt-1"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ShieldCheck className="w-4 h-4 shrink-0" />
+                      <span className="truncate">Admin Console</span>
+                    </div>
+                    <ArrowUpRight className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform shrink-0" />
+                  </Link>
+                )}
               </div>
 
               {/* Sidebar Action: Sign Out or Sign In Prompt */}

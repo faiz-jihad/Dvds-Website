@@ -17,12 +17,14 @@ import {
   ChevronDown,
   Sun,
   Moon,
+  ShieldCheck,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useUiStore } from "../../stores/useUiStore";
 import { useThemeStore } from "../../stores/useThemeStore";
 import { useCustomerAuth } from "../../auth/CustomerAuth";
+import { useAdminAuth } from "../../auth/AdminAuth";
 import { useFavouritesStore, useActiveFavouritesCount } from "../../stores/useFavouritesStore";
 import { useNotificationStore } from "../../stores/useNotificationStore";
 import { publicApi } from "../../lib/publicApi";
@@ -47,6 +49,20 @@ export const MobileNavDrawer: React.FC = () => {
     isAuthenticated,
     logout: customerLogout,
   } = useCustomerAuth();
+  const { user: adminUser } = useAdminAuth();
+
+  const isPrivilegedUser = Boolean(
+    customer?.role === 'admin' ||
+    customer?.role === 'staff' ||
+    adminUser?.role === 'admin' ||
+    adminUser?.role === 'staff' ||
+    (customer?.email && customer.email.toLowerCase() === 'admin@azrayan.co.uk')
+  );
+  const roleLabel = (
+    customer?.role ||
+    adminUser?.role ||
+    (customer?.email?.toLowerCase() === 'admin@azrayan.co.uk' ? 'admin' : '')
+  ).toUpperCase();
   const location = useLocation();
   const [genresOpen, setGenresOpen] = useState(false);
   const activeFavouritesCount = useActiveFavouritesCount();
@@ -132,37 +148,68 @@ export const MobileNavDrawer: React.FC = () => {
               {/* Customer Account Mobile Status */}
               <div className="p-4 border-b border-gray-100 dark:border-white/10 bg-gray-50/60 dark:bg-[#131826]/70">
                 {isAuthenticated && customer ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <Link
-                      to="/account"
-                      onClick={closeMobileNav}
-                      className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-90 transition"
-                    >
-                      <div className="w-9 h-9 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-                        {(customer.full_name || customer.email)
-                          .charAt(0)
-                          .toUpperCase()}
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <Link
+                        to="/account"
+                        onClick={closeMobileNav}
+                        className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-90 transition"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                          {(customer.full_name || customer.email)
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-dark dark:text-white truncate">
+                            {customer.full_name || "My Account"}
+                          </p>
+                          <p className="text-[10px] text-gray-400 truncate font-mono">
+                            {customer.email}
+                          </p>
+                        </div>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeMobileNav();
+                          customerLogout();
+                        }}
+                        className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition cursor-pointer"
+                        title="Sign Out"
+                      >
+                        <LogOut className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Admin Console Quick Panel on Mobile */}
+                    {isPrivilegedUser && (
+                      <div className="pt-2 border-t border-gray-200/80 dark:border-white/10">
+                        <Link
+                          to="/admin"
+                          onClick={closeMobileNav}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-blue-900/15 via-indigo-900/10 to-blue-900/15 dark:from-blue-950/70 dark:via-indigo-950/60 dark:to-blue-950/70 border border-brand-blue/30 text-dark dark:text-white shadow-2xs group hover:border-brand-blue transition-all"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-7 h-7 rounded-lg bg-brand-blue text-white flex items-center justify-center shrink-0 shadow-xs">
+                              <ShieldCheck className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold leading-tight truncate">Admin Console</span>
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-brand-blue/20 text-brand-blue dark:text-blue-300">
+                                  {roleLabel || 'ADMIN'}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight block truncate">
+                                Backoffice &amp; Store Management
+                              </span>
+                            </div>
+                          </div>
+                          <ArrowRight className="w-3.5 h-3.5 text-brand-blue group-hover:translate-x-0.5 transition-transform shrink-0" />
+                        </Link>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-dark dark:text-white truncate">
-                          {customer.full_name || "My Account"}
-                        </p>
-                        <p className="text-[10px] text-gray-400 truncate font-mono">
-                          {customer.email}
-                        </p>
-                      </div>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        closeMobileNav();
-                        customerLogout();
-                      }}
-                      className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition cursor-pointer"
-                      title="Sign Out"
-                    >
-                      <LogOut className="w-4 h-4" />
-                    </button>
+                    )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
