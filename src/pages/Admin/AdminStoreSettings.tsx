@@ -593,27 +593,29 @@ export const AdminStoreSettings: React.FC = () => {
                       <div className="flex flex-wrap items-center gap-2 mb-3">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-brand-blue text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-wider shadow-md">
                           <Disc className="w-3 h-3 animate-spin" style={{ animationDuration: '6s' }} />
-                          <span>4K ULTRA HD</span>
+                          <span>{activePreviewProduct?.format || '4K ULTRA HD'}</span>
                         </span>
-                        <span className="px-2.5 py-1 rounded-md bg-brand-red text-white text-[10px] font-bold uppercase tracking-wider shadow-md">
-                          New Release
-                        </span>
+                        {(activePreviewProduct?.is_new_release ?? true) && (
+                          <span className="px-2.5 py-1 rounded-md bg-brand-red text-white text-[10px] font-bold uppercase tracking-wider shadow-md">
+                            New Release
+                          </span>
+                        )}
                       </div>
 
                       <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight mb-2">
-                        The Mandalorian: The Complete Seasons
+                        {activePreviewProduct?.title || 'Featured Film Premiere'}
                       </h3>
 
                       <div className="flex flex-wrap items-center gap-2 text-xs text-gray-300 font-semibold mb-4">
                         <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-400/20 text-amber-400 font-bold border border-amber-400/30">
                           <Star className="w-3 h-3 fill-amber-400" />
-                          <span>8.7 IMDb</span>
+                          <span>{activePreviewProduct?.imdb_rating ? `${activePreviewProduct.imdb_rating.toFixed(1)} IMDb` : '8.7 IMDb'}</span>
                         </span>
-                        <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-bold text-[10px]">12</span>
+                        <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-bold text-[10px]">{activePreviewProduct?.age_rating || '15'}</span>
                         <span className="text-gray-400">&bull;</span>
-                        <span className="text-gray-300">2023</span>
+                        <span className="text-gray-300">{activePreviewProduct?.release_year || '2026'}</span>
                         <span className="text-gray-400">&bull;</span>
-                        <span className="text-gray-300">Sci-Fi &amp; Adventure</span>
+                        <span className="text-gray-300">{activePreviewProduct?.genres?.[0]?.name || 'Film'}</span>
                       </div>
 
                       <div className="flex items-center gap-3 pt-1">
@@ -623,7 +625,7 @@ export const AdminStoreSettings: React.FC = () => {
                         </span>
                         <span className="px-4 py-2.5 rounded-xl bg-brand-blue text-white text-xs font-bold shadow-md flex items-center gap-1.5 cursor-default">
                           <ShoppingCart className="w-3.5 h-3.5" />
-                          <span>{settings.hero_cta_secondary || 'Curator Picks'} &bull; £39.99</span>
+                          <span>{settings.hero_cta_secondary || 'Curator Picks'} &bull; {formatGBP(activePreviewProduct?.price ?? 26)}</span>
                         </span>
                       </div>
                     </div>
@@ -633,13 +635,13 @@ export const AdminStoreSettings: React.FC = () => {
                       <div className="absolute -inset-2 bg-gradient-to-tr from-brand-blue/20 via-white/10 to-amber-400/15 rounded-2xl blur-xl opacity-60 pointer-events-none" />
                       <div className="w-28 aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border-2 border-white/20 bg-gray-900 relative animate-hero-card-float">
                         <img
-                          src="/catalog/the-mandalorian-seasons-1-3.jpeg"
-                          alt="3D Case Mockup"
+                          src={activePreviewProduct?.cover_image_url || '/catalog/the-mandalorian-seasons-1-3.jpeg'}
+                          alt={activePreviewProduct?.title || '3D Case Mockup'}
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute bottom-1.5 left-1.5 right-1.5 p-1 rounded bg-black/80 backdrop-blur-xs text-[9px] font-bold text-white flex justify-between">
-                          <span>Box Set</span>
-                          <span className="text-emerald-400">£39.99</span>
+                          <span>{activePreviewProduct?.format || 'Box Set'}</span>
+                          <span className="text-emerald-400">{formatGBP(activePreviewProduct?.price ?? 26)}</span>
                         </div>
                       </div>
                     </div>

@@ -388,9 +388,8 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
         .map((t) => products.find((p) => p.id === t.product_id || p.slug === t.product_id))
         .filter(Boolean) as Product[];
       if (configured.length > 0) {
-        // Keep configured hero films first, then fill up remaining carousel slides with other titles
-        const others = pool.filter((p) => !configured.some((c) => c.id === p.id));
-        return [...configured, ...others].slice(0, 6);
+        // Strictly show ONLY the films configured by the admin in Store Settings
+        return configured;
       }
     }
     const highlighted = pool.filter((p) => p.is_featured || p.is_best_seller || p.is_new_release);
