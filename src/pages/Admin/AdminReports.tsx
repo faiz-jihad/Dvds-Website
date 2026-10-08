@@ -159,7 +159,7 @@ export const AdminReports: React.FC = () => {
   const handleExportCsv = () => {
     if (!report) return;
     const lines: string[] = [];
-    lines.push('AZ RAYAN DVDS - FINANCIAL & OPERATING REPORT STATEMENT');
+    lines.push('DVDS ZONE - FINANCIAL & OPERATING REPORT STATEMENT');
     lines.push(`Period Start,${report.periodStart}`);
     lines.push(`Period End,${report.periodEnd}`);
     lines.push(`Generated At,${report.generatedAt}`);
@@ -197,7 +197,7 @@ export const AdminReports: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `AZ-Rayan-Financial-Ledger-${report.periodStart}-to-${report.periodEnd}.csv`);
+    link.setAttribute('download', `DVDs-Zone-Financial-Ledger-${report.periodStart}-to-${report.periodEnd}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -234,7 +234,7 @@ export const AdminReports: React.FC = () => {
       <div className="hidden print:block border-b-2 border-black pb-4 mb-4">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-xl font-bold tracking-tight uppercase">AZ RAYAN DVDS</h1>
+            <h1 className="text-xl font-bold tracking-tight uppercase">DVDS ZONE</h1>
             <p className="text-xs text-gray-600">Trading Performance & Cash Accounting Statement</p>
             <p className="text-[10px] text-gray-500 mt-1">United Kingdom · Retail Physical Media Merchant</p>
           </div>
@@ -251,7 +251,7 @@ export const AdminReports: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-              AZ Rayan DVDs · Accounts & Reporting
+              DVDs Zone · Accounts & Reporting
             </span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
             <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">

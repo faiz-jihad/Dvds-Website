@@ -33,7 +33,7 @@ export const Footer: React.FC = () => {
   const companiesHouseUrl =
     settings.companies_house_url ||
     'https://find-and-update.company-information.service.gov.uk/company/13894195';
-  const businessLocation = settings.warehouse_location || 'West Midlands, Birmingham, United Kingdom';
+  const businessLocation = settings.warehouse_location || 'United Kingdom';
 
   // Close guides dropdown on click outside
   useEffect(() => {
@@ -68,8 +68,8 @@ export const Footer: React.FC = () => {
             <div className="space-y-2 text-xs text-neutral-400">
               <div className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-brand-blue shrink-0" />
-                <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="hover:text-white transition-colors">
-                  {settings.support_email || 'azrayanltd@gmail.com'}
+                <a href={`mailto:${settings.support_email || 'support@dvdszone.co.uk'}`} className="hover:text-white transition-colors">
+                  {settings.support_email || 'support@dvdszone.co.uk'}
                 </a>
               </div>
               <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ export const Footer: React.FC = () => {
           <div className="flex flex-wrap items-center gap-4 sm:gap-6">
             <div className="flex items-center gap-1.5 text-white font-bold cursor-default">
               <MapPin className="w-3.5 h-3.5 text-white fill-white" />
-              <span>West Midlands, Birmingham, United Kingdom</span>
+              <span>United Kingdom</span>
             </div>
             <span>© {new Date().getFullYear()} {registeredCompanyName}. All Rights Reserved.</span>
           </div>

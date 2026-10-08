@@ -306,10 +306,10 @@ export const AdminStoreSettings: React.FC = () => {
       store_name: 'DVDs Zone',
       registered_company_name: 'DVDs Zone',
       company_number: '13894195',
-      registered_office_address: 'West Midlands, Birmingham, United Kingdom',
+      registered_office_address: 'United Kingdom',
       companies_house_url: 'https://find-and-update.company-information.service.gov.uk/company/13894195',
-      warehouse_location: 'West Midlands, Birmingham, United Kingdom',
-      support_email: 'azrayanltd@gmail.com',
+      warehouse_location: 'United Kingdom',
+      support_email: 'support@dvdszone.co.uk',
       support_phone: '00447400320038',
       updated_at: new Date().toISOString(),
     });
@@ -1749,7 +1749,7 @@ export const AdminStoreSettings: React.FC = () => {
                   type="email"
                   value={settings.support_email || ''}
                   onChange={(e) => handleChange('support_email', e.target.value)}
-                  placeholder="azrayanltd@gmail.com"
+                  placeholder="support@dvdszone.co.uk"
                 />
 
                 <Input

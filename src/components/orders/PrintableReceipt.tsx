@@ -40,20 +40,17 @@ export const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order, class
           <div>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-black tracking-tight text-gray-950 font-display">
-                AZ RAYAN
-              </span>
-              <span className="bg-red-600 text-white font-black text-xs px-2 py-0.5 rounded uppercase tracking-wider">
-                DVDs
+                DVDs ZONE
               </span>
             </div>
             <p className="text-xs uppercase tracking-widest text-gray-500 font-bold mt-1">
               Official Payment Receipt & Proof of Purchase
             </p>
             <p className="text-xs text-gray-600 mt-1">
-              AZ Rayan DVDs Ltd • Online DVD & Entertainment Specialist
+              DVDs Zone • Online DVD & Entertainment Specialist • United Kingdom
             </p>
             <p className="text-xs text-gray-500">
-              support@azrayan.co.uk • www.azrayan.co.uk
+              support@dvdszone.co.uk • www.dvdszone.co.uk
             </p>
           </div>
 
@@ -261,7 +258,7 @@ export const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order, class
             </p>
             <p className="text-[11px] text-gray-500">
               For support or returns, email{' '}
-              <span className="font-medium text-gray-700">support@azrayan.co.uk</span> with order ref{' '}
+              <span className="font-medium text-gray-700">support@dvdszone.co.uk</span> with order ref{' '}
               <span className="font-mono font-bold text-gray-800">{order.order_number}</span>.
             </p>
           </div>
@@ -278,7 +275,7 @@ export const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order, class
         </div>
 
         <div className="text-[10px] text-gray-400 text-center border-t border-gray-100 pt-3">
-          AZ Rayan DVDs • United Kingdom • All items are brand new, sealed original media unless specified.
+          DVDs Zone • United Kingdom • All items are brand new, sealed original media unless specified.
         </div>
       </footer>
     </article>

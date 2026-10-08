@@ -153,20 +153,20 @@ export const publicApi = {
       vip_min_spend: Number(localOverride.vip_min_spend ?? data.vip_min_spend ?? 0),
     } as StoreSettings;
 
-    // Strict privacy protection: never expose personal home address
-    if (!result.registered_office_address || result.registered_office_address.includes('Ryland') || result.registered_office_address.includes('Apartment')) {
-      result.registered_office_address = 'West Midlands, Birmingham, United Kingdom';
+    // Strict privacy protection: clean jurisdiction to United Kingdom
+    if (!result.registered_office_address || result.registered_office_address.includes('Ryland') || result.registered_office_address.includes('Apartment') || result.registered_office_address.includes('Birmingham') || result.registered_office_address.includes('West Midlands')) {
+      result.registered_office_address = 'United Kingdom';
     }
-    if (!result.warehouse_location || result.warehouse_location.includes('Ryland') || result.warehouse_location.includes('Apartment') || result.warehouse_location.includes('London')) {
-      result.warehouse_location = 'West Midlands, Birmingham, United Kingdom';
+    if (!result.warehouse_location || result.warehouse_location.includes('Ryland') || result.warehouse_location.includes('Apartment') || result.warehouse_location.includes('London') || result.warehouse_location.includes('Birmingham') || result.warehouse_location.includes('West Midlands')) {
+      result.warehouse_location = 'United Kingdom';
     }
-    if (!result.store_name || result.store_name === 'AZ Rayan DVDs') {
-      result.store_name = 'DVD ZONE';
+    if (!result.store_name || result.store_name.includes('AZ Rayan')) {
+      result.store_name = 'DVDs Zone';
     }
-    if (!result.registered_company_name || result.registered_company_name === 'AZ Rayan DVDs') {
-      result.registered_company_name = 'AZ Rayan LTD & DVD Zone';
+    if (!result.registered_company_name || result.registered_company_name.includes('AZ Rayan')) {
+      result.registered_company_name = 'DVDs Zone';
     }
-    result.support_email = data.support_email?.trim() || localOverride.support_email?.trim() || 'azrayanltd@gmail.com';
+    result.support_email = data.support_email?.trim() || localOverride.support_email?.trim() || 'support@dvdszone.co.uk';
     result.support_phone = data.support_phone?.trim() || localOverride.support_phone?.trim() || '00447400320038';
     return result;
   },

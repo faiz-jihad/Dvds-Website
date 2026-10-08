@@ -133,25 +133,23 @@ export const ContactPage: React.FC = () => {
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-16 transition-colors">
       <Seo
         title="Contact DVD ZONE — Customer Service & Inquiries | UK DVD Store"
-        description="Contact DVD ZONE. Headquarter & Vault: DVD ZONE, West Midlands, Birmingham, United Kingdom. Customer service and inquiry email address: azrayanltd@gmail.com. Customer Line: 00447400320038."
+        description="Contact DVD ZONE. Headquarter & Vault: DVD ZONE, United Kingdom. Customer service and inquiry email address: support@dvdszone.co.uk. Customer Line: 00447400320038."
         canonicalPath="/contact"
-        keywords="contact DVD ZONE, UK DVD customer service, DVD customer support, film shop contact, Birmingham DVD inquiries, email azrayanltd@gmail.com"
+        keywords="contact DVD ZONE, UK DVD customer service, DVD customer support, film shop contact, UK DVD inquiries, email support@dvdszone.co.uk"
         siteName="DVD ZONE"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'ContactPage',
           name: 'Contact DVD ZONE Customer Service',
-          description: 'Get in touch with DVD ZONE customer service and dispatch team in Birmingham, UK.',
+          description: 'Get in touch with DVD ZONE customer service and dispatch team in the United Kingdom.',
           url: 'https://dvdszone.co.uk/contact',
           mainEntity: {
             '@type': 'LocalBusiness',
             name: 'DVD ZONE',
             telephone: '+447400320038',
-            email: 'azrayanltd@gmail.com',
+            email: 'support@dvdszone.co.uk',
             address: {
               '@type': 'PostalAddress',
-              addressLocality: 'Birmingham',
-              addressRegion: 'West Midlands',
               addressCountry: 'GB',
             },
           },
@@ -180,7 +178,7 @@ export const ContactPage: React.FC = () => {
                   <strong className="text-dark dark:text-white block font-semibold mb-0.5">Headquarter &amp; Vault</strong>
                   <div className="font-bold text-dark dark:text-white">{settings.store_name || 'DVD ZONE'}</div>
                   <span className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                    {settings.warehouse_location || settings.registered_office_address || 'West Midlands, Birmingham, United Kingdom'}
+                    {settings.warehouse_location || settings.registered_office_address || 'United Kingdom'}
                   </span>
                 </div>
               </div>
@@ -189,8 +187,8 @@ export const ContactPage: React.FC = () => {
                 <Mail className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-dark dark:text-white block font-semibold mb-0.5">Customer service and inquiry email address</strong>
-                  <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">
-                    {settings.support_email || 'azrayanltd@gmail.com'}
+                  <a href={`mailto:${settings.support_email || 'support@dvdszone.co.uk'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">
+                    {settings.support_email || 'support@dvdszone.co.uk'}
                   </a>
                 </div>
               </div>

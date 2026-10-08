@@ -1,12 +1,12 @@
 import { formatMoney } from '../shared/commerce.js';
 
 /**
- * Universal email dispatcher for AZ Rayan DVDs.
+ * Universal email dispatcher for DVDs Zone.
  * Supports Resend (RESEND_API_KEY), SendGrid (SENDGRID_API_KEY),
  * or graceful simulated delivery in local/test environments.
  */
 export async function sendEmail({ to, subject, html, text }) {
-  const fromEmail = process.env.EMAIL_FROM || 'AZ Rayan DVDs <orders@azrayan.co.uk>';
+  const fromEmail = process.env.EMAIL_FROM || 'DVDs Zone <orders@dvdszone.co.uk>';
   const resendKey = process.env.RESEND_API_KEY;
   const sendgridKey = process.env.SENDGRID_API_KEY;
 
@@ -48,7 +48,7 @@ export async function sendEmail({ to, subject, html, text }) {
         },
         body: JSON.stringify({
           personalizations: [{ to: (Array.isArray(to) ? to : [to]).map((email) => ({ email })) }],
-          from: { email: fromEmail.replace(/.*<([^>]+)>.*/, '$1') || 'orders@azrayan.co.uk', name: 'AZ Rayan DVDs' },
+          from: { email: fromEmail.replace(/.*<([^>]+)>.*/, '$1') || 'orders@dvdszone.co.uk', name: 'DVDs Zone' },
           subject,
           content: [
             { type: 'text/plain', value: text },
@@ -122,7 +122,7 @@ export async function sendCustomerPaymentReceipt(db, order, { paymentReference, 
     // If table not present yet, proceed
   }
 
-  const siteUrl = process.env.SITE_URL || 'https://azrayan.co.uk';
+  const siteUrl = process.env.SITE_URL || 'https://dvdszone.co.uk';
   const orderDate = new Date(order.created_at || Date.now()).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
@@ -156,10 +156,10 @@ export async function sendCustomerPaymentReceipt(db, order, { paymentReference, 
   const items = Array.isArray(order.items) ? order.items : [];
   const viewOrderUrl = `${siteUrl}/checkout/success?session_id=${encodeURIComponent(order.checkout_session_id || '')}&order_id=${encodeURIComponent(order.id)}`;
 
-  const subject = `Payment Receipt - AZ Rayan DVDs #${order.order_number}`;
+  const subject = `Payment Receipt - DVDs Zone #${order.order_number}`;
 
   // Plaintext body matching business specification
-  const textBody = `AZ Rayan DVDs
+  const textBody = `DVDs Zone
 Thank you for your purchase.
 
 ## ORDER DETAILS
@@ -190,8 +190,8 @@ Paid At: ${formattedPaidAt}
 View your order online:
 ${viewOrderUrl}
 
-Thank you for shopping with AZ Rayan DVDs.
-If you have any questions regarding your order, please contact our support team at support@azrayan.co.uk.
+Thank you for shopping with DVDs Zone.
+If you have any questions regarding your order, please contact our support team at support@dvdszone.co.uk.
 `;
 
   // Clean, responsive, branded HTML receipt
@@ -229,7 +229,7 @@ If you have any questions regarding your order, please contact our support team 
   <div style="padding: 16px 12px;">
     <div class="container">
       <div class="header">
-        <h1 class="brand-title">AZ RAYAN DVDs</h1>
+        <h1 class="brand-title">DVDS ZONE</h1>
         <p class="brand-sub">Official Payment Receipt</p>
       </div>
       <div class="content">
@@ -293,8 +293,8 @@ If you have any questions regarding your order, please contact our support team 
         </div>
       </div>
       <div class="footer">
-        <p style="margin: 0 0 6px;">Thank you for shopping with <strong>AZ Rayan DVDs</strong>.</p>
-        <p style="margin: 0;">If you have any questions regarding your order, please contact our support team at <a href="mailto:support@azrayan.co.uk" style="color: #1E40AF; text-decoration: none;">support@azrayan.co.uk</a>.</p>
+        <p style="margin: 0 0 6px;">Thank you for shopping with <strong>DVDs Zone</strong>.</p>
+        <p style="margin: 0;">If you have any questions regarding your order, please contact our support team at <a href="mailto:support@dvdszone.co.uk" style="color: #1E40AF; text-decoration: none;">support@dvdszone.co.uk</a>.</p>
         <p style="margin: 12px 0 0; font-size: 11px; color: #94A3B8;">This is an automated transaction receipt. No sensitive card credentials or CVV codes are stored or transmitted.</p>
       </div>
     </div>
@@ -331,7 +331,7 @@ If you have any questions regarding your order, please contact our support team 
  * Generate and send the automated Admin Business Performance Report.
  */
 export async function sendAdminBusinessReport(db, report) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@azrayan.co.uk';
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@dvdszone.co.uk';
   const { type, periodStart, periodEnd, summary, topProducts, expenses, orderStatuses, weeklyTrend } = report;
 
   const currency = 'GBP';
@@ -340,7 +340,7 @@ export async function sendAdminBusinessReport(db, report) {
   const dateRangeLabel = `${new Date(periodStart).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - ${new Date(periodEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
   const monthYearLabel = new Date(periodStart).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
   const subjectPeriod = isWeekly ? dateRangeLabel : monthYearLabel;
-  const subject = `AZ Rayan DVDs - ${reportTitle} - ${subjectPeriod}`;
+  const subject = `DVDs Zone - ${reportTitle} - ${subjectPeriod}`;
 
   const revenueFormatted = formatMoney(summary.revenue, currency);
   const aovFormatted = formatMoney(summary.averageOrderValue, currency);
@@ -348,7 +348,7 @@ export async function sendAdminBusinessReport(db, report) {
   const netRevenueFormatted = formatMoney(summary.netResult, currency);
 
   // Plaintext version
-  const textBody = `AZ Rayan DVDs
+  const textBody = `DVDs Zone
 ${reportTitle} - ${subjectPeriod}
 
 ## SALES SUMMARY
@@ -411,7 +411,7 @@ Refunded: ${orderStatuses.refunded || 0}
 <body>
   <div class="container">
     <div class="header">
-      <h1 class="brand">AZ RAYAN DVDs</h1>
+      <h1 class="brand">DVDS ZONE</h1>
       <p class="sub">${reportTitle} &bull; ${subjectPeriod}</p>
     </div>
     <div class="content">
@@ -547,7 +547,7 @@ Refunded: ${orderStatuses.refunded || 0}
       </div>
     </div>
     <div class="footer">
-      AZ Rayan DVDs &bull; Automated Business Performance Report &bull; Strictly Confidential (Admin Only)
+      DVDs Zone &bull; Automated Business Performance Report &bull; Strictly Confidential (Admin Only)
     </div>
   </div>
 </body>

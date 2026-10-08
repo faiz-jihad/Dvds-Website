@@ -28,7 +28,7 @@ export const DEFAULT_SHIPPING_ZONES = [
 
 export const DEFAULT_BANK_SETTINGS = {
   bank_name: 'Barclays Bank UK',
-  bank_account_name: 'AZ Rayan LTD',
+  bank_account_name: 'DVDs Zone Ltd',
   bank_sort_code: '20-00-00',
   bank_account_number: '12345678',
   bank_iban: 'GB29BARC20000012345678',

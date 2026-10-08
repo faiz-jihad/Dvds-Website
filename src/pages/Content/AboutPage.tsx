@@ -20,15 +20,15 @@ export const AboutPage: React.FC = () => {
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-16 transition-colors">
       <Seo
         title="About DVD ZONE UK Physical DVD Retailer | Our Story"
-        description="DVD ZONE is active since 2021, operated by company based in 2022 AZ Rayan LTD & DVD Zone, based in West Midlands, Birmingham, United Kingdom. Quality DVDs & Entertainment."
+        description="DVD ZONE is active since 2021, operated by DVDs Zone, based in United Kingdom. Quality DVDs & Entertainment."
         canonicalPath="/about"
-        keywords="about DVD ZONE, UK DVD shop, AZ Rayan LTD, physical media UK, Birmingham DVD retailer, British film store, authentic PAL DVDs"
+        keywords="about DVD ZONE, UK DVD shop, DVDs Zone, physical media UK, British film store, authentic PAL DVDs"
         siteName="DVD ZONE"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'AboutPage',
           name: 'About DVD ZONE',
-          description: 'UK physical media retailer specialising in DVDs, TV box sets, and entertainment. Based in West Midlands, Birmingham.',
+          description: 'UK physical media retailer specialising in DVDs, TV box sets, and entertainment. Based in United Kingdom.',
           url: 'https://dvdszone.co.uk/about',
           publisher: { '@type': 'Organization', name: 'DVD ZONE', url: 'https://dvdszone.co.uk' },
         }}
@@ -45,7 +45,7 @@ export const AboutPage: React.FC = () => {
             Quality DVDs &amp; Entertainment
           </h1>
           <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed font-light max-w-xl mx-auto">
-            DVD ZONE is active since 2021, operated by company based in 2022 AZ Rayan LTD &amp; DVD Zone, based in West Midlands, Birmingham, United Kingdom.
+            DVD ZONE is active since 2021, operated by DVDs Zone, based in United Kingdom.
           </p>
         </div>
 
@@ -57,7 +57,7 @@ export const AboutPage: React.FC = () => {
               <MapPin className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-dark dark:text-white">Headquarter &amp; Vault:</span>
-                <p>{settings.store_name || 'DVD ZONE'} — {settings.warehouse_location || settings.registered_office_address || 'West Midlands, Birmingham, United Kingdom'}</p>
+                <p>{settings.store_name || 'DVD ZONE'} — {settings.warehouse_location || settings.registered_office_address || 'United Kingdom'}</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
@@ -65,8 +65,8 @@ export const AboutPage: React.FC = () => {
               <div>
                 <span className="font-semibold text-dark dark:text-white">Customer service and inquiry email address:</span>
                 <br />
-                <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">
-                  {settings.support_email || 'azrayanltd@gmail.com'}
+                <a href={`mailto:${settings.support_email || 'support@dvdszone.co.uk'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">
+                  {settings.support_email || 'support@dvdszone.co.uk'}
                 </a>
               </div>
             </div>

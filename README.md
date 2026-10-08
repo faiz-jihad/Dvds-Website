@@ -1,4 +1,4 @@
-# DVD ZONE (AZ Rayan LTD)
+# DVDs Zone
 
 A premium physical media e-commerce platform built with React 19, TypeScript, Vite, Supabase, Stripe Hosted Checkout, PayPal, and automated business intelligence. Featuring curated physical films and box sets (DVD, Blu-ray, 4K UHD), real-time inventory management, isolated transactional email subsystems (Customer Receipts & Admin Business Reports), and an interactive customer account portal.
 
@@ -127,8 +127,8 @@ PAYPAL_WEBHOOK_ID=your-paypal-webhook-id
 PAYPAL_ENVIRONMENT=sandbox
 
 # Email & Automated Business Reports
-ADMIN_EMAIL=admin@azrayan.co.uk
-EMAIL_FROM="DVD ZONE <orders@azrayan.co.uk>"
+ADMIN_EMAIL=admin@dvdszone.co.uk
+EMAIL_FROM="DVDs Zone <orders@dvdszone.co.uk>"
 RESEND_API_KEY=re_xxxxxxxxxxxx
 # Or: SENDGRID_API_KEY=SG.xxxxxxxxxxxx
 CRON_SECRET=your-random-cron-secret-token

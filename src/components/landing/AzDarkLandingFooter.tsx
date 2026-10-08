@@ -19,9 +19,9 @@ export const AzDarkLandingFooter: React.FC = () => {
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
   const storeName = settings.store_name || 'DVD ZONE';
-  const registeredCompanyName = settings.registered_company_name || 'DVD Zone';
-  const warehouseLocation = settings.warehouse_location || 'West Midlands, Birmingham, United Kingdom';
-  const supportEmail = settings.support_email || 'azrayanltd@gmail.com';
+  const registeredCompanyName = settings.registered_company_name || 'DVDs Zone';
+  const warehouseLocation = settings.warehouse_location || 'United Kingdom';
+  const supportEmail = settings.support_email || 'support@dvdszone.co.uk';
   const supportPhone = settings.support_phone || '00447400320038';
   const cutoffTime = settings.dispatch_cutoff_time || '2:00 PM';
 
@@ -47,7 +47,7 @@ export const AzDarkLandingFooter: React.FC = () => {
               />
             </Link>
             <p className={cn('text-xs leading-relaxed max-w-xs', isDark ? 'text-gray-400' : 'text-gray-600')}>
-              {storeName} — Quality DVDs &amp; Entertainment. Active since 2021, operated by company based in 2022 AZ Rayan LTD &amp; {registeredCompanyName}.
+              {storeName} — Quality DVDs &amp; Entertainment. Active since 2021, operated by {registeredCompanyName || 'DVDs Zone'}. United Kingdom.
             </p>
             <div className={cn('flex items-center gap-1.5 text-xs pt-1', isDark ? 'text-gray-400' : 'text-gray-600')}>
               <MapPin size={13} className="text-brand-blue shrink-0" />
@@ -201,7 +201,7 @@ export const AzDarkLandingFooter: React.FC = () => {
           )}
         >
           <p>
-            &copy; {new Date().getFullYear()} AZ Rayan LTD &amp; {registeredCompanyName}. All rights reserved. Registered in England &amp; Wales.
+            &copy; {new Date().getFullYear()} {registeredCompanyName || 'DVDs Zone'}. All rights reserved. Registered in United Kingdom.
           </p>
           <div className={cn('flex items-center gap-4 text-xs', isDark ? 'text-gray-400' : 'text-gray-600')}>
             <span>Stripe Verified</span>
