@@ -34,6 +34,7 @@ export const Footer: React.FC = () => {
     settings.companies_house_url ||
     'https://find-and-update.company-information.service.gov.uk/company/13894195';
   const businessLocation = settings.warehouse_location || 'United Kingdom';
+  const supportEmail = (!settings.support_email || settings.support_email.includes('azrayan.co.uk') || settings.support_email.includes('concierge')) ? 'azrayanltd@gmail.com' : settings.support_email;
 
   // Close guides dropdown on click outside
   useEffect(() => {
@@ -68,8 +69,8 @@ export const Footer: React.FC = () => {
             <div className="space-y-2 text-xs text-neutral-400">
               <div className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-brand-blue shrink-0" />
-                <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="hover:text-white transition-colors">
-                  {settings.support_email || 'azrayanltd@gmail.com'}
+                <a href={`mailto:${supportEmail}`} className="hover:text-white transition-colors">
+                  {supportEmail}
                 </a>
               </div>
               <div className="flex items-center gap-2">

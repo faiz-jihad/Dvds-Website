@@ -205,20 +205,6 @@ export const ContactPage: React.FC = () => {
                   </span>
                 </div>
               </div>
-
-              <div className="pt-2 border-t border-gray-100 dark:border-white/5">
-                <p className="text-gray-500 dark:text-gray-400 text-[11px]">
-                  {settings.registered_company_name} · Company no. {settings.company_number}
-                </p>
-                <a
-                  href={settings.companies_house_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 block text-brand-blue dark:text-blue-400 hover:underline text-[11px]"
-                >
-                  Companies House record
-                </a>
-              </div>
             </div>
           </div>
 

@@ -653,6 +653,13 @@ WHERE registered_office_address LIKE '%Birmingham%'
    OR warehouse_location LIKE '%Birmingham%'
    OR warehouse_location LIKE '%West Midlands%';
 
+UPDATE public.store_settings
+SET
+  support_email = 'azrayanltd@gmail.com'
+WHERE support_email LIKE '%azrayan.co.uk%'
+   OR support_email LIKE '%concierge%'
+   OR support_email IS NULL;
+
 NOTIFY pgrst, 'reload schema';
 
 NOTIFY pgrst, 'reload schema';

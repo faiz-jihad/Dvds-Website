@@ -21,7 +21,7 @@ export const AzDarkLandingFooter: React.FC = () => {
   const storeName = settings.store_name || 'DVD ZONE';
   const registeredCompanyName = settings.registered_company_name || 'DVDs Zone';
   const warehouseLocation = settings.warehouse_location || 'United Kingdom';
-  const supportEmail = settings.support_email || 'azrayanltd@gmail.com';
+  const supportEmail = (!settings.support_email || settings.support_email.includes('azrayan.co.uk') || settings.support_email.includes('concierge')) ? 'azrayanltd@gmail.com' : settings.support_email;
   const supportPhone = settings.support_phone || '00447400320038';
   const cutoffTime = settings.dispatch_cutoff_time || '2:00 PM';
 
