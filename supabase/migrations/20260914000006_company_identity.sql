@@ -1,9 +1,9 @@
 -- Central legal identity for customer-facing company disclosures.
 
 ALTER TABLE public.store_settings
-  ADD COLUMN IF NOT EXISTS registered_company_name TEXT NOT NULL DEFAULT 'AZ Rayan LTD & DVD ZONE',
+  ADD COLUMN IF NOT EXISTS registered_company_name TEXT NOT NULL DEFAULT 'DVDs Zone',
   ADD COLUMN IF NOT EXISTS company_number TEXT NOT NULL DEFAULT '13894195',
-  ADD COLUMN IF NOT EXISTS registered_office_address TEXT NOT NULL DEFAULT 'West Midlands, Birmingham, United Kingdom',
+  ADD COLUMN IF NOT EXISTS registered_office_address TEXT NOT NULL DEFAULT 'United Kingdom',
   ADD COLUMN IF NOT EXISTS companies_house_url TEXT NOT NULL DEFAULT 'https://find-and-update.company-information.service.gov.uk/company/13894195';
 
 ALTER TABLE public.store_settings
@@ -15,9 +15,9 @@ ALTER TABLE public.store_settings
 
 UPDATE public.store_settings
 SET
-  registered_company_name = 'AZ Rayan LTD & DVD ZONE',
+  registered_company_name = 'DVDs Zone',
   company_number = '13894195',
-  registered_office_address = 'West Midlands, Birmingham, United Kingdom',
+  registered_office_address = 'United Kingdom',
   companies_house_url = 'https://find-and-update.company-information.service.gov.uk/company/13894195',
   updated_at = NOW();
 

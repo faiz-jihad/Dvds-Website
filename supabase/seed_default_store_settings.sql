@@ -1,7 +1,7 @@
 -- ====================================================================
--- AZ RAYAN DVDs — SEED DEFAULT STORE & OPERATIONAL SETTINGS
+-- DVDS ZONE — SEED DEFAULT STORE & OPERATIONAL SETTINGS
 -- ====================================================================
--- Jalankan script ini di Supabase Dashboard -> SQL Editor -> RUN
+-- Run this script in Supabase Dashboard -> SQL Editor -> RUN
 -- ====================================================================
 
 INSERT INTO public.store_settings (
@@ -51,9 +51,9 @@ INSERT INTO public.store_settings (
 ) VALUES (
   's1000000-0000-0000-0000-000000000001',
   TRUE,
-  'AZ Rayan DVDs',
+  'DVD ZONE',
   'https://azrayan.co.uk',
-  'AZ Rayan DVDs — British Physical Media Archive & Purveyor',
+  'DVDs Zone — British Physical Media Archive & Purveyor',
   'Specialist British DVD purveyor and archive cinema stockist. Free UK delivery across England, Scotland, Wales, and Northern Ireland.',
   'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&auto=format&fit=crop&q=80',
   'Independent physical media retailer and DVD archive specialist based in the UK.',
@@ -88,13 +88,14 @@ INSERT INTO public.store_settings (
   'WELCOME10',
   10.00,
   20.00,
-  'West Midlands, Birmingham, United Kingdom',
+  'United Kingdom',
   'azrayanltd@gmail.com',
   '00447400320038',
   NOW()
 )
 ON CONFLICT (singleton) WHERE singleton = TRUE 
 DO UPDATE SET
+  warehouse_location = 'United Kingdom',
   low_stock_threshold = EXCLUDED.low_stock_threshold,
   free_shipping_threshold = EXCLUDED.free_shipping_threshold,
   standard_shipping_fee = EXCLUDED.standard_shipping_fee,

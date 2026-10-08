@@ -23,9 +23,9 @@ $$;
 -- Central legal identity for customer-facing company disclosures.
 
 ALTER TABLE public.store_settings
-  ADD COLUMN IF NOT EXISTS registered_company_name TEXT NOT NULL DEFAULT 'AZ Rayan LTD & DVD ZONE',
+  ADD COLUMN IF NOT EXISTS registered_company_name TEXT NOT NULL DEFAULT 'DVDs Zone',
   ADD COLUMN IF NOT EXISTS company_number TEXT NOT NULL DEFAULT '13894195',
-  ADD COLUMN IF NOT EXISTS registered_office_address TEXT NOT NULL DEFAULT 'West Midlands, Birmingham, United Kingdom',
+  ADD COLUMN IF NOT EXISTS registered_office_address TEXT NOT NULL DEFAULT 'United Kingdom',
   ADD COLUMN IF NOT EXISTS companies_house_url TEXT NOT NULL DEFAULT 'https://find-and-update.company-information.service.gov.uk/company/13894195';
 
 ALTER TABLE public.store_settings
@@ -643,6 +643,15 @@ ALTER TABLE public.store_settings
   ADD COLUMN IF NOT EXISTS custom_formats TEXT[] DEFAULT ARRAY['Standard', 'DVD', 'Blu-ray', '4K UHD', 'Box Set', 'Merchandise', 'Physical'],
   ADD COLUMN IF NOT EXISTS store_name TEXT DEFAULT 'DVD ZONE',
   ADD COLUMN IF NOT EXISTS warehouse_location TEXT DEFAULT 'United Kingdom';
+
+UPDATE public.store_settings
+SET
+  registered_office_address = 'United Kingdom',
+  warehouse_location = 'United Kingdom'
+WHERE registered_office_address LIKE '%Birmingham%'
+   OR registered_office_address LIKE '%West Midlands%'
+   OR warehouse_location LIKE '%Birmingham%'
+   OR warehouse_location LIKE '%West Midlands%';
 
 NOTIFY pgrst, 'reload schema';
 

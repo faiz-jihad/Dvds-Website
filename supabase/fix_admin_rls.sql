@@ -228,7 +228,7 @@ INSERT INTO public.store_settings (
   5, 8.00, '14:00 GMT',
   'RAYAN10', 10.00, 20.00,
   'DVD ZONE',
-  'West Midlands, Birmingham, United Kingdom',
+  'United Kingdom',
   'azrayanltd@gmail.com',
   '00447400320038'
 )

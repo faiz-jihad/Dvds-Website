@@ -12,4 +12,13 @@ ALTER TABLE public.store_settings
   ADD COLUMN IF NOT EXISTS store_name TEXT DEFAULT 'DVD ZONE',
   ADD COLUMN IF NOT EXISTS warehouse_location TEXT DEFAULT 'United Kingdom';
 
+UPDATE public.store_settings
+SET
+  registered_office_address = 'United Kingdom',
+  warehouse_location = 'United Kingdom'
+WHERE registered_office_address LIKE '%Birmingham%'
+   OR registered_office_address LIKE '%West Midlands%'
+   OR warehouse_location LIKE '%Birmingham%'
+   OR warehouse_location LIKE '%West Midlands%';
+
 NOTIFY pgrst, 'reload schema';
