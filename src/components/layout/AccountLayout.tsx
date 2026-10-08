@@ -4,6 +4,7 @@ import { User, Package, MapPin, Heart, LogOut, LogIn, UserPlus, ShieldCheck, Arr
 import { cn } from '../../lib/formatters';
 import { useCustomerAuth } from '../../auth/CustomerAuth';
 import { useAdminAuth } from '../../auth/AdminAuth';
+import { Seo } from '../common/Seo';
 
 export const AccountLayout: React.FC = () => {
   const { customer, isAuthenticated, isLoading, logout } = useCustomerAuth();
@@ -32,6 +33,13 @@ export const AccountLayout: React.FC = () => {
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] min-h-screen py-6 sm:py-10 text-dark dark:text-white transition-colors duration-200">
+      <Seo
+        title="My Account — DVDs Zone UK"
+        description="Manage your DVDs Zone customer account, track your physical DVD shipments, and manage saved delivery addresses."
+        canonicalPath="/account"
+        noIndex={true}
+        siteName="DVDs Zone"
+      />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         <div className="pb-6 mb-8 border-b border-gray-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>

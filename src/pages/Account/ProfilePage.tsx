@@ -5,6 +5,7 @@ import { Input } from '../../components/common/Input';
 import { StoreDataState } from '../../components/common/StoreDataState';
 import { publicApi } from '../../lib/publicApi';
 import { useUiStore } from '../../stores/useUiStore';
+import { Seo } from '../../components/common/Seo';
 
 export const ProfilePage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -40,6 +41,13 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <Seo
+        title="Profile Details — DVDs Zone UK"
+        description="Manage your DVDs Zone personal details and contact preferences."
+        canonicalPath="/account"
+        noIndex={true}
+        siteName="DVDs Zone"
+      />
       <div>
         <h2 className="font-display text-lg font-bold text-dark dark:text-white">Profile Details</h2>
         <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Your live account details used for order communication.</p>

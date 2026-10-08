@@ -1,106 +1,100 @@
-# AZ Rayan DVDs
+# DVD ZONE (AZ Rayan LTD)
 
-Platform e-commerce physical media premium berbasis React 19, TypeScript, Vite, Supabase, Stripe Hosted Checkout, dan automated business intelligence. Menggabungkan kurasi film fisik berkualitas (DVD, Blu-ray, 4K UHD) dengan arsitektur operasional real-time, manajemen inventaris atomik, sistem email terpisah (Customer Receipts & Admin Business Reports), dan portal akun pelanggan yang lengkap.
-
----
-
-## Fitur Utama & Operasional
-
-### 1. Storefront & Editorial Media Fisik
-- **Katalog & Navigasi Sinematik**: Eksplorasi katalog berdasarkan format (DVD, Blu-ray, 4K UHD), dekade, kategori, dan genre.
-- **Pencarian Real-Time**: Pencarian cepat instan dengan filter harga, ketersediaan, dan pengurutan.
-- **Detail Produk Lengkap**: Metadata rilisan fisik mendalam (Aspect Ratio, Audio, Subtitles, Region Code, BBFC Rating, Special Features).
-- **Wishlist & Keranjang Belanja**: Keranjang responsif dengan kalkulasi subtotal dan diskon dinamis.
-
-### 2. Portal Pelanggan & Manajemen Akun (Customer Portal)
-- **Otentikasi Pelanggan**: Registrasi, login, dan manajemen profil mandiri.
-- **Saved Addresses (Buku Alamat)**:
-  - Manajemen CRUD lengkap (Tambah alamat, Edit alamat, Hapus dengan konfirmasi).
-  - Penandaan alamat utama (**Set as Default**) secara instan.
-  - Validasi kode pos UK otomatis dengan format standar.
-  - Terintegrasi langsung dengan formulir checkout untuk auto-fill 1-klik, serta opsi simpan alamat baru ke akun saat checkout.
-  - *Resilient storage*: Fallback cerdas berbasis scoped storage saat database publik offline.
-- **Order History (Riwayat Pesanan)**:
-  - Pencarian pesanan real-time berdasarkan Order Reference atau judul DVD.
-  - Filter status: *Semua*, *Dalam Proses (In Progress)*, *Terkirim (Delivered)*, dan *Menunggu Pembayaran (Awaiting Payment)*.
-  - Integrasi pelacakan kurir **Royal Mail** dengan tombol salin nomor resi dan tautan portal tracking resmi.
-  - Thumbnail produk, rincian harga per item, dan tombol **Buy Again** 1-klik untuk memasukkan kembali item ke keranjang.
-
-### 3. Visual Order Status Stepper (React Bits & Framer Motion)
-- **Pelacakan Status Interaktif**: Komponen pelacak pesanan 5 tahap (*Order Confirmed*, *Payment Verified*, *Processing & Packing*, *Dispatched*, *Delivered*).
-- **Animasi Halus**: Didukung oleh `framer-motion` dengan indikator progres visual, transisi status dinamis, dan tampilan detail kurir/resi.
-- Ditampilkan pada halaman konfirmasi sukses order (`/order-success`) dan riwayat akun pelanggan (`/account/orders`).
-
-### 4. Official AZ Rayan DVDs Struk & Printable Receipt
-- **Desain Struk & Invoice Resmi**: Dilengkapi identitas resmi AZ Rayan DVDs, nomor referensi order `#ORD-XXXX`, status pembayaran (`PAID`), metode transaksi, rincian produk, dan barcode simulasi.
-- **Null-Safety & Tahan Crash**: Penanganan aman terhadap data alamat, item, maupun status pembayaran parsial.
-- **Aksi 1-Klik di Halaman Order Success**:
-  - Tombol **"Cetak Struk / Print Receipt"** langsung membuka native print dialog browser (*Print / Save as PDF*).
-  - Tombol **"Lihat Struk / Preview"** membuka modal interaktif kertas A4 dengan efek bayangan dan status pembayaran.
-  - Tombol pintas **Ctrl+P / Cmd+P** otomatis mencetak struk bersih yang terisolasi.
-- **Isolasi Cetak Bersih (@media print)**: Menggunakan portal `#print-only-container` yang otomatis menyembunyikan antarmuka web, modal, dan tombol, memastikan hasil cetak A4 atau PDF rapi dan presisi tanpa terpotong.
-
-### 5. Sistem Email Terpisah (Customer Receipts vs Admin Reports)
-Sistem email memisahkan dua peruntukan secara ketat:
-- **CUSTOMER (Bukti Pembelian / Struk Email)**:
-  - Dikirimkan secara otomatis **hanya** setelah webhook Stripe diverifikasi (`stripe.webhooks.constructEvent`).
-  - Tidak pernah dipicu dari navigasi frontend.
-  - Desain kuitansi e-commerce profesional, mobile-friendly, tanpa memuat nomor kartu lengkap atau CVV.
-  - Dilengkapi tombol *"View Order"* dan proteksi idempotensi via `email_logs`.
-- **ADMIN (Laporan Kinerja Bisnis Mingguan & Bulanan)**:
-  - Admin **tidak** menerima email per transaksi satuan.
-  - Laporan eksekutif berkala otomatis:
-    - **Laporan Mingguan**: Setiap Senin pagi (periode Senin s/d Minggu lalu).
-    - **Laporan Bulanan**: Setiap tanggal 1 (periode bulan kalender lalu).
-  - Merangkum Total Pendapatan, Jumlah Pesanan, AOV, Unit Terjual, Produk Terlaris, dan Pengeluaran Operasional.
-  - Pembedaan akuntansi transparan antara **"Net Revenue After Recorded Expenses"** vs **"Estimated Profit"** berdasarkan ketersediaan data modal (`cost_price` / COGS).
-  - Lihat panduan lengkap di [docs/EMAIL_AND_REPORTS_SYSTEM.md](docs/EMAIL_AND_REPORTS_SYSTEM.md).
-
-### 6. Backoffice & Administrasi Toko (/admin)
-- **Role-Based Access Control**: Akses terproteksi untuk role `admin` dan `staff` via Supabase RLS.
-- **Laporan & Finansial (`/admin/reports`)**:
-  - Dashboard performa bisnis dengan filter rentang waktu (*This Week*, *Last Week*, *This Month*, *Last Month*, *Custom*).
-  - Manajemen pencatatan pengeluaran (*Expenses*) per kategori (*Shipping*, *Packaging*, *Payment Fees*, *Inventory*, *Marketing*, *Hosting*, dll).
-  - Riwayat pengiriman laporan (*Report History*) dengan fitur *Resend* manual jika email gagal terkirim.
-  - Tombol *Trigger Report Now* untuk pengujian instan.
-- **Katalog & Stok**: CRUD produk, pengarsipan aman (tanpa merusak histori transaksi), dan penyesuaian stok atomik wajib alasan.
-- **Order Fulfilment**: Pengaturan status pemenuhan, input kurir/resi Royal Mail, dan pencatatan riwayat status pesanan.
-- **Promosi & Diskon**: Kupon promo bertanggal dengan batas minimum belanja dan validasi server.
-- **CMS & Pengaturan Toko**: Kontrol banner beranda, ongkir, batas waktu dispatch (cutoff time), dan kontak toko.
-- **Audit & Inventory Ledger**: Log mutasi stok dan aktivitas admin append-only.
-
-### 7. Keamanan & Gateway Pembayaran
-- **Stripe Hosted Checkout & Webhooks**: Perhitungan harga, diskon, ongkir, dan ketersediaan stok diverifikasi ulang di backend `/api/checkout-session` dan `/api/stripe-webhook`.
-- **Reservasi Stok Otomatis**: Stok direservasi saat sesi checkout dibuka dan otomatis dilepaskan kembali jika sesi kedaluwarsa (`checkout.session.expired`) atau dibatalkan.
-- **Batas Serverless Function Vercel**: Seluruh endpoint API serverless dirancang efisien dan terkonsolidasi (11 fungsi aktif, di bawah batas 12 fungsi paket Vercel Hobby).
+A premium physical media e-commerce platform built with React 19, TypeScript, Vite, Supabase, Stripe Hosted Checkout, PayPal, and automated business intelligence. Featuring curated physical films and box sets (DVD, Blu-ray, 4K UHD), real-time inventory management, isolated transactional email subsystems (Customer Receipts & Admin Business Reports), and an interactive customer account portal.
 
 ---
 
-## Menjalankan Aplikasi Secara Lokal
+## Key Features & Architecture
 
-### Prasyarat
-- Node.js versi 20+ (atau v24+ disarankan)
+### 1. Storefront & Physical Media Curation
+- **Cinematic Catalogue & Exploration**: Browse physical media releases by format (DVD, Blu-ray, 4K UHD), category, decade, and genre.
+- **Real-Time Search**: Instant live search engine with price, availability filters, and sorting.
+- **Comprehensive Product Metadata**: In-depth physical release details (Aspect Ratio, Audio Format, Subtitles, Region Code, BBFC Rating, Special Features).
+- **Wishlist & Cart**: Persistent shopping cart with dynamic subtotal calculations and promotional coupon support.
+
+### 2. Customer Portal & Account Management
+- **Customer Authentication**: Secure registration, login, and profile self-service.
+- **Saved Address Book**:
+  - Full CRUD management (Add, edit, delete with confirmation modal).
+  - One-click **Set as Default** selection.
+  - Automated UK postal code validation.
+  - Express integration with checkout for one-click address selection.
+  - Scoped storage resilience fallback when offline.
+- **Order History**:
+  - Real-time search across historical purchases by Order Reference or title.
+  - Filter by status: *All*, *In Progress*, *Delivered*, and *Awaiting Payment*.
+  - Official **Royal Mail** parcel tracking integration with copy-to-clipboard tracking numbers.
+  - Item thumbnails, itemised pricing, and 1-click **Buy Again** reordering.
+
+### 3. Visual Order Status Stepper
+- **Interactive Tracking**: 5-stage visual progress stepper (*Order Confirmed*, *Payment Verified*, *Processing & Packing*, *Dispatched*, *Delivered*).
+- **Smooth Animations**: Powered by `framer-motion` with status transitions and carrier details.
+- Displayed on order confirmation (`/order-success/:id`) and customer order history (`/account/orders`).
+
+### 4. Official Printable Receipts & Invoices
+- **Official Invoices**: Includes company registration details, order reference `#ORD-XXXX`, payment status (`PAID`), product breakdown, and barcode.
+- **One-Click Actions on Order Success**:
+  - **"Print Receipt"** opens native browser print dialogue (*Print / Save as PDF*).
+  - **"Preview Receipt"** displays an interactive A4 modal with print preview.
+  - Keyboard shortcut **Ctrl+P / Cmd+P** triggers isolated receipt printing.
+- **Clean Print Isolation (@media print)**: Utilises `#print-only-container` to automatically hide navigation chrome, modals, and buttons, guaranteeing pristine A4 output.
+
+### 5. Isolated Email Subsystems (Customer Receipts vs Admin Reports)
+- **Customer Payment Receipts**:
+  - Automatically dispatched **only** after cryptographic webhook verification (`stripe.webhooks.constructEvent`).
+  - Never triggered by frontend client navigation.
+  - Clean, mobile-responsive layout without sensitive card numbers or CVV codes.
+  - Includes a secure "View Order" link and idempotency tracking via `email_logs`.
+- **Admin Business Intelligence Reports**:
+  - Aggregated performance summaries dispatched on schedule (Weekly on Monday, Monthly on the 1st).
+  - Summarises Gross Revenue, Order Volume, AOV, Units Sold, Top Titles, and Operating Expenditure.
+  - Transparent accounting separation between **Net Revenue After Recorded Expenses** and **Estimated Profit**.
+  - See [docs/EMAIL_AND_REPORTS_SYSTEM.md](docs/EMAIL_AND_REPORTS_SYSTEM.md) for full details.
+
+### 6. Backoffice & Administration (/admin)
+- **Role-Based Access Control**: Secure access restricted to `admin` and `staff` roles via Supabase Row-Level Security.
+- **Financial Reports (`/admin/reports`)**:
+  - Business performance dashboard with date presets (*This Week*, *Last Week*, *This Month*, *Last Month*, *Custom*).
+  - Categorised expense tracking (*Shipping*, *Packaging*, *Payment Fees*, *Inventory*, *Marketing*, *Hosting*).
+  - Report dispatch history with manual *Resend* capability for failed dispatches.
+  - *Trigger Report Now* button for instant report generation.
+- **Catalogue & Inventory**: Atomic inventory adjustments with audit trail reasons and non-destructive archiving.
+- **Order Fulfilment**: Status progression, Royal Mail tracking injection, and dispatch notifications.
+- **Promotions**: Time-restricted discount codes with minimum spend requirements and server validation.
+- **Store Configuration**: Hero banners, shipping rates, same-day dispatch cutoff times, and company metadata.
+
+### 7. Security & Payment Processing
+- **Stripe & PayPal Gateways**: Server-side pricing, discounts, shipping, and inventory reservation verification.
+- **Automated Stock Reservations**: Stock is reserved when a checkout session opens and released if expired or cancelled.
+- **Vercel Serverless Optimisation**: Lightweight, consolidated serverless functions within hobby tier constraints.
+
+---
+
+## Local Development
+
+### Prerequisites
+- Node.js 20+ (Node.js 22+ or 24+ recommended)
 - NPM
 
-### Instalasi & Menjalankan Dev Server
+### Installation & Development Server
 
 ```bash
-# Instal dependensi
+# Install dependencies
 npm install
 
-# Jalankan server pengembangan lokal (Vite)
+# Start local development server (Vite)
 npm run dev
 ```
 
-Server lokal akan aktif di `http://localhost:5173`.
+Local development server starts at `http://localhost:5173`.
 
-### Menjalankan Pengujian (Testing)
+### Running Tests
 
 ```bash
 node --test tests/checkout.test.mjs tests/security.test.mjs tests/admin-api.test.mjs tests/reports-and-email.test.mjs
 ```
 
-### Validasi Build Produksi
+### Production Build
 
 ```bash
 npm run build
@@ -108,9 +102,9 @@ npm run build
 
 ---
 
-## Konfigurasi Environment (.env)
+## Environment Variables (.env)
 
-Salin `.env.example` menjadi `.env` lalu lengkapi variabel berikut:
+Copy `.env.example` to `.env` and populate the following keys:
 
 ```env
 # Frontend Client Public Keys
@@ -134,38 +128,38 @@ PAYPAL_ENVIRONMENT=sandbox
 
 # Email & Automated Business Reports
 ADMIN_EMAIL=admin@azrayan.co.uk
-EMAIL_FROM="AZ Rayan DVDs <orders@azrayan.co.uk>"
+EMAIL_FROM="DVD ZONE <orders@azrayan.co.uk>"
 RESEND_API_KEY=re_xxxxxxxxxxxx
-# atau: SENDGRID_API_KEY=SG.xxxxxxxxxxxx
+# Or: SENDGRID_API_KEY=SG.xxxxxxxxxxxx
 CRON_SECRET=your-random-cron-secret-token
 ```
 
-> **Keamanan**: Jangan pernah memasukkan `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, atau API key email ke variabel yang berawalan `VITE_`.
+> **Security**: Never expose `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, or email API keys in variables prefixed with `VITE_`.
 
 ---
 
-## Menyiapkan Supabase Database
+## Supabase Database Setup
 
-1. Terapkan seluruh migration database secara berurutan:
+1. Apply database migrations in sequential order:
    - `20260915000001_admin_reliability.sql`
    - `20260915000002_checkout_sync.sql`
    - `20261007000001_business_reports_and_expenses.sql`
 
-2. Promosikan akun admin pertama melalui SQL Editor Supabase:
+2. Promote your primary administrator account via Supabase SQL Editor:
    ```sql
    UPDATE public.profiles
    SET role = 'admin'
    WHERE email = 'owner@example.com';
    ```
 
-Lihat panduan lengkap di [docs/ADMIN_VERIFICATION.md](docs/ADMIN_VERIFICATION.md).
+Refer to [docs/ADMIN_VERIFICATION.md](docs/ADMIN_VERIFICATION.md) for complete verification steps.
 
 ---
 
-## Dokumentasi Terkait
+## Documentation
 
-- [docs/EMAIL_AND_REPORTS_SYSTEM.md](docs/EMAIL_AND_REPORTS_SYSTEM.md) — Panduan lengkap sistem email kuitansi pelanggan, laporan performa admin, manajemen pengeluaran, dan Vercel Cron.
-- [docs/PAYMENT_GATEWAY_SETUP.md](docs/PAYMENT_GATEWAY_SETUP.md) — Panduan konfigurasi Stripe, PayPal, Direct Bank Transfer, dan webhook lifecycle.
-- [docs/ADMIN_VERIFICATION.md](docs/ADMIN_VERIFICATION.md) — Verifikasi hak akses admin dan integritas database.
-- [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md) — Panduan integrasi keamanan Cloudflare dan Turnstile bot protection.
-- [SECURITY.md](SECURITY.md) — Standar mitigasi OWASP Top 10, IDOR, CSP, dan rate limiting.
+- [docs/EMAIL_AND_REPORTS_SYSTEM.md](docs/EMAIL_AND_REPORTS_SYSTEM.md) — Comprehensive guide to customer receipts, admin reports, expense logging, and Vercel Cron.
+- [docs/PAYMENT_GATEWAY_SETUP.md](docs/PAYMENT_GATEWAY_SETUP.md) — Configuration guide for Stripe, PayPal, Direct Bank Transfer, and webhook lifecycles.
+- [docs/ADMIN_VERIFICATION.md](docs/ADMIN_VERIFICATION.md) — Verification of admin features, RLS policies, and database schema.
+- [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md) — Cloudflare security integration and Turnstile bot protection.
+- [SECURITY.md](SECURITY.md) — OWASP Top 10 mitigation, IDOR protection, CSP, and rate limiting standards.

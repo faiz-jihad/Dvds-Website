@@ -178,32 +178,65 @@ export const Shop: React.FC = () => {
     return <StoreDataState loading={productsQuery.isLoading || categoriesQuery.isLoading || genresQuery.isLoading} error={productsQuery.error || categoriesQuery.error || genresQuery.error} retry={() => { productsQuery.refetch(); categoriesQuery.refetch(); genresQuery.refetch(); }} />;
   }
 
+  const categoryParam = selectedCategory !== 'all' ? selectedCategory : null;
+
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
       <Seo
-        title={`${pageTitle} — DVD ZONE | Buy Physical DVDs UK`}
-        description={`${pageDescription} All orders 100% free standard delivery across United Kingdom. Dispatch same day, will be delivered to your address within 2 working days via Royal Mail.`}
-        canonicalPath="/shop"
+        title={`${pageTitle} — DVDs Zone UK | Buy Physical Media`}
+        description={`${pageDescription} All orders 100% free standard delivery across United Kingdom. Same-day dispatch, delivered to your door within 2 working days via Royal Mail.`}
+        keywords={`${pageTitle}, buy DVDs online UK, physical media catalogue, TV box sets UK, cheap DVDs UK, classic movies on DVD, DVDs Zone`}
+        canonicalPath={categoryParam ? `/shop?category=${encodeURIComponent(categoryParam)}` : '/shop'}
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
-        siteName="DVD ZONE"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          name: pageTitle,
-          description: pageDescription,
-          url: 'https://dvdszone.co.uk/shop',
-          mainEntity: {
-            '@type': 'ItemList',
-            numberOfItems: filteredProducts.length,
-            itemListElement: filteredProducts.slice(0, 20).map((prod, idx) => ({
-              '@type': 'ListItem',
-              position: idx + 1,
-              name: prod.title,
-              url: `https://dvdszone.co.uk/product/${prod.slug}`,
-              image: `https://dvdszone.co.uk${prod.cover_image_url}`,
-            })),
+        siteName="DVDs Zone"
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: pageTitle,
+            description: pageDescription,
+            url: 'https://dvdszone.co.uk/shop',
+            mainEntity: {
+              '@type': 'ItemList',
+              numberOfItems: filteredProducts.length,
+              itemListElement: filteredProducts.slice(0, 20).map((prod, idx) => ({
+                '@type': 'ListItem',
+                position: idx + 1,
+                name: prod.title,
+                url: `https://dvdszone.co.uk/product/${prod.slug}`,
+                image: `https://dvdszone.co.uk${prod.cover_image_url}`,
+              })),
+            },
           },
-        }}
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://dvdszone.co.uk/',
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Catalogue',
+                item: 'https://dvdszone.co.uk/shop',
+              },
+              ...(categoryParam
+                ? [
+                    {
+                      '@type': 'ListItem',
+                      position: 3,
+                      name: pageTitle,
+                      item: `https://dvdszone.co.uk/shop?category=${encodeURIComponent(categoryParam)}`,
+                    },
+                  ]
+                : []),
+            ],
+          },
+        ]}
       />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Editorial Page Header */}

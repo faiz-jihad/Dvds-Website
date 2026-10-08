@@ -27,6 +27,7 @@ const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath
         title={`${title} — DVDs Zone`}
         description={description || `DVDs Zone legal document: ${title}.`}
         canonicalPath={canonicalPath}
+        keywords="DVDs Zone legal, terms and conditions, privacy policy, UK consumer rights, distance selling regulations"
         siteName="DVDs Zone"
       />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-6 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">

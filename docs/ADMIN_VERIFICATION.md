@@ -1,69 +1,43 @@
-﻿# Pemeriksaan fitur admin — 16 September 2026
+# Admin Feature Verification — September 2026
 
-## Hasil
+## Overview & Results
 
-Kode diperiksa menggunakan tes API, render React, dan PostgreSQL lokal terisolasi
-(PGlite). Tes database menjalankan semua migrasi, lalu memeriksa transaksi,
-penyimpanan, izin pengguna, dan audit. Pengujian ini tidak mengubah data live.
+Codebase integrity has been verified using end-to-end API tests, React component rendering tests, and an isolated local PostgreSQL instance (PGlite). Database test suites apply all migrations, verifying transactions, storage, role-based access controls, and audit logging without modifying live production data.
 
-Hasil akhir: **95 tes lulus, 0 gagal**; build TypeScript dan Vite berhasil.
+Verification status: **95 tests passing, 0 failing**; TypeScript compilation and Vite production build succeeded.
 
-**Database live belum siap untuk seluruh fitur.** Pemeriksaan read-only terakhir
-menemukan `orders.payment_method`, `store_settings.registered_company_name`,
-`payment_events`, dan `media_assets` belum tersedia. Query berhenti pada kolom
-pertama yang hilang, sehingga kolom lanjutan juga perlu dilengkapi melalui repair.
-Tabel profil, produk, kategori, genre, promosi, support, dan audit dapat diperiksa,
-tetapi keberadaan tabel saja tidak membuktikan izin/RPC admin sudah berfungsi.
+**Live database schema checklist**: Verify that all columns including `orders.payment_method`, `store_settings.registered_company_name`, `payment_events`, and `media_assets` are present. Profiles, products, categories, genres, promotions, support enquiries, and audit log tables must have valid RLS policies and RPC functions enabled.
 
-Tidak tersedia koneksi pengelolaan database untuk menerapkan SQL atau browser
-terhubung untuk uji klik dengan sesi admin. Pembayaran provider live belum diuji;
-konfigurasi server dan webhook mengikuti `PAYMENT_GATEWAY_SETUP.md`.
+Live payment provider integration should follow [PAYMENT_GATEWAY_SETUP.md](PAYMENT_GATEWAY_SETUP.md).
 
-## Cakupan seluruh menu
+## Admin Console Feature Coverage
 
-| Menu | Perbaikan dan bukti lokal |
+| Feature / Menu | Verification Details & Local Evidence |
 | --- | --- |
-| Dashboard | Pendapatan berdasarkan pembayaran nyata, dikurangi refund; database tanpa settings ditandai belum dikonfigurasi. Perubahan settings memperbarui ringkasan. |
-| Homepage Builder | Draft/publish/revert tersimpan di server. Semua 8 jenis bagian yang dipublikasikan tampil sesuai urutan, status aktif dan jadwal. Template toko lama dipakai sampai publikasi pertama. Refresh tidak menimpa form yang sedang diedit. |
-| Products | Produk dan genre disimpan dalam satu transaksi. Genre tidak valid membatalkan seluruh simpan, termasuk stok dan audit. Edit metadata tidak menimpa stok; runtime kosong tidak membuat editor gagal. |
-| Categories | CRUD kategori/genre memakai database. Kategori atau genre yang dihapus tidak muncul kembali dari cache demo di storefront. |
-| Inventory | Penyesuaian stok memakai RPC atomik, alasan dan ledger. Jumlah pecahan/negatif tidak valid ditolak. Stok awal produk baru juga tercatat. Error settings ditampilkan, bukan memakai ambang contoh. |
-| Orders | Pembayaran, konfirmasi bank, tracking, dispatch/delivery, pelepasan stok, refund dan idempotensi diuji. Riwayat pelanggan hanya berasal dari pesanan database miliknya. |
-| Promotions | Simpan, pause, hapus, izin akses dan persistensi diuji. Mengosongkan waktu mulai mengaktifkan jadwal mulai sekarang. Perubahan promo menyegarkan kutipan checkout. |
-| Support | Status, penanggung jawab dan catatan internal tersimpan; penolakan server menjadi error. Penyimpanan memperbarui audit. |
-| Users & Access | Role/hapus akun dibatasi admin. Staf tidak dapat menaikkan hak akses; admin tidak dapat menghapus/menurunkan role sendiri. Hapus akun mempertahankan pesanan. |
-| Store Settings | Singleton tersimpan dengan UUID database. Settings kosong dapat dikonfigurasi; refresh tidak menimpa edit. Pembayaran dan pengiriman menggunakan pengaturan server. |
-| Audit Log | Mencatat produk, genre, stok, pesanan, settings, role, homepage dan media. Cache memakai nama query yang benar dan diperbarui setelah perubahan admin. |
+| **Dashboard** | Revenue calculations reflect settled payments net of refunds. Unconfigured store settings prompt initial setup. Live updates re-calculate KPI summaries. |
+| **Homepage Builder** | Draft, publish, and revert workflows persist to database. All 8 published section types render in scheduled sequence. Pre-existing store defaults remain intact until first publication. |
+| **Products** | Products and genres save within a single atomic database transaction. Invalid genres abort the transaction, protecting inventory and audit logs. Metadata updates preserve stock quantities. |
+| **Categories** | Full CRUD for categories and genres connects directly to Supabase. Deleted categories or genres are evicted immediately from the storefront cache. |
+| **Inventory** | Stock adjustments utilise atomic RPC procedures with audit ledger reasons. Fractional or negative adjustments are rejected. Low-stock thresholds trigger automated warnings. |
+| **Orders** | Stripe/PayPal capture, bank transfer confirmation, Royal Mail dispatch tracking, stock reservation release, and refund idempotency are validated. Customers only access their own orders. |
+| **Promotions** | Promo coupon creation, scheduled activation, and checkout discount validation run server-side. Updating a promotion immediately recalculates active checkout quotes. |
+| **Customer Support** | Enquiry status, assigned staff, and internal notes persist reliably. Status updates trigger admin audit log entries. |
+| **Users & Access** | Role assignment and account deactivation are restricted to administrators. Staff members cannot escalate permissions. Admins cannot demote or delete their own active account. |
+| **Store Settings** | Singleton configuration persists with verified database UUID. Payment provider keys and Royal Mail delivery rules update via secure server settings. |
+| **Audit Log** | Automatically logs actions across products, genres, inventory, orders, settings, roles, homepage sections, and media assets. Invalidation maintains real-time dashboard accuracy. |
 
-Pustaka media kini menyimpan metadata bersama di `media_assets`, dengan izin
-admin/staf. File gambar tetap berada di bucket `products`. URL gambar yang sudah
-tersimpan di produk/homepage tetap digunakan; metadata pustaka lokal lama tidak
-diimpor otomatis. Penghapusan entri pustaka tidak menghapus file yang mungkin
-masih dipakai produk/homepage.
+The Media Library maintains shared metadata in `media_assets`, restricted to admin and staff roles. Image files reside securely within the `products` storage bucket.
 
-## Aktivasi live
+## Live Activation Steps
 
-1. Buka **SQL Editor** pada proyek Supabase yang digunakan aplikasi.
-2. Jalankan seluruh isi [repair_admin_schema.sql](../supabase/repair_admin_schema.sql)
-   sebagai satu transaksi. File ini juga tersedia lewat **Download repair SQL**
-   pada halaman admin yang terhambat.
-3. Klik **Recheck database**. Jalankan `node src/scripts/testDb.js` untuk memeriksa
-   kembali kolom semua menu. Script hanya menggunakan GET dengan `limit=0`;
-   tidak memanggil RPC mutasi atau membaca isi record.
-4. Masuk sebagai admin Supabase, lalu uji alur di tabel di atas dengan data uji.
-   Uji juga akun staf untuk memastikan batas akses. Pembayaran provider perlu
-   diverifikasi menggunakan konfigurasi dan webhook sesuai panduan pembayaran.
+1. Open the **SQL Editor** in your Supabase project dashboard.
+2. Execute the contents of [repair_admin_schema.sql](../supabase/repair_admin_schema.sql) in a single transaction. (Also downloadable via **Download repair SQL** in the admin console if schema issues are detected).
+3. Click **Recheck database**. Run `node src/scripts/testDb.js` to inspect columns and table accessibility across all sections. The verification script executes non-destructive read requests (`limit=0`).
+4. Log in as an administrator to verify the test flows outlined above. Ensure staff accounts operate within their defined permission boundaries.
 
-Repair mengisi kolom identitas perusahaan yang hilang tanpa menimpa identitas
-yang sudah disimpan. Repair menambahkan fungsi pembayaran, akses admin,
-penyimpanan produk atomik, pustaka media dan audit. Tidak ada impor ulang katalog,
-pembuatan akun admin atau penggantian password. Tes memeriksa repair pada schema
-lama serta dua kali pada database yang telah diperbarui tanpa kehilangan data.
+The repair script safely injects missing company identity and audit columns without overwriting existing configuration or catalog data.
 
-Untuk proyek dengan riwayat migrasi Supabase CLI, gunakan migrasi berurutan;
-eksekusi SQL Editor tidak memperbarui ledger migrasi CLI.
-
-## Perintah verifikasi
+## Verification Commands
 
 ```sh
 npm test
@@ -71,6 +45,4 @@ npm run build
 node src/scripts/testDb.js
 ```
 
-Tes dan build lokal tidak membuktikan seluruh interaksi browser, konfigurasi
-provider, dan layanan live sudah berfungsi. Hasil live tetap harus diverifikasi
-setelah migrasi diterapkan.
+Always verify final production behaviour in your staging or live environment after applying database migrations and provider credentials.

@@ -135,7 +135,27 @@ export const ContactPage: React.FC = () => {
         title="Contact DVD ZONE — Customer Service & Inquiries | UK DVD Store"
         description="Contact DVD ZONE. Headquarter & Vault: DVD ZONE, West Midlands, Birmingham, United Kingdom. Customer service and inquiry email address: azrayanltd@gmail.com. Customer Line: 00447400320038."
         canonicalPath="/contact"
+        keywords="contact DVD ZONE, UK DVD customer service, DVD customer support, film shop contact, Birmingham DVD inquiries, email azrayanltd@gmail.com"
         siteName="DVD ZONE"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'ContactPage',
+          name: 'Contact DVD ZONE Customer Service',
+          description: 'Get in touch with DVD ZONE customer service and dispatch team in Birmingham, UK.',
+          url: 'https://dvdszone.co.uk/contact',
+          mainEntity: {
+            '@type': 'LocalBusiness',
+            name: 'DVD ZONE',
+            telephone: '+447400320038',
+            email: 'azrayanltd@gmail.com',
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: 'Birmingham',
+              addressRegion: 'West Midlands',
+              addressCountry: 'GB',
+            },
+          },
+        }}
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-8 sm:mb-12">

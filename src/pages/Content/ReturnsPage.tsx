@@ -11,7 +11,15 @@ export const ReturnsPage: React.FC = () => {
         title="Returns Policy — 30-Day Hassle-Free Returns | DVDs Zone UK"
         description="DVDs Zone offers a 30-day returns policy. Faulty disc? Changed your mind? Contact our UK team and we'll arrange a replacement or full refund."
         canonicalPath="/returns"
+        keywords="DVD returns policy, 30 day returns UK, faulty DVD replacement, money back guarantee DVDs, UK consumer rights"
         siteName="DVDs Zone"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: 'DVDs Zone 30-Day Returns Policy',
+          description: 'Hassle-free 30-day return policy and replacement process for DVDs and Box Sets.',
+          url: 'https://dvdszone.co.uk/returns',
+        }}
       />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8">
         <div>

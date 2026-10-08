@@ -4,6 +4,7 @@ import { Mail, LockKeyhole, Eye, EyeOff, User, ArrowRight, ShieldCheck, ArrowLef
 import { useCustomerAuth } from '../../auth/CustomerAuth';
 import { useUiStore } from '../../stores/useUiStore';
 import { useThemeStore } from '../../stores/useThemeStore';
+import { Seo } from '../../components/common/Seo';
 
 export const RegisterPage: React.FC = () => {
   const { register, loginWithGoogle, customer } = useCustomerAuth();
@@ -135,6 +136,13 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white transition-colors duration-200">
+      <Seo
+        title="Create Account — DVDs Zone UK"
+        description="Register a new DVDs Zone account for fast UK delivery checkout, easy order tracking, and personalised collection features."
+        canonicalPath="/register"
+        noIndex={true}
+        siteName="DVDs Zone"
+      />
       <div className="max-w-md w-full">
         {/* Header link & theme toggle */}
         <div className="mb-6 flex items-center justify-between">

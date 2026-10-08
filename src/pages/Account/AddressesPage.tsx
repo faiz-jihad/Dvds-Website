@@ -8,6 +8,7 @@ import { StoreDataState } from '../../components/common/StoreDataState';
 import { publicApi } from '../../lib/publicApi';
 import { useUiStore } from '../../stores/useUiStore';
 import { Address } from '../../types';
+import { Seo } from '../../components/common/Seo';
 
 interface AddressFormState {
   full_name: string;
@@ -151,6 +152,13 @@ export const AddressesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <Seo
+        title="Saved Addresses — DVDs Zone UK"
+        description="Manage your UK delivery addresses for rapid, one-click checkout."
+        canonicalPath="/account/addresses"
+        noIndex={true}
+        siteName="DVDs Zone"
+      />
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

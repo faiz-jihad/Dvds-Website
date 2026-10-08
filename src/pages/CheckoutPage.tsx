@@ -45,6 +45,7 @@ import {
   saveCheckoutDraft,
 } from "../lib/checkoutDraft";
 import { FastPaymentSection } from "../components/checkout/FastPaymentSection";
+import { Seo } from "../components/common/Seo";
 
 const fieldClass =
   "mt-1.5 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] px-3.5 py-3 text-sm text-dark dark:text-white outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 disabled:bg-gray-50 dark:disabled:bg-white/5 transition-colors";
@@ -621,6 +622,12 @@ export const CheckoutPage: React.FC = () => {
 
   return (
     <div className="bg-gray-50/70 dark:bg-[#07090E] min-h-screen text-dark dark:text-white transition-colors">
+      <Seo
+        title="Secure Checkout — DVDs Zone UK"
+        description="Complete your order securely with SSL 256-bit encryption. Fast 2-day delivery via Royal Mail across the United Kingdom."
+        canonicalPath="/checkout"
+        noIndex
+      />
       {/* Dedicated Clean Checkout Header Bar with Logo & Theme Switcher */}
       <header className="border-b border-gray-200 dark:border-white/10 bg-white/95 dark:bg-[#07090E]/95 backdrop-blur-md sticky top-0 z-30 transition-colors shadow-2xs">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-[72px] flex items-center justify-between gap-3">

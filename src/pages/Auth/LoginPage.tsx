@@ -5,6 +5,7 @@ import { useCustomerAuth } from '../../auth/CustomerAuth';
 import { useUiStore } from '../../stores/useUiStore';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { sanitizeRedirectPath } from '../../lib/utils';
+import { Seo } from '../../components/common/Seo';
 
 export const LoginPage: React.FC = () => {
   const { login, loginWithGoogle, customer } = useCustomerAuth();
@@ -98,6 +99,13 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white transition-colors duration-200">
+      <Seo
+        title="Sign In — DVDs Zone UK"
+        description="Sign in to your DVDs Zone customer account to view past orders, track dispatch, and manage your delivery addresses."
+        canonicalPath="/login"
+        noIndex={true}
+        siteName="DVDs Zone"
+      />
       <div className="max-w-md w-full">
         {/* Header link & theme toggle */}
         <div className="mb-6 flex items-center justify-between">

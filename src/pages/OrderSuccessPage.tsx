@@ -34,6 +34,7 @@ import { useCartStore } from "../stores/useCartStore";
 import { useNotificationStore } from "../stores/useNotificationStore";
 import { clearCheckoutDraft } from "../lib/checkoutDraft";
 import { useThemeStore } from "../stores/useThemeStore";
+import { Seo } from "../components/common/Seo";
 
 interface PaymentProofData {
   fileName: string;
@@ -361,6 +362,12 @@ export const OrderSuccessPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white transition-colors duration-200">
+      <Seo
+        title={order?.order_number ? `Order #${order.order_number} Confirmed — DVDs Zone UK` : "Order Confirmed — DVDs Zone UK"}
+        description="Official order confirmation, Royal Mail dispatch status and receipt details. DVDs Zone UK."
+        canonicalPath={orderId ? `/order-success/${orderId}` : "/order-success"}
+        noIndex
+      />
       {/* Checkout / Order Header */}
       <header className="sticky top-0 z-30 border-b border-gray-200 dark:border-white/10 bg-white/95 dark:bg-[#0B0F19]/95 backdrop-blur-md transition-colors">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">

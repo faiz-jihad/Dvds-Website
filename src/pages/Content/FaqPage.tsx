@@ -43,6 +43,7 @@ export const FaqPage: React.FC = () => {
         title="FAQ — DVD Regions, Delivery & Returns | DVD ZONE"
         description="Answers to common questions about DVD regions, UK delivery times, free shipping, same-day dispatch via Royal Mail, and returns at DVD ZONE."
         canonicalPath="/faq"
+        keywords="DVD FAQ, Region 2 UK DVDs, PAL DVD compatibility, UK DVD player help, Royal Mail DVD postage FAQ, DVD ZONE questions"
         siteName="DVD ZONE"
         jsonLd={{
           '@context': 'https://schema.org',

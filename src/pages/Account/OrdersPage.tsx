@@ -29,6 +29,7 @@ import { OrderStatusStepper } from "../../components/orders/OrderStatusStepper";
 import { useCartStore } from "../../stores/useCartStore";
 import { useUiStore } from "../../stores/useUiStore";
 import { Order, Product } from "../../types";
+import { Seo } from "../../components/common/Seo";
 
 type FilterTab = "all" | "in_progress" | "delivered" | "awaiting_payment";
 
@@ -216,6 +217,13 @@ export const OrdersPage: React.FC = () => {
 
   return (
     <div className="space-y-6 text-dark dark:text-white">
+      <Seo
+        title="My Orders — DVDs Zone UK"
+        description="View your DVDs Zone purchase history, track Royal Mail deliveries, and download receipts."
+        canonicalPath="/account/orders"
+        noIndex={true}
+        siteName="DVDs Zone"
+      />
       {/* Header and Summary stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

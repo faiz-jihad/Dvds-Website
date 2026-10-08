@@ -1,144 +1,144 @@
-# AZ Rayan DVDs — Email & Business Reporting System
+# DVDs Zone — Email & Business Reporting Architecture
 
-Sistem email dan pelaporan bisnis AZ Rayan DVDs dirancang dengan pemisahan tegas (*strict separation*) antara dua peruntukan yang berbeda:
+The DVDs Zone email and business reporting architecture maintains strict separation of concerns across two distinct domains:
 
-1. **CUSTOMER (Pelanggan)**: Struk pembayaran resmi / bukti pembelian (*payment receipt / proof of purchase*) yang dikirimkan secara otomatis setelah pembayaran terverifikasi oleh webhook Stripe.
-2. **ADMIN (Pemilik Toko)**: Laporan kinerja bisnis eksekutif berkala (*weekly & monthly business performance reports*) untuk memantau performa penjualan, produk terlaris, pengeluaran operasional, dan laba bersih.
+1. **CUSTOMER**: Official payment receipts and dispatch confirmations, automatically dispatched once payment is cryptographically verified by the Stripe or PayPal webhook.
+2. **ADMIN**: Executive business performance reports (scheduled weekly and monthly), aggregating sales metrics, top-selling titles, operational expenditure, and net earnings.
 
-Kedua sistem ini berjalan secara independen dan tidak saling mencampur aduk.
+Both subsystems operate independently and remain completely isolated.
 
 ---
 
-## 1. Arsitektur & Alur Kerja (Workflows)
+## 1. Architecture & Workflows
 
 ### A. Customer Payment Receipt Flow
 
 ```text
-Pelanggan Menyelesaikan Pembayaran (Stripe / Gateway)
+Customer Completes Payment (Stripe / PayPal / Gateway)
                         │
                         ▼
-Stripe Mengirim Webhook ke /api/stripe-webhook
+Payment Gateway Sends Webhook to /api/stripe-webhook
                         │
                         ▼
-Verifikasi Tanda Tangan Kriptografis Webhook (stripe.webhooks.constructEvent)
+Verify Cryptographic Webhook Signature (e.g. stripe.webhooks.constructEvent)
                         │
                         ▼
-Pemeriksaan Idempotensi (payment_events & email_logs)
+Idempotency Verification (payment_events & email_logs)
                         │
                         ▼
-Konfirmasi Status Pesanan di Database (payment_status = 'paid')
+Confirm Order Status in Database (payment_status = 'paid')
                         │
                         ▼
-Ambil Data Item Terverifikasi dari Database (orders + order_items)
+Retrieve Verified Items from Database (orders + order_items)
                         │
                         ▼
-Kirim Struk Email Resmi via Resend / SendGrid
+Dispatch Official Email Receipt via Resend / SendGrid
                         │
                         ▼
-Catat orders.receipt_sent_at = NOW() & Log ke email_logs
+Record orders.receipt_sent_at = NOW() & Log to email_logs
 ```
 
-#### Aturan Bisnis Struk Pelanggan:
-- **Hanya Dikirim Setelah Verifikasi Webhook**: Tidak pernah dipicu hanya karena pelanggan mengunjungi `/order-success` atau halaman konfirmasi frontend.
-- **Kerahasiaan Data Pembayaran**: Tidak pernah mencantumkan nomor kartu penuh (*full PAN*), CVV, atau token kredensial rahasia.
-- **Identitas & Branding**: Menggunakan branding resmi AZ Rayan DVDs (Blue / Red / Black / White), mobile-friendly, dan menyerupai kuitansi toko e-commerce resmi.
-- **Tombol Aksi**: Menyertakan tombol *"View Order"* yang mengarahkan pelanggan kembali ke halaman detail pesanan mereka.
-- **Idempotensi**: Mencegah pengiriman struk ganda jika Stripe mengirimkan pengulangan webhook (*webhook retries*).
+#### Customer Receipt Business Rules:
+- **Dispatched Exclusively After Webhook Verification**: Receipts are never triggered simply because a customer lands on the frontend `/order-success` page.
+- **Cardholder Data Privacy**: Never includes full primary account numbers (PAN), CVVs, or secret API credentials.
+- **Brand Identity**: Features official DVDs Zone branding, mobile-responsive layout, and structured itemisation.
+- **Action Links**: Includes a secure "View Order" link guiding customers directly to their order status and tracking details.
+- **Idempotency Protection**: Ensures duplicate receipts are never sent when webhook retries occur.
 
 ---
 
 ### B. Admin Business Reporting Flow
 
-Admin menerima laporan ringkasan berkala tanpa menerima notifikasi per transaksi tunggal.
+Store administrators receive periodic aggregated executive summaries without being spammed per individual transaction.
 
 ```text
 Vercel Cron Trigger (0 8 * * * UTC) ──► GET /api/cron-reports
                                                 │
                  ┌──────────────────────────────┴──────────────────────────────┐
                  ▼                                                             ▼
-         Hari Senin Pagi?                                              Tanggal 1 Bulan Baru?
+         Monday Morning?                                             1st of the Month?
                  │                                                             │
                  ▼                                                             ▼
-      Weekly Business Report                                        Monthly Business Report
-(Senin 00:00 - Minggu 23:59 UTC lalu)                         (Tgl 1 - Tgl akhir bulan kalender lalu)
+       Weekly Business Report                                        Monthly Business Report
+ (Previous Mon 00:00 - Sun 23:59 UTC)                           (Previous full calendar month)
                  │                                                             │
                  └──────────────────────────────┬──────────────────────────────┘
                                                 │
                                                 ▼
-                     Hitung Metrik Berbasis Database Supabase:
-                     - Total Pendapatan Bersih (Hanya pesanan paid)
-                     - Jumlah Pesanan & Total Unit Terjual
+                     Calculate Verified Metrics via Database:
+                     - Net Settled Revenue (Paid orders only)
+                     - Order Volume & Total Units Sold
                      - Average Order Value (AOV)
-                     - Produk Terlaris (Berdasarkan kuantitas & revenue)
-                     - Pengeluaran Terdistribusi (Tabel expenses)
-                     - Pengurangan Refund (Penuh & Parsial)
-                     - Estimasi Laba vs Net Revenue After Expenses
+                     - Top-Selling Titles (By units & revenue)
+                     - Categorised Expenditure (expenses table)
+                     - Deductions for Full & Partial Refunds
+                     - Estimated Profit vs Net Revenue After Expenses
                                                 │
                                                 ▼
-                     Format Email Eksekutif & Kirim ke ADMIN_EMAIL
+                     Format Executive Email & Dispatch to ADMIN_EMAIL
                                                 │
                                                 ▼
-                    Simpan Riwayat ke Tabel report_history (status: sent / failed)
+                     Persist Snapshot to report_history (status: sent / failed)
 ```
 
 ---
 
-## 2. Kalkulasi Keuangan & Integritas Data
+## 2. Financial Calculations & Data Integrity
 
-Sistem pelaporan **tidak pernah memalsukan angka (*never invent numbers*)**, melainkan menghitung langsung dari database:
+The reporting system never fabricates metrics, calculating directly from verified database records:
 
-1. **Pendapatan Kotor (Gross Revenue)**:
-   - Hanya menghitung pesanan dengan `payment_status = 'paid'`.
-   - Mengabaikan pesanan yang dibatalkan (*cancelled*), pending, gagal, atau kedaluwarsa.
-2. **Pengurangan Pengembalian Dana (Refunds)**:
-   - Mengurangi nilai `refunded_amount` secara proporsional.
-3. **Pengeluaran Operasional (Expenses)**:
-   - Ditarik langsung dari tabel `expenses` untuk periode waktu terkait.
-4. **Pembedaan "Estimated Profit" vs "Net Revenue After Recorded Expenses"**:
-   - Jika data harga modal produk (`products.cost_price` / COGS) belum lengkap:
+1. **Gross Revenue**:
+   - Only counts orders with `payment_status = 'paid'`.
+   - Excludes cancelled, pending, failed, or expired checkouts.
+2. **Refund Deductions**:
+   - Proportionately deducts `refunded_amount` values recorded in the database.
+3. **Operational Expenses**:
+   - Pulled directly from the `expenses` table for the specified period.
+4. **Distinction Between "Estimated Profit" and "Net Revenue After Recorded Expenses"**:
+   - If product cost prices (`products.cost_price` / COGS) are partially missing:
      $$\text{Net Revenue After Recorded Expenses} = \text{Revenue} - \text{Refunds} - \text{Recorded Expenses}$$
-   - Hanya jika seluruh produk yang terjual memiliki data `cost_price` yang valid, sistem melabelinya sebagai:
+   - Only when all sold items contain a verified `cost_price` does the system label the metric as:
      $$\text{Estimated Profit} = \text{Revenue} - \text{COGS} - \text{Refunds} - \text{Recorded Expenses}$$
 
 ---
 
-## 3. Manajemen Pengeluaran (Expense System)
+## 3. Expense Management Subsystem
 
-Admin dapat mencatat dan mengelola pengeluaran operasional toko melalui dashboard `/admin/reports`:
+Administrators manage store operating costs directly via the `/admin/reports` console:
 
-- **Kategori Pengeluaran**:
-  - `shipping` (Biaya pengiriman kurir)
-  - `packaging` (Kardus, bubble wrap, stiker pengaman)
-  - `payment_fees` (Biaya potongan Stripe / gateway)
-  - `inventory` (Pembelian stok fisik)
-  - `marketing` (Iklan sosial media / kampanye)
-  - `website_domain` (Domain & DNS)
-  - `vps_hosting` (Hosting & server)
-  - `other` (Pengeluaran lain-lain)
-- **Data Tersimpan**: Deskripsi, Kategori, Nominal (£), Tanggal, dan Catatan Opsional.
+- **Expense Categories**:
+  - `shipping` (Courier and Royal Mail postage fees)
+  - `packaging` (Boxes, bubble wrap, security tape)
+  - `payment_fees` (Stripe and payment gateway interchange fees)
+  - `inventory` (Physical media inventory acquisitions)
+  - `marketing` (Advertising campaigns)
+  - `website_domain` (Domain renewals & DNS)
+  - `vps_hosting` (Hosting and infrastructure costs)
+  - `other` (General operating sundries)
+- **Stored Fields**: Description, Category, Amount (£), Date, and Optional Notes.
 
 ---
 
-## 4. Konfigurasi Environment & Penyedia Email
+## 4. Environment Configuration & Providers
 
-Konfigurasikan variabel berikut di platform hosting (misal: Vercel Project Settings > Environment Variables):
+Set the following environment variables in your deployment environment (e.g. Vercel Project Settings):
 
-| Variabel | Keterangan | Contoh Nilai |
+| Variable | Description | Example Value |
 | :--- | :--- | :--- |
-| `ADMIN_EMAIL` | Alamat email tujuan laporan mingguan dan bulanan | `admin@azrayan.co.uk` |
-| `EMAIL_FROM` | Alamat pengirim struk dan laporan | `AZ Rayan DVDs <orders@azrayan.co.uk>` |
-| `RESEND_API_KEY` | *(Pilihan Utama)* API Key dari penyedia [Resend](https://resend.com) | `re_123456789...` |
-| `SENDGRID_API_KEY` | *(Pilihan Alternatif)* API Key dari [SendGrid](https://sendgrid.com) | `SG.xxxxxxxx...` |
-| `CRON_SECRET` | Token rahasia otentikasi untuk pemanggilan cron endpoint | `random-32-char-token` |
-| `STRIPE_WEBHOOK_SECRET`| Rahasia tanda tangan webhook Stripe | `whsec_xxxxxxxx...` |
+| `ADMIN_EMAIL` | Destination email address for periodic reports | `admin@azrayan.co.uk` |
+| `EMAIL_FROM` | Sender identity for receipts and reports | `DVD ZONE <orders@azrayan.co.uk>` |
+| `RESEND_API_KEY` | *(Primary)* API key from [Resend](https://resend.com) | `re_123456789...` |
+| `SENDGRID_API_KEY` | *(Alternative)* API key from [SendGrid](https://sendgrid.com) | `SG.xxxxxxxx...` |
+| `CRON_SECRET` | Secret bearer token protecting the cron endpoint | `random-32-char-token` |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | `whsec_xxxxxxxx...` |
 
-> **Mode Simulasi (Development)**: Jika `RESEND_API_KEY` dan `SENDGRID_API_KEY` tidak diisi (misal saat testing lokal), modul email otomatis beralih ke mode simulasi aman. Log pengiriman akan dicatat di konsol server tanpa error atau menghentikan alur pembayaran.
+> **Development Simulation Mode**: When neither `RESEND_API_KEY` nor `SENDGRID_API_KEY` is supplied (such as in local development), the mailer falls back cleanly to simulation mode. Delivery payloads are logged to the console without interrupting payment completion.
 
 ---
 
-## 5. Jadwal Cron di Vercel (`vercel.json`)
+## 5. Vercel Cron Schedule (`vercel.json`)
 
-Jadwal otomatisasi laporan dikonfigurasi melalui Vercel Cron:
+Automated report triggers are configured via Vercel Cron:
 
 ```json
 {
@@ -151,27 +151,27 @@ Jadwal otomatisasi laporan dikonfigurasi melalui Vercel Cron:
 }
 ```
 
-- Endpoint dipanggil setiap hari pukul 08:00 UTC.
-- Pada hari Senin, cron memproses **Laporan Mingguan** (Senin s/d Minggu sebelumnya).
-- Pada tanggal 1 setiap bulan, cron memproses **Laporan Bulanan** (Bulan kalender sebelumnya).
+- Endpoint is evaluated daily at 08:00 UTC.
+- On Mondays, the cron processes the **Weekly Report** (previous Monday to Sunday).
+- On the 1st of each month, the cron processes the **Monthly Report** (previous calendar month).
 
 ---
 
-## 6. Riwayat Laporan & Penanganan Kegagalan (Failure Recovery)
+## 6. Report History & Failure Recovery
 
-- Setiap laporan yang dihasilkan disimpan di tabel `report_history` beserta snapshot metrik JSON.
-- Jika email gagal terkirim (misal karena kuota API email habis), status disimpan sebagai `status = 'failed'` dengan detail pesan error di `error_message`.
-- Admin dapat meninjau riwayat laporan di dashboard `/admin/reports` dan mengklik tombol **"Resend"** kapan saja untuk mengirim ulang laporan yang gagal.
-- Admin juga dapat mengklik tombol **"Trigger Report Now"** untuk menghasilkan laporan langsung tanpa menunggu jadwal cron.
+- Every generated report is persisted to `report_history` alongside its JSON metrics snapshot.
+- If email transmission encounters an error (such as provider quota exhaustion), status is recorded as `status = 'failed'` with the exact error message preserved in `error_message`.
+- Administrators can review the dispatch ledger in `/admin/reports` and trigger an immediate **"Resend"** for any failed report.
+- The **"Trigger Report Now"** utility allows on-demand snapshot generation at any time without waiting for scheduled crons.
 
 ---
 
-## 7. Skema Database Terkait
+## 7. Associated Database Schema
 
 Migration file: `supabase/migrations/20261007000001_business_reports_and_expenses.sql`
 
-- **Tabel `expenses`**: Menyimpan pengeluaran operasional toko.
-- **Tabel `report_history`**: Menyimpan histori pengiriman laporan mingguan & bulanan.
-- **Tabel `email_logs`**: Menyimpan audit log pengiriman email struk pelanggan & laporan admin.
-- **Kolom `orders.receipt_sent_at`**: Timestamp penanda struk telah terkirim.
-- **Kolom `products.cost_price`**: Harga modal produk untuk kalkulasi COGS.
+- **`expenses` table**: Tracks operating expenditures.
+- **`report_history` table**: Maintains history of weekly and monthly reports.
+- **`email_logs` table**: Audit log of all outgoing customer receipts and executive reports.
+- **`orders.receipt_sent_at` column**: Timestamp confirming receipt dispatch.
+- **`products.cost_price` column**: Product unit acquisition cost for accurate COGS calculations.

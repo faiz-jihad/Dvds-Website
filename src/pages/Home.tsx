@@ -62,29 +62,46 @@ export const Home: React.FC = () => {
   return (
     <>
       <Seo
-        title="DVD ZONE — Quality DVDs & Entertainment | Free UK Delivery"
-        description="Quality DVDs, TV box sets, and entertainment. Free UK standard delivery on all orders. Same-day dispatch. Delivery within 2 working days via Royal Mail."
+        title="DVD ZONE — Quality DVDs, TV Box Sets & Cinema Entertainment | Free UK Delivery"
+        description="Quality DVDs, TV box sets, and physical entertainment releases. Free UK standard delivery on all orders. Same-day dispatch. Fast 2 working days delivery via Royal Mail."
+        keywords="buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs, DVDs Zone"
         canonicalPath="/"
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
-        siteName="DVD ZONE"
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "CollectionPage",
-          name: "DVD ZONE - Quality DVDs & Entertainment",
-          description:
-            "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",
-          url: "https://dvdszone.co.uk/",
-          mainEntity: {
-            "@type": "ItemList",
-            itemListElement: products.slice(0, 11).map((prod, idx) => ({
-              "@type": "ListItem",
-              position: idx + 1,
-              name: prod.title,
-              url: `https://dvdszone.co.uk/product/${prod.slug}`,
-              image: `https://dvdszone.co.uk${prod.cover_image_url}`,
-            })),
+        siteName="DVDs Zone"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "DVDs Zone",
+            url: "https://dvdszone.co.uk/",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: {
+                "@type": "EntryPoint",
+                urlTemplate: "https://dvdszone.co.uk/search?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
           },
-        }}
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: "DVDs Zone — Quality DVDs & Entertainment Catalogue",
+            description:
+              "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",
+            url: "https://dvdszone.co.uk/",
+            mainEntity: {
+              "@type": "ItemList",
+              itemListElement: products.slice(0, 12).map((prod, idx) => ({
+                "@type": "ListItem",
+                position: idx + 1,
+                name: prod.title,
+                url: `https://dvdszone.co.uk/product/${prod.slug}`,
+                image: `https://dvdszone.co.uk${prod.cover_image_url}`,
+              })),
+            },
+          }
+        ]}
       />
       <AzDarkLandingLayout
         products={products}

@@ -7,6 +7,7 @@ import { QuantitySelector } from '../components/commerce/QuantitySelector';
 import { Button } from '../components/common/Button';
 import { EmptyState } from '../components/common/EmptyState';
 import { useCustomerAuth } from '../auth/CustomerAuth';
+import { Seo } from '../components/common/Seo';
 
 export const CartPage: React.FC = () => {
   const { customer } = useCustomerAuth();
@@ -45,6 +46,12 @@ export const CartPage: React.FC = () => {
   if (items.length === 0) {
     return (
       <div className="py-20 bg-[#F8FAFC] dark:bg-[#07090E] min-h-[60vh] flex items-center justify-center transition-colors">
+        <Seo
+          title="Shopping Basket — DVDs Zone UK"
+          description="Your basket is currently empty. Explore our curated catalogue of DVD releases and TV box sets."
+          canonicalPath="/cart"
+          noIndex
+        />
         <EmptyState
           title="Your basket is empty"
           description="You haven't selected any films yet. Explore our curated catalogue of new releases and timeless classics."
@@ -58,6 +65,12 @@ export const CartPage: React.FC = () => {
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
+      <Seo
+        title="Shopping Basket — DVDs Zone UK"
+        description="Review your selected physical DVD media and box sets. Free UK delivery on all orders."
+        canonicalPath="/cart"
+        noIndex
+      />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         <div className="pb-6 mb-8 border-b border-gray-200 dark:border-white/10">
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue dark:text-blue-400">

@@ -22,6 +22,7 @@ export const AboutPage: React.FC = () => {
         title="About DVD ZONE UK Physical DVD Retailer | Our Story"
         description="DVD ZONE is active since 2021, operated by company based in 2022 AZ Rayan LTD & DVD Zone, based in West Midlands, Birmingham, United Kingdom. Quality DVDs & Entertainment."
         canonicalPath="/about"
+        keywords="about DVD ZONE, UK DVD shop, AZ Rayan LTD, physical media UK, Birmingham DVD retailer, British film store, authentic PAL DVDs"
         siteName="DVD ZONE"
         jsonLd={{
           '@context': 'https://schema.org',

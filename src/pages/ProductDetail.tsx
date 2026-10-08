@@ -125,43 +125,89 @@ export const ProductDetail: React.FC = () => {
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-12 transition-colors">
       <Seo
-        title={`${product.title} | DVD ZONE`}
+        title={`${product.title} (DVD / Box Set) | DVDs Zone UK`}
         description={`${product.title}. ${product.description ? product.description.slice(0, 130).replace(/\s\S+$/, '') + '...' : ''} All orders 100% free standard delivery across United Kingdom. Dispatched same day, delivered to your address within 2 working days via Royal Mail.`}
+        keywords={`${product.title} DVD, buy ${product.title} online UK, ${product.category?.name || 'film'} DVD box set, ${product.format || 'DVD'} UK, physical media, DVDs Zone`}
         canonicalPath={`/product/${product.slug}`}
         image={activeImage}
         type="product"
-        siteName="DVD ZONE"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'Product',
-          name: product.title,
-          description: product.description || product.title,
-          image: activeImage.startsWith('http') ? activeImage : `https://dvdszone.co.uk${activeImage}`,
-          url: `https://dvdszone.co.uk/product/${product.slug}`,
-          sku: product.sku || product.id,
-          brand: { '@type': 'Brand', name: 'DVD ZONE' },
-          offers: {
-            '@type': 'Offer',
+        siteName="DVDs Zone"
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: product.title,
+            description: product.description || product.title,
+            image: activeImage.startsWith('http') ? activeImage : `https://dvdszone.co.uk${activeImage}`,
             url: `https://dvdszone.co.uk/product/${product.slug}`,
-            priceCurrency: 'GBP',
-            price: product.price.toFixed(2),
-            priceValidUntil: new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0],
-            availability: product.stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            seller: { '@type': 'Organization', name: 'DVD ZONE' },
-            shippingDetails: {
-              '@type': 'OfferShippingDetails',
-              shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'GBP' },
-              shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'GB' },
-              deliveryTime: {
-                '@type': 'ShippingDeliveryTime',
-                handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
-                transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' },
+            sku: product.sku || product.id,
+            brand: { '@type': 'Brand', name: 'DVDs Zone' },
+            category: product.category?.name || 'Film & Entertainment',
+            offers: {
+              '@type': 'Offer',
+              url: `https://dvdszone.co.uk/product/${product.slug}`,
+              priceCurrency: 'GBP',
+              price: product.price.toFixed(2),
+              itemCondition: 'https://schema.org/NewCondition',
+              priceValidUntil: new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0],
+              availability: product.stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+              seller: { '@type': 'Organization', name: 'DVDs Zone' },
+              shippingDetails: {
+                '@type': 'OfferShippingDetails',
+                shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'GBP' },
+                shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'GB' },
+                deliveryTime: {
+                  '@type': 'ShippingDeliveryTime',
+                  handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
+                  transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' },
+                },
               },
             },
+            ...(isVideoFormat && product.age_rating && product.age_rating !== 'All' && { contentRating: product.age_rating }),
+            ...(product.format && { additionalProperty: { '@type': 'PropertyValue', name: 'Format', value: product.format } }),
           },
-          ...(isVideoFormat && product.age_rating && product.age_rating !== 'All' && { contentRating: product.age_rating }),
-          ...(product.format && { additionalProperty: { '@type': 'PropertyValue', name: 'Format', value: product.format } }),
-        }}
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://dvdszone.co.uk/',
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Catalogue',
+                item: 'https://dvdszone.co.uk/shop',
+              },
+              ...(product.category?.name
+                ? [
+                    {
+                      '@type': 'ListItem',
+                      position: 3,
+                      name: product.category.name,
+                      item: `https://dvdszone.co.uk/shop?category=${product.category.slug}`,
+                    },
+                    {
+                      '@type': 'ListItem',
+                      position: 4,
+                      name: product.title,
+                      item: `https://dvdszone.co.uk/product/${product.slug}`,
+                    },
+                  ]
+                : [
+                    {
+                      '@type': 'ListItem',
+                      position: 3,
+                      name: product.title,
+                      item: `https://dvdszone.co.uk/product/${product.slug}`,
+                    },
+                  ]),
+            ],
+          },
+        ]}
       />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Breadcrumb Navigation */}

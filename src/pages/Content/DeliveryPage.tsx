@@ -64,7 +64,20 @@ export const DeliveryPage: React.FC = () => {
         title="Delivery Information — 100% Free UK Delivery | DVD ZONE"
         description="All orders 100% free standard delivery across United Kingdom. Dispatched same day, delivered to your address within 2 working days via Royal Mail."
         canonicalPath="/delivery"
+        keywords="free UK delivery DVDs, Royal Mail DVD shipping, same day DVD dispatch, UK postage rates, fast DVD shipping UK"
         siteName="DVD ZONE"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: 'DVD ZONE UK Delivery Information',
+          description: 'Free standard UK delivery on all DVD purchases via Royal Mail.',
+          url: 'https://dvdszone.co.uk/delivery',
+          provider: {
+            '@type': 'Organization',
+            name: 'DVD ZONE',
+            url: 'https://dvdszone.co.uk',
+          },
+        }}
       />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">

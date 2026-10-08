@@ -163,9 +163,9 @@ export const AzDarkLandingNav: React.FC = () => {
           </Link>
         </div>
 
-        {/* ── CENTER: Category Selector Pill (Gambar 2) + Search Engine (Shortened to not cross sidebar boundary) ── */}
+        {/* ── CENTER: Category Selector Pill + Search Engine (Shortened to not cross sidebar boundary) ── */}
         <div className="hidden md:flex flex-1 items-center min-w-0 mx-1 sm:mx-3 xl:mx-4 gap-2 sm:gap-3 max-w-4xl xl:max-w-5xl">
-          {/* Category Dropdown Pill [ Movies ⌵ ] matching Gambar 2 */}
+          {/* Category Dropdown Pill [ Movies ⌵ ] */}
           <div ref={categoryRef} className="relative shrink-0">
             <button
               type="button"
