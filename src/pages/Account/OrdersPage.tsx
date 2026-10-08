@@ -485,8 +485,8 @@ export const OrdersPage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Royal Mail Tracking Strip (if dispatched) */}
-                {order.tracking_number && (
+                {/* Royal Mail Tracking Strip (if dispatched and not cancelled) */}
+                {order.tracking_number && order.status !== "cancelled" && (
                   <div className="bg-blue-50/50 dark:bg-blue-950/20 border-b border-blue-100/90 dark:border-blue-900/40 px-5 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800/40 text-brand-blue dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
@@ -656,57 +656,83 @@ export const OrdersPage: React.FC = () => {
 
                     {/* Action Buttons Group — Every button has a crisp border */}
                     <div className="space-y-2 pt-1">
-                      {/* Primary CTA: View Order Details */}
-                      <Link
-                        to={`/order-success/${order.id}`}
-                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-brand-blue hover:bg-brand-blue-hover text-white border border-brand-blue shadow-xs transition-all cursor-pointer"
-                      >
-                        <span>View Order Details &amp; Receipt</span>
-                        <ArrowRight size={14} />
-                      </Link>
+                      {order.status === "cancelled" ? (
+                        <div className="space-y-2">
+                          <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 text-center">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-red-700 dark:text-red-400">
+                              <AlertCircle size={14} />
+                              CANCELLED
+                            </span>
+                            <p className="text-[11px] text-red-600/80 dark:text-red-400/80 mt-0.5">
+                              This order has been cancelled. Tracking, receipt, and details are unavailable.
+                            </p>
+                          </div>
 
-                      {/* Secondary Action Buttons (side-by-side) */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setExpandedStepperOrderId((prev) =>
-                              prev === order.id ? null : order.id,
-                            )
-                          }
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] border border-gray-300 dark:border-white/15 hover:bg-gray-50 dark:hover:bg-white/10 text-dark dark:text-white shadow-2xs transition-all cursor-pointer"
-                        >
-                          <Package size={13} className="text-gray-500 dark:text-gray-400" />
-                          <span>
-                            {isStepperOpen ? "Hide Track" : "Track Status"}
-                          </span>
-                        </button>
+                          {/* Re-order items button */}
+                          <button
+                            type="button"
+                            onClick={() => handleReorder(order)}
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold bg-gray-50 dark:bg-[#141A26]/60 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <RotateCcw size={13} className="text-brand-blue" />
+                            <span>Buy these items again</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Primary CTA: View Order Details */}
+                          <Link
+                            to={`/order-success/${order.id}`}
+                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-brand-blue hover:bg-brand-blue-hover text-white border border-brand-blue shadow-xs transition-all cursor-pointer"
+                          >
+                            <span>View Order Details &amp; Receipt</span>
+                            <ArrowRight size={14} />
+                          </Link>
 
-                        <button
-                          type="button"
-                          onClick={() => setSelectedReceiptOrder(order)}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] border border-gray-300 dark:border-white/15 hover:bg-gray-50 dark:hover:bg-white/10 text-dark dark:text-white shadow-2xs transition-all cursor-pointer"
-                        >
-                          <Printer size={13} className="text-gray-500 dark:text-gray-400" />
-                          <span>Print Receipt</span>
-                        </button>
-                      </div>
+                          {/* Secondary Action Buttons (side-by-side) */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExpandedStepperOrderId((prev) =>
+                                  prev === order.id ? null : order.id,
+                                )
+                              }
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] border border-gray-300 dark:border-white/15 hover:bg-gray-50 dark:hover:bg-white/10 text-dark dark:text-white shadow-2xs transition-all cursor-pointer"
+                            >
+                              <Package size={13} className="text-gray-500 dark:text-gray-400" />
+                              <span>
+                                {isStepperOpen ? "Hide Track" : "Track Status"}
+                              </span>
+                            </button>
 
-                      {/* Tertiary Action: Buy Again */}
-                      <button
-                        type="button"
-                        onClick={() => handleReorder(order)}
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-gray-50 dark:bg-[#141A26]/60 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 transition-colors cursor-pointer shadow-2xs"
-                      >
-                        <RotateCcw size={13} className="text-brand-blue" />
-                        <span>Buy these items again</span>
-                      </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedReceiptOrder(order)}
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] border border-gray-300 dark:border-white/15 hover:bg-gray-50 dark:hover:bg-white/10 text-dark dark:text-white shadow-2xs transition-all cursor-pointer"
+                            >
+                              <Printer size={13} className="text-gray-500 dark:text-gray-400" />
+                              <span>Print Receipt</span>
+                            </button>
+                          </div>
+
+                          {/* Tertiary Action: Buy Again */}
+                          <button
+                            type="button"
+                            onClick={() => handleReorder(order)}
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-gray-50 dark:bg-[#141A26]/60 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <RotateCcw size={13} className="text-brand-blue" />
+                            <span>Buy these items again</span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Expandable Order Status Stepper */}
-                {isStepperOpen && (
+                {/* Expandable Order Status Stepper (only for active orders) */}
+                {isStepperOpen && order.status !== "cancelled" && (
                   <div className="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100 dark:border-white/10 bg-gray-50/60 dark:bg-[#141A26]/40">
                     <OrderStatusStepper order={order} />
                   </div>

@@ -950,26 +950,30 @@ export const OrderSuccessPage: React.FC = () => {
           />
 
           <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-3.5 mt-8">
-            <button
-              type="button"
-              onClick={() => {
-                // Instantly invoke browser print dialog
-                setTimeout(() => window.print(), 50);
-              }}
-              className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-blue/20 active:scale-95 transition-all cursor-pointer"
-            >
-              <Printer size={16} />
-              <span>Print Receipt</span>
-            </button>
+            {!closed && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Instantly invoke browser print dialog
+                    setTimeout(() => window.print(), 50);
+                  }}
+                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-blue/20 active:scale-95 transition-all cursor-pointer"
+                >
+                  <Printer size={16} />
+                  <span>Print Receipt</span>
+                </button>
 
-            <button
-              type="button"
-              onClick={() => setReceiptOpen(true)}
-              className="inline-flex items-center justify-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-white dark:bg-[#0E131F] hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-200 hover:text-dark dark:hover:text-white text-xs sm:text-sm font-semibold shadow-2xs active:scale-95 transition-all cursor-pointer"
-            >
-              <FileText size={15} className="text-gray-400" />
-              <span>Preview Receipt</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={() => setReceiptOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-white dark:bg-[#0E131F] hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-200 hover:text-dark dark:hover:text-white text-xs sm:text-sm font-semibold shadow-2xs active:scale-95 transition-all cursor-pointer"
+                >
+                  <FileText size={15} className="text-gray-400" />
+                  <span>Preview Receipt</span>
+                </button>
+              </>
+            )}
 
             <button
               type="button"

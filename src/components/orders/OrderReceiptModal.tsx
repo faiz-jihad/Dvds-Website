@@ -17,7 +17,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
   onClose,
   order,
 }) => {
-  if (!order) return null;
+  if (!order || order.status === "cancelled") return null;
 
   const handlePrint = () => {
     // Small timeout ensures focus/paint state is idle before invoking native dialog
