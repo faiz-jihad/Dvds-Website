@@ -1874,22 +1874,105 @@ export const AdminStoreSettings: React.FC = () => {
         ========================================== */}
         {activeTab === 'logistics' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+            {/* Live Checkout Preview Card */}
+            <div className="bg-gradient-to-r from-blue-50/70 to-indigo-50/40 rounded-xl border border-blue-200/80 p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-blue text-white">
+                    <Eye className="w-3.5 h-3.5" />
+                  </span>
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-brand-blue">
+                    Customer Checkout Preview (Step 2: Delivery Method)
+                  </span>
+                </div>
+                <span className="text-[11px] text-gray-500 font-medium">
+                  Live preview based on settings below
+                </span>
+              </div>
+              <div className="space-y-2.5 pt-1">
+                <div className="flex items-center justify-between p-3.5 bg-white rounded-xl border border-gray-200 shadow-2xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                    <div>
+                      <div className="text-sm font-semibold text-dark">
+                        {settings.standard_shipping_name || 'Royal Mail Tracked 48'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {settings.standard_shipping_eta || '2-3 working days'}
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`text-sm font-bold ${Number(settings.standard_shipping_fee ?? 0) === 0 ? 'text-brand-blue' : 'text-dark'}`}>
+                    {Number(settings.standard_shipping_fee ?? 0) === 0
+                      ? 'FREE'
+                      : formatGBP(Number(settings.standard_shipping_fee ?? 0))}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-3.5 bg-blue-50/40 rounded-xl border border-brand-blue/50 ring-1 ring-brand-blue/30 shadow-2xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-full border-2 border-brand-blue flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-brand-blue" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-dark">
+                        {settings.express_shipping_name || 'DPD Next Day Priority'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {settings.express_shipping_eta || '1 working day (Order by 2PM)'}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-dark">
+                    {Number(settings.express_shipping_fee ?? 0) === 0
+                      ? 'FREE'
+                      : formatGBP(Number(settings.express_shipping_fee ?? 0))}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Standard UK Delivery Rates */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-5">
               <div className="border-b border-gray-100 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-blue">
                     <Truck className="w-4 h-4" />
                   </span>
                   <h2 className="font-display font-bold text-base text-dark">
-                    UK Delivery Rates, Royal Mail &amp; Inventory Thresholds
+                    Standard UK Delivery (Primary Carrier)
                   </h2>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Configure delivery thresholds, fees, service carrier names, dispatch cutoff times, and low stock alert warnings.
+                  Configure default postal delivery service, baseline fee, and optional minimum spend threshold for free delivery.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Input
+                  label="Standard Service Name"
+                  value={settings.standard_shipping_name || ''}
+                  onChange={(e) => handleChange('standard_shipping_name', e.target.value)}
+                  placeholder="e.g. Royal Mail Tracked 48"
+                  helperText="Service name shown to customers at checkout."
+                />
+                <Input
+                  label="Standard Delivery Estimate"
+                  value={settings.standard_shipping_eta || ''}
+                  onChange={(e) => handleChange('standard_shipping_eta', e.target.value)}
+                  placeholder="e.g. 2-3 working days"
+                  helperText="Customer-facing transit estimate."
+                />
+                <Input
+                  label="Standard Delivery Fee (£)"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={settings.standard_shipping_fee ?? 0}
+                  onChange={(e) => handleChange('standard_shipping_fee', e.target.value === '' ? 0 : Number(e.target.value))}
+                  placeholder="0.00"
+                  helperText="Set to 0.00 for complimentary delivery, or enter your standard shipping fee (e.g. 3.49)."
+                />
                 <Input
                   label="Free UK Delivery Threshold (£)"
                   type="number"
@@ -1898,30 +1981,79 @@ export const AdminStoreSettings: React.FC = () => {
                   value={settings.free_shipping_threshold ?? 0}
                   onChange={(e) => handleChange('free_shipping_threshold', e.target.value === '' ? 0 : Number(e.target.value))}
                   placeholder="0.00"
-                  helperText="Set to 0.00 for 100% Free UK Delivery on all orders."
+                  helperText="Orders at or above this basket total receive free delivery. Set to 0.00 if you do not offer a free threshold."
                 />
+              </div>
+            </div>
 
+            {/* Express UK Delivery Rates */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-5">
+              <div className="border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                    <Clock className="w-4 h-4" />
+                  </span>
+                  <h2 className="font-display font-bold text-base text-dark">
+                    Express UK Delivery (Priority Expedited)
+                  </h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Optional expedited delivery tier (e.g. DPD Next Day Priority or Royal Mail Tracked 24).
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <Input
-                  label="Standard Tracked 48 Delivery Fee (£)"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={settings.standard_shipping_fee ?? 0}
-                  onChange={(e) => handleChange('standard_shipping_fee', e.target.value === '' ? 0 : Number(e.target.value))}
-                  placeholder="0.00"
-                  helperText="Set to 0.00 for complimentary delivery across the UK."
+                  label="Express Service Name"
+                  value={settings.express_shipping_name || ''}
+                  onChange={(e) => handleChange('express_shipping_name', e.target.value)}
+                  placeholder="e.g. DPD Next Day Priority"
+                  helperText="Carrier name shown for priority tier."
                 />
-
                 <Input
-                  label="Express Tracked 24 Delivery Fee (£)"
+                  label="Express Delivery Estimate"
+                  value={settings.express_shipping_eta || ''}
+                  onChange={(e) => handleChange('express_shipping_eta', e.target.value)}
+                  placeholder="e.g. 1 working day (Order by 2PM)"
+                  helperText="Estimated delivery time."
+                />
+                <Input
+                  label="Express Delivery Fee (£)"
                   type="number"
                   step="0.01"
                   min="0"
                   value={settings.express_shipping_fee ?? 0}
                   onChange={(e) => handleChange('express_shipping_fee', e.target.value === '' ? 0 : Number(e.target.value))}
-                  placeholder="4.99"
+                  placeholder="5.99"
+                  helperText="Fee charged for priority shipping."
                 />
+              </div>
+            </div>
 
+            {/* Dispatch Operations & Stock Settings */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-5">
+              <div className="border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                    <Sliders className="w-4 h-4" />
+                  </span>
+                  <h2 className="font-display font-bold text-base text-dark">
+                    Dispatch Cutoff &amp; Inventory Thresholds
+                  </h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Operational cutoff times and inventory management boundaries.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <Input
+                  label="Same-Day Dispatch Cutoff Time"
+                  value={settings.dispatch_cutoff_time || ''}
+                  onChange={(e) => handleChange('dispatch_cutoff_time', e.target.value)}
+                  placeholder="e.g. 14:00 GMT"
+                  helperText="Daily warehouse order packing deadline."
+                />
                 <Input
                   label="Low-stock Alert Threshold (units)"
                   type="number"
@@ -1929,9 +2061,8 @@ export const AdminStoreSettings: React.FC = () => {
                   step="1"
                   value={settings.low_stock_threshold ?? 0}
                   onChange={(e) => handleChange('low_stock_threshold', Math.max(0, e.target.value === '' ? 0 : parseInt(e.target.value, 10)))}
-                  helperText="Products at or below this value appear as low stock."
+                  helperText="Products at or below this value trigger low stock alerts."
                 />
-
                 <Input
                   label="Budget Collection Maximum (£)"
                   type="number"
@@ -1939,20 +2070,8 @@ export const AdminStoreSettings: React.FC = () => {
                   step="0.01"
                   value={settings.budget_collection_threshold ?? 0}
                   onChange={(e) => handleChange('budget_collection_threshold', Math.max(0, e.target.value === '' ? 0 : Number(e.target.value)))}
-                  helperText="Controls the homepage budget collection using live product prices."
+                  helperText="Controls budget collections on the storefront."
                 />
-
-                <Input
-                  label="Same-Day Dispatch Cutoff Time"
-                  value={settings.dispatch_cutoff_time || ''}
-                  onChange={(e) => handleChange('dispatch_cutoff_time', e.target.value)}
-                  placeholder="e.g. 14:00 GMT"
-                />
-
-                <Input label="Standard Service Name" value={settings.standard_shipping_name || ''} onChange={(e) => handleChange('standard_shipping_name', e.target.value)} placeholder="Carrier and service" />
-                <Input label="Standard Delivery Estimate" value={settings.standard_shipping_eta || ''} onChange={(e) => handleChange('standard_shipping_eta', e.target.value)} placeholder="Customer-facing estimate" />
-                <Input label="Express Service Name" value={settings.express_shipping_name || ''} onChange={(e) => handleChange('express_shipping_name', e.target.value)} placeholder="Carrier and service" />
-                <Input label="Express Delivery Estimate" value={settings.express_shipping_eta || ''} onChange={(e) => handleChange('express_shipping_eta', e.target.value)} placeholder="Customer-facing estimate" />
               </div>
             </div>
 

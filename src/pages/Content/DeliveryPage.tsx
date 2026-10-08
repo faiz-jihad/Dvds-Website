@@ -112,9 +112,15 @@ export const DeliveryPage: React.FC = () => {
                   <span className="font-bold text-dark dark:text-white text-sm">
                     {settings.standard_shipping_name || 'Standard UK Delivery (Royal Mail)'}
                   </span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
-                    Free on all orders
-                  </span>
+                  {settings.standard_shipping_fee === 0 ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                      Free on all orders
+                    </span>
+                  ) : settings.free_shipping_threshold != null && settings.free_shipping_threshold > 0 ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-100 dark:bg-blue-900/60 text-brand-blue dark:text-blue-300">
+                      Free over {formatGBP(settings.free_shipping_threshold)}
+                    </span>
+                  ) : null}
                 </div>
                 <p className="text-xs text-gray-600 dark:text-gray-300">
                   {settings.standard_shipping_eta || 'Delivered within 2 working days'}. Orders placed before {settings.dispatch_cutoff_time || '2:00 PM'} are dispatched the same day.
@@ -122,9 +128,11 @@ export const DeliveryPage: React.FC = () => {
               </div>
               <div className="text-left sm:text-right shrink-0">
                 <span className="font-display font-extrabold text-base text-emerald-700 dark:text-emerald-400">
-                  {settings.free_shipping_threshold != null && settings.free_shipping_threshold > 0
-                    ? `FREE over ${formatGBP(settings.free_shipping_threshold)}`
-                    : 'FREE'}
+                  {settings.standard_shipping_fee === 0
+                    ? 'FREE'
+                    : settings.free_shipping_threshold != null && settings.free_shipping_threshold > 0
+                      ? `FREE over ${formatGBP(settings.free_shipping_threshold)}`
+                      : formatGBP(settings.standard_shipping_fee)}
                 </span>
               </div>
             </div>

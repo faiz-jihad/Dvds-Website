@@ -57,7 +57,7 @@ Deno.serve(async (request) => {
 
     const shipping = deliveryTier === 'express'
       ? Number(settings.express_shipping_fee)
-      : (Number(settings.free_shipping_threshold) <= 0 || Number(settings.standard_shipping_fee) === 0 || subtotal >= Number(settings.free_shipping_threshold))
+      : (Number(settings.standard_shipping_fee) === 0 || (Number(settings.free_shipping_threshold) > 0 && subtotal >= Number(settings.free_shipping_threshold)))
       ? 0
       : Number(settings.standard_shipping_fee);
 

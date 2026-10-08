@@ -94,12 +94,12 @@ export const useCartStore = create<CartState>()(
       getSubtotal: () => get().items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0),
       getShippingFee: () => {
         const subtotal = get().getSubtotal();
-        const { freeShippingThreshold, standardShippingRate } = get();
         if (subtotal === 0) return 0;
-        if (freeShippingThreshold != null && freeShippingThreshold <= 0) return 0;
-        if (standardShippingRate != null && standardShippingRate <= 0) return 0;
-        if (freeShippingThreshold == null || standardShippingRate == null) return 0;
-        return subtotal >= freeShippingThreshold ? 0 : standardShippingRate;
+        const rate = Number(get().standardShippingRate ?? 0);
+        if (rate <= 0) return 0;
+        const threshold = Number(get().freeShippingThreshold ?? 0);
+        if (threshold > 0 && subtotal >= threshold) return 0;
+        return rate;
       },
       getDiscountAmount: () => {
         const subtotal = get().getSubtotal();
@@ -110,8 +110,9 @@ export const useCartStore = create<CartState>()(
       getItemCount: () => get().items.reduce((count, item) => count + item.quantity, 0),
       getFreeShippingProgress: () => {
         const subtotal = get().getSubtotal();
-        const threshold = get().freeShippingThreshold ?? 0;
-        if (threshold <= 0) {
+        const threshold = Number(get().freeShippingThreshold ?? 0);
+        const rate = Number(get().standardShippingRate ?? 0);
+        if (rate <= 0 || threshold <= 0) {
           return { threshold: 0, remaining: 0, percentage: 100 };
         }
         return {

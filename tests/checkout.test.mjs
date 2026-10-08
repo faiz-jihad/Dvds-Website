@@ -21,7 +21,8 @@ test('server quotes actual prices, delivery and integer-pence totals', () => {
   assert.equal(result.delivery.express.name, 'Priority');
   assert.equal(quote().total_amount, 23.45);
   assert.equal(quote({}, null, '', 'standard', 3).shipping_amount, 0);
-  assert.equal(quote({ free_shipping_threshold: 0 }).shipping_amount, 0);
+  assert.equal(quote({ standard_shipping_fee: 0 }).shipping_amount, 0);
+  assert.equal(quote({ free_shipping_threshold: 0 }).shipping_amount, 2.95);
   assert.equal(quote({ express_shipping_fee: 0 }, null, '', 'express').shipping_amount, 0);
 });
 

@@ -200,9 +200,30 @@ export function calculateQuote(items, products, settings, promo, promoCode, deli
   if (!code) throw new CheckoutError('Choose a valid delivery country.');
   let standard, express, delivery, zoneName = 'United Kingdom';
   if (code === 'GB') {
-    standard = Number(settings.free_shipping_threshold) <= 0 || subtotal >= money(settings.free_shipping_threshold) ? 0 : money(settings.standard_shipping_fee);
+    const stdFee = money(settings.standard_shipping_fee);
+    const freeThreshold = settings.free_shipping_threshold != null && Number(settings.free_shipping_threshold) > 0
+      ? money(settings.free_shipping_threshold)
+      : null;
+    if (stdFee === 0) {
+      standard = 0;
+    } else if (freeThreshold != null && subtotal >= freeThreshold) {
+      standard = 0;
+    } else {
+      standard = stdFee;
+    }
     express = money(settings.express_shipping_fee);
-    delivery = { standard: { name: settings.standard_shipping_name, eta: settings.standard_shipping_eta, amount: standard / 100 }, express: { name: settings.express_shipping_name, eta: settings.express_shipping_eta, amount: express / 100 } };
+    delivery = {
+      standard: {
+        name: settings.standard_shipping_name || 'Royal Mail Tracked 48',
+        eta: settings.standard_shipping_eta || '2-3 working days',
+        amount: standard / 100,
+      },
+      express: {
+        name: settings.express_shipping_name || 'DPD Next Day Priority',
+        eta: settings.express_shipping_eta || '1 working day (Order by 2PM)',
+        amount: express / 100,
+      },
+    };
   } else {
     const rawZones = Array.isArray(settings.shipping_zones) && settings.shipping_zones.length > 0
       ? settings.shipping_zones
