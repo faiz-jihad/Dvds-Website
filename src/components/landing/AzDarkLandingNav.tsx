@@ -333,22 +333,6 @@ export const AzDarkLandingNav: React.FC = () => {
             {isDark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
 
-          {/* Quick Admin Portal Button (Desktop) */}
-          {isPrivilegedUser && (
-            <Link
-              to="/admin"
-              className={cn(
-                'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-xs border',
-                isDark
-                  ? 'bg-brand-blue/20 hover:bg-brand-blue text-blue-300 hover:text-white border-brand-blue/40 hover:shadow-brand-blue/20'
-                  : 'bg-brand-blue/10 hover:bg-brand-blue text-brand-blue hover:text-white border-brand-blue/30 hover:shadow-brand-blue/20'
-              )}
-              title="Open Admin Console"
-            >
-              <ShieldCheck size={14} className="shrink-0" />
-              <span>Admin Console</span>
-            </Link>
-          )}
 
           {/* ── Customer Account Menu with Dark/Light Mode Toggle (Item 6) ── */}
           <div ref={accountRef} className="relative">

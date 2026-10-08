@@ -28,6 +28,11 @@ import {
   Flame,
   Tag,
   Percent,
+  CreditCard,
+  Globe,
+  Mail,
+  Phone,
+  ShieldCheck,
 } from 'lucide-react';
 import { extractYouTubeVideoId } from '../../components/landing/AzCinematicHero';
 import { adminApi } from '../../lib/adminApi';
@@ -165,7 +170,7 @@ export const AdminStoreSettings: React.FC = () => {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const dirty = useRef(false);
   const products = productsQuery.data || [];
-  const [activeTab, setActiveTab] = useState<'hero' | 'campaign' | 'curator' | 'logistics' | 'payments'>('hero');
+  const [activeTab, setActiveTab] = useState<'identity' | 'hero' | 'campaign' | 'curator' | 'logistics' | 'payments'>('identity');
   const [isSaving, setIsSaving] = useState(false);
   const [previewTrailerIndex, setPreviewTrailerIndex] = useState(0);
   const addToast = useUiStore((state) => state.addToast);
@@ -187,21 +192,21 @@ export const AdminStoreSettings: React.FC = () => {
     if (!settings) return;
 
     // Validate core storefront identity with sensible fallbacks
-    const storeName = (settings.store_name || '').trim() || 'DVDs Zone';
+    const storeName = (settings.store_name || '').trim() || 'DVD ZONE';
     const companyName = (settings.registered_company_name || '').trim() || 'DVDs Zone Ltd';
 
     // Database check constraint requires: company_number ~ '^[A-Z0-9]{8}$'
     const cleanCompanyNumber = (settings.company_number || '13894195').trim().toUpperCase();
     if (!/^[A-Z0-9]{8}$/.test(cleanCompanyNumber)) {
       addToast('Company number must be exactly 8 alphanumeric characters (e.g. 13894195).', 'error');
-      setActiveTab('logistics');
+      setActiveTab('identity');
       return;
     }
 
     const supportEmail = (settings.support_email || '').trim();
     if (supportEmail && !/^\S+@\S+\.\S+$/.test(supportEmail)) {
       addToast('Please enter a valid customer support email address.', 'error');
-      setActiveTab('logistics');
+      setActiveTab('identity');
       return;
     }
 
@@ -217,8 +222,6 @@ export const AdminStoreSettings: React.FC = () => {
       return;
     }
 
-
-
     setIsSaving(true);
     try {
       const payload: StoreSettings = {
@@ -226,11 +229,20 @@ export const AdminStoreSettings: React.FC = () => {
         store_name: storeName,
         registered_company_name: companyName,
         company_number: cleanCompanyNumber,
+        registered_office_address: 'United Kingdom',
+        warehouse_location: 'United Kingdom',
+        support_email: supportEmail || 'azrayanltd@gmail.com',
+        support_phone: (settings.support_phone || '').trim() || '00447400320038',
         director_product_ids: Array.isArray(settings.director_product_ids)
           ? settings.director_product_ids.filter(Boolean)
           : [],
+        deal_product_id: settings.deal_product_id || null,
+        deal_discount_price: Math.max(0, Number(settings.deal_discount_price ?? 0)),
         deal_ends_at: settings.campaign_ends_at || settings.deal_ends_at || null,
         campaign_ends_at: settings.campaign_ends_at || settings.deal_ends_at || null,
+        vip_promo_code: (settings.vip_promo_code || 'ZONE10').trim().toUpperCase(),
+        vip_promo_discount: Math.max(0, Math.min(100, Number(settings.vip_promo_discount ?? 10))),
+        vip_min_spend: Math.max(0, Number(settings.vip_min_spend ?? 20)),
         bank_sort_code: settings.bank_sort_code
           ? (settings.bank_sort_code.replace(/\D/g, '').length === 6
               ? `${settings.bank_sort_code.replace(/\D/g, '').slice(0, 2)}-${settings.bank_sort_code.replace(/\D/g, '').slice(2, 4)}-${settings.bank_sort_code.replace(/\D/g, '').slice(4, 6)}`
@@ -430,14 +442,15 @@ export const AdminStoreSettings: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs - 5 main storefront management tabs */}
+      {/* Tabs - 6 main storefront management tabs */}
       <div className="-mx-4 flex snap-x items-center gap-1 overflow-x-auto border-b border-gray-200 px-4 pb-px sm:mx-0 sm:gap-2 sm:px-0">
         {[
+          { id: 'identity', label: 'Store Profile & Legal', icon: Building2 },
           { id: 'hero', label: 'Hero & Announcements', icon: Sparkles },
           { id: 'campaign', label: 'Special Offers & Campaign', icon: Flame },
           { id: 'curator', label: 'Director Spotlight', icon: Award },
           { id: 'logistics', label: 'Shipping & Logistics', icon: Truck },
-          { id: 'payments', label: 'Payment Methods & Bank', icon: Building2 },
+          { id: 'payments', label: 'Payment Gateways', icon: CreditCard },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -456,6 +469,197 @@ export const AdminStoreSettings: React.FC = () => {
       </div>
 
       <form onSubmit={handleSave} className="space-y-8">
+        {/* ==========================================
+            TAB: STORE PROFILE & LEGAL IDENTITY
+        ========================================== */}
+        {activeTab === 'identity' && (
+          <div className="space-y-6">
+            {/* Legal Company Registration & Public Record */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+              <div className="border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-blue">
+                    <Building2 className="w-4 h-4" />
+                  </span>
+                  <h2 className="font-display font-bold text-base text-dark">
+                    Official UK Company Registration &amp; Store Identity
+                  </h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Manage the registered business entity, Companies House public verification number, legal jurisdiction, and dispatch warehouse.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Input
+                  label="Registered Company / Storefront Brand *"
+                  value={settings.store_name || ''}
+                  onChange={(e) => handleChange('store_name', e.target.value)}
+                  placeholder="DVD ZONE"
+                  helperText="Customer-facing store name shown in the header, metadata, and receipts."
+                  required
+                />
+
+                <Input
+                  label="Registered Legal Entity Name *"
+                  value={settings.registered_company_name || ''}
+                  onChange={(e) => handleChange('registered_company_name', e.target.value)}
+                  placeholder="DVDs Zone Ltd"
+                  helperText="Official company name incorporated at Companies House."
+                  required
+                />
+
+                <Input
+                  label="Companies House Number (8 alphanumeric chars) *"
+                  value={settings.company_number || ''}
+                  onChange={(e) => handleChange('company_number', e.target.value.toUpperCase())}
+                  placeholder="13894195"
+                  helperText="Must be exactly 8 characters (e.g. 13894195)."
+                  required
+                />
+
+                <Input
+                  label="Companies House Public Verification URL"
+                  type="url"
+                  value={settings.companies_house_url || ''}
+                  onChange={(e) => handleChange('companies_house_url', e.target.value)}
+                  placeholder="https://find-and-update.company-information.service.gov.uk/company/13894195"
+                  helperText="Official government registry link linked on the footer and legal pages."
+                />
+
+                <Input
+                  label="Registered Office Address (United Kingdom)"
+                  value={settings.registered_office_address || 'United Kingdom'}
+                  onChange={(e) => handleChange('registered_office_address', e.target.value)}
+                  placeholder="United Kingdom"
+                  helperText="Standardized country jurisdiction across all legal disclosures."
+                />
+
+                <Input
+                  label="Dispatch Warehouse & Logistics Location"
+                  value={settings.warehouse_location || 'United Kingdom'}
+                  onChange={(e) => handleChange('warehouse_location', e.target.value)}
+                  placeholder="United Kingdom"
+                  helperText="Operational dispatch center across Royal Mail delivery networks."
+                />
+              </div>
+            </div>
+
+            {/* Official Support & Contact Information */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+              <div className="border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <Mail className="w-4 h-4" />
+                  </span>
+                  <h2 className="font-display font-bold text-base text-dark">
+                    Official Customer Support &amp; Communications
+                  </h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Primary contact channels displayed on footer, contact page, order confirmation, and payment receipts.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Input
+                  label="Customer Support Email *"
+                  type="email"
+                  value={settings.support_email || ''}
+                  onChange={(e) => handleChange('support_email', e.target.value)}
+                  placeholder="azrayanltd@gmail.com"
+                  helperText="Primary email where order receipts, enquiries, and notifications are sent."
+                  required
+                />
+
+                <Input
+                  label="Customer Support Phone"
+                  value={settings.support_phone || ''}
+                  onChange={(e) => handleChange('support_phone', e.target.value)}
+                  placeholder="00447400320038"
+                  helperText="UK helpline number displayed on contact and support documentation."
+                />
+              </div>
+            </div>
+
+            {/* SEO & Search Engine Optimization */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+              <div className="border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                    <Globe className="w-4 h-4" />
+                  </span>
+                  <h2 className="font-display font-bold text-base text-dark">
+                    SEO &amp; Search Engine Metadata
+                  </h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Global meta tags, OpenGraph sharing preview, and Google search index configuration.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="sm:col-span-2">
+                  <Input
+                    label="Site Title (SEO Title Tag)"
+                    value={settings.seo_site_title || ''}
+                    onChange={(e) => handleChange('seo_site_title', e.target.value)}
+                    placeholder="DVD ZONE — Quality DVDs & Entertainment | UK Physical Media Store"
+                    helperText="Appears in browser tabs and Google search engine results."
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Meta Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={settings.seo_site_description || ''}
+                    onChange={(e) => handleChange('seo_site_description', e.target.value)}
+                    placeholder="Quality DVDs, TV box sets, and entertainment. Free UK standard delivery on all orders. Same-day dispatch via Royal Mail."
+                    className="w-full rounded-lg border border-gray-200 p-3 text-xs text-dark focus:border-brand-blue focus:outline-none"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Recommended length: 140–160 characters for optimal Google search snippets.
+                  </p>
+                </div>
+
+                <Input
+                  label="Canonical Site URL"
+                  type="url"
+                  value={settings.seo_site_url || ''}
+                  onChange={(e) => handleChange('seo_site_url', e.target.value)}
+                  placeholder="https://dvdszone.co.uk"
+                  helperText="Primary production domain URL."
+                />
+
+                <Input
+                  label="Social Sharing Image URL (OpenGraph / Twitter Card)"
+                  type="url"
+                  value={settings.seo_social_image_url || ''}
+                  onChange={(e) => handleChange('seo_social_image_url', e.target.value)}
+                  placeholder="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&auto=format&fit=crop&q=80"
+                  helperText="Image displayed when pages are shared on WhatsApp, Facebook, or X."
+                />
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Organization Structured Data Description (Schema.org)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={settings.seo_organization_description || ''}
+                    onChange={(e) => handleChange('seo_organization_description', e.target.value)}
+                    placeholder="Independent physical media retailer operated by DVDs Zone, based in United Kingdom."
+                    className="w-full rounded-lg border border-gray-200 p-3 text-xs text-dark focus:border-brand-blue focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ==========================================
             TAB 1: HERO & ANNOUNCEMENTS
         ========================================== */}
@@ -1423,6 +1627,54 @@ export const AdminStoreSettings: React.FC = () => {
               )}
             </div>
 
+            {/* VIP Promo Code Settings */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+              <div className="border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                    <Tag className="w-4 h-4" />
+                  </span>
+                  <h3 className="font-display font-bold text-sm text-dark">
+                    VIP Club Voucher &amp; Member Promo Code
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Configure default VIP membership code, discount rate, and minimum spend eligibility.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <Input
+                  label="VIP Promo Code"
+                  value={settings.vip_promo_code || ''}
+                  onChange={(e) => handleChange('vip_promo_code', e.target.value.toUpperCase())}
+                  placeholder="ZONE10"
+                  helperText="Checkout voucher code for collectors club."
+                />
+
+                <Input
+                  label="Discount Percentage (%)"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={settings.vip_promo_discount ?? 10}
+                  onChange={(e) => handleChange('vip_promo_discount', Math.max(0, Math.min(100, Number(e.target.value))))}
+                  helperText="Percentage reduction applied to cart subtotal."
+                />
+
+                <Input
+                  label="Minimum Order Spend (£)"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={settings.vip_min_spend ?? 20}
+                  onChange={(e) => handleChange('vip_min_spend', Math.max(0, Number(e.target.value)))}
+                  helperText="Minimum subtotal required to activate code."
+                />
+              </div>
+            </div>
+
             {/* Real-time Interactive Preview */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -1618,15 +1870,22 @@ export const AdminStoreSettings: React.FC = () => {
         )}
 
         {/* ==========================================
-            TAB 3: SHIPPING, FEES & LOGISTICS
+            TAB: SHIPPING, FEES & LOGISTICS
         ========================================== */}
         {activeTab === 'logistics' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
               <div className="border-b border-gray-100 pb-3">
-                <h2 className="font-display font-bold text-base text-dark">UK Logistics, Royal Mail & Warehouse</h2>
-                <p className="text-xs text-gray-500">
-                  Configure delivery thresholds, fees, dispatch cutoff times, and official warehouse contact information.
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-blue">
+                    <Truck className="w-4 h-4" />
+                  </span>
+                  <h2 className="font-display font-bold text-base text-dark">
+                    UK Delivery Rates, Royal Mail &amp; Inventory Thresholds
+                  </h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Configure delivery thresholds, fees, service carrier names, dispatch cutoff times, and low stock alert warnings.
                 </p>
               </div>
 
@@ -1694,72 +1953,6 @@ export const AdminStoreSettings: React.FC = () => {
                 <Input label="Standard Delivery Estimate" value={settings.standard_shipping_eta || ''} onChange={(e) => handleChange('standard_shipping_eta', e.target.value)} placeholder="Customer-facing estimate" />
                 <Input label="Express Service Name" value={settings.express_shipping_name || ''} onChange={(e) => handleChange('express_shipping_name', e.target.value)} placeholder="Carrier and service" />
                 <Input label="Express Delivery Estimate" value={settings.express_shipping_eta || ''} onChange={(e) => handleChange('express_shipping_eta', e.target.value)} placeholder="Customer-facing estimate" />
-
-                <Input
-                  label="Registered Company / Store Name *"
-                  value={settings.store_name || ''}
-                  onChange={(e) => handleChange('store_name', e.target.value)}
-                  placeholder="DVDs Zone"
-                  required
-                />
-
-                <Input
-                  label="Registered Legal Entity *"
-                  value={settings.registered_company_name || ''}
-                  onChange={(e) => handleChange('registered_company_name', e.target.value)}
-                  placeholder="DVDs Zone Ltd"
-                  required
-                />
-
-                <Input
-                  label="Companies House Number (8 chars) *"
-                  value={settings.company_number || ''}
-                  onChange={(e) => handleChange('company_number', e.target.value.toUpperCase())}
-                  placeholder="13894195"
-                  helperText="Must be 8 alphanumeric characters (e.g. 13894195)"
-                  required
-                />
-
-                <div className="sm:col-span-3">
-                  <Input
-                    label="Registered Office Address"
-                    value={settings.registered_office_address || ''}
-                    onChange={(e) => handleChange('registered_office_address', e.target.value)}
-                    placeholder="Official Companies House registered office"
-                  />
-                </div>
-
-                <div className="sm:col-span-3">
-                  <Input
-                    label="Companies House Public Record URL"
-                    type="url"
-                    value={settings.companies_house_url || ''}
-                    onChange={(e) => handleChange('companies_house_url', e.target.value)}
-                    placeholder="https://find-and-update.company-information.service.gov.uk/company/..."
-                  />
-                </div>
-
-                <Input
-                  label="Store / Warehouse Location"
-                  value={settings.warehouse_location || ''}
-                  onChange={(e) => handleChange('warehouse_location', e.target.value)}
-                  placeholder="Operational dispatch location"
-                />
-
-                <Input
-                  label="Customer Support Email"
-                  type="email"
-                  value={settings.support_email || ''}
-                  onChange={(e) => handleChange('support_email', e.target.value)}
-                  placeholder="azrayanltd@gmail.com"
-                />
-
-                <Input
-                  label="Customer Support Phone"
-                  value={settings.support_phone || ''}
-                  onChange={(e) => handleChange('support_phone', e.target.value)}
-                  placeholder="00447400320038"
-                />
               </div>
             </div>
 

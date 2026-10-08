@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { COUNTRIES, CURRENCIES, ShippingZone } from '../../../shared/commerce.js';
 import { StoreSettings } from '../../types';
 import { Input } from '../common/Input';
@@ -9,7 +9,10 @@ export function InternationalShippingSettings({ settings, onChange }: { settings
   const change = (id: string, values: Partial<ShippingZone>) => onChange('shipping_zones', zones.map((zone) => zone.id === id ? { ...zone, ...values } : zone));
   return <section className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
     <div><h3 className="font-semibold text-lg">International delivery & currencies</h3><p className="text-sm text-gray-500 mt-2">Prices and delivery fees are managed in GBP. Checkout converts them using a server-verified exchange rate and saves the chosen currency with the order.</p></div>
-    <fieldset><legend className="text-sm font-semibold mb-2">Accepted checkout currencies</legend><div className="flex flex-wrap gap-4">{CURRENCIES.map((currency) => <label key={currency} className="inline-flex gap-2 text-sm items-center"><input type="checkbox" checked={settings.checkout_currencies.includes(currency)} disabled={currency === 'GBP'} onChange={(event) => onChange('checkout_currencies', event.target.checked ? [...settings.checkout_currencies, currency] : settings.checkout_currencies.filter((code) => code !== currency))} />{currency}</label>)}</div><p className="text-xs text-gray-500 mt-2">Enable these currencies in your payment provider account too. IDR uses card payments. Bank transfers remain UK / GBP only.</p></fieldset>
+    <fieldset><legend className="text-sm font-semibold mb-2">Accepted checkout currencies</legend><div className="flex flex-wrap gap-4">{CURRENCIES.map((currency) => {
+      const activeCurrencies = Array.isArray(settings.checkout_currencies) ? settings.checkout_currencies : ['GBP', 'EUR', 'USD'];
+      return <label key={currency} className="inline-flex gap-2 text-sm items-center"><input type="checkbox" checked={activeCurrencies.includes(currency)} disabled={currency === 'GBP'} onChange={(event) => onChange('checkout_currencies', event.target.checked ? [...activeCurrencies, currency] : activeCurrencies.filter((code) => code !== currency))} />{currency}</label>;
+    })}</div><p className="text-xs text-gray-500 mt-2">Enable these currencies in your payment provider account too. IDR uses card payments. Bank transfers remain UK / GBP only.</p></fieldset>
     <label className="block text-sm font-semibold">International duties notice<textarea className="block w-full border border-gray-200 rounded-lg p-3 mt-2 text-sm font-normal" rows={3} required value={settings.international_duties_notice} onChange={(event) => onChange('international_duties_notice', event.target.value)} /></label>
     <p className="text-sm text-gray-600">Only countries in enabled zones can order. Set verified flat fees per order and realistic delivery estimates before enabling a zone. UK services use the domestic settings above.</p>
     {zones.map((zone) => <div key={zone.id} className="border border-gray-200 rounded-xl p-4 space-y-4">
