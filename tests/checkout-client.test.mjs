@@ -103,8 +103,11 @@ test('checkout renders accessible payment radios, configured delivery, and unava
   });
   const html = render(CheckoutPage, '/checkout');
   assert.ok(html.includes('Admin express'));
-  assert.equal((html.match(/name="payment"/g) || []).length, 3);
-  assert.equal((html.match(/Temporarily unavailable/g) || []).length, 2);
+  assert.equal((html.match(/name="payment"/g) || []).length, 4);
+  assert.ok(html.includes('Apple Pay'));
+  assert.ok(html.includes('Amazon Pay'));
+  assert.ok(!html.includes('UK Bank Transfer'));
+  assert.equal((html.match(/Temporarily unavailable/g) || []).length, 1);
   assert.ok(html.includes('Continue to secure payment'));
   assert.ok(!html.includes('Pay in 3'));
   assert.ok(!html.includes('13894195'));

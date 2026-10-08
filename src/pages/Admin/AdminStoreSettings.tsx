@@ -1974,7 +1974,7 @@ export const AdminStoreSettings: React.FC = () => {
 
             <div className="grid sm:grid-cols-2 gap-3">
               {([
-                ['payment_card_enabled', 'Visa / Mastercard / Apple Pay (Stripe)'],
+                ['payment_card_enabled', 'Visa / Mastercard / Apple Pay / Amazon Pay (Stripe)'],
                 ['payment_paypal_enabled', 'PayPal Express Checkout'],
               ] as const).map(([field, label]) => (
                 <label key={field} className="flex items-center gap-3 border border-gray-200 rounded-xl p-4 text-xs font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
@@ -1993,7 +1993,7 @@ export const AdminStoreSettings: React.FC = () => {
               <CheckCircle2 className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
               <div>
                 <strong className="block mb-0.5">Active Payment Gateways:</strong>
-                <span>Checkout is restricted to Stripe (Credit/Debit Card, Apple Pay, Google Pay) and PayPal. Manual company bank transfers are disabled.</span>
+                <span>Checkout is restricted to Stripe (Credit/Debit Card, Apple Pay, Amazon Pay, Google Pay) and PayPal. Manual company bank transfers are disabled.</span>
               </div>
             </div>
           </section>

@@ -92,19 +92,57 @@ const PaypalIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" })
   </svg>
 );
 
+const ApplePayBadge: React.FC<{ className?: string }> = ({ className = "h-5" }) => (
+  <div className="flex items-center gap-1 bg-black text-white px-2 py-0.5 rounded font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
+    <ApplePayIcon className="w-3.5 h-3.5 fill-white" />
+    <span>Pay</span>
+  </div>
+);
+
+const AmazonPayBadge: React.FC<{ className?: string }> = ({ className = "h-5" }) => (
+  <div className="flex items-center gap-1 bg-[#232F3E] text-white px-2 py-0.5 rounded font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
+    <span className="text-white font-black">amazon</span>
+    <span className="text-[#FF9900] font-black">pay</span>
+  </div>
+);
+
 const methods = [
   {
     id: "card" as const,
-    name: "Visa debit or credit card",
+    backendId: "card" as const,
+    name: "Visa, Mastercard & Debit Card",
     icon: VisaCardIcon,
     description:
-      "Pay securely with any Visa, Mastercard, or debit/credit card.",
+      "Pay securely with any Visa, Mastercard, American Express, or UK debit card.",
     detail:
       "You will be redirected to Stripe's secure 256-bit bank-grade checkout to complete payment with your card.",
     badge: "Powered by Stripe",
   },
   {
+    id: "apple_pay" as const,
+    backendId: "card" as const,
+    name: "Apple Pay",
+    icon: ApplePayBadge,
+    description:
+      "Instant 1-touch checkout with Touch ID or Face ID via Stripe.",
+    detail:
+      "Pay instantly using cards stored in your Apple Wallet. Processed safely with biometric authentication via Stripe.",
+    badge: "Powered by Stripe",
+  },
+  {
+    id: "amazon_pay" as const,
+    backendId: "card" as const,
+    name: "Amazon Pay",
+    icon: AmazonPayBadge,
+    description:
+      "Use your Amazon account payment methods and addresses via Stripe.",
+    detail:
+      "Sign in to your Amazon account to complete payment securely without re-entering card details, processed via Stripe.",
+    badge: "Powered by Stripe",
+  },
+  {
     id: "paypal" as const,
+    backendId: "paypal" as const,
     name: "PayPal",
     icon: PaypalIcon,
     description:
@@ -112,16 +150,6 @@ const methods = [
     detail:
       "Continue to PayPal to approve your payment securely, then return to your order confirmation.",
     badge: "PayPal checkout",
-  },
-  {
-    id: "bank_transfer" as const,
-    name: "UK Bank Transfer",
-    icon: Wallet,
-    description:
-      "Direct transfer to our UK bank account. Order is reserved for 20 minutes.",
-    detail:
-      "Account number, sort code and payment reference will be shown on the order confirmation page.",
-    badge: "Bank transfer",
   },
 ];
 
@@ -185,10 +213,16 @@ export const CheckoutPage: React.FC = () => {
   const [tier, setTier] = useState<"standard" | "express">(
     () => savedDraft?.tier || "standard",
   );
-  const [method, setMethod] = useState<PaymentMethodType>(
-    () => ((savedDraft?.method as PaymentMethodType) || "card"),
+  const [method, setMethod] = useState<UiPaymentMethod>(
+    () => {
+      const saved = savedDraft?.method as UiPaymentMethod;
+      if (saved === "card" || saved === "apple_pay" || saved === "amazon_pay" || saved === "paypal") {
+        return saved;
+      }
+      return "card";
+    },
   );
-  const backendMethod: PaymentMethodType = method;
+  const backendMethod: PaymentMethodType = method === "paypal" ? "paypal" : "card";
   const [promo, setPromo] = useState<string>(
     () => savedDraft?.promo ?? (appliedPromo || ""),
   );
@@ -248,14 +282,13 @@ export const CheckoutPage: React.FC = () => {
 
   useEffect(() => {
     if (quote) {
-      const isCurrentAvailable = Boolean(quote.methods[method]);
+      const isCurrentAvailable = Boolean(quote.methods[backendMethod]);
       if (!isCurrentAvailable) {
         if (quote.methods.card) setMethod("card");
         else if (quote.methods.paypal) setMethod("paypal");
-        else if (quote.methods.bank_transfer) setMethod("bank_transfer");
       }
     }
-  }, [quote, method]);
+  }, [quote, backendMethod]);
 
   const savedAddressesQuery = useQuery({
     queryKey: ["account", "addresses"],
@@ -521,50 +554,7 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    // 2. IF BANK TRANSFER: proceed with UK bank transfer order
-    if (method === "bank_transfer") {
-      setBusy(true);
-      setError("");
-
-      if (attempt?.orderId) {
-        try {
-          await checkoutApi.cancel(attempt.orderId);
-        } catch {
-          // ignore cancellation error
-        }
-      }
-      forgetCheckoutAttempt();
-      setAttempt(null);
-
-      try {
-        const result = await checkoutApi.create("bank_transfer", {
-          items: basket,
-          customerEmail: email,
-          shippingAddress: { ...address, ...validatedAddress },
-          deliveryTier: tier,
-          promoCode: promo,
-          expectedTotal: quote.total_amount,
-          currency: quote.currency || currency,
-          internationalAcknowledged,
-        });
-        setAttempt(currentCheckoutAttempt());
-        clearCheckoutDraft();
-        navigate(`/order-success/${result.orderId}`);
-      } catch (cause) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Bank transfer order could not be placed. Please retry.",
-        );
-        setAttempt(currentCheckoutAttempt());
-        await quoteQuery.refetch();
-      } finally {
-        setBusy(false);
-      }
-      return;
-    }
-
-    // 3. STRIPE CARD PAYMENT:
+    // 2. STRIPE PAYMENT (Card, Apple Pay, Amazon Pay):
     setBusy(true);
     setError("");
 
@@ -1214,7 +1204,7 @@ export const CheckoutPage: React.FC = () => {
                 className="space-y-3 clear-both mt-1"
               >
                 {methods.map((option) => {
-                  const isAvailable = Boolean(quote ? quote.methods[option.id] : true);
+                  const isAvailable = Boolean(quote ? quote.methods[option.backendId] : true);
                   const selected = method === option.id;
                   const Icon = option.icon;
 
@@ -1475,16 +1465,18 @@ export const CheckoutPage: React.FC = () => {
                   ? "Please wait..."
                   : quoteQuery.isFetching
                     ? "Updating total..."
-                    : method === "bank_transfer"
-                      ? "Place order - pay by bank transfer"
-                      : method === "paypal"
-                        ? "Continue with PayPal"
-                        : "Continue to secure payment"}
+                    : method === "apple_pay"
+                      ? "Pay with Apple Pay"
+                      : method === "amazon_pay"
+                        ? "Pay with Amazon Pay"
+                        : method === "paypal"
+                          ? "Continue with PayPal"
+                          : "Continue to secure payment"}
               </span>
               <ArrowRight size={17} className="shrink-0" />
             </button>
             <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400 mt-3 text-center">
-              You will review and complete payment securely {method === "paypal" ? "via PayPal" : "directly on this page"}.
+              You will review and complete payment securely {method === "paypal" ? "via PayPal" : "via Stripe (256-bit SSL encrypted)"}.
             </p>
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-5 pt-5 border-t border-gray-100 dark:border-white/10">
               <Truck size={15} /> Delivery to {countryName(address.country)}
