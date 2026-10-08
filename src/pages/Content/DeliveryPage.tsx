@@ -54,7 +54,7 @@ export const DeliveryPage: React.FC = () => {
     },
     {
       q: 'What happens if my disc or case arrives damaged?',
-      a: 'We inspect every item before packaging, but transit accidents happen. If a case or disc arrives damaged, email support@dvdszone.co.uk with your order number and we will arrange a quick replacement or refund.',
+      a: 'We inspect every item before packaging, but transit accidents happen. If a case or disc arrives damaged, email azrayanltd@gmail.com with your order number and we will arrange a quick replacement or refund.',
     },
   ];
 
@@ -198,8 +198,8 @@ export const DeliveryPage: React.FC = () => {
                 <Mail className="w-3.5 h-3.5 text-brand-blue dark:text-blue-400" />
                 <span>Email Inquiries</span>
               </div>
-              <a href={`mailto:${settings.support_email || 'support@dvdszone.co.uk'}`} className="text-brand-blue dark:text-blue-400 hover:underline block font-mono">
-                {settings.support_email || 'support@dvdszone.co.uk'}
+              <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline block font-mono">
+                {settings.support_email || 'azrayanltd@gmail.com'}
               </a>
               <p className="text-[11px] text-gray-500 dark:text-gray-400">Replies usually within a few hours</p>
             </div>

@@ -6,7 +6,7 @@ import { formatMoney } from '../shared/commerce.js';
  * or graceful simulated delivery in local/test environments.
  */
 export async function sendEmail({ to, subject, html, text }) {
-  const fromEmail = process.env.EMAIL_FROM || 'DVDs Zone <orders@dvdszone.co.uk>';
+  const fromEmail = process.env.EMAIL_FROM || 'DVDs Zone <azrayanltd@gmail.com>';
   const resendKey = process.env.RESEND_API_KEY;
   const sendgridKey = process.env.SENDGRID_API_KEY;
 
@@ -48,7 +48,7 @@ export async function sendEmail({ to, subject, html, text }) {
         },
         body: JSON.stringify({
           personalizations: [{ to: (Array.isArray(to) ? to : [to]).map((email) => ({ email })) }],
-          from: { email: fromEmail.replace(/.*<([^>]+)>.*/, '$1') || 'orders@dvdszone.co.uk', name: 'DVDs Zone' },
+          from: { email: fromEmail.replace(/.*<([^>]+)>.*/, '$1') || 'azrayanltd@gmail.com', name: 'DVDs Zone' },
           subject,
           content: [
             { type: 'text/plain', value: text },
@@ -191,7 +191,7 @@ View your order online:
 ${viewOrderUrl}
 
 Thank you for shopping with DVDs Zone.
-If you have any questions regarding your order, please contact our support team at support@dvdszone.co.uk.
+If you have any questions regarding your order, please contact our support team at azrayanltd@gmail.com.
 `;
 
   // Clean, responsive, branded HTML receipt
@@ -294,7 +294,7 @@ If you have any questions regarding your order, please contact our support team 
       </div>
       <div class="footer">
         <p style="margin: 0 0 6px;">Thank you for shopping with <strong>DVDs Zone</strong>.</p>
-        <p style="margin: 0;">If you have any questions regarding your order, please contact our support team at <a href="mailto:support@dvdszone.co.uk" style="color: #1E40AF; text-decoration: none;">support@dvdszone.co.uk</a>.</p>
+        <p style="margin: 0;">If you have any questions regarding your order, please contact our support team at <a href="mailto:azrayanltd@gmail.com" style="color: #1E40AF; text-decoration: none;">azrayanltd@gmail.com</a>.</p>
         <p style="margin: 12px 0 0; font-size: 11px; color: #94A3B8;">This is an automated transaction receipt. No sensitive card credentials or CVV codes are stored or transmitted.</p>
       </div>
     </div>
@@ -331,7 +331,7 @@ If you have any questions regarding your order, please contact our support team 
  * Generate and send the automated Admin Business Performance Report.
  */
 export async function sendAdminBusinessReport(db, report) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@dvdszone.co.uk';
+  const adminEmail = process.env.ADMIN_EMAIL || 'azrayanltd@gmail.com';
   const { type, periodStart, periodEnd, summary, topProducts, expenses, orderStatuses, weeklyTrend } = report;
 
   const currency = 'GBP';

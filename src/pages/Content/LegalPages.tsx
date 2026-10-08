@@ -40,7 +40,7 @@ const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath
           <p>Company based in 2022: <strong>DVDs Zone</strong>, registered in England and Wales.</p>
           <p>Company number: {settings.company_number || '13894195'}</p>
           <p>{settings.warehouse_location || 'United Kingdom'}</p>
-          <p>Customer service &amp; inquiry email: <a href="mailto:support@dvdszone.co.uk" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">support@dvdszone.co.uk</a> • Customer Line: <a href="tel:+447400320038" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">00447400320038</a></p>
+          <p>Customer service &amp; inquiry email: <a href="mailto:azrayanltd@gmail.com" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">azrayanltd@gmail.com</a> • Customer Line: <a href="tel:+447400320038" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">00447400320038</a></p>
           <a
             href={settings.companies_house_url || 'https://find-and-update.company-information.service.gov.uk/company/13894195'}
             target="_blank"
@@ -94,7 +94,7 @@ export const PrivacyPage: React.FC = () => (
 
         <h3 className="font-display font-bold text-sm text-dark dark:text-white pt-2">Customer Service &amp; Inquiries</h3>
         <p>
-          Privacy enquiries and data rights requests can be sent to our customer service and inquiry email address: <a href="mailto:support@dvdszone.co.uk" className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">support@dvdszone.co.uk</a>, or via our Customer Line: <a href="tel:+447400320038" className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">00447400320038</a>.
+          Privacy enquiries and data rights requests can be sent to our customer service and inquiry email address: <a href="mailto:azrayanltd@gmail.com" className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">azrayanltd@gmail.com</a>, or via our Customer Line: <a href="tel:+447400320038" className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">00447400320038</a>.
         </p>
       </>
     )}
@@ -113,7 +113,7 @@ export const TermsPage: React.FC = () => (
         <h3 className="font-display font-bold text-sm text-dark dark:text-white pt-2">Orders & Pricing</h3>
         <p>Prices are shown in GBP (£). The total price, delivery charge and any discount are displayed before payment. Obvious pricing or stock errors may be corrected before dispatch, with the customer notified where an order is affected.</p>
         <h3 className="font-display font-bold text-sm text-dark dark:text-white pt-2">Customer Support</h3>
-        <p>Questions about an order can be sent to {settings.support_email || 'support@dvdszone.co.uk'}. The registered office is a legal correspondence address and is not automatically the returns address.</p>
+        <p>Questions about an order can be sent to {settings.support_email || 'azrayanltd@gmail.com'}. The registered office is a legal correspondence address and is not automatically the returns address.</p>
       </>
     )}
   </LegalPage>
@@ -131,7 +131,7 @@ export const RefundPolicyPage: React.FC = () => (
         <h3 className="font-display font-bold text-sm text-dark dark:text-white pt-2">Cancellation and Returns</h3>
         <p>For eligible distance purchases, customers may tell us they wish to cancel within 14 days after receiving the goods, then have a further 14 days to return them. The cancellation right does not normally apply to sealed audio or video recordings once they have been unsealed. Faulty or misdescribed goods remain covered by statutory rights.</p>
         <h3 className="font-display font-bold text-sm text-dark dark:text-white pt-2">Before Sending a Return</h3>
-        <p>Contact {settings.support_email || 'support@dvdszone.co.uk'} for the correct returns address and instructions. Do not send returns to the registered office unless customer support explicitly confirms it.</p>
+        <p>Contact {settings.support_email || 'azrayanltd@gmail.com'} for the correct returns address and instructions. Do not send returns to the registered office unless customer support explicitly confirms it.</p>
       </>
     )}
   </LegalPage>

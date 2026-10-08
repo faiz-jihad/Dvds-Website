@@ -46,7 +46,7 @@ BEGIN
       role = CASE WHEN LOWER(EXCLUDED.email) = 'admin@azrayan.co.uk' THEN 'admin' ELSE profiles.role END;
   RETURN NEW;
 EXCEPTION WHEN OTHERS THEN
-  -- Selalu izinkan registrasi auth berhasil meskipun profile sync ada kendala
+  -- Always allow auth registration to succeed even if profile sync encounters an error
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

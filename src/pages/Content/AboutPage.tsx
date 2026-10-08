@@ -65,8 +65,8 @@ export const AboutPage: React.FC = () => {
               <div>
                 <span className="font-semibold text-dark dark:text-white">Customer service and inquiry email address:</span>
                 <br />
-                <a href={`mailto:${settings.support_email || 'support@dvdszone.co.uk'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">
-                  {settings.support_email || 'support@dvdszone.co.uk'}
+                <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">
+                  {settings.support_email || 'azrayanltd@gmail.com'}
                 </a>
               </div>
             </div>

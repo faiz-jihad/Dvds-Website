@@ -133,9 +133,9 @@ export const ContactPage: React.FC = () => {
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-16 transition-colors">
       <Seo
         title="Contact DVD ZONE — Customer Service & Inquiries | UK DVD Store"
-        description="Contact DVD ZONE. Headquarter & Vault: DVD ZONE, United Kingdom. Customer service and inquiry email address: support@dvdszone.co.uk. Customer Line: 00447400320038."
+        description="Contact DVD ZONE. Headquarter & Vault: DVD ZONE, United Kingdom. Customer service and inquiry email address: azrayanltd@gmail.com. Customer Line: 00447400320038."
         canonicalPath="/contact"
-        keywords="contact DVD ZONE, UK DVD customer service, DVD customer support, film shop contact, UK DVD inquiries, email support@dvdszone.co.uk"
+        keywords="contact DVD ZONE, UK DVD customer service, DVD customer support, film shop contact, UK DVD inquiries, email azrayanltd@gmail.com"
         siteName="DVD ZONE"
         jsonLd={{
           '@context': 'https://schema.org',
@@ -147,7 +147,7 @@ export const ContactPage: React.FC = () => {
             '@type': 'LocalBusiness',
             name: 'DVD ZONE',
             telephone: '+447400320038',
-            email: 'support@dvdszone.co.uk',
+            email: 'azrayanltd@gmail.com',
             address: {
               '@type': 'PostalAddress',
               addressCountry: 'GB',
@@ -187,8 +187,8 @@ export const ContactPage: React.FC = () => {
                 <Mail className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-dark dark:text-white block font-semibold mb-0.5">Customer service and inquiry email address</strong>
-                  <a href={`mailto:${settings.support_email || 'support@dvdszone.co.uk'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">
-                    {settings.support_email || 'support@dvdszone.co.uk'}
+                  <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono font-medium">
+                    {settings.support_email || 'azrayanltd@gmail.com'}
                   </a>
                 </div>
               </div>

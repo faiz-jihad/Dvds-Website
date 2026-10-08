@@ -125,8 +125,8 @@ Set the following environment variables in your deployment environment (e.g. Ver
 
 | Variable | Description | Example Value |
 | :--- | :--- | :--- |
-| `ADMIN_EMAIL` | Destination email address for periodic reports | `admin@dvdszone.co.uk` |
-| `EMAIL_FROM` | Sender identity for receipts and reports | `DVDs Zone <orders@dvdszone.co.uk>` |
+| `ADMIN_EMAIL` | Destination email address for periodic reports | `azrayanltd@gmail.com` |
+| `EMAIL_FROM` | Sender identity for receipts and reports | `DVDs Zone <azrayanltd@gmail.com>` |
 | `RESEND_API_KEY` | *(Primary)* API key from [Resend](https://resend.com) | `re_123456789...` |
 | `SENDGRID_API_KEY` | *(Alternative)* API key from [SendGrid](https://sendgrid.com) | `SG.xxxxxxxx...` |
 | `CRON_SECRET` | Secret bearer token protecting the cron endpoint | `random-32-char-token` |

@@ -73,7 +73,7 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   registered_office_address: 'United Kingdom',
   companies_house_url: 'https://find-and-update.company-information.service.gov.uk/company/13894195',
   warehouse_location: 'United Kingdom',
-  support_email: 'support@dvdszone.co.uk',
+  support_email: 'azrayanltd@gmail.com',
   support_phone: '00447400320038',
   bank_name: 'Barclays Bank UK',
   bank_account_name: 'DVDs Zone Ltd',

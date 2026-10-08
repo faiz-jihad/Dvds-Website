@@ -270,7 +270,7 @@ export const SeriviaMobileDrawer: React.FC<SeriviaMobileDrawerProps> = ({
     customer?.role === 'staff' ||
     adminUser?.role === 'admin' ||
     adminUser?.role === 'staff' ||
-    (customer?.email && (customer.email.toLowerCase() === 'admin@dvdszone.co.uk' || customer.email.toLowerCase() === 'admin@azrayan.co.uk'))
+    (customer?.email && (customer.email.toLowerCase() === 'admin@dvdszone.co.uk' || customer.email.toLowerCase() === 'admin@azrayan.co.uk' || customer.email.toLowerCase() === 'azrayanltd@gmail.com'))
   );
   const { pathname } = useLocation();
 

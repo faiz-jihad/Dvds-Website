@@ -56,12 +56,12 @@ export const MobileNavDrawer: React.FC = () => {
     customer?.role === 'staff' ||
     adminUser?.role === 'admin' ||
     adminUser?.role === 'staff' ||
-    (customer?.email && (customer.email.toLowerCase() === 'admin@dvdszone.co.uk' || customer.email.toLowerCase() === 'admin@azrayan.co.uk'))
+    (customer?.email && (customer.email.toLowerCase() === 'admin@dvdszone.co.uk' || customer.email.toLowerCase() === 'admin@azrayan.co.uk' || customer.email.toLowerCase() === 'azrayanltd@gmail.com'))
   );
   const roleLabel = (
     customer?.role ||
     adminUser?.role ||
-    (customer?.email?.toLowerCase() === 'admin@dvdszone.co.uk' || customer?.email?.toLowerCase() === 'admin@azrayan.co.uk' ? 'admin' : '')
+    (customer?.email?.toLowerCase() === 'admin@dvdszone.co.uk' || customer?.email?.toLowerCase() === 'admin@azrayan.co.uk' || customer?.email?.toLowerCase() === 'azrayanltd@gmail.com' ? 'admin' : '')
   ).toUpperCase();
   const location = useLocation();
   const [genresOpen, setGenresOpen] = useState(false);

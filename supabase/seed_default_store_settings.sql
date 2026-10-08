@@ -100,7 +100,7 @@ DO UPDATE SET
   standard_shipping_fee = EXCLUDED.standard_shipping_fee,
   updated_at = NOW();
 
--- Izinkan public membaca store_settings
+-- Allow public to read store_settings
 ALTER TABLE public.store_settings ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public can read storefront settings" ON public.store_settings;

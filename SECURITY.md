@@ -147,8 +147,8 @@ Configured in `vercel.json` and served on all application responses:
 
 ## 11. Reporting Security Issues
 
-If you discover a vulnerability or security defect in AZ Rayan DVDs:
+If you discover a vulnerability or security defect in DVDs Zone:
 1. Please do **NOT** open a public issue on GitHub.
-2. Email the security team directly at **`security@azrayan.co.uk`**.
+2. Email the security team directly at **`azrayanltd@gmail.com`**.
 3. Include a detailed description of the vulnerability, steps to reproduce, and proof of concept.
 4. We acknowledge receipt within 24 hours and prioritize high and critical severity findings.

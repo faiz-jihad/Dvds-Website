@@ -127,8 +127,8 @@ PAYPAL_WEBHOOK_ID=your-paypal-webhook-id
 PAYPAL_ENVIRONMENT=sandbox
 
 # Email & Automated Business Reports
-ADMIN_EMAIL=admin@dvdszone.co.uk
-EMAIL_FROM="DVDs Zone <orders@dvdszone.co.uk>"
+ADMIN_EMAIL=azrayanltd@gmail.com
+EMAIL_FROM="DVDs Zone <azrayanltd@gmail.com>"
 RESEND_API_KEY=re_xxxxxxxxxxxx
 # Or: SENDGRID_API_KEY=SG.xxxxxxxxxxxx
 CRON_SECRET=your-random-cron-secret-token

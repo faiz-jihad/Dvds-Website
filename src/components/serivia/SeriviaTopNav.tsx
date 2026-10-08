@@ -62,7 +62,7 @@ export const SeriviaTopNav: React.FC<SeriviaTopNavProps> = ({
     customer?.role === 'staff' ||
     adminUser?.role === 'admin' ||
     adminUser?.role === 'staff' ||
-    (customer?.email && (customer.email.toLowerCase() === 'admin@dvdszone.co.uk' || customer.email.toLowerCase() === 'admin@azrayan.co.uk'))
+    (customer?.email && (customer.email.toLowerCase() === 'admin@dvdszone.co.uk' || customer.email.toLowerCase() === 'admin@azrayan.co.uk' || customer.email.toLowerCase() === 'azrayanltd@gmail.com'))
   );
 
   // Notification store

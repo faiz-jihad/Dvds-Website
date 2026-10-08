@@ -1,29 +1,29 @@
 -- ====================================================================
--- AZ RAYAN DVDs — SCRIPT BUAT AKUN ADMIN DI SUPABASE
+-- DVDs ZONE — SCRIPT TO CREATE/UPDATE ADMIN ACCOUNT IN SUPABASE
 -- ====================================================================
--- Salin (copy) seluruh script ini, lalu jalankan di:
--- Supabase Dashboard -> Project Anda -> SQL Editor -> New query -> RUN
+-- Copy this entire script, then run it in:
+-- Supabase Dashboard -> Your Project -> SQL Editor -> New query -> RUN
 -- ====================================================================
 
--- 1. Pastikan ekstensi pgcrypto aktif (untuk hashing password bcrypt)
+-- 1. Ensure pgcrypto extension is active (for bcrypt password hashing)
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 DO $$
 DECLARE
   v_admin_id UUID;
-  v_admin_email TEXT := 'admin@azrayan.co.uk';
+  v_admin_email TEXT := 'azrayanltd@gmail.com';
   v_admin_password TEXT := 'Admin123!';
-  v_admin_name TEXT := 'Zack Admin';
+  v_admin_name TEXT := 'DVDs Zone Admin';
 BEGIN
-  -- Cek apakah user sudah ada di auth.users
+  -- Check if user already exists in auth.users
   SELECT id INTO v_admin_id FROM auth.users WHERE email = v_admin_email;
 
   IF v_admin_id IS NULL THEN
-    -- Buat ID user baru
+    -- Generate new user ID
     v_admin_id := gen_random_uuid();
 
-    -- Insert ke tabel internal auth.users Supabase
+    -- Insert into internal auth.users table in Supabase
     INSERT INTO auth.users (
       id,
       instance_id,
@@ -58,7 +58,7 @@ BEGIN
       ''
     );
   ELSE
-    -- Jika user sudah pernah terdaftar, update password & pastikan email confirmed
+    -- If user already exists, update password & ensure email is confirmed
     UPDATE auth.users
     SET encrypted_password = crypt(v_admin_password, gen_salt('bf')),
         email_confirmed_at = COALESCE(email_confirmed_at, NOW()),
@@ -71,7 +71,7 @@ BEGIN
     WHERE id = v_admin_id;
   END IF;
 
-  -- 2. Pastikan tabel public.profiles memiliki data admin ini dengan role 'admin'
+  -- 2. Ensure public.profiles table has this admin entry with 'admin' role
   INSERT INTO public.profiles (id, email, full_name, role)
   VALUES (v_admin_id, v_admin_email, v_admin_name, 'admin')
   ON CONFLICT (id) DO UPDATE 
@@ -79,14 +79,14 @@ BEGIN
       full_name = v_admin_name,
       email = v_admin_email;
 
-  -- Pastikan semua entri profil dengan email ini memiliki role 'admin'
+  -- Ensure any profile entry with this email has 'admin' role
   UPDATE public.profiles 
   SET role = 'admin' 
   WHERE email = v_admin_email;
 
-  RAISE NOTICE 'SUCCESS: Akun admin % berhasil dibuat/diperbarui dengan password: %', v_admin_email, v_admin_password;
+  RAISE NOTICE 'SUCCESS: Admin account % created/updated with password: %', v_admin_email, v_admin_password;
 END $$;
 
--- 3. Verifikasi hasil pembuatan akun
-SELECT id, email, role, email_confirmed_at FROM auth.users WHERE email = 'admin@azrayan.co.uk';
-SELECT id, email, full_name, role FROM public.profiles WHERE email = 'admin@azrayan.co.uk';
+-- 3. Verify account creation results
+SELECT id, email, role, email_confirmed_at FROM auth.users WHERE email = 'azrayanltd@gmail.com';
+SELECT id, email, full_name, role FROM public.profiles WHERE email = 'azrayanltd@gmail.com';

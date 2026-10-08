@@ -309,7 +309,7 @@ export const AdminStoreSettings: React.FC = () => {
       registered_office_address: 'United Kingdom',
       companies_house_url: 'https://find-and-update.company-information.service.gov.uk/company/13894195',
       warehouse_location: 'United Kingdom',
-      support_email: 'support@dvdszone.co.uk',
+      support_email: 'azrayanltd@gmail.com',
       support_phone: '00447400320038',
       updated_at: new Date().toISOString(),
     });
@@ -1749,7 +1749,7 @@ export const AdminStoreSettings: React.FC = () => {
                   type="email"
                   value={settings.support_email || ''}
                   onChange={(e) => handleChange('support_email', e.target.value)}
-                  placeholder="support@dvdszone.co.uk"
+                  placeholder="azrayanltd@gmail.com"
                 />
 
                 <Input

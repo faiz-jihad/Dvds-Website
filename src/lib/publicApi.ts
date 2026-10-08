@@ -166,7 +166,7 @@ export const publicApi = {
     if (!result.registered_company_name || result.registered_company_name.includes('AZ Rayan')) {
       result.registered_company_name = 'DVDs Zone';
     }
-    result.support_email = data.support_email?.trim() || localOverride.support_email?.trim() || 'support@dvdszone.co.uk';
+    result.support_email = data.support_email?.trim() || localOverride.support_email?.trim() || 'azrayanltd@gmail.com';
     result.support_phone = data.support_phone?.trim() || localOverride.support_phone?.trim() || '00447400320038';
     return result;
   },
