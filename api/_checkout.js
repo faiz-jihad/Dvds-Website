@@ -458,6 +458,18 @@ export async function verifyStripe(db, order, sessionId) {
         numericAmount,
         String(paymentIntent.currency || order.currency || 'GBP').toUpperCase()
       );
+      try {
+        const { data: freshOrder } = await db.from('orders').select('*, items:order_items(*)').eq('id', order.id).maybeSingle();
+        if (freshOrder) {
+          const { sendCustomerPaymentReceipt } = await import('./_email.js');
+          await sendCustomerPaymentReceipt(db, freshOrder, {
+            paymentReference: paymentIntent.id,
+            paidAt: new Date().toISOString(),
+          });
+        }
+      } catch (receiptErr) {
+        console.warn('[verifyStripe] Customer receipt dispatch note:', receiptErr.message);
+      }
     }
     return {
       id: paymentIntent.id,
@@ -495,6 +507,18 @@ export async function verifyStripe(db, order, sessionId) {
       numericAmount,
       String(session.currency || order.currency || 'GBP').toUpperCase()
     );
+    try {
+      const { data: freshOrder } = await db.from('orders').select('*, items:order_items(*)').eq('id', order.id).maybeSingle();
+      if (freshOrder) {
+        const { sendCustomerPaymentReceipt } = await import('./_email.js');
+        await sendCustomerPaymentReceipt(db, freshOrder, {
+          paymentReference,
+          paidAt: new Date().toISOString(),
+        });
+      }
+    } catch (receiptErr) {
+      console.warn('[verifyStripe] Customer receipt dispatch note:', receiptErr.message);
+    }
   }
   if (session.status === 'expired' && order.payment_status !== 'paid') {
     check(await db.rpc('expire_checkout_order', { p_order_id: order.id, p_provider_order_id: session.id }));

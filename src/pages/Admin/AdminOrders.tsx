@@ -294,9 +294,16 @@ export const AdminOrders: React.FC = () => {
       if (selectedOrder?.id === updated.id) {
         setSelectedOrder(updated);
       }
+      // Trigger background receipt delivery to customer
+      fetch('/api/order-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: confirmingBankOrder.id }),
+      }).catch(() => {});
+
       setConfirmingBankOrder(null);
       setBankConfirmNote('');
-      addToast(`Payment confirmed for order ${updated.order_number}! Status updated to Processing.`, 'success');
+      addToast(`Payment confirmed for order ${updated.order_number}! Payment receipt email dispatched to customer.`, 'success');
     } catch (err) {
       addToast(err instanceof Error ? err.message : 'Failed to confirm bank transfer payment', 'error');
     } finally {

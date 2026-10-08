@@ -92,6 +92,17 @@ export default endpoint(async (req) => {
       amountToRecord,
       resource.amount.currency_code
     );
+
+    try {
+      const freshOrder = await loadOrder(db, order.id);
+      const { sendCustomerPaymentReceipt } = await import('./_email.js');
+      await sendCustomerPaymentReceipt(db, freshOrder || order, {
+        paymentReference: resource.id,
+        paidAt: new Date().toISOString(),
+      });
+    } catch (receiptErr) {
+      console.warn('[paypal-webhook] Customer receipt dispatch note:', receiptErr.message);
+    }
   } else if (event.event_type === 'PAYMENT.CAPTURE.REFUNDED') {
     const captureId =
       resource.supplementary_data?.related_ids?.capture_id ||

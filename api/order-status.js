@@ -63,6 +63,17 @@ export default endpoint(async (req) => {
         console.warn('[order-status] PayPal capture attempt note:', err.message);
       }
     }
+  // Ensure customer payment receipt has been dispatched once order is confirmed paid
+  if (order.payment_status === 'paid' && !order.receipt_sent_at) {
+    try {
+      const { sendCustomerPaymentReceipt } = await import('./_email.js');
+      await sendCustomerPaymentReceipt(db, order, {
+        paymentReference: order.payment_reference || 'Confirmed',
+        paidAt: order.paid_at || new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn('[order-status] Customer receipt check note:', err.message);
+    }
   }
 
   // The order status reflects verified backend / provider data.

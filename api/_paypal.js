@@ -27,4 +27,16 @@ export async function capturePayPal(db, order, paypalId) {
   const capture = captures.find((item) => item.status === 'COMPLETED');
   if (!capture || captures.length !== 1 || (unit.custom_id && unit.custom_id !== order.id)) throw new CheckoutError('PayPal payment details could not be verified.', 409);
   await recordPayment(db, order, paypalId, capture.id, Number(capture.amount.value), capture.amount.currency_code);
+  try {
+    const { data: freshOrder } = await db.from('orders').select('*, items:order_items(*)').eq('id', order.id).maybeSingle();
+    if (freshOrder) {
+      const { sendCustomerPaymentReceipt } = await import('./_email.js');
+      await sendCustomerPaymentReceipt(db, freshOrder, {
+        paymentReference: capture.id,
+        paidAt: new Date().toISOString(),
+      });
+    }
+  } catch (receiptErr) {
+    console.warn('[capturePayPal] Customer receipt dispatch note:', receiptErr.message);
+  }
 }

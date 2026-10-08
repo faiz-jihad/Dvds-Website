@@ -112,6 +112,103 @@ test('Customer receipt skips duplicate delivery if already sent', async () => {
   assert.equal(result.duplicate_skipped, true);
 });
 
+test('Customer receipt resolves items from database and displays purchased items with PayPal/Bank Transfer methods', async () => {
+  const orderId = randomUUID();
+  const mockOrderWithoutItems = {
+    id: orderId,
+    order_number: 'ORD-PP-7788',
+    email: 'customer@example.test',
+    total_amount: 25.00,
+    subtotal: 22.05,
+    shipping_amount: 2.95,
+    payment_method: 'paypal',
+    created_at: '2026-10-08T09:00:00.000Z',
+    shipping_address: {
+      full_name: 'John Smith',
+      address_line_1: '25 Baker Street',
+      city: 'London',
+      postcode: 'NW1 6XE',
+    },
+    // items is missing/empty initially
+  };
+
+  const dbItems = [
+    { product_title: 'Gladiator 4K Ultra HD', product_sku: 'DVD-GLAD', quantity: 1, unit_price: 12.05, total_price: 12.05 },
+    { product_title: 'Saving Private Ryan DVD', product_sku: 'DVD-SPR', quantity: 1, unit_price: 10.00, total_price: 10.00 },
+  ];
+
+  const loggedEmails = [];
+  const mockDb = {
+    from: (table) => {
+      if (table === 'order_items') {
+        return {
+          select: () => ({
+            eq: async () => ({ data: dbItems }),
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              in: () => ({
+                maybeSingle: async () => ({ data: null }),
+              }),
+            }),
+          }),
+        }),
+        insert: async (row) => {
+          loggedEmails.push({ table, row });
+          return { data: row, error: null };
+        },
+        update: () => ({
+          eq: async () => ({ error: null }),
+        }),
+      };
+    },
+  };
+
+  const result = await sendCustomerPaymentReceipt(mockDb, mockOrderWithoutItems, {
+    paymentReference: 'CAPTURE-998811',
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(loggedEmails.length, 1);
+  assert.equal(loggedEmails[0].row.recipient, 'customer@example.test');
+  assert.ok(loggedEmails[0].row.subject.includes('#ORD-PP-7788'));
+
+  // Test UK Bank Transfer method label
+  const bankTransferOrder = {
+    ...mockOrderWithoutItems,
+    id: randomUUID(),
+    order_number: 'ORD-BT-1122',
+    payment_method: 'bank_transfer',
+    items: dbItems,
+  };
+  const btLogged = [];
+  const mockDbBt = {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            in: () => ({
+              maybeSingle: async () => ({ data: null }),
+            }),
+          }),
+        }),
+      }),
+      insert: async (row) => {
+        btLogged.push(row);
+        return { data: row, error: null };
+      },
+      update: () => ({ eq: async () => ({}) }),
+    }),
+  };
+  const btResult = await sendCustomerPaymentReceipt(mockDbBt, bankTransferOrder, { paymentReference: 'BACS-REF-44' });
+  assert.equal(btResult.success, true);
+  assert.equal(btLogged.length, 1);
+});
+
 test('Business metrics engine calculates authoritative sales, refunds, expenses, and label', async () => {
   const o1 = {
     id: randomUUID(),

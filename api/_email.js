@@ -98,8 +98,9 @@ export async function logEmailAttempt(db, { orderId = null, recipient, emailType
  * Generate and send the professional Customer Payment Receipt.
  * Triggered ONLY by verified Stripe webhook.
  */
-export async function sendCustomerPaymentReceipt(db, order, { paymentReference, paidAt }) {
-  if (!order || !order.email) {
+export async function sendCustomerPaymentReceipt(db, order, { paymentReference, paidAt } = {}) {
+  const recipientEmail = order?.email || order?.customer_email || order?.shipping_address?.email;
+  if (!order || !recipientEmail) {
     console.warn('[email] Order has no email recipient, skipping receipt.');
     return { success: false, error: 'No recipient email on order.' };
   }
@@ -122,13 +123,26 @@ export async function sendCustomerPaymentReceipt(db, order, { paymentReference, 
     // If table not present yet, proceed
   }
 
+  let items = Array.isArray(order.items) ? order.items : [];
+  if (!items.length && db) {
+    try {
+      const { data: dbItems } = await db
+        .from('order_items')
+        .select('*')
+        .eq('order_id', order.id);
+      if (dbItems && dbItems.length) items = dbItems;
+    } catch {
+      // non-blocking
+    }
+  }
+
   const siteUrl = process.env.SITE_URL || 'https://dvdszone.co.uk';
   const orderDate = new Date(order.created_at || Date.now()).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   });
-  const formattedPaidAt = new Date(paidAt || Date.now()).toLocaleString('en-GB', {
+  const formattedPaidAt = new Date(paidAt || order.paid_at || Date.now()).toLocaleString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -150,11 +164,17 @@ export async function sendCustomerPaymentReceipt(db, order, { paymentReference, 
     address.city,
     address.county,
     address.postcode,
-    address.country,
+    address.country || 'United Kingdom',
   ].filter(Boolean).join('\n');
 
-  const items = Array.isArray(order.items) ? order.items : [];
-  const viewOrderUrl = `${siteUrl}/checkout/success?session_id=${encodeURIComponent(order.checkout_session_id || '')}&order_id=${encodeURIComponent(order.id)}`;
+  const viewOrderUrl = `${siteUrl}/order-success/${encodeURIComponent(order.id)}`;
+
+  const paymentMethodLabel =
+    order.payment_method === 'paypal' || order.payment_provider === 'paypal'
+      ? 'PayPal'
+      : order.payment_method === 'bank_transfer' || order.payment_provider === 'bank_transfer'
+        ? 'UK Bank Transfer'
+        : 'Credit/Debit Card (Stripe)';
 
   const subject = `Payment Receipt - DVDs Zone #${order.order_number}`;
 
@@ -166,7 +186,7 @@ Thank you for your purchase.
 Order Number: #${order.order_number}
 Order Date: ${orderDate}
 Payment Status: PAID
-Payment Method: Stripe / Card
+Payment Method: ${paymentMethodLabel}
 Transaction Reference: ${paymentReference || order.payment_reference || 'Confirmed'}
 
 ## ITEMS
@@ -243,7 +263,7 @@ If you have any questions regarding your order, please contact our support team 
           <table style="width: 100%;">
             <tr><td style="color: #64748B; font-size: 13px; padding: 3px 0;">Order Number:</td><td style="text-align: right; font-weight: 700; font-size: 13px; color: #0F172A;">#${order.order_number}</td></tr>
             <tr><td style="color: #64748B; font-size: 13px; padding: 3px 0;">Order Date:</td><td style="text-align: right; font-size: 13px; color: #0F172A;">${orderDate}</td></tr>
-            <tr><td style="color: #64748B; font-size: 13px; padding: 3px 0;">Payment Method:</td><td style="text-align: right; font-size: 13px; color: #0F172A;">Stripe / Card</td></tr>
+            <tr><td style="color: #64748B; font-size: 13px; padding: 3px 0;">Payment Method:</td><td style="text-align: right; font-size: 13px; color: #0F172A;">${paymentMethodLabel}</td></tr>
             <tr><td style="color: #64748B; font-size: 13px; padding: 3px 0;">Transaction Ref:</td><td style="text-align: right; font-family: monospace; font-size: 12px; color: #475569;">${paymentReference || order.payment_reference || 'Confirmed'}</td></tr>
             <tr><td style="color: #64748B; font-size: 13px; padding: 3px 0;">Paid At:</td><td style="text-align: right; font-size: 13px; color: #0F172A;">${formattedPaidAt}</td></tr>
           </table>
@@ -303,7 +323,7 @@ If you have any questions regarding your order, please contact our support team 
 </html>`;
 
   const result = await sendEmail({
-    to: order.email,
+    to: recipientEmail,
     subject,
     html: htmlBody,
     text: textBody,
@@ -311,7 +331,7 @@ If you have any questions regarding your order, please contact our support team 
 
   await logEmailAttempt(db, {
     orderId: order.id,
-    recipient: order.email,
+    recipient: recipientEmail,
     emailType: 'customer_receipt',
     subject,
     result,
