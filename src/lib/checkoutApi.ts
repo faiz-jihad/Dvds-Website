@@ -59,8 +59,7 @@ export const checkoutApi = {
       attempt = { fingerprint, requestId: crypto.randomUUID(), accessToken: crypto.randomUUID(), items: input.items, input, method };
       sessionStorage.setItem(ATTEMPT_KEY, JSON.stringify(attempt));
     }
-    if (method === 'bank_transfer') throw new CheckoutApiError('Bank transfer is no longer supported. Please pay with Stripe or PayPal.', 'METHOD_DISABLED');
-    const route = { card: 'create-checkout-session', paypal: 'create-paypal-order' }[method];
+    const route = { card: 'create-checkout-session', paypal: 'create-paypal-order', bank_transfer: 'create-bank-transfer-order' }[method];
     try {
       const result = await post<{ orderId: string; orderNumber: string; url?: string; completed?: boolean }>(route, { ...input, requestId: attempt.requestId, accessToken: attempt.accessToken });
       if (!result.orderId) throw new CheckoutApiError('The order could not be created. Please retry.', 'INVALID_RESPONSE');

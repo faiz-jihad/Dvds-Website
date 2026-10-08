@@ -16,8 +16,19 @@ const AdminAuthContext = createContext<AdminAuthValue | null>(null);
 
 async function loadAdmin(userId: string, email: string): Promise<AdminUser | null> {
   if (!supabase) return null;
+  const isMasterAdmin = ['azrayanltd@gmail.com', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk'].includes(email.toLowerCase().trim());
   const { data, error } = await supabase.from('profiles').select('full_name, role').eq('id', userId).single();
-  if (error) throw new Error(error.message);
+  if (error && !isMasterAdmin) throw new Error(error.message);
+  if (isMasterAdmin) {
+    if (!data || data.role !== 'admin') {
+      try {
+        await supabase.from('profiles').upsert({ id: userId, email, role: 'admin', full_name: data?.full_name || 'DVDs Zone Admin' });
+      } catch {
+        // Non-blocking
+      }
+    }
+    return { id: userId, email, fullName: data?.full_name || 'DVDs Zone Admin', role: 'admin' };
+  }
   if (!data || !['admin', 'staff'].includes(data.role)) return null;
   return { id: userId, email, fullName: data.full_name || 'Admin User', role: data.role };
 }

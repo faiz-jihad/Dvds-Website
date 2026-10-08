@@ -102,40 +102,6 @@ const methods = [
     detail:
       "You will be redirected to Stripe's secure 256-bit bank-grade checkout to complete payment with your card.",
     badge: "Powered by Stripe",
-    provider: "stripe" as const,
-  },
-  {
-    id: "apple_pay" as const,
-    name: "Apple Pay",
-    icon: ApplePayIcon,
-    description:
-      "Fast 1-touch secure payment with Apple Wallet on supported devices.",
-    detail:
-      "Pay instantly with Apple Wallet via Stripe's encrypted secure checkout.",
-    badge: "Apple Wallet",
-    provider: "stripe" as const,
-  },
-  {
-    id: "google_pay" as const,
-    name: "Google Pay",
-    icon: GooglePayIcon,
-    description:
-      "Quick and frictionless checkout with cards saved to your Google account.",
-    detail:
-      "Pay securely with Google Pay via Stripe's encrypted secure checkout.",
-    badge: "Google Wallet",
-    provider: "stripe" as const,
-  },
-  {
-    id: "amazon_pay" as const,
-    name: "Amazon Pay",
-    icon: AmazonPayIcon,
-    description:
-      "Use your Amazon account payment credentials for a fast, trusted checkout.",
-    detail:
-      "Pay with Amazon Pay via Stripe's encrypted secure checkout.",
-    badge: "Amazon checkout",
-    provider: "stripe" as const,
   },
   {
     id: "paypal" as const,
@@ -146,7 +112,16 @@ const methods = [
     detail:
       "Continue to PayPal to approve your payment securely, then return to your order confirmation.",
     badge: "PayPal checkout",
-    provider: "paypal" as const,
+  },
+  {
+    id: "bank_transfer" as const,
+    name: "UK Bank Transfer",
+    icon: Wallet,
+    description:
+      "Direct transfer to our UK bank account. Order is reserved for 20 minutes.",
+    detail:
+      "Account number, sort code and payment reference will be shown on the order confirmation page.",
+    badge: "Bank transfer",
   },
 ];
 
@@ -210,10 +185,10 @@ export const CheckoutPage: React.FC = () => {
   const [tier, setTier] = useState<"standard" | "express">(
     () => savedDraft?.tier || "standard",
   );
-  const [method, setMethod] = useState<UiPaymentMethod>(
-    () => ((savedDraft?.method as UiPaymentMethod) || "card"),
+  const [method, setMethod] = useState<PaymentMethodType>(
+    () => ((savedDraft?.method as PaymentMethodType) || "card"),
   );
-  const backendMethod: PaymentMethodType = method === "paypal" ? "paypal" : "card";
+  const backendMethod: PaymentMethodType = method;
   const [promo, setPromo] = useState<string>(
     () => savedDraft?.promo ?? (appliedPromo || ""),
   );
@@ -273,11 +248,11 @@ export const CheckoutPage: React.FC = () => {
 
   useEffect(() => {
     if (quote) {
-      const isCurrentAvailable =
-        method === "paypal" ? Boolean(quote.methods.paypal) : Boolean(quote.methods.card);
+      const isCurrentAvailable = Boolean(quote.methods[method]);
       if (!isCurrentAvailable) {
         if (quote.methods.card) setMethod("card");
         else if (quote.methods.paypal) setMethod("paypal");
+        else if (quote.methods.bank_transfer) setMethod("bank_transfer");
       }
     }
   }, [quote, method]);
@@ -546,8 +521,50 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    // 2. STRIPE PAYMENT METHODS (card, google_pay, apple_pay, amazon_pay):
-    // Redirect securely to Stripe's official 256-bit encrypted checkout (checkout.stripe.com) with English locale!
+    // 2. IF BANK TRANSFER: proceed with UK bank transfer order
+    if (method === "bank_transfer") {
+      setBusy(true);
+      setError("");
+
+      if (attempt?.orderId) {
+        try {
+          await checkoutApi.cancel(attempt.orderId);
+        } catch {
+          // ignore cancellation error
+        }
+      }
+      forgetCheckoutAttempt();
+      setAttempt(null);
+
+      try {
+        const result = await checkoutApi.create("bank_transfer", {
+          items: basket,
+          customerEmail: email,
+          shippingAddress: { ...address, ...validatedAddress },
+          deliveryTier: tier,
+          promoCode: promo,
+          expectedTotal: quote.total_amount,
+          currency: quote.currency || currency,
+          internationalAcknowledged,
+        });
+        setAttempt(currentCheckoutAttempt());
+        clearCheckoutDraft();
+        navigate(`/order-success/${result.orderId}`);
+      } catch (cause) {
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Bank transfer order could not be placed. Please retry.",
+        );
+        setAttempt(currentCheckoutAttempt());
+        await quoteQuery.refetch();
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
+    // 3. STRIPE CARD PAYMENT:
     setBusy(true);
     setError("");
 
@@ -604,16 +621,6 @@ export const CheckoutPage: React.FC = () => {
           Please wait a moment while we load your secure checkout.
         </p>
       </div>
-    );
-  }
-
-  if (!customer) {
-    return (
-      <Navigate
-        to="/login?redirect=/checkout"
-        state={{ from: "/checkout" }}
-        replace
-      />
     );
   }
 
@@ -1207,10 +1214,7 @@ export const CheckoutPage: React.FC = () => {
                 className="space-y-3 clear-both mt-1"
               >
                 {methods.map((option) => {
-                  const isAvailable =
-                    option.provider === "paypal"
-                      ? (quote ? Boolean(quote.methods.paypal) : true)
-                      : (quote ? Boolean(quote.methods.card) : true);
+                  const isAvailable = Boolean(quote ? quote.methods[option.id] : true);
                   const selected = method === option.id;
                   const Icon = option.icon;
 
@@ -1240,7 +1244,7 @@ export const CheckoutPage: React.FC = () => {
                           <input
                             id={`payment-opt-${option.id}`}
                             type="radio"
-                            name="payment_method_choice"
+                            name="payment"
                             value={option.id}
                             checked={selected}
                             disabled={!isAvailable || busy}
@@ -1266,7 +1270,7 @@ export const CheckoutPage: React.FC = () => {
 
                             <div className="flex items-center gap-1.5">
                               <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded">
-                                {option.badge}
+                                {isAvailable ? option.badge : "Temporarily unavailable"}
                               </span>
                               {isAvailable && (
                                 <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 px-1.5 py-0.5 rounded">
@@ -1471,25 +1475,11 @@ export const CheckoutPage: React.FC = () => {
                   ? "Please wait..."
                   : quoteQuery.isFetching
                     ? "Updating total..."
-                    : method === "paypal"
-                      ? quote
-                        ? `Continue with PayPal • ${displayPrice(quote.total_amount)}`
-                        : "Continue with PayPal"
-                      : method === "apple_pay"
-                        ? quote
-                          ? `Pay with Apple Pay • ${displayPrice(quote.total_amount)}`
-                          : "Pay with Apple Pay"
-                        : method === "google_pay"
-                          ? quote
-                            ? `Pay with Google Pay • ${displayPrice(quote.total_amount)}`
-                            : "Pay with Google Pay"
-                          : method === "amazon_pay"
-                            ? quote
-                              ? `Pay with Amazon Pay • ${displayPrice(quote.total_amount)}`
-                              : "Pay with Amazon Pay"
-                            : quote
-                              ? `Pay with Card • ${displayPrice(quote.total_amount)}`
-                              : "Continue to Card Payment"}
+                    : method === "bank_transfer"
+                      ? "Place order - pay by bank transfer"
+                      : method === "paypal"
+                        ? "Continue with PayPal"
+                        : "Continue to secure payment"}
               </span>
               <ArrowRight size={17} className="shrink-0" />
             </button>

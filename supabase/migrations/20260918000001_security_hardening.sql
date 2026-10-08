@@ -14,7 +14,7 @@ STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT (
+  SELECT COALESCE(
     -- Verified role in database
     EXISTS (
       SELECT 1
@@ -24,10 +24,11 @@ AS $$
     )
     OR
     -- Direct admin email check
-    (auth.jwt() ->> 'email') = 'admin@azrayan.co.uk'
+    (COALESCE(auth.jwt() ->> 'email', '') IN ('azrayanltd@gmail.com', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk'))
     OR
     -- Only server-set app_metadata (never client-controlled user_metadata)
-    (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin', 'staff')
+    (COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') IN ('admin', 'staff')),
+    FALSE
   );
 $$;
 
@@ -38,7 +39,7 @@ CREATE OR REPLACE FUNCTION public.protect_profile_role()
 RETURNS TRIGGER AS $$
 BEGIN
   IF NEW.role IS DISTINCT FROM OLD.role THEN
-    IF NOT public.is_admin() THEN
+    IF (current_user = 'authenticated' OR COALESCE(current_setting('request.jwt.claim.role', true), '') = 'authenticated') AND NOT public.is_admin() THEN
       NEW.role := OLD.role;
     END IF;
   END IF;
@@ -106,25 +107,23 @@ CREATE POLICY "Admins can manage contact messages" ON public.contact_messages
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- 6. Access Control: Orders and Order Items
+-- 6. Access Control: Orders and Order Items
+-- Browser clients only read through RLS. All mutations occur exclusively via verified server/admin RPCs.
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Customers can view their orders" ON public.orders;
 DROP POLICY IF EXISTS "Admins can manage orders" ON public.orders;
+DROP POLICY IF EXISTS "Users can insert own orders" ON public.orders;
 
 CREATE POLICY "Customers can view their orders" ON public.orders
   FOR SELECT USING (auth.uid() = user_id OR public.is_admin());
 
-CREATE POLICY "Admins can manage orders" ON public.orders
-  FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
-
 DROP POLICY IF EXISTS "Customers can view their order items" ON public.order_items;
 DROP POLICY IF EXISTS "Admins can manage order items" ON public.order_items;
+DROP POLICY IF EXISTS "Users can insert order items" ON public.order_items;
 
 CREATE POLICY "Customers can view their order items" ON public.order_items
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_items.order_id AND (o.user_id = auth.uid() OR public.is_admin()))
   );
-
-CREATE POLICY "Admins can manage order items" ON public.order_items
-  FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());

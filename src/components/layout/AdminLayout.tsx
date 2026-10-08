@@ -351,7 +351,7 @@ export const AdminLayout: React.FC = () => {
                 />
               </span>
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                {wsConnected ? "Live Sync Active" : "Live Sync Paused"}
+                {wsConnected ? "Live updates" : "Live updates paused"}
               </span>
             </div>
 
@@ -550,36 +550,14 @@ export const AdminLayout: React.FC = () => {
 
         {/* Content Viewport */}
         <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#07090E] p-4 sm:p-6 lg:p-8 print:p-0 print:overflow-visible print:bg-white print:text-black">
-          {schemaQuery.error &&
-          (schemaQuery.error as any)?.code === "BACKEND_NOT_CONFIGURED" ? (
+          {schemaQuery.isLoading || schemaQuery.error ? (
             <AdminDataState
               loading={schemaQuery.isLoading}
               error={schemaQuery.error}
               onRetry={() => schemaQuery.refetch()}
             />
           ) : (
-            <>
-              {schemaQuery.error && !dismissedSchemaWarning && (
-                <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-brand-red/30 dark:border-brand-red/40 bg-brand-red-soft dark:bg-brand-red/10 p-4 text-xs text-brand-red dark:text-red-300 shadow-2xs">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-2 w-2 rounded-full bg-brand-red shrink-0" />
-                    <span>
-                      Notice: Some optional database schema items are pending
-                      migration. Store features are running smoothly with
-                      default values.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setDismissedSchemaWarning(true)}
-                    className="shrink-0 rounded-md px-2.5 py-1 font-semibold text-brand-red dark:text-red-300 hover:bg-brand-red/20 transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              )}
-              <Outlet />
-            </>
+            <Outlet />
           )}
         </main>
       </div>

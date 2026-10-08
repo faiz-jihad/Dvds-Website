@@ -319,38 +319,34 @@ export const OrderSuccessPage: React.FC = () => {
     );
   const needsReview =
     order.payment_review_required && (paid || partiallyRefunded);
-  const isCancelledOrExpired = closed || (isOrderExpired && !paid);
+  const isCancelledOrExpired = closed;
   const isPaymentFailed = order.payment_status === "failed";
   const title = refunded
     ? "Payment refunded"
-    : isCancelledOrExpired
-      ? "Order cancelled - Payment expired"
-      : isPaymentFailed
-        ? "Payment failed"
-        : needsReview
-          ? "Payment received - order under review"
-          : partiallyRefunded
-            ? "Payment partially refunded"
-            : paid
-              ? "Thank you. Your order has been confirmed."
-              : bankPending
-                ? "Order placed - awaiting transfer"
-                : "Payment still processing";
+    : closed
+      ? "Payment not completed"
+      : needsReview
+        ? "Payment received - order under review"
+        : partiallyRefunded
+          ? "Payment partially refunded"
+          : paid
+            ? "Payment confirmed"
+            : bankPending
+              ? "Order placed - awaiting transfer"
+              : "Awaiting payment confirmation";
   const description = refunded
     ? "Your payment provider has confirmed a full refund for this order."
-    : isCancelledOrExpired
-      ? "The 20-minute payment window has expired. This order has been automatically cancelled and reserved stock returned to inventory."
-      : isPaymentFailed
-        ? "Your payment could not be completed."
-        : needsReview
-          ? "Your payment arrived after the stock reservation was released. Our team needs to review the order before dispatch."
-          : partiallyRefunded
-            ? "A refund has been recorded. Your latest order and delivery status are shown below."
-            : paid
-              ? "Thank you. Your payment has been confirmed and your order is now being processed."
-              : bankPending
-                ? "Please use the bank account details and payment reference below to complete your transfer before the 20-minute window expires."
-                : "Your payment is being confirmed. We'll update your order shortly.";
+    : closed
+      ? "Your payment could not be completed or the order was cancelled."
+      : needsReview
+        ? "Your payment arrived after the stock reservation was released. Our team needs to review the order before dispatch."
+        : partiallyRefunded
+          ? "A refund has been recorded. Your latest order and delivery status are shown below."
+          : paid
+            ? "Thank you. Your payment has been confirmed and your order is now being processed."
+            : bankPending
+              ? "Please use the bank account details and payment reference below to complete your transfer before the 20-minute window expires."
+              : "Your payment is being confirmed. We'll update your order shortly.";
   const isAlert = isCancelledOrExpired || needsReview || refunded;
   const Icon =
     isCancelledOrExpired || needsReview ? AlertCircle : paid ? CheckCircle2 : Clock;

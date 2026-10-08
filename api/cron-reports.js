@@ -22,8 +22,9 @@ async function verifyAdminOrCron(db, req) {
         .eq('id', data.user.id)
         .maybeSingle();
 
-      if (profile && ['admin', 'staff'].includes(profile.role)) {
-        return { user: data.user, role: profile.role, isCron: false };
+      const isKnownAdmin = ['azrayanltd@gmail.com', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk'].includes((data.user.email || '').toLowerCase());
+      if ((profile && ['admin', 'staff'].includes(profile.role)) || isKnownAdmin) {
+        return { user: data.user, role: profile?.role || 'admin', isCron: false };
       }
     }
   }

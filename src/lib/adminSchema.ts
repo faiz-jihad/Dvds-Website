@@ -1,4 +1,4 @@
-export type AdminSchemaScope = 'dashboard' | 'homepage' | 'products' | 'taxonomy' | 'inventory' | 'orders' | 'promotions' | 'support' | 'users' | 'settings' | 'activity' | 'all';
+export type AdminSchemaScope = 'dashboard' | 'homepage' | 'products' | 'taxonomy' | 'inventory' | 'orders' | 'promotions' | 'support' | 'users' | 'settings' | 'activity' | 'reports' | 'all';
 
 const checks = {
   profiles: 'id,email,full_name,role,created_at',
@@ -32,6 +32,7 @@ const dependencies: Record<Exclude<AdminSchemaScope, 'all'>, readonly Table[]> =
   users: ['profiles'],
   settings: ['store_settings', 'products', 'categories', 'genres', 'product_genres'],
   activity: ['inventory_movements', 'order_status_history', 'admin_audit_log', 'products', 'orders'],
+  reports: ['orders', 'order_items', 'store_settings'],
 };
 
 export function adminSchemaScope(pathname: string): AdminSchemaScope {

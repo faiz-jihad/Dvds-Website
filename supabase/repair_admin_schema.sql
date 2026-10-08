@@ -325,7 +325,7 @@ BEGIN
     CASE WHEN p_order->>'payment_method' = 'bank_transfer' THEN 'awaiting_payment' ELSE 'pending' END,
     p_order->>'payment_method', p_order->>'payment_provider', 'unfulfilled', (p_order->>'subtotal')::NUMERIC,
     (p_order->>'shipping_amount')::NUMERIC, (p_order->>'discount_amount')::NUMERIC, (p_order->>'total_amount')::NUMERIC,
-    'GBP', p_order->'shipping_address', p_request_id, p_request_hash, p_access_hash, p_order->>'delivery_tier', p_order->>'delivery_name', p_order->'bank_details',
+    COALESCE(NULLIF(p_order->>'currency',''), 'GBP'), p_order->'shipping_address', p_request_id, p_request_hash, p_access_hash, p_order->>'delivery_tier', p_order->>'delivery_name', p_order->'bank_details',
     CASE WHEN p_order->>'payment_method' = 'bank_transfer' THEN v_number ELSE NULL END);
   FOR v_item IN SELECT value FROM jsonb_array_elements(p_items) LOOP
     INSERT INTO public.order_items(order_id, product_id, product_title, product_sku, quantity, unit_price, total_price, product_snapshot)
@@ -610,8 +610,7 @@ CREATE OR REPLACE FUNCTION public.create_global_checkout_order(
 DECLARE v_result JSONB; v_currency TEXT := p_order->>'currency'; v_rate NUMERIC := (p_order->>'exchange_rate')::NUMERIC;
 BEGIN
   IF v_currency IS NULL OR v_currency NOT IN ('GBP','USD','EUR','CAD','AUD','NZD','CHF','SGD','HKD','JPY','IDR') OR v_rate IS NULL OR v_rate <= 0 THEN RAISE EXCEPTION 'Invalid order currency or exchange rate'; END IF;
-  IF v_currency = 'GBP' AND v_rate <> 1 THEN RAISE EXCEPTION 'Invalid GBP exchange rate'; END IF;
-  IF p_order->>'payment_method' = 'bank_transfer' AND (v_currency <> 'GBP' OR p_order->'shipping_address'->>'country' NOT IN ('GB','UK','United Kingdom')) THEN RAISE EXCEPTION 'Bank transfer is available for UK GBP orders only'; END IF;
+  -- Allow bank transfer in any supported currency
   IF (p_order->>'total_amount')::NUMERIC <> (p_order->>'subtotal')::NUMERIC + (p_order->>'shipping_amount')::NUMERIC - (p_order->>'discount_amount')::NUMERIC
     OR (p_order->>'subtotal')::NUMERIC <> (SELECT sum((item->>'total_price')::NUMERIC) FROM jsonb_array_elements(p_items) item)
     OR EXISTS (SELECT 1 FROM jsonb_array_elements(p_items) item WHERE (item->>'total_price')::NUMERIC <> (item->>'unit_price')::NUMERIC * (item->>'quantity')::INT)
@@ -628,6 +627,23 @@ END;
 $$;
 REVOKE ALL ON FUNCTION public.create_global_checkout_order(UUID,TEXT,TEXT,JSONB,JSONB) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.create_global_checkout_order(UUID,TEXT,TEXT,JSONB,JSONB) TO service_role;
+NOTIFY pgrst, 'reload schema';
+
+-- Source: 20261008000001_campaign_and_store_settings.sql
+-- Migration: 20261008000001_campaign_and_store_settings.sql
+-- Add campaign customization, format filters, and warehouse location columns to store_settings
+
+ALTER TABLE public.store_settings
+  ADD COLUMN IF NOT EXISTS campaign_is_active BOOLEAN DEFAULT TRUE,
+  ADD COLUMN IF NOT EXISTS campaign_title TEXT DEFAULT 'Collector''s Vault Special & Clearance',
+  ADD COLUMN IF NOT EXISTS campaign_badge TEXT DEFAULT 'CAMPAIGN EXCLUSIVE',
+  ADD COLUMN IF NOT EXISTS campaign_tagline TEXT DEFAULT 'Limited boutique archive allocation with rare box sets, special discounts, and same-day UK dispatch.',
+  ADD COLUMN IF NOT EXISTS campaign_discount_text TEXT DEFAULT 'Up to 50% OFF',
+  ADD COLUMN IF NOT EXISTS campaign_ends_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS custom_formats TEXT[] DEFAULT ARRAY['Standard', 'DVD', 'Blu-ray', '4K UHD', 'Box Set', 'Merchandise', 'Physical'],
+  ADD COLUMN IF NOT EXISTS store_name TEXT DEFAULT 'DVD ZONE',
+  ADD COLUMN IF NOT EXISTS warehouse_location TEXT DEFAULT 'United Kingdom';
+
 NOTIFY pgrst, 'reload schema';
 
 NOTIFY pgrst, 'reload schema';
