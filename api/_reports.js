@@ -143,6 +143,26 @@ export async function calculateBusinessMetrics(db, { type = 'weekly', startDate,
       expensesList = expRows;
       totalExpenses = expRows.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
       totalExpenses = Number(totalExpenses.toFixed(2));
+    } else {
+      // Fallback: Read from admin_audit_log if expenses table is pending migration
+      try {
+        const { data: auditRows } = await db
+          .from('admin_audit_log')
+          .select('after_data')
+          .eq('table_name', 'expenses')
+          .order('created_at', { ascending: false });
+
+        if (Array.isArray(auditRows)) {
+          const parsed = auditRows
+            .map((r) => r.after_data)
+            .filter((e) => e && e.date >= startDateString && e.date <= endDateString);
+          expensesList = parsed;
+          totalExpenses = parsed.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+          totalExpenses = Number(totalExpenses.toFixed(2));
+        }
+      } catch {
+        // Fallback gracefully to empty list
+      }
     }
   } catch (err) {
     console.warn('[reports] Expenses query note:', err.message);

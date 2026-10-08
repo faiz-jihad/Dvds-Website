@@ -35,8 +35,12 @@ import { Button } from '../../components/common/Button';
 export const AdminReports: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedRange, setSelectedRange] = useState<'this_week' | 'weekly' | 'this_month' | 'monthly' | 'custom'>('this_week');
-  const [customStart, setCustomStart] = useState<string>('');
-  const [customEnd, setCustomEnd] = useState<string>('');
+  const [customStart, setCustomStart] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [customEnd, setCustomEnd] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [expenseFilterCategory, setExpenseFilterCategory] = useState<string>('all');
   const [actionMessage, setActionMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -136,7 +140,8 @@ export const AdminReports: React.FC = () => {
       setTimeout(() => setActionMessage(null), 4000);
     },
     onError: (err: any) => {
-      alert(`Could not log expense: ${err.message}`);
+      setActionMessage({ text: `Could not log expense: ${err.message}`, type: 'error' });
+      setTimeout(() => setActionMessage(null), 6000);
     },
   });
 
@@ -146,6 +151,12 @@ export const AdminReports: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-report'] });
       queryClient.invalidateQueries({ queryKey: ['admin-expenses'] });
+      setActionMessage({ text: 'Expenditure entry removed from ledger.', type: 'success' });
+      setTimeout(() => setActionMessage(null), 4000);
+    },
+    onError: (err: any) => {
+      setActionMessage({ text: `Could not remove expense: ${err.message}`, type: 'error' });
+      setTimeout(() => setActionMessage(null), 6000);
     },
   });
 
@@ -1162,7 +1173,7 @@ export const AdminReports: React.FC = () => {
               <Button
                 variant="primary"
                 size="sm"
-                disabled={!expenseForm.description || !expenseForm.amount || addExpenseMutation.isPending}
+                disabled={!expenseForm.description.trim() || !expenseForm.amount || isNaN(parseFloat(expenseForm.amount)) || parseFloat(expenseForm.amount) <= 0 || addExpenseMutation.isPending}
                 onClick={() =>
                   addExpenseMutation.mutate({
                     description: expenseForm.description,

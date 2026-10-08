@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { sendEmail, sendCustomerPaymentReceipt, sendAdminBusinessReport } from '../api/_email.js';
 import { calculateBusinessMetrics, getReportDateRange } from '../api/_reports.js';
+import cronReportsHandler from '../api/cron-reports.js';
 
 test('Date range helper calculates proper Weekly and Monthly periods', () => {
   const weekly = getReportDateRange('weekly');
@@ -364,4 +365,77 @@ test('Admin business report formats executive summary and records to report_hist
   assert.equal(history.row.report_type, 'weekly');
   assert.equal(history.row.status, 'sent');
   assert.equal(history.row.payload.summary.ordersCount, 42);
+});
+
+test('Business metrics engine seamlessly falls back to admin_audit_log when expenses table is not present', async () => {
+  const o1 = {
+    id: randomUUID(),
+    order_number: 'ORD-AUDIT-1',
+    total_amount: 25.00,
+    refunded_amount: 0,
+    payment_status: 'paid',
+    status: 'delivered',
+    paid_at: '2026-10-05T10:00:00.000Z',
+    items: [{ product_id: 'p1', product_title: 'Aliens DVD', quantity: 1, total_price: 25.00 }],
+  };
+
+  const mockDb = {
+    from: (table) => {
+      if (table === 'orders') {
+        return {
+          select: () => ({
+            or: () => ({
+              or: async () => ({ data: [o1], error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === 'expenses') {
+        return {
+          select: () => ({
+            gte: () => ({
+              lte: () => ({
+                order: async () => ({
+                  data: null,
+                  error: { code: 'PGRST205', message: 'Table public.expenses not found' },
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === 'admin_audit_log') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: async () => ({
+                data: [
+                  { after_data: { id: 'aud-1', description: 'Tape', category: 'packaging', amount: 5.00, date: '2026-10-05' } },
+                ],
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === 'products') {
+        return {
+          select: () => ({
+            not: async () => ({ data: [], error: null }),
+          }),
+        };
+      }
+      return { select: () => ({}) };
+    },
+  };
+
+  const report = await calculateBusinessMetrics(mockDb, {
+    type: 'custom',
+    startDate: '2026-10-01T00:00:00.000Z',
+    endDate: '2026-10-10T23:59:59.999Z',
+  });
+
+  assert.equal(report.summary.grossRevenue, 25.00);
+  assert.equal(report.summary.totalExpenses, 5.00);
+  assert.equal(report.summary.netResult, 20.00);
 });

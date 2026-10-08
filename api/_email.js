@@ -589,16 +589,30 @@ Refunded: ${orderStatuses.refunded || 0}
 
   // Store into report_history table
   try {
-    await db.from('report_history').insert({
+    const reportId = (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : 'rep-' + Date.now());
+    const historyRecord = {
+      id: reportId,
       report_type: type,
       period_start: periodStart,
       period_end: periodEnd,
+      generated_at: new Date().toISOString(),
       sent_at: result.success ? new Date().toISOString() : null,
       recipient: adminEmail,
       status: result.success ? 'sent' : 'failed',
       error_message: result.error || null,
       payload: report,
-    });
+    };
+
+    const { error: insErr } = await db.from('report_history').insert(historyRecord);
+    if (insErr) {
+      // Fallback: save to admin_audit_log if table pending migration
+      await db.from('admin_audit_log').insert({
+        record_id: reportId,
+        table_name: 'report_history',
+        action: 'INSERT',
+        after_data: historyRecord,
+      });
+    }
   } catch (err) {
     console.warn('[email] Could not record report_history:', err.message);
   }

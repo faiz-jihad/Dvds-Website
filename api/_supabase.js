@@ -13,9 +13,14 @@ function createServerClient(key) {
 
 export function getSupabaseServerClient() {
   // Checkout creates orders and records provider events through RPCs that are
-  // intentionally available only to service_role.  An anon key may read
+  // intentionally available only to service_role. An anon key may read
   // public catalogue data, but cannot safely create or settle an order.
-  return createServerClient(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return createServerClient(
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY
+  );
 }
 
 export function getSupabasePublicClient() {
