@@ -27,6 +27,9 @@ interface UiState {
   removeToast: (id: string) => void;
 }
 
+// Internal cache to deduplicate identical toasts fired in rapid succession
+const recentToasts = new Map<string, number>();
+
 export const useUiStore = create<UiState>((set) => ({
   isCartDrawerOpen: false,
   isSearchOpen: false,
@@ -45,11 +48,34 @@ export const useUiStore = create<UiState>((set) => ({
   closeMobileNav: () => set({ isMobileNavOpen: false }),
 
   addToast: (message, type = 'success') => {
-    const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    set((s) => ({ toasts: [...s.toasts, { id, type, message }] }));
+    const trimmed = (message || '').trim();
+    if (!trimmed) return;
+
+    const now = Date.now();
+    const lastSeen = recentToasts.get(trimmed);
+    if (lastSeen && now - lastSeen < 2500) {
+      // Ignore duplicate toast within 2.5 seconds
+      return;
+    }
+    recentToasts.set(trimmed, now);
+
+    // Garbage-collect old deduplication cache entries
+    if (recentToasts.size > 25) {
+      for (const [key, timestamp] of recentToasts.entries()) {
+        if (now - timestamp > 10000) recentToasts.delete(key);
+      }
+    }
+
+    const id = `toast-${now}-${Math.random().toString(36).substring(2, 6)}`;
+    set((s) => {
+      // Keep at most 2 previous toasts + 1 new toast (max 3 on screen)
+      const capped = s.toasts.slice(-2);
+      return { toasts: [...capped, { id, type, message: trimmed }] };
+    });
+
     setTimeout(() => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
-    }, 3500);
+    }, 4000);
   },
 
   removeToast: (id) => {

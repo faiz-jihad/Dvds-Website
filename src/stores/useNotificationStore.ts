@@ -45,8 +45,41 @@ interface NotificationState {
   sendTestNotification: (target: NotificationRole) => void;
 }
 
-const STORAGE_KEY = 'az_rayan_notifications_v1';
-const BROADCAST_CHANNEL = 'az_rayan_notifications_sync_v1';
+export const isNotificationTargetActive = (target: NotificationRole): boolean => {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname.toLowerCase();
+  const isAdminPath = path.startsWith('/admin');
+
+  if (target === 'admin') {
+    // Only alert admin if user is in /admin routes or logged in as staff/admin
+    if (isAdminPath) return true;
+    try {
+      const profileRaw = localStorage.getItem('az_rayan_customer_profile');
+      if (profileRaw) {
+        const p = JSON.parse(profileRaw);
+        if (
+          ['admin', 'staff'].includes(p.role) ||
+          ['admin@dvdszone.co.uk', 'admin@azrayan.co.uk', 'azrayanltd@gmail.com'].includes(p.email?.toLowerCase())
+        ) {
+          return true;
+        }
+      }
+    } catch {
+      // Non-blocking
+    }
+    return false;
+  }
+
+  if (target === 'customer') {
+    // Customer alerts should not popup over admin dashboard operations
+    return !isAdminPath;
+  }
+
+  return true;
+};
+
+const STORAGE_KEY = 'dvds_zone_notifications_v2';
+const BROADCAST_CHANNEL = 'dvds_zone_notifications_sync_v2';
 
 const getInitialNotifications = (): AppNotification[] => {
   if (typeof window === 'undefined') return [];
@@ -55,21 +88,21 @@ const getInitialNotifications = (): AppNotification[] => {
     if (!raw) {
       return [
         {
-          id: 'init-admin-1',
+          id: 'init-admin-system',
           target: 'admin',
           type: 'system',
-          title: 'Store Operations Active',
-          message: 'Notification centre is synchronised for live orders, inventory alerts, and customer messages.',
+          title: 'Store Operations Synchronised',
+          message: 'Real-time order tracking, inventory monitoring, and customer messages are active.',
           link: '/admin',
           read: true,
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
+          createdAt: new Date().toISOString(),
         },
         {
-          id: 'init-customer-1',
+          id: 'init-customer-welcome',
           target: 'customer',
           type: 'promo',
           title: 'Welcome to DVDs Zone',
-          message: 'Enjoy 10% off your first physical media order with voucher code ZONE10.',
+          message: 'Explore our catalog of verified original DVD and Blu-ray editions.',
           link: '/shop',
           read: false,
           createdAt: new Date().toISOString(),
@@ -85,7 +118,7 @@ const getInitialNotifications = (): AppNotification[] => {
 const saveNotifications = (list: AppNotification[]) => {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 100)));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 60)));
   } catch (err) {
     console.warn('[NotificationStore] Failed to persist notifications:', err);
   }
@@ -105,7 +138,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
       if (data?.type === 'ADD' && data?.notification) {
         set((state) => {
           if (state.notifications.some((n) => n.id === data.notification.id)) return state;
-          const updated = [data.notification, ...state.notifications];
+          const updated = [data.notification, ...state.notifications].slice(0, 60);
           return { notifications: updated };
         });
       } else if (data?.type === 'SYNC') {
@@ -132,11 +165,28 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         createdAt: new Date().toISOString(),
       };
 
+      let shouldAlert = true;
+
       set((state) => {
-        const updated = [newNotif, ...state.notifications];
+        // Deduplicate identical alerts triggered in close succession
+        const isDuplicate = state.notifications.some(
+          (n) =>
+            n.target === item.target &&
+            n.title === item.title &&
+            n.message === item.message &&
+            Date.now() - new Date(n.createdAt).getTime() < 4000
+        );
+        if (isDuplicate) {
+          shouldAlert = false;
+          return state;
+        }
+
+        const updated = [newNotif, ...state.notifications].slice(0, 60);
         saveNotifications(updated);
         return { notifications: updated };
       });
+
+      if (!shouldAlert) return;
 
       // Broadcast to other open tabs
       if (notifChannel) {
@@ -147,7 +197,15 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         }
       }
 
-      // 1. Play auditory chime
+      // Check whether current context (admin vs customer) matches target
+      const isTargetActive = isNotificationTargetActive(item.target);
+      if (!isTargetActive) {
+        // Notification is safely recorded in the history log, but audio, toasts,
+        // and native push notifications will NOT leak into the mismatched role.
+        return;
+      }
+
+      // 1. Play auditory chime (throttled)
       if (opts.playAudio) {
         playNotificationChime();
       }

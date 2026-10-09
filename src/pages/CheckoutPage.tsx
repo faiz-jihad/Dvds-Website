@@ -19,6 +19,9 @@ import {
   X,
   Sun,
   Moon,
+  ShoppingBag,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useCartStore } from "../stores/useCartStore";
 import { useThemeStore } from "../stores/useThemeStore";
@@ -48,7 +51,7 @@ import { FastPaymentSection } from "../components/checkout/FastPaymentSection";
 import { Seo } from "../components/common/Seo";
 
 const fieldClass =
-  "mt-1.5 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] px-3.5 py-3 text-sm text-dark dark:text-white outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 disabled:bg-gray-50 dark:disabled:bg-white/5 transition-colors";
+  "mt-1.5 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] px-3.5 py-3 text-base sm:text-sm text-dark dark:text-white outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 disabled:bg-gray-50 dark:disabled:bg-white/5 transition-colors";
 
 const isAppleDevice =
   typeof navigator !== "undefined" &&
@@ -249,6 +252,7 @@ export const CheckoutPage: React.FC = () => {
   const hasFastMethods = Boolean(
     fastMethods && Object.values(fastMethods).some(Boolean),
   );
+  const [isMobileSummaryOpen, setIsMobileSummaryOpen] = useState(false);
 
   const basket = items.map((item) => ({
     product_id: item.product_id,
@@ -645,16 +649,16 @@ export const CheckoutPage: React.FC = () => {
       />
       {/* Dedicated Clean Checkout Header Bar with Logo & Theme Switcher */}
       <header className="border-b border-gray-200 dark:border-white/10 bg-white/95 dark:bg-[#07090E]/95 backdrop-blur-md sticky top-0 z-30 transition-colors shadow-2xs">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-[72px] flex items-center justify-between gap-3">
+        <div className="max-w-6xl mx-auto px-3.5 sm:px-6 h-14 sm:h-[72px] flex items-center justify-between gap-2.5">
           <Link to="/" className="flex items-center gap-2 group py-1" title="DVDs Zone - Return to shop">
             <img
               src={isDark ? "/brand/logo-dark-theme.png" : "/brand/logo-transparent.png"}
               alt="DVDs Zone"
-              className="h-8 sm:h-10 w-auto max-w-[130px] sm:max-w-[170px] object-contain transition-transform group-hover:scale-[1.02]"
+              className="h-7 sm:h-10 w-auto max-w-[120px] sm:max-w-[170px] object-contain transition-transform group-hover:scale-[1.02]"
             />
           </Link>
 
-          <div className="flex items-center gap-2.5 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3.5">
             {/* Direct Theme Switcher Button */}
             <button
               type="button"
@@ -673,22 +677,23 @@ export const CheckoutPage: React.FC = () => {
 
             <Link
               to="/cart"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-dark dark:hover:text-white border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-dark dark:hover:text-white border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors shadow-2xs shrink-0"
             >
               <ArrowLeft size={13} />
-              <span>Back to basket</span>
+              <span className="hidden xs:inline sm:inline">Back to basket</span>
+              <span className="xs:hidden sm:hidden">Basket</span>
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <div className="max-w-6xl mx-auto px-3.5 sm:px-6 py-4 sm:py-10 pb-28 lg:pb-10">
         {(searchParams.get("cancelled") === "1" || searchParams.get("cancelled") === "true") && (
-          <div className="mb-6 p-4 rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 text-sm flex items-center justify-between gap-3 shadow-xs">
+          <div className="mb-5 p-3.5 sm:p-4 rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 text-xs sm:text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-xs">
             <div className="flex items-center gap-2.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
               <span>
-                <strong>Checkout cancelled:</strong> No payment was taken. Your basket items are saved and ready.
+                <strong>Checkout cancelled:</strong> No payment was taken. Your basket items are saved.
               </span>
             </div>
             <button
@@ -698,63 +703,201 @@ export const CheckoutPage: React.FC = () => {
                 url.searchParams.delete("cancelled");
                 window.history.replaceState({}, "", url.pathname + (url.search ? url.search : ""));
               }}
-              className="text-xs font-semibold underline text-amber-700 dark:text-amber-300 hover:text-amber-900 cursor-pointer"
+              className="text-xs font-semibold underline text-amber-700 dark:text-amber-300 hover:text-amber-900 cursor-pointer self-end sm:self-auto"
             >
               Dismiss
             </button>
           </div>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div>
-            <p className="text-xs uppercase tracking-widest text-brand-blue font-semibold">
+            <p className="text-[11px] sm:text-xs uppercase tracking-widest text-brand-blue font-semibold">
               Almost yours
             </p>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 text-dark dark:text-white">
+            <h1 className="font-display text-2xl sm:text-4xl font-bold mt-0.5 sm:mt-1 text-dark dark:text-white">
               Checkout
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-              Your details, delivery, and a payment method that suits you.
+            <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-0.5 sm:mt-1">
+              Your details, delivery, and secure payment.
             </p>
           </div>
-          <span className="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] px-4 py-2 shadow-2xs">
-            <Lock size={14} className="text-brand-blue" /> Secure payment
+          <span className="inline-flex items-center gap-1.5 self-start sm:self-auto text-xs text-gray-600 dark:text-gray-300 rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] px-3.5 py-1.5 sm:px-4 sm:py-2 shadow-2xs">
+            <Lock size={13} className="text-brand-blue shrink-0" />
+            <span className="font-medium">256-bit SSL encrypted</span>
           </span>
         </div>
+
+        {/* Mobile Collapsible Order Summary Accordion (Fast inspection without scrolling) */}
+        <div className="lg:hidden mb-5 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] overflow-hidden shadow-xs transition-colors">
+          <button
+            type="button"
+            onClick={() => setIsMobileSummaryOpen(!isMobileSummaryOpen)}
+            className="w-full px-4 py-3 flex items-center justify-between text-left cursor-pointer bg-gray-50/80 dark:bg-white/[0.03] hover:bg-gray-100/80 dark:hover:bg-white/[0.06] transition-colors"
+            aria-expanded={isMobileSummaryOpen}
+          >
+            <div className="flex items-center gap-2 text-xs font-semibold text-brand-blue dark:text-blue-400">
+              <ShoppingBag size={15} />
+              <span>{isMobileSummaryOpen ? "Hide order summary" : "Show order summary"}</span>
+              <ChevronDown
+                size={14}
+                className={cn("transition-transform duration-200", isMobileSummaryOpen && "rotate-180")}
+              />
+            </div>
+            <div className="text-right">
+              <span className="text-sm font-bold text-dark dark:text-white">
+                {quote ? displayPrice(quote.total_amount) : "--"}
+              </span>
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 block">
+                {items.reduce((sum, item) => sum + item.quantity, 0)} items
+              </span>
+            </div>
+          </button>
+
+          {isMobileSummaryOpen && (
+            <div className="p-4 border-t border-gray-100 dark:border-white/10 space-y-3.5">
+              <div className="divide-y divide-gray-100 dark:divide-white/10 max-h-56 overflow-y-auto">
+                {items.map((item) => (
+                  <div key={item.product_id} className="flex items-center gap-3 py-2.5">
+                    <div className="relative shrink-0">
+                      <img
+                        src={item.product.cover_image_url}
+                        alt=""
+                        className="w-10 h-14 rounded object-cover bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10"
+                      />
+                      <span className="absolute -top-1.5 -right-1.5 bg-brand-blue text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                        {item.quantity}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-dark dark:text-white truncate">
+                        {item.product.title}
+                      </p>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                        Qty: {item.quantity}
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-dark dark:text-white shrink-0">
+                      {quote
+                        ? displayPrice(
+                            quote.items.find((line) => line.product_id === item.product_id)?.total_price || 0
+                          )
+                        : "--"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Promo voucher entry in mobile summary */}
+              <div>
+                <label htmlFor="mobile-checkout-promo" className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1">
+                  Voucher code
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="mobile-checkout-promo"
+                    className="w-full min-w-0 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] px-3 py-2 text-base sm:text-xs text-dark dark:text-white uppercase focus:outline-blue-500 placeholder:text-gray-400"
+                    value={promoDraft}
+                    placeholder="ENTER CODE"
+                    disabled={busy || Boolean(attempt)}
+                    onChange={(e) => setPromoDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        setPromo(promoDraft.trim().toUpperCase());
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={busy || Boolean(attempt)}
+                    onClick={() => setPromo(promoDraft.trim().toUpperCase())}
+                    className="text-xs font-bold border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] hover:bg-gray-50 dark:hover:bg-white/10 text-dark dark:text-white rounded-xl px-3.5 py-2 transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {promo && (
+                  <button
+                    type="button"
+                    disabled={busy || Boolean(attempt)}
+                    onClick={() => {
+                      setPromo("");
+                      setPromoDraft("");
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 rounded-lg px-2.5 py-1 mt-2 cursor-pointer"
+                  >
+                    <X size={12} />
+                    <span>Remove {promo}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Price Breakdown */}
+              <dl className="space-y-1.5 text-xs border-t border-gray-100 dark:border-white/10 pt-2.5">
+                <div className="flex justify-between">
+                  <dt className="text-gray-500 dark:text-gray-400">Subtotal</dt>
+                  <dd className="font-semibold text-dark dark:text-white">{quote ? displayPrice(quote.subtotal) : "--"}</dd>
+                </div>
+                {Boolean(quote?.discount_amount) && (
+                  <div className="flex justify-between text-brand-red dark:text-red-400 font-semibold">
+                    <dt>Discount</dt>
+                    <dd>-{displayPrice(quote!.discount_amount)}</dd>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <dt className="text-gray-500 dark:text-gray-400">Delivery</dt>
+                  <dd className="font-semibold text-dark dark:text-white">
+                    {quote
+                      ? quote.shipping_amount === 0
+                        ? "FREE"
+                        : displayPrice(quote.shipping_amount)
+                      : "--"}
+                  </dd>
+                </div>
+                <div className="flex justify-between border-t border-gray-100 dark:border-white/10 pt-2 text-sm font-bold text-dark dark:text-white">
+                  <dt>Total</dt>
+                  <dd>{quote ? displayPrice(quote.total_amount) : "--"}</dd>
+                </div>
+              </dl>
+            </div>
+          )}
+        </div>
+
         {attempt && (
           <section
-            className="rounded-2xl border border-blue-200/90 dark:border-blue-800/40 bg-blue-50/70 dark:bg-blue-950/30 p-5 sm:p-6 mb-6 shadow-xs"
+            className="rounded-2xl border border-blue-200/90 dark:border-blue-800/40 bg-blue-50/70 dark:bg-blue-950/30 p-4 sm:p-6 mb-6 shadow-xs"
             aria-label="Existing checkout"
           >
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800/50 text-brand-blue dark:text-blue-300 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                <Clock size={19} />
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800/50 text-brand-blue dark:text-blue-300 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                <Clock size={18} />
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="font-bold text-base text-dark dark:text-white">
+                <h2 className="font-bold text-sm sm:text-base text-dark dark:text-white">
                   You have an order awaiting payment
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
-                  Continue your existing order, or cancel it to release the reserved
-                  items and change your checkout.
+                  Continue your existing order, or cancel it to edit your details.
                 </p>
 
-                <div className="flex flex-wrap items-center gap-2.5 mt-4">
+                <div className="flex flex-wrap items-center gap-2 mt-3.5">
                   {attempt.url && (
                     <a
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-brand-blue hover:bg-brand-blue-hover text-white border border-brand-blue shadow-xs transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-brand-blue hover:bg-brand-blue-hover text-white border border-brand-blue shadow-xs transition-all cursor-pointer"
                       href={attempt.url}
                     >
                       <span>Resume Payment</span>
-                      <ExternalLink size={13} />
+                      <ExternalLink size={12} />
                     </a>
                   )}
                   {attempt.orderId && (
                     <Link
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] text-dark dark:text-white border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 shadow-2xs transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] text-dark dark:text-white border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 shadow-2xs transition-all cursor-pointer"
                       to={`/order-success/${attempt.orderId}`}
                     >
-                      <FileText size={13} className="text-gray-500 dark:text-gray-400" />
-                      <span>View Order Status</span>
+                      <FileText size={12} className="text-gray-500 dark:text-gray-400" />
+                      <span>View Status</span>
                     </Link>
                   )}
                   {!attempt.url && (
@@ -762,9 +905,9 @@ export const CheckoutPage: React.FC = () => {
                       type="button"
                       disabled={busy}
                       onClick={retryAttempt}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-brand-blue hover:bg-brand-blue-hover text-white border border-brand-blue shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-brand-blue hover:bg-brand-blue-hover text-white border border-brand-blue shadow-xs transition-all cursor-pointer disabled:opacity-50"
                     >
-                      <RefreshCw size={13} className={busy ? "animate-spin" : ""} />
+                      <RefreshCw size={12} className={busy ? "animate-spin" : ""} />
                       <span>Retry Saved Checkout</span>
                     </button>
                   )}
@@ -773,10 +916,10 @@ export const CheckoutPage: React.FC = () => {
                       type="button"
                       disabled={busy}
                       onClick={cancelAttempt}
-                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/30 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/30 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
                     >
-                      <X size={14} />
-                      <span>{busy ? "Please wait..." : "Cancel Order & Edit"}</span>
+                      <X size={13} />
+                      <span>{busy ? "Please wait..." : "Cancel & Edit"}</span>
                     </button>
                   )}
                 </div>
@@ -787,16 +930,17 @@ export const CheckoutPage: React.FC = () => {
         {error && (
           <div
             role="alert"
-            className="rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200 p-4 mb-6 text-sm"
+            className="rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200 p-3.5 sm:p-4 mb-6 text-xs sm:text-sm"
           >
             {error}
           </div>
         )}
         <form
+          id="checkout-form"
           onSubmit={submit}
           className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-6 lg:gap-8 items-start"
         >
-          <div className="rounded-2xl bg-white dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 p-5 sm:p-8 space-y-8 shadow-xs">
+          <div className="rounded-2xl bg-white dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 p-4 sm:p-8 space-y-6 sm:space-y-8 shadow-xs">
 
             <fieldset id="checkout-step-1" disabled={busy}>
               <legend className="text-lg font-semibold mb-4 text-dark dark:text-white">
@@ -1269,7 +1413,7 @@ export const CheckoutPage: React.FC = () => {
                             setMethod(option.id);
                           }
                         }}
-                        className="p-4 flex items-start gap-3.5 cursor-pointer select-none"
+                        className="p-3.5 sm:p-4 flex items-start gap-3 sm:gap-3.5 cursor-pointer select-none active:bg-gray-50/50 dark:active:bg-white/[0.02]"
                       >
                         {/* Native Radio Button */}
                         <div className="pt-0.5 shrink-0">
@@ -1287,22 +1431,22 @@ export const CheckoutPage: React.FC = () => {
 
                         {/* Title, Badges & Description */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <div className="h-5 flex items-center justify-center">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="h-5 flex items-center justify-center shrink-0">
                                 <Icon className="w-5 h-5 text-dark dark:text-white" />
                               </div>
                               <label
                                 htmlFor={`payment-opt-${option.id}`}
-                                className="text-sm font-bold text-dark dark:text-white cursor-pointer"
+                                className="text-xs sm:text-sm font-bold text-dark dark:text-white cursor-pointer truncate"
                               >
                                 {option.name}
                               </label>
                             </div>
 
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded">
-                                {isAvailable ? option.badge : "Temporarily unavailable"}
+                            <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-auto pl-7 sm:pl-0">
+                              <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded">
+                                {isAvailable ? option.badge : "Unavailable"}
                               </span>
                               {isAvailable && (
                                 <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 px-1.5 py-0.5 rounded">
@@ -1312,7 +1456,7 @@ export const CheckoutPage: React.FC = () => {
                             </div>
                           </div>
 
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed pl-7 sm:pl-7">
                             {option.description}
                           </p>
                         </div>
@@ -1525,6 +1669,50 @@ export const CheckoutPage: React.FC = () => {
             </div>
           </aside>
         </form>
+      </div>
+
+      {/* Sticky Mobile Checkout Action Bar (< lg screen only) */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#0E131F]/95 backdrop-blur-md border-t border-gray-200 dark:border-white/10 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] transition-colors safe-area-bottom">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 dark:text-gray-500 block leading-none mb-1">
+              Total to pay
+            </span>
+            <span className="text-lg font-black text-dark dark:text-white truncate block leading-none">
+              {quote ? displayPrice(quote.total_amount) : "--"}
+            </span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-400 block truncate mt-0.5">
+              {quote?.shipping_amount === 0 ? "Free UK Delivery" : "Tracked Delivery"}
+            </span>
+          </div>
+
+          <button
+            type="submit"
+            form="checkout-form"
+            disabled={
+              busy ||
+              quoteQuery.isFetching ||
+              quoteQuery.isError ||
+              (quote ? !quote.methods[backendMethod] : false)
+            }
+            className="flex-1 max-w-[210px] sm:max-w-[250px] flex items-center justify-center gap-1.5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white px-4 py-3 text-xs sm:text-sm font-bold shadow-md transition-all active:scale-[0.98] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <span className="truncate">
+              {busy
+                ? "Please wait..."
+                : quoteQuery.isFetching
+                  ? "Updating..."
+                  : method === "apple_pay"
+                    ? "Pay with Apple Pay"
+                    : method === "amazon_pay"
+                      ? "Pay with Amazon Pay"
+                      : method === "paypal"
+                        ? "Pay with PayPal"
+                        : "Pay Now"}
+            </span>
+            <ArrowRight size={15} className="shrink-0" />
+          </button>
+        </div>
       </div>
     </div>
   );

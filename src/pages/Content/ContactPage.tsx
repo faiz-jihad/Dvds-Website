@@ -104,21 +104,27 @@ export const ContactPage: React.FC = () => {
       }
       addToast('Your message was saved in the customer support queue.', 'success');
 
-      // Immediate notification synchronization for customer and admin
-      useNotificationStore.getState().addNotification({
-        target: 'admin',
-        type: 'support',
-        title: 'New Customer Enquiry',
-        message: `Message from ${name} (${email}): "${message.slice(0, 70)}${message.length > 70 ? '...' : ''}"`,
-        link: '/admin/support',
-      });
-      useNotificationStore.getState().addNotification({
-        target: 'customer',
-        type: 'support',
-        title: 'Enquiry Received',
-        message: 'Your inquiry has been submitted. Our team will get back to you shortly.',
-        link: '/contact',
-      });
+      // Immediate notification synchronization for customer and admin (silenced to avoid duplicate toast spam)
+      useNotificationStore.getState().addNotification(
+        {
+          target: 'admin',
+          type: 'support',
+          title: 'New Customer Enquiry',
+          message: `Message from ${name} (${email}): "${message.slice(0, 70)}${message.length > 70 ? '...' : ''}"`,
+          link: '/admin/support',
+        },
+        { showToast: false, playAudio: false, sendNativePush: false }
+      );
+      useNotificationStore.getState().addNotification(
+        {
+          target: 'customer',
+          type: 'support',
+          title: 'Enquiry Received',
+          message: 'Your inquiry has been submitted. Our team will get back to you shortly.',
+          link: '/contact',
+        },
+        { showToast: false, playAudio: false, sendNativePush: false }
+      );
     } catch (error) {
       addToast(error instanceof Error ? error.message : 'Message could not be sent.', 'error');
     } finally { setSubmitting(false); }

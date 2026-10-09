@@ -29,6 +29,51 @@ const RealtimeContext = createContext<RealtimeContextValue>({
 
 const BROADCAST_CHANNEL_NAME = 'az_rayan_realtime_broadcast_v1';
 
+// Helper to track customer order references for localized push updates
+export const trackCustomerOrder = (orderId?: string | null, orderNumber?: string | null) => {
+  if (typeof window === 'undefined' || (!orderId && !orderNumber)) return;
+  try {
+    const existing: string[] = JSON.parse(localStorage.getItem('az_customer_recent_orders') || '[]');
+    const toAdd = [orderId, orderNumber].filter(Boolean) as string[];
+    const updated = Array.from(new Set([...toAdd, ...existing])).slice(0, 30);
+    localStorage.setItem('az_customer_recent_orders', JSON.stringify(updated));
+  } catch {
+    // Non-blocking
+  }
+};
+
+// Verify if an order payload belongs to the currently active user session
+export const isCustomerOrder = (record: any): boolean => {
+  if (!record || typeof window === 'undefined') return false;
+  try {
+    // 1. Check authenticated customer profile
+    const profileRaw = localStorage.getItem('az_rayan_customer_profile');
+    if (profileRaw) {
+      const profile = JSON.parse(profileRaw);
+      if (profile?.id && record.user_id && profile.id === record.user_id) return true;
+      if (profile?.email && record.email && profile.email.toLowerCase() === record.email.toLowerCase()) return true;
+    }
+
+    // 2. Check active checkout session receipts
+    const receiptsRaw = sessionStorage.getItem('az_checkout_receipts_v2');
+    if (receiptsRaw) {
+      const receipts = JSON.parse(receiptsRaw);
+      if (record.id && receipts[record.id]) return true;
+    }
+
+    // 3. Check customer stored order references (including guest checkout)
+    const savedRefsRaw = localStorage.getItem('az_customer_recent_orders');
+    if (savedRefsRaw) {
+      const savedRefs: string[] = JSON.parse(savedRefsRaw);
+      if (record.id && savedRefs.includes(record.id)) return true;
+      if (record.order_number && savedRefs.includes(record.order_number)) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+};
+
 export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<RealtimeStatus>(isSupabaseConfigured ? 'connecting' : 'offline');
@@ -81,8 +126,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         if (eventType === 'INSERT') {
           const orderNum = newRecord?.order_number || 'new';
           const totalText = newRecord?.total_amount ? ` totalling £${Number(newRecord.total_amount).toFixed(2)}` : '';
-          useUiStore.getState().addToast(`Order #${orderNum} received!`, 'info');
-          // Admin duty: New order notification
+          // Admin duty: New order notification (role-gated to admin context)
           useNotificationStore.getState().addNotification({
             target: 'admin',
             type: 'order',
@@ -91,20 +135,22 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
             link: '/admin/orders',
           });
         } else if (eventType === 'UPDATE' && newRecord?.status) {
-          // Customer duty: Order status update notification
-          const orderNum = newRecord?.order_number || '';
-          const statusText = newRecord.status === 'dispatched'
-            ? 'has been dispatched with tracking'
-            : newRecord.status === 'delivered'
-            ? 'has been successfully delivered to your address'
-            : `is now ${newRecord.status}`;
-          useNotificationStore.getState().addNotification({
-            target: 'customer',
-            type: 'order',
-            title: 'Order Status Updated',
-            message: `Your order #${orderNum} ${statusText}.`,
-            link: '/account/orders',
-          });
+          // Customer duty: Order status update notification (ONLY for the customer who owns this order)
+          if (isCustomerOrder(newRecord)) {
+            const orderNum = newRecord?.order_number || '';
+            const statusText = newRecord.status === 'dispatched'
+              ? 'has been dispatched with tracking'
+              : newRecord.status === 'delivered'
+              ? 'has been successfully delivered to your address'
+              : `status is now ${newRecord.status.toUpperCase()}`;
+            useNotificationStore.getState().addNotification({
+              target: 'customer',
+              type: 'order',
+              title: 'Order Status Updated',
+              message: `Your order #${orderNum} ${statusText}.`,
+              link: newRecord.id ? `/order-success/${newRecord.id}` : '/account/orders',
+            });
+          }
         }
         break;
 
@@ -147,8 +193,8 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         queryClient.invalidateQueries({ queryKey: ['store', 'promotions'] });
         queryClient.invalidateQueries({ queryKey: ['active-promotions'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'promotions'] });
-        // Customer duty: Promo code notification
-        if (newRecord?.code && newRecord?.is_active) {
+        // Customer duty: Promo code notification on new creation
+        if (eventType === 'INSERT' && newRecord?.code && newRecord?.is_active) {
           useNotificationStore.getState().addNotification({
             target: 'customer',
             type: 'promo',
@@ -171,8 +217,7 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
       case 'contact_messages':
         queryClient.invalidateQueries({ queryKey: ['admin', 'contact-messages'] });
         if (eventType === 'INSERT') {
-          useUiStore.getState().addToast('New customer enquiry received', 'info');
-          // Admin duty: New customer support enquiry
+          // Admin duty: New customer support enquiry (role-gated to admin context)
           useNotificationStore.getState().addNotification({
             target: 'admin',
             type: 'support',

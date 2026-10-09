@@ -61,8 +61,17 @@ export interface PushNotificationPayload {
  * High-fidelity, synthetic dual-tone bell chime using Web Audio API.
  * Zero external audio file dependency, zero latency, 100% reliable across browsers.
  */
+let lastChimeTimestamp = 0;
+
 export const playNotificationChime = (): void => {
   if (typeof window === 'undefined') return;
+  const nowMs = Date.now();
+  if (nowMs - lastChimeTimestamp < 1500) {
+    // Avoid overlapping harsh chimes when multiple events arrive at once
+    return;
+  }
+  lastChimeTimestamp = nowMs;
+
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContextClass) return;

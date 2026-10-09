@@ -35,6 +35,7 @@ import { useNotificationStore } from "../stores/useNotificationStore";
 import { clearCheckoutDraft } from "../lib/checkoutDraft";
 import { useThemeStore } from "../stores/useThemeStore";
 import { Seo } from "../components/common/Seo";
+import { trackCustomerOrder } from "../lib/realtime";
 
 interface PaymentProofData {
   fileName: string;
@@ -169,7 +170,10 @@ export const OrderSuccessPage: React.FC = () => {
     clearCheckoutDraft();
     if (!purchased || !purchased.length) return;
 
-    // Dispatch order confirmation for customer & admin
+    // Track order reference for accurate real-time updates
+    trackCustomerOrder(order.id, order.order_number);
+
+    // Dispatch order confirmation for customer
     useNotificationStore.getState().addNotification({
       target: "customer",
       type: "order",
@@ -177,13 +181,18 @@ export const OrderSuccessPage: React.FC = () => {
       message: `Your order #${order.order_number} has been received (${formatMoney(order.total_amount, effectiveCurrency)}). Follow delivery progress anytime.`,
       link: `/order-success/${order.id}`,
     });
-    useNotificationStore.getState().addNotification({
-      target: "admin",
-      type: "order",
-      title: "New Order Received",
-      message: `Order #${order.order_number} (${formatMoney(order.total_amount, effectiveCurrency)}) placed by customer.`,
-      link: "/admin/orders",
-    });
+
+    // Internal admin log (silenced for customer screen)
+    useNotificationStore.getState().addNotification(
+      {
+        target: "admin",
+        type: "order",
+        title: "New Order Received",
+        message: `Order #${order.order_number} (${formatMoney(order.total_amount, effectiveCurrency)}) placed by customer.`,
+        link: "/admin/orders",
+      },
+      { showToast: false, playAudio: false, sendNativePush: false }
+    );
 
     useCartStore.setState((state) => {
       const remaining = state.items.flatMap((item) => {

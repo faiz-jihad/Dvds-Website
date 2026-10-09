@@ -255,13 +255,16 @@ export const AdminOrders: React.FC = () => {
 
       addToast(`Order ${updated.order_number} cancelled & marked as failed. Stock returned to inventory.`, 'success');
 
-      useNotificationStore.getState().addNotification({
-        target: 'customer',
-        type: 'order',
-        title: 'Order Cancelled',
-        message: `Order #${updated.order_number} has been cancelled (${finalReason}). Any reserved stock has been released.`,
-        link: '/account/orders',
-      });
+      useNotificationStore.getState().addNotification(
+        {
+          target: 'customer',
+          type: 'order',
+          title: 'Order Cancelled',
+          message: `Order #${updated.order_number} has been cancelled (${finalReason}). Any reserved stock has been released.`,
+          link: '/account/orders',
+        },
+        { showToast: false, playAudio: false, sendNativePush: false }
+      );
     } catch (err) {
       addToast(err instanceof Error ? err.message : 'Failed to cancel order', 'error');
     } finally {
@@ -362,13 +365,16 @@ export const AdminOrders: React.FC = () => {
       addToast(`Order ${updated.order_number} marked as ${newStatus}`, 'success');
 
       // Dispatch real-time notifications for both customer and admin
-      useNotificationStore.getState().addNotification({
-        target: 'customer',
-        type: 'order',
-        title: 'Order Status Updated',
-        message: `Order #${updated.order_number} status is now ${newStatus.toUpperCase()} (${fulfilment})${trackingNumber ? ` • Tracking: ${trackingNumber}` : ''}.`,
-        link: '/account/orders',
-      });
+      useNotificationStore.getState().addNotification(
+        {
+          target: 'customer',
+          type: 'order',
+          title: 'Order Status Updated',
+          message: `Order #${updated.order_number} status is now ${newStatus.toUpperCase()} (${fulfilment})${trackingNumber ? ` • Tracking: ${trackingNumber}` : ''}.`,
+          link: '/account/orders',
+        },
+        { showToast: false, playAudio: false, sendNativePush: false }
+      );
       useNotificationStore.getState().addNotification(
         {
           target: 'admin',
@@ -377,7 +383,7 @@ export const AdminOrders: React.FC = () => {
           message: `Order #${updated.order_number} changed to ${newStatus.toUpperCase()} (${fulfilment}).`,
           link: '/admin/orders',
         },
-        { showToast: false }
+        { showToast: false, playAudio: false }
       );
     } catch (updateError) {
       addToast(updateError instanceof Error ? updateError.message : 'Order could not be updated', 'error');

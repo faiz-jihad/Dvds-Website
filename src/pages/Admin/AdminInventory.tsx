@@ -65,13 +65,16 @@ export const AdminInventory: React.FC = () => {
       // Dispatch real-time low-stock or adjustment notification
       const currentThreshold = settingsQuery.data?.low_stock_threshold ?? 3;
       if (updated.stock_quantity <= currentThreshold) {
-        useNotificationStore.getState().addNotification({
-          target: 'admin',
-          type: 'stock',
-          title: 'Low Stock Alert',
-          message: `Product "${updated.title}" has reached ${updated.stock_quantity} units remaining (Threshold: ${currentThreshold}).`,
-          link: '/admin/inventory',
-        });
+        useNotificationStore.getState().addNotification(
+          {
+            target: 'admin',
+            type: 'stock',
+            title: 'Low Stock Alert',
+            message: `Product "${updated.title}" has reached ${updated.stock_quantity} units remaining (Threshold: ${currentThreshold}).`,
+            link: '/admin/inventory',
+          },
+          { showToast: false }
+        );
       } else {
         useNotificationStore.getState().addNotification(
           {
