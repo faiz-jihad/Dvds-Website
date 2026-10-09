@@ -251,6 +251,9 @@ export const AdminStoreSettings: React.FC = () => {
               ? `${settings.bank_sort_code.replace(/\D/g, '').slice(0, 2)}-${settings.bank_sort_code.replace(/\D/g, '').slice(2, 4)}-${settings.bank_sort_code.replace(/\D/g, '').slice(4, 6)}`
               : settings.bank_sort_code.trim())
           : '',
+        payment_card_enabled: Boolean(settings.payment_card_enabled ?? true),
+        payment_paypal_enabled: Boolean(settings.payment_paypal_enabled ?? true),
+        payment_bank_transfer_enabled: Boolean(settings.payment_bank_transfer_enabled ?? false),
         bank_account_number: (settings.bank_account_number || '').trim(),
       };
       const updated = await adminApi.saveStoreSettings(payload);

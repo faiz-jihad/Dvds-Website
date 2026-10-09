@@ -144,6 +144,7 @@ export default endpoint(async (req) => {
       'standard_shipping_name', 'standard_shipping_eta', 'express_shipping_name', 'express_shipping_eta',
       'low_stock_threshold', 'budget_collection_threshold', 'dispatch_cutoff_time',
       'deal_product_id', 'deal_discount_price', 'deal_ends_at', 'deal_is_active',
+      'payment_card_enabled', 'payment_paypal_enabled', 'payment_bank_transfer_enabled',
       'vip_promo_code', 'vip_promo_discount', 'vip_min_spend', 'updated_at'
     ];
     for (const key of coreKeys) {

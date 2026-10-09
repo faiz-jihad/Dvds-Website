@@ -289,14 +289,24 @@ export const CheckoutPage: React.FC = () => {
     formatMoney(amount, quote?.currency || currency);
 
   useEffect(() => {
+    if (storeSettings) {
+      if (storeSettings.payment_card_enabled === false && method !== "paypal") {
+        setMethod("paypal");
+      } else if (storeSettings.payment_paypal_enabled === false && method === "paypal") {
+        setMethod("card");
+      }
+    }
+  }, [storeSettings, method]);
+
+  useEffect(() => {
     if (quote) {
       const isCurrentAvailable = Boolean(quote.methods[backendMethod]);
       if (!isCurrentAvailable) {
-        if (quote.methods.card) setMethod("card");
-        else if (quote.methods.paypal) setMethod("paypal");
+        if (quote.methods.card && storeSettings?.payment_card_enabled !== false) setMethod("card");
+        else if (quote.methods.paypal && storeSettings?.payment_paypal_enabled !== false) setMethod("paypal");
       }
     }
-  }, [quote, backendMethod]);
+  }, [quote, backendMethod, storeSettings]);
 
   const savedAddressesQuery = useQuery({
     queryKey: ["account", "addresses"],
@@ -1173,49 +1183,51 @@ export const CheckoutPage: React.FC = () => {
                 Choose how you would like to pay.
               </p>
 
-              {/* Express Checkout Element for 1-click wallets (only mounted if device supports them) */}
-              <div className="clear-both">
-                <FastPaymentSection
-                  items={basket}
-                  email={email}
-                  address={address}
-                  tier={tier}
-                  promo={promo}
-                  currency={quote?.currency || currency}
-                  totalAmount={quote?.total_amount || 0}
-                  isReady={Boolean(quote && !quoteQuery.isFetching && !quoteQuery.isError)}
-                  stripePublishableKey={configQuery.data?.stripePublishableKey}
-                  isDark={isDark}
-                  disabled={busy || Boolean(attempt)}
-                  onPaymentStart={() => {
-                    setBusy(true);
-                    setError("");
-                  }}
-                  onPaymentComplete={(orderId) => {
-                    clearCheckoutDraft();
-                    navigate(`/order-success/${orderId}`);
-                  }}
-                  onError={(err) => {
-                    setError(err);
-                    setBusy(false);
-                    setAttempt(currentCheckoutAttempt());
-                  }}
-                  onMethodsChange={(detected) => {
-                    setFastMethods(detected);
-                  }}
-                />
+              {/* Express Checkout Element for 1-click wallets (only mounted if enabled by store and supported by device) */}
+              {(storeSettings?.payment_card_enabled !== false && quote?.methods?.card !== false) && (
+                <div className="clear-both">
+                  <FastPaymentSection
+                    items={basket}
+                    email={email}
+                    address={address}
+                    tier={tier}
+                    promo={promo}
+                    currency={quote?.currency || currency}
+                    totalAmount={quote?.total_amount || 0}
+                    isReady={Boolean(quote && !quoteQuery.isFetching && !quoteQuery.isError)}
+                    stripePublishableKey={configQuery.data?.stripePublishableKey}
+                    isDark={isDark}
+                    disabled={busy || Boolean(attempt)}
+                    onPaymentStart={() => {
+                      setBusy(true);
+                      setError("");
+                    }}
+                    onPaymentComplete={(orderId) => {
+                      clearCheckoutDraft();
+                      navigate(`/order-success/${orderId}`);
+                    }}
+                    onError={(err) => {
+                      setError(err);
+                      setBusy(false);
+                      setAttempt(currentCheckoutAttempt());
+                    }}
+                    onMethodsChange={(detected) => {
+                      setFastMethods(detected);
+                    }}
+                  />
 
-                {hasFastMethods && (
-                  <div className="relative my-4 text-center" aria-hidden="true">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-200 dark:border-white/10" />
+                  {hasFastMethods && (
+                    <div className="relative my-4 text-center" aria-hidden="true">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-200 dark:border-white/10" />
+                      </div>
+                      <div className="relative inline-flex items-center gap-2 px-4 bg-white dark:bg-[#0E131F] text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                        <span>OR CHOOSE PAYMENT METHOD</span>
+                      </div>
                     </div>
-                    <div className="relative inline-flex items-center gap-2 px-4 bg-white dark:bg-[#0E131F] text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                      <span>OR CHOOSE PAYMENT METHOD</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* Payment method card choices */}
               <div
@@ -1223,7 +1235,17 @@ export const CheckoutPage: React.FC = () => {
                 aria-label="Payment method"
                 className="space-y-3 clear-both mt-1"
               >
-                {methods.map((option) => {
+                {methods
+                  .filter((option) => {
+                    if (storeSettings && storeSettings.payment_card_enabled === false && option.backendId === 'card') {
+                      return false;
+                    }
+                    if (storeSettings && storeSettings.payment_paypal_enabled === false && option.backendId === 'paypal') {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((option) => {
                   const isAvailable = Boolean(quote ? quote.methods[option.backendId] : true);
                   const selected = method === option.id;
                   const Icon = option.icon;
