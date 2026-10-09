@@ -12,7 +12,6 @@ import {
   ShoppingCart,
   Boxes,
   Tag,
-  BarChart3,
   ArrowUpRight,
   LogOut,
   Menu,
@@ -59,7 +58,6 @@ const NAV_GROUPS: NavGroup[] = [
     title: "Overview",
     items: [
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard, end: true },
-      { label: "Reports & Financials", href: "/admin/reports", icon: BarChart3 },
     ],
   },
   {

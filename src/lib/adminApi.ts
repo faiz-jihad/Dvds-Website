@@ -461,7 +461,7 @@ export const adminApi = {
   async saveStoreSettings(input: StoreSettings): Promise<StoreSettings> {
     if (input.shipping_zones) validateShippingZones(input.shipping_zones);
     if (input.checkout_currencies && (!input.checkout_currencies.includes('GBP') || input.checkout_currencies.some((currency) => !CURRENCIES.includes(currency)))) throw new Error('Enable GBP and select supported checkout currencies.');
-    const { data: existing, error: readError } = await client().from('store_settings').select('id').eq('singleton', true).maybeSingle();
+    const { data: existing, error: readError } = await client().from('store_settings').select('*').eq('singleton', true).maybeSingle();
     if (readError) fail(readError, 'Store settings could not be loaded before saving.');
     const { id, ...values } = input;
     // Strictly sanitize address to protect personal privacy and standardize jurisdiction
@@ -488,10 +488,21 @@ export const adminApi = {
         localStorage.setItem('dvds_store_settings_override', JSON.stringify({ ...input, ...values }));
       }
     } catch {}
+
+    // Filter payload strictly to columns that exist in the database schema to avoid 42703 column errors
+    const allowedKeys = existing ? new Set(Object.keys(existing)) : null;
+    const sanitizedPayload: Record<string, any> = {};
+    for (const [key, val] of Object.entries(payload)) {
+      if (!allowedKeys || allowedKeys.has(key)) {
+        sanitizedPayload[key] = val;
+      }
+    }
+    sanitizedPayload.singleton = true;
+    sanitizedPayload.updated_at = new Date().toISOString();
     
     let result = existing
-      ? await client().from('store_settings').update(payload).eq('id', existing.id).select('*').single()
-      : await client().from('store_settings').insert(payload).select('*').single();
+      ? await client().from('store_settings').update(sanitizedPayload).eq('id', existing.id).select('*').single()
+      : await client().from('store_settings').insert(sanitizedPayload).select('*').single();
 
     const isSchemaColumnError = (err: any) =>
       Boolean(
