@@ -304,7 +304,7 @@ export const FastPaymentSection: React.FC<FastPaymentSectionProps> = ({
   return (
     <div aria-label="Express checkout options" className="w-full">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-blue/10 dark:bg-blue-400/10 text-brand-blue dark:text-blue-400">
             <Zap size={12} className="fill-current" />
@@ -314,8 +314,8 @@ export const FastPaymentSection: React.FC<FastPaymentSectionProps> = ({
           </span>
         </div>
         <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-          <ShieldCheck size={13} className="text-emerald-500 dark:text-emerald-400" />
-          <span>Official Wallet Protected</span>
+          <ShieldCheck size={13} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
+          <span><span className="hidden sm:inline">Official </span>Wallet Protected</span>
         </span>
       </div>
 
@@ -323,13 +323,13 @@ export const FastPaymentSection: React.FC<FastPaymentSectionProps> = ({
       <div
         ref={stripeContainerRef}
         id="stripe-express-checkout-element"
-        className="w-full"
+        className="w-full overflow-hidden rounded-xl"
       />
 
       {/* Trust hint */}
-      <p className="text-[11px] text-center text-gray-500 dark:text-gray-400 mt-2 flex items-center justify-center gap-1.5">
-        <Lock size={11} className="text-gray-400 dark:text-gray-500" />
-        <span>Pay instantly using your saved card via Apple Pay, Google Pay, or Link.</span>
+      <p className="text-[11px] text-center text-gray-500 dark:text-gray-400 mt-2 flex items-center justify-center gap-1.5 px-1">
+        <Lock size={11} className="text-gray-400 dark:text-gray-500 shrink-0" />
+        <span className="leading-tight">Pay instantly using your saved card via Apple Pay, Google Pay, or Link.</span>
       </p>
     </div>
   );
