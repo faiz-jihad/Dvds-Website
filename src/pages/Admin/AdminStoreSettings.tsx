@@ -261,7 +261,7 @@ export const AdminStoreSettings: React.FC = () => {
       };
       const updated = await adminApi.saveStoreSettings(payload);
       dirty.current = false;
-      if (Array.isArray(payload.hero_trailers) && payload.hero_trailers.length > 0 && (!Array.isArray(updated.hero_trailers) || updated.hero_trailers.length === 0)) {
+      if (Array.isArray(payload.hero_trailers)) {
         updated.hero_trailers = payload.hero_trailers;
       }
       setSettings(updated);
@@ -1060,8 +1060,11 @@ export const AdminStoreSettings: React.FC = () => {
                                 Select Title from Catalogue
                               </label>
                               <select
-                                value={trailer.product_id}
-                                onChange={(e) => handleUpdateTrailer(idx, { product_id: e.target.value })}
+                                value={selectedProduct?.id || trailer.product_id}
+                                onChange={(e) => {
+                                  handleUpdateTrailer(idx, { product_id: e.target.value });
+                                  setPreviewTrailerIndex(idx);
+                                }}
                                 className="w-full rounded-lg border border-gray-200 p-2.5 text-xs text-dark focus:border-brand-blue focus:outline-none bg-white font-medium cursor-pointer"
                               >
                                 {products.map((p) => (
@@ -1301,7 +1304,14 @@ export const AdminStoreSettings: React.FC = () => {
                 {heroTrailers.length > 1 && (
                   <div className="flex items-center gap-1.5 mb-2 overflow-x-auto pb-1">
                     {heroTrailers.map((item, idx) => {
-                      const p = products.find((pr) => pr.id === item.product_id);
+                      const p = products.find((pr) => {
+                        const target = String(item.product_id || '').trim().toLowerCase();
+                        return (
+                          String(pr.id).trim().toLowerCase() === target ||
+                          String(pr.slug).trim().toLowerCase() === target ||
+                          (pr.title && pr.title.toLowerCase() === target)
+                        );
+                      });
                       return (
                         <button
                           key={idx}
@@ -1324,6 +1334,7 @@ export const AdminStoreSettings: React.FC = () => {
                   {/* YouTube Iframe or Fallback backdrop - Clear & Vibrant (No dark shadow overlays) */}
                   {settings.hero_youtube_enabled && activePreviewVideoId ? (
                     <AdminHeroVideoPlayer
+                      key={`${previewTrailerIndex}-${activePreviewProduct?.id}-${activePreviewVideoId}-${activePreviewStart}-${activePreviewEnd}`}
                       videoId={activePreviewVideoId}
                       startSec={activePreviewStart}
                       endSec={activePreviewEnd}

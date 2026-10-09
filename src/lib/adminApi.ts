@@ -436,24 +436,22 @@ export const adminApi = {
     if (!data) return null;
     const settings = { ...DEFAULT_STORE_SETTINGS, ...data } as StoreSettings;
 
-    // Unpack hero trailers and youtube settings from HERO_META fallback if column is missing or empty
-    if (!Array.isArray(settings.hero_trailers) || settings.hero_trailers.length === 0) {
-      if (settings.hero_bg_image && settings.hero_bg_image.startsWith('HERO_META:')) {
-        try {
-          const meta = JSON.parse(settings.hero_bg_image.slice('HERO_META:'.length));
-          if (Array.isArray(meta.hero_trailers) && meta.hero_trailers.length > 0) {
-            settings.hero_trailers = meta.hero_trailers;
-          }
-          if (meta.hero_youtube_enabled !== undefined && data.hero_youtube_enabled === undefined) settings.hero_youtube_enabled = meta.hero_youtube_enabled;
-          if (meta.hero_youtube_url && !data.hero_youtube_url) settings.hero_youtube_url = meta.hero_youtube_url;
-          if (meta.hero_youtube_mute !== undefined && data.hero_youtube_mute === undefined) settings.hero_youtube_mute = meta.hero_youtube_mute;
-          if (meta.hero_youtube_loop !== undefined && data.hero_youtube_loop === undefined) settings.hero_youtube_loop = meta.hero_youtube_loop;
-          if (meta.hero_youtube_start_minutes !== undefined && data.hero_youtube_start_minutes === undefined) settings.hero_youtube_start_minutes = meta.hero_youtube_start_minutes;
-          if (meta.hero_youtube_start_seconds !== undefined && data.hero_youtube_start_seconds === undefined) settings.hero_youtube_start_seconds = meta.hero_youtube_start_seconds;
-          if (meta.hero_youtube_end_minutes !== undefined && data.hero_youtube_end_minutes === undefined) settings.hero_youtube_end_minutes = meta.hero_youtube_end_minutes;
-          if (meta.hero_youtube_end_seconds !== undefined && data.hero_youtube_end_seconds === undefined) settings.hero_youtube_end_seconds = meta.hero_youtube_end_seconds;
-        } catch {}
-      }
+    // Unpack hero trailers and youtube settings from HERO_META fallback
+    if (settings.hero_bg_image && settings.hero_bg_image.startsWith('HERO_META:')) {
+      try {
+        const meta = JSON.parse(settings.hero_bg_image.slice('HERO_META:'.length));
+        if (Array.isArray(meta.hero_trailers)) {
+          settings.hero_trailers = meta.hero_trailers;
+        }
+        if (meta.hero_youtube_enabled !== undefined) settings.hero_youtube_enabled = meta.hero_youtube_enabled;
+        if (meta.hero_youtube_url !== undefined) settings.hero_youtube_url = meta.hero_youtube_url;
+        if (meta.hero_youtube_mute !== undefined) settings.hero_youtube_mute = meta.hero_youtube_mute;
+        if (meta.hero_youtube_loop !== undefined) settings.hero_youtube_loop = meta.hero_youtube_loop;
+        if (meta.hero_youtube_start_minutes !== undefined) settings.hero_youtube_start_minutes = meta.hero_youtube_start_minutes;
+        if (meta.hero_youtube_start_seconds !== undefined) settings.hero_youtube_start_seconds = meta.hero_youtube_start_seconds;
+        if (meta.hero_youtube_end_minutes !== undefined) settings.hero_youtube_end_minutes = meta.hero_youtube_end_minutes;
+        if (meta.hero_youtube_end_seconds !== undefined) settings.hero_youtube_end_seconds = meta.hero_youtube_end_seconds;
+      } catch {}
     }
     if ((!Array.isArray(settings.hero_trailers) || settings.hero_trailers.length === 0) && typeof window !== 'undefined') {
       try {
@@ -551,7 +549,7 @@ export const adminApi = {
               }
             } catch {}
             const merged = { ...DEFAULT_STORE_SETTINGS, ...body.settings } as StoreSettings;
-            if ((!Array.isArray(merged.hero_trailers) || merged.hero_trailers.length === 0) && Array.isArray(input.hero_trailers) && input.hero_trailers.length > 0) {
+            if (Array.isArray(input.hero_trailers)) {
               merged.hero_trailers = input.hero_trailers;
             }
             return merged;
@@ -603,9 +601,7 @@ export const adminApi = {
       const nonCoreColumns = new Set([
         'campaign_is_active', 'campaign_title', 'campaign_badge', 'campaign_tagline',
         'campaign_discount_text', 'campaign_ends_at', 'custom_formats',
-        'hero_youtube_enabled', 'hero_youtube_url', 'hero_youtube_mute', 'hero_youtube_loop',
-        'hero_youtube_start_minutes', 'hero_youtube_start_seconds', 'hero_youtube_end_minutes',
-        'hero_youtube_end_seconds', 'hero_trailers', 'shipping_zones', 'checkout_currencies',
+        'shipping_zones', 'checkout_currencies',
         'international_duties_notice'
       ]);
       const corePayload: Record<string, any> = {};
@@ -632,7 +628,7 @@ export const adminApi = {
     } catch {}
 
     const returnedSettings = { ...DEFAULT_STORE_SETTINGS, ...result.data } as StoreSettings;
-    if ((!Array.isArray(returnedSettings.hero_trailers) || returnedSettings.hero_trailers.length === 0) && Array.isArray(input.hero_trailers) && input.hero_trailers.length > 0) {
+    if (Array.isArray(input.hero_trailers)) {
       returnedSettings.hero_trailers = input.hero_trailers;
     }
     return returnedSettings;

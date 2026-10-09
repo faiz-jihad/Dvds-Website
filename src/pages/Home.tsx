@@ -28,7 +28,8 @@ export const Home: React.FC = () => {
   const settingsQuery = useQuery({
     queryKey: ["store", "settings"],
     queryFn: () => publicApi.getStoreSettings(),
-    staleTime: 60_000,
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
   });
 
   const isLoading =

@@ -143,21 +143,21 @@ export const publicApi = {
     if (data.hero_bg_image && data.hero_bg_image.startsWith('HERO_META:')) {
       try {
         const meta = JSON.parse(data.hero_bg_image.slice('HERO_META:'.length));
-        if (heroTrailers.length === 0 && Array.isArray(meta.hero_trailers) && meta.hero_trailers.length > 0) {
+        if (Array.isArray(meta.hero_trailers)) {
           heroTrailers = meta.hero_trailers;
         }
-        if (heroYoutubeEnabled === undefined && meta.hero_youtube_enabled !== undefined) heroYoutubeEnabled = meta.hero_youtube_enabled;
-        if (!heroYoutubeUrl && meta.hero_youtube_url) heroYoutubeUrl = meta.hero_youtube_url;
-        if (heroYoutubeMute === undefined && meta.hero_youtube_mute !== undefined) heroYoutubeMute = meta.hero_youtube_mute;
-        if (heroYoutubeLoop === undefined && meta.hero_youtube_loop !== undefined) heroYoutubeLoop = meta.hero_youtube_loop;
-        if (heroYoutubeStartMinutes === undefined && meta.hero_youtube_start_minutes !== undefined) heroYoutubeStartMinutes = meta.hero_youtube_start_minutes;
-        if (heroYoutubeStartSeconds === undefined && meta.hero_youtube_start_seconds !== undefined) heroYoutubeStartSeconds = meta.hero_youtube_start_seconds;
-        if (heroYoutubeEndMinutes === undefined && meta.hero_youtube_end_minutes !== undefined) heroYoutubeEndMinutes = meta.hero_youtube_end_minutes;
-        if (heroYoutubeEndSeconds === undefined && meta.hero_youtube_end_seconds !== undefined) heroYoutubeEndSeconds = meta.hero_youtube_end_seconds;
+        if (meta.hero_youtube_enabled !== undefined) heroYoutubeEnabled = meta.hero_youtube_enabled;
+        if (meta.hero_youtube_url !== undefined) heroYoutubeUrl = meta.hero_youtube_url;
+        if (meta.hero_youtube_mute !== undefined) heroYoutubeMute = meta.hero_youtube_mute;
+        if (meta.hero_youtube_loop !== undefined) heroYoutubeLoop = meta.hero_youtube_loop;
+        if (meta.hero_youtube_start_minutes !== undefined) heroYoutubeStartMinutes = meta.hero_youtube_start_minutes;
+        if (meta.hero_youtube_start_seconds !== undefined) heroYoutubeStartSeconds = meta.hero_youtube_start_seconds;
+        if (meta.hero_youtube_end_minutes !== undefined) heroYoutubeEndMinutes = meta.hero_youtube_end_minutes;
+        if (meta.hero_youtube_end_seconds !== undefined) heroYoutubeEndSeconds = meta.hero_youtube_end_seconds;
       } catch {}
     }
 
-    if (heroTrailers.length === 0 && typeof window !== 'undefined') {
+    if ((!Array.isArray(heroTrailers) || heroTrailers.length === 0) && typeof window !== 'undefined') {
       try {
         const local = localStorage.getItem('dvds_hero_trailers');
         if (local) {

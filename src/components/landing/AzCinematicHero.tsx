@@ -476,7 +476,18 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
     if (!current) return null;
 
     // 1. Check if configured for this specific film in Admin Store Settings
-    const adminTrailer = settings?.hero_trailers?.find((t) => {
+    let configuredTrailers = settings?.hero_trailers;
+    if ((!configuredTrailers || configuredTrailers.length === 0) && typeof window !== 'undefined') {
+      try {
+        const local = localStorage.getItem('dvds_hero_trailers');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) configuredTrailers = parsed;
+        }
+      } catch {}
+    }
+
+    const adminTrailer = configuredTrailers?.find((t) => {
       const target = String(t.product_id || '').trim().toLowerCase();
       const pId = String(current.id || '').trim().toLowerCase();
       const pSlug = String(current.slug || '').trim().toLowerCase();

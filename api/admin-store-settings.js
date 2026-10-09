@@ -168,6 +168,9 @@ export default endpoint(async (req) => {
       'deal_product_id', 'deal_discount_price', 'deal_ends_at', 'deal_is_active',
       'hero_badge_text', 'hero_headline_line1', 'hero_headline_highlight', 'hero_subheadline',
       'hero_cta_primary', 'hero_cta_secondary', 'hero_bg_image',
+      'hero_youtube_enabled', 'hero_youtube_url', 'hero_youtube_mute', 'hero_youtube_loop',
+      'hero_youtube_start_minutes', 'hero_youtube_start_seconds', 'hero_youtube_end_minutes', 'hero_youtube_end_seconds',
+      'hero_trailers',
       'announcement_left', 'announcement_center', 'announcement_link',
       'payment_card_enabled', 'payment_paypal_enabled', 'payment_bank_transfer_enabled',
       'vip_promo_code', 'vip_promo_discount', 'vip_min_spend', 'updated_at'
@@ -204,20 +207,19 @@ export default endpoint(async (req) => {
     throw new CheckoutError(`Failed to persist store settings: ${saveError?.message || 'Unknown error'}`, 500, 'DB_SAVE_ERROR');
   }
 
-  // Re-hydrate hero trailer settings from metadata if column hero_trailers does not exist
-  if (updated && (!Array.isArray(updated.hero_trailers) || updated.hero_trailers.length === 0)) {
-    if (updated.hero_bg_image && updated.hero_bg_image.startsWith('HERO_META:')) {
-      try {
-        const meta = JSON.parse(updated.hero_bg_image.slice('HERO_META:'.length));
-        if (Array.isArray(meta.hero_trailers) && meta.hero_trailers.length > 0) {
-          updated.hero_trailers = meta.hero_trailers;
-        }
-      } catch {}
-    }
-    if ((!Array.isArray(updated.hero_trailers) || updated.hero_trailers.length === 0) && Array.isArray(input.hero_trailers)) {
-      updated.hero_trailers = input.hero_trailers;
-    }
+  // Authoritatively ensure updated contains the latest hero trailers from input or metadata
+  if (Array.isArray(input.hero_trailers)) {
+    updated.hero_trailers = input.hero_trailers;
+  } else if (updated.hero_bg_image && updated.hero_bg_image.startsWith('HERO_META:')) {
+    try {
+      const meta = JSON.parse(updated.hero_bg_image.slice('HERO_META:'.length));
+      if (Array.isArray(meta.hero_trailers)) {
+        updated.hero_trailers = meta.hero_trailers;
+      }
+    } catch {}
   }
+  if (input.hero_youtube_enabled !== undefined) updated.hero_youtube_enabled = Boolean(input.hero_youtube_enabled);
+  if (input.hero_youtube_url !== undefined) updated.hero_youtube_url = input.hero_youtube_url;
 
   return { success: true, settings: updated };
 }, 'POST', { max: 30, windowMs: 60000 });
