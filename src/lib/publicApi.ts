@@ -130,12 +130,57 @@ export const publicApi = {
     const { data, error } = await sb.from('store_settings').select('*').eq('singleton', true).maybeSingle();
     if (error || !data) throw new Error('Store settings are unavailable. Please retry.');
 
+    let heroTrailers = Array.isArray(data.hero_trailers) && data.hero_trailers.length > 0 ? data.hero_trailers : [];
+    let heroYoutubeEnabled = data.hero_youtube_enabled;
+    let heroYoutubeUrl = data.hero_youtube_url;
+    let heroYoutubeMute = data.hero_youtube_mute;
+    let heroYoutubeLoop = data.hero_youtube_loop;
+    let heroYoutubeStartMinutes = data.hero_youtube_start_minutes;
+    let heroYoutubeStartSeconds = data.hero_youtube_start_seconds;
+    let heroYoutubeEndMinutes = data.hero_youtube_end_minutes;
+    let heroYoutubeEndSeconds = data.hero_youtube_end_seconds;
+
+    if (data.hero_bg_image && data.hero_bg_image.startsWith('HERO_META:')) {
+      try {
+        const meta = JSON.parse(data.hero_bg_image.slice('HERO_META:'.length));
+        if (heroTrailers.length === 0 && Array.isArray(meta.hero_trailers) && meta.hero_trailers.length > 0) {
+          heroTrailers = meta.hero_trailers;
+        }
+        if (heroYoutubeEnabled === undefined && meta.hero_youtube_enabled !== undefined) heroYoutubeEnabled = meta.hero_youtube_enabled;
+        if (!heroYoutubeUrl && meta.hero_youtube_url) heroYoutubeUrl = meta.hero_youtube_url;
+        if (heroYoutubeMute === undefined && meta.hero_youtube_mute !== undefined) heroYoutubeMute = meta.hero_youtube_mute;
+        if (heroYoutubeLoop === undefined && meta.hero_youtube_loop !== undefined) heroYoutubeLoop = meta.hero_youtube_loop;
+        if (heroYoutubeStartMinutes === undefined && meta.hero_youtube_start_minutes !== undefined) heroYoutubeStartMinutes = meta.hero_youtube_start_minutes;
+        if (heroYoutubeStartSeconds === undefined && meta.hero_youtube_start_seconds !== undefined) heroYoutubeStartSeconds = meta.hero_youtube_start_seconds;
+        if (heroYoutubeEndMinutes === undefined && meta.hero_youtube_end_minutes !== undefined) heroYoutubeEndMinutes = meta.hero_youtube_end_minutes;
+        if (heroYoutubeEndSeconds === undefined && meta.hero_youtube_end_seconds !== undefined) heroYoutubeEndSeconds = meta.hero_youtube_end_seconds;
+      } catch {}
+    }
+
+    if (heroTrailers.length === 0 && typeof window !== 'undefined') {
+      try {
+        const local = localStorage.getItem('dvds_hero_trailers');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            heroTrailers = parsed;
+          }
+        }
+      } catch {}
+    }
+
     const result = {
       ...DEFAULT_STORE_SETTINGS,
       ...data,
-      hero_youtube_enabled: data.hero_youtube_enabled ?? DEFAULT_STORE_SETTINGS.hero_youtube_enabled ?? false,
-      hero_youtube_url: data.hero_youtube_url ?? DEFAULT_STORE_SETTINGS.hero_youtube_url ?? '',
-      hero_trailers: Array.isArray(data.hero_trailers) ? data.hero_trailers : (DEFAULT_STORE_SETTINGS.hero_trailers || []),
+      hero_youtube_enabled: heroYoutubeEnabled ?? DEFAULT_STORE_SETTINGS.hero_youtube_enabled ?? false,
+      hero_youtube_url: heroYoutubeUrl ?? DEFAULT_STORE_SETTINGS.hero_youtube_url ?? '',
+      hero_youtube_mute: heroYoutubeMute ?? DEFAULT_STORE_SETTINGS.hero_youtube_mute ?? true,
+      hero_youtube_loop: heroYoutubeLoop ?? DEFAULT_STORE_SETTINGS.hero_youtube_loop ?? true,
+      hero_youtube_start_minutes: heroYoutubeStartMinutes ?? DEFAULT_STORE_SETTINGS.hero_youtube_start_minutes ?? 0,
+      hero_youtube_start_seconds: heroYoutubeStartSeconds ?? DEFAULT_STORE_SETTINGS.hero_youtube_start_seconds ?? 0,
+      hero_youtube_end_minutes: heroYoutubeEndMinutes ?? DEFAULT_STORE_SETTINGS.hero_youtube_end_minutes,
+      hero_youtube_end_seconds: heroYoutubeEndSeconds ?? DEFAULT_STORE_SETTINGS.hero_youtube_end_seconds,
+      hero_trailers: heroTrailers,
       deal_discount_price: Number(data.deal_discount_price ?? 0),
       free_shipping_threshold: Number(data.free_shipping_threshold ?? 0),
       standard_shipping_fee: Number(data.standard_shipping_fee ?? 0),

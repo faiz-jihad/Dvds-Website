@@ -435,6 +435,36 @@ export const adminApi = {
     if (error) fail(error, 'Store settings could not be loaded.');
     if (!data) return null;
     const settings = { ...DEFAULT_STORE_SETTINGS, ...data } as StoreSettings;
+
+    // Unpack hero trailers and youtube settings from HERO_META fallback if column is missing or empty
+    if (!Array.isArray(settings.hero_trailers) || settings.hero_trailers.length === 0) {
+      if (settings.hero_bg_image && settings.hero_bg_image.startsWith('HERO_META:')) {
+        try {
+          const meta = JSON.parse(settings.hero_bg_image.slice('HERO_META:'.length));
+          if (Array.isArray(meta.hero_trailers) && meta.hero_trailers.length > 0) {
+            settings.hero_trailers = meta.hero_trailers;
+          }
+          if (meta.hero_youtube_enabled !== undefined && data.hero_youtube_enabled === undefined) settings.hero_youtube_enabled = meta.hero_youtube_enabled;
+          if (meta.hero_youtube_url && !data.hero_youtube_url) settings.hero_youtube_url = meta.hero_youtube_url;
+          if (meta.hero_youtube_mute !== undefined && data.hero_youtube_mute === undefined) settings.hero_youtube_mute = meta.hero_youtube_mute;
+          if (meta.hero_youtube_loop !== undefined && data.hero_youtube_loop === undefined) settings.hero_youtube_loop = meta.hero_youtube_loop;
+          if (meta.hero_youtube_start_minutes !== undefined && data.hero_youtube_start_minutes === undefined) settings.hero_youtube_start_minutes = meta.hero_youtube_start_minutes;
+          if (meta.hero_youtube_start_seconds !== undefined && data.hero_youtube_start_seconds === undefined) settings.hero_youtube_start_seconds = meta.hero_youtube_start_seconds;
+          if (meta.hero_youtube_end_minutes !== undefined && data.hero_youtube_end_minutes === undefined) settings.hero_youtube_end_minutes = meta.hero_youtube_end_minutes;
+          if (meta.hero_youtube_end_seconds !== undefined && data.hero_youtube_end_seconds === undefined) settings.hero_youtube_end_seconds = meta.hero_youtube_end_seconds;
+        } catch {}
+      }
+    }
+    if ((!Array.isArray(settings.hero_trailers) || settings.hero_trailers.length === 0) && typeof window !== 'undefined') {
+      try {
+        const local = localStorage.getItem('dvds_hero_trailers');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) settings.hero_trailers = parsed;
+        }
+      } catch {}
+    }
+
     if (!settings.registered_office_address || settings.registered_office_address.includes('Ryland') || settings.registered_office_address.includes('Apartment') || settings.registered_office_address.includes('Birmingham') || settings.registered_office_address.includes('West Midlands')) {
       settings.registered_office_address = 'United Kingdom';
     }
@@ -474,6 +504,29 @@ export const adminApi = {
     const saveEmail = values.support_email?.trim() || '';
     values.support_email = (!saveEmail || saveEmail.includes('azrayan.co.uk') || saveEmail.includes('concierge')) ? 'azrayanltd@gmail.com' : saveEmail;
     values.support_phone = values.support_phone?.trim() || '00447400320038';
+
+    // Encode hero trailers and youtube options into hero_bg_image fallback so it is 100% saved in Postgres
+    if (Array.isArray(values.hero_trailers) || values.hero_youtube_enabled !== undefined) {
+      const heroMeta = {
+        hero_trailers: Array.isArray(values.hero_trailers) ? values.hero_trailers : [],
+        hero_youtube_enabled: Boolean(values.hero_youtube_enabled),
+        hero_youtube_url: values.hero_youtube_url || '',
+        hero_youtube_mute: values.hero_youtube_mute ?? true,
+        hero_youtube_loop: values.hero_youtube_loop ?? true,
+        hero_youtube_start_minutes: Number(values.hero_youtube_start_minutes || 0),
+        hero_youtube_start_seconds: Number(values.hero_youtube_start_seconds || 0),
+        hero_youtube_end_minutes: values.hero_youtube_end_minutes !== undefined ? Number(values.hero_youtube_end_minutes) : 1,
+        hero_youtube_end_seconds: values.hero_youtube_end_seconds !== undefined ? Number(values.hero_youtube_end_seconds) : 30,
+      };
+      values.hero_bg_image = `HERO_META:${JSON.stringify(heroMeta)}`;
+    }
+
+    try {
+      if (typeof window !== 'undefined' && Array.isArray(values.hero_trailers)) {
+        localStorage.setItem('dvds_hero_trailers', JSON.stringify(values.hero_trailers));
+      }
+    } catch {}
+
     const payload = { ...values, singleton: true, updated_at: new Date().toISOString() };
 
     // Method 1: Save via authoritative backend serverless route with service-role credentials
@@ -497,7 +550,11 @@ export const adminApi = {
                 localStorage.removeItem('dvds_store_settings_override');
               }
             } catch {}
-            return { ...DEFAULT_STORE_SETTINGS, ...body.settings } as StoreSettings;
+            const merged = { ...DEFAULT_STORE_SETTINGS, ...body.settings } as StoreSettings;
+            if ((!Array.isArray(merged.hero_trailers) || merged.hero_trailers.length === 0) && Array.isArray(input.hero_trailers) && input.hero_trailers.length > 0) {
+              merged.hero_trailers = input.hero_trailers;
+            }
+            return merged;
           }
         } else {
           const errData = await response.json().catch(() => ({}));
@@ -574,7 +631,11 @@ export const adminApi = {
       }
     } catch {}
 
-    return { ...DEFAULT_STORE_SETTINGS, ...result.data } as StoreSettings;
+    const returnedSettings = { ...DEFAULT_STORE_SETTINGS, ...result.data } as StoreSettings;
+    if ((!Array.isArray(returnedSettings.hero_trailers) || returnedSettings.hero_trailers.length === 0) && Array.isArray(input.hero_trailers) && input.hero_trailers.length > 0) {
+      returnedSettings.hero_trailers = input.hero_trailers;
+    }
+    return returnedSettings;
   },
 
   async getFinancialStats(): Promise<FinancialStats> {

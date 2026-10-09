@@ -255,9 +255,15 @@ export const AdminStoreSettings: React.FC = () => {
         payment_paypal_enabled: Boolean(settings.payment_paypal_enabled ?? true),
         payment_bank_transfer_enabled: Boolean(settings.payment_bank_transfer_enabled ?? false),
         bank_account_number: (settings.bank_account_number || '').trim(),
+        hero_trailers: Array.isArray(settings.hero_trailers)
+          ? settings.hero_trailers.filter((t) => Boolean(t && t.product_id))
+          : [],
       };
       const updated = await adminApi.saveStoreSettings(payload);
       dirty.current = false;
+      if (Array.isArray(payload.hero_trailers) && payload.hero_trailers.length > 0 && (!Array.isArray(updated.hero_trailers) || updated.hero_trailers.length === 0)) {
+        updated.hero_trailers = payload.hero_trailers;
+      }
       setSettings(updated);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
       await queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
@@ -393,7 +399,14 @@ export const AdminStoreSettings: React.FC = () => {
 
   const currentPreviewTrailer = heroTrailers[previewTrailerIndex] || heroTrailers[0];
   const activePreviewProduct = currentPreviewTrailer
-    ? products.find((p) => p.id === currentPreviewTrailer.product_id)
+    ? products.find((p) => {
+        const target = String(currentPreviewTrailer.product_id || '').trim().toLowerCase();
+        return (
+          String(p.id).trim().toLowerCase() === target ||
+          String(p.slug).trim().toLowerCase() === target ||
+          (p.title && p.title.toLowerCase() === target)
+        );
+      }) || products[0]
     : products[0];
   const activePreviewVideoUrl = currentPreviewTrailer?.youtube_url?.trim() || settings.hero_youtube_url?.trim() || '';
   const activePreviewVideoId = extractYouTubeVideoId(activePreviewVideoUrl);
@@ -989,7 +1002,14 @@ export const AdminStoreSettings: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     {heroTrailers.map((trailer, idx) => {
-                      const selectedProduct = products.find((p) => p.id === trailer.product_id);
+                      const selectedProduct = products.find((p) => {
+                        const target = String(trailer.product_id || '').trim().toLowerCase();
+                        return (
+                          String(p.id).trim().toLowerCase() === target ||
+                          String(p.slug).trim().toLowerCase() === target ||
+                          (p.title && p.title.toLowerCase() === target)
+                        );
+                      });
                       const trailerVideoId = extractYouTubeVideoId(trailer.youtube_url);
                       return (
                         <div

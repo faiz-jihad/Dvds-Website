@@ -20,6 +20,9 @@ const CORE_COLUMNS = new Set([
   'seo_site_url', 'seo_site_title', 'seo_site_description', 'seo_social_image_url', 'seo_organization_description',
   'hero_badge_text', 'hero_headline_line1', 'hero_headline_highlight', 'hero_subheadline',
   'hero_cta_primary', 'hero_cta_secondary', 'hero_bg_image',
+  'hero_youtube_enabled', 'hero_youtube_url', 'hero_youtube_mute', 'hero_youtube_loop',
+  'hero_youtube_start_minutes', 'hero_youtube_start_seconds', 'hero_youtube_end_minutes', 'hero_youtube_end_seconds',
+  'hero_trailers',
   'announcement_left', 'announcement_center', 'announcement_link',
   'bank_name', 'bank_account_name', 'bank_sort_code', 'bank_account_number', 'bank_iban', 'bank_payment_instructions',
   'campaign_is_active', 'campaign_title', 'campaign_badge', 'campaign_tagline', 'campaign_discount_text', 'campaign_ends_at',
@@ -75,44 +78,63 @@ export default endpoint(async (req) => {
   const sanitized = {};
   for (const [key, value] of Object.entries(input)) {
     if (key === 'id') continue;
-    if (allowedColumns.has(key)) {
+    if (allowedColumns.has(key) || CORE_COLUMNS.has(key)) {
       sanitized[key] = value;
     }
   }
 
+  // Persist hero trailers and youtube config into hero_bg_image fallback so it is 100% saved in Postgres
+  if (Array.isArray(input.hero_trailers) || input.hero_youtube_enabled !== undefined) {
+    const heroMeta = {
+      hero_trailers: Array.isArray(input.hero_trailers) ? input.hero_trailers : [],
+      hero_youtube_enabled: Boolean(input.hero_youtube_enabled),
+      hero_youtube_url: input.hero_youtube_url || '',
+      hero_youtube_mute: input.hero_youtube_mute ?? true,
+      hero_youtube_loop: input.hero_youtube_loop ?? true,
+      hero_youtube_start_minutes: Number(input.hero_youtube_start_minutes || 0),
+      hero_youtube_start_seconds: Number(input.hero_youtube_start_seconds || 0),
+      hero_youtube_end_minutes: input.hero_youtube_end_minutes !== undefined ? Number(input.hero_youtube_end_minutes) : 1,
+      hero_youtube_end_seconds: input.hero_youtube_end_seconds !== undefined ? Number(input.hero_youtube_end_seconds) : 30,
+    };
+    sanitized.hero_bg_image = `HERO_META:${JSON.stringify(heroMeta)}`;
+    if (Array.isArray(input.hero_trailers)) {
+      sanitized.hero_trailers = input.hero_trailers;
+    }
+  }
+
   // Numeric sanitization for delivery & thresholds (never NaN or empty strings)
-  if ('standard_shipping_fee' in input && allowedColumns.has('standard_shipping_fee')) {
+  if ('standard_shipping_fee' in input && (allowedColumns.has('standard_shipping_fee') || CORE_COLUMNS.has('standard_shipping_fee'))) {
     sanitized.standard_shipping_fee = Math.max(0, Math.round(Number(input.standard_shipping_fee || 0) * 100) / 100);
   }
-  if ('free_shipping_threshold' in input && allowedColumns.has('free_shipping_threshold')) {
+  if ('free_shipping_threshold' in input && (allowedColumns.has('free_shipping_threshold') || CORE_COLUMNS.has('free_shipping_threshold'))) {
     sanitized.free_shipping_threshold = Math.max(0, Math.round(Number(input.free_shipping_threshold || 0) * 100) / 100);
   }
-  if ('express_shipping_fee' in input && allowedColumns.has('express_shipping_fee')) {
+  if ('express_shipping_fee' in input && (allowedColumns.has('express_shipping_fee') || CORE_COLUMNS.has('express_shipping_fee'))) {
     sanitized.express_shipping_fee = Math.max(0, Math.round(Number(input.express_shipping_fee || 0) * 100) / 100);
   }
-  if ('low_stock_threshold' in input && allowedColumns.has('low_stock_threshold')) {
+  if ('low_stock_threshold' in input && (allowedColumns.has('low_stock_threshold') || CORE_COLUMNS.has('low_stock_threshold'))) {
     sanitized.low_stock_threshold = Math.max(0, Math.round(Number(input.low_stock_threshold || 5)));
   }
-  if ('budget_collection_threshold' in input && allowedColumns.has('budget_collection_threshold')) {
+  if ('budget_collection_threshold' in input && (allowedColumns.has('budget_collection_threshold') || CORE_COLUMNS.has('budget_collection_threshold'))) {
     sanitized.budget_collection_threshold = Math.max(0, Math.round(Number(input.budget_collection_threshold || 8) * 100) / 100);
   }
 
   // Strict compliance & jurisdiction sanitation
-  if (allowedColumns.has('registered_office_address')) sanitized.registered_office_address = 'United Kingdom';
-  if (allowedColumns.has('warehouse_location')) sanitized.warehouse_location = 'United Kingdom';
-  if (allowedColumns.has('store_name')) {
+  if (allowedColumns.has('registered_office_address') || CORE_COLUMNS.has('registered_office_address')) sanitized.registered_office_address = 'United Kingdom';
+  if (allowedColumns.has('warehouse_location') || CORE_COLUMNS.has('warehouse_location')) sanitized.warehouse_location = 'United Kingdom';
+  if (allowedColumns.has('store_name') || CORE_COLUMNS.has('store_name')) {
     if (!sanitized.store_name || sanitized.store_name.includes('AZ Rayan')) sanitized.store_name = 'DVDs Zone';
   }
-  if (allowedColumns.has('registered_company_name')) {
+  if (allowedColumns.has('registered_company_name') || CORE_COLUMNS.has('registered_company_name')) {
     if (!sanitized.registered_company_name || sanitized.registered_company_name.includes('AZ Rayan')) sanitized.registered_company_name = 'DVDs Zone';
   }
-  if (allowedColumns.has('support_email')) {
+  if (allowedColumns.has('support_email') || CORE_COLUMNS.has('support_email')) {
     const rawEmail = (sanitized.support_email || '').trim();
     sanitized.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge'))
       ? 'azrayanltd@gmail.com'
       : rawEmail;
   }
-  if (allowedColumns.has('support_phone')) {
+  if (allowedColumns.has('support_phone') || CORE_COLUMNS.has('support_phone')) {
     sanitized.support_phone = (sanitized.support_phone || '').trim() || '00447400320038';
   }
 
@@ -144,6 +166,9 @@ export default endpoint(async (req) => {
       'standard_shipping_name', 'standard_shipping_eta', 'express_shipping_name', 'express_shipping_eta',
       'low_stock_threshold', 'budget_collection_threshold', 'dispatch_cutoff_time',
       'deal_product_id', 'deal_discount_price', 'deal_ends_at', 'deal_is_active',
+      'hero_badge_text', 'hero_headline_line1', 'hero_headline_highlight', 'hero_subheadline',
+      'hero_cta_primary', 'hero_cta_secondary', 'hero_bg_image',
+      'announcement_left', 'announcement_center', 'announcement_link',
       'payment_card_enabled', 'payment_paypal_enabled', 'payment_bank_transfer_enabled',
       'vip_promo_code', 'vip_promo_discount', 'vip_min_spend', 'updated_at'
     ];
@@ -177,6 +202,21 @@ export default endpoint(async (req) => {
   if (saveError || !updated) {
     console.error('[admin-store-settings] Save error:', saveError);
     throw new CheckoutError(`Failed to persist store settings: ${saveError?.message || 'Unknown error'}`, 500, 'DB_SAVE_ERROR');
+  }
+
+  // Re-hydrate hero trailer settings from metadata if column hero_trailers does not exist
+  if (updated && (!Array.isArray(updated.hero_trailers) || updated.hero_trailers.length === 0)) {
+    if (updated.hero_bg_image && updated.hero_bg_image.startsWith('HERO_META:')) {
+      try {
+        const meta = JSON.parse(updated.hero_bg_image.slice('HERO_META:'.length));
+        if (Array.isArray(meta.hero_trailers) && meta.hero_trailers.length > 0) {
+          updated.hero_trailers = meta.hero_trailers;
+        }
+      } catch {}
+    }
+    if ((!Array.isArray(updated.hero_trailers) || updated.hero_trailers.length === 0) && Array.isArray(input.hero_trailers)) {
+      updated.hero_trailers = input.hero_trailers;
+    }
   }
 
   return { success: true, settings: updated };

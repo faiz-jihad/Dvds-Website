@@ -379,19 +379,40 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
 
   // Prioritize films specifically selected by admin in hero_trailers, otherwise fall back to active featured
   const featured = React.useMemo(() => {
-    const active = products.filter((p) => p.status === 'active');
-    const inStock = active.filter((p) => p.stock_quantity > 0);
-    const pool = inStock.length > 0 ? inStock : active;
+    // 1. Resolve configured trailers from settings or localStorage fallback
+    let configuredTrailers = settings?.hero_trailers;
+    if ((!configuredTrailers || configuredTrailers.length === 0) && typeof window !== 'undefined') {
+      try {
+        const local = localStorage.getItem('dvds_hero_trailers');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) configuredTrailers = parsed;
+        }
+      } catch {}
+    }
 
-    if (settings?.hero_trailers && settings.hero_trailers.length > 0) {
-      const configured = settings.hero_trailers
-        .map((t) => products.find((p) => p.id === t.product_id || p.slug === t.product_id))
+    if (configuredTrailers && configuredTrailers.length > 0) {
+      const configured = configuredTrailers
+        .map((t) => {
+          const target = String(t.product_id || '').trim().toLowerCase();
+          return products.find((p) => {
+            const pId = String(p.id || '').trim().toLowerCase();
+            const pSlug = String(p.slug || '').trim().toLowerCase();
+            const pTitle = String(p.title || '').trim().toLowerCase();
+            return pId === target || pSlug === target || pTitle === target;
+          });
+        })
         .filter(Boolean) as Product[];
       if (configured.length > 0) {
         // Strictly show ONLY the films configured by the admin in Store Settings
         return configured;
       }
     }
+
+    const active = products.filter((p) => p.status === 'active');
+    const inStock = active.filter((p) => p.stock_quantity > 0);
+    const pool = inStock.length > 0 ? inStock : active;
+
     const highlighted = pool.filter((p) => p.is_featured || p.is_best_seller || p.is_new_release);
     return (highlighted.length >= 3 ? highlighted : pool).slice(0, 6);
   }, [products, settings?.hero_trailers]);
@@ -455,9 +476,13 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
     if (!current) return null;
 
     // 1. Check if configured for this specific film in Admin Store Settings
-    const adminTrailer = settings?.hero_trailers?.find(
-      (t) => (t.product_id === current.id || t.product_id === current.slug) && Boolean(t.youtube_url?.trim())
-    );
+    const adminTrailer = settings?.hero_trailers?.find((t) => {
+      const target = String(t.product_id || '').trim().toLowerCase();
+      const pId = String(current.id || '').trim().toLowerCase();
+      const pSlug = String(current.slug || '').trim().toLowerCase();
+      const pTitle = String(current.title || '').trim().toLowerCase();
+      return (pId === target || pSlug === target || pTitle === target) && Boolean(t.youtube_url?.trim());
+    });
     if (adminTrailer) {
       return adminTrailer;
     }
