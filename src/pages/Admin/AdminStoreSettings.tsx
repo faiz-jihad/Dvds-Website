@@ -243,6 +243,9 @@ export const AdminStoreSettings: React.FC = () => {
         vip_promo_code: (settings.vip_promo_code || 'ZONE10').trim().toUpperCase(),
         vip_promo_discount: Math.max(0, Math.min(100, Number(settings.vip_promo_discount ?? 10))),
         vip_min_spend: Math.max(0, Number(settings.vip_min_spend ?? 20)),
+        standard_shipping_fee: Math.max(0, Number(settings.standard_shipping_fee ?? 0)),
+        express_shipping_fee: Math.max(0, Number(settings.express_shipping_fee ?? 0)),
+        free_shipping_threshold: Math.max(0, Number(settings.free_shipping_threshold ?? 0)),
         bank_sort_code: settings.bank_sort_code
           ? (settings.bank_sort_code.replace(/\D/g, '').length === 6
               ? `${settings.bank_sort_code.replace(/\D/g, '').slice(0, 2)}-${settings.bank_sort_code.replace(/\D/g, '').slice(2, 4)}-${settings.bank_sort_code.replace(/\D/g, '').slice(4, 6)}`
@@ -300,14 +303,14 @@ export const AdminStoreSettings: React.FC = () => {
       director_bio: 'Visionary British-American filmmaker celebrated for nonlinear storytelling, practical effects, and high-format 70mm archival preservation.',
       director_product_ids: [],
       free_shipping_threshold: 0,
-      standard_shipping_fee: 3.49,
+      standard_shipping_fee: 0,
       shipping_zones: [],
       checkout_currencies: ['GBP', 'EUR', 'USD'],
       international_duties_notice: '',
-      express_shipping_fee: 5.99,
-      standard_shipping_name: 'Royal Mail Tracked 48',
+      express_shipping_fee: 0,
+      standard_shipping_name: 'Standard Delivery',
       standard_shipping_eta: '2-3 working days',
-      express_shipping_name: 'DPD Next Day Priority',
+      express_shipping_name: 'Express Priority Delivery',
       express_shipping_eta: '1 working day (Order by 2PM)',
       low_stock_threshold: 5,
       budget_collection_threshold: 15,
@@ -432,12 +435,13 @@ export const AdminStoreSettings: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            onClick={handleSave}
+            type="submit"
+            form="store-settings-form"
             disabled={isSaving}
-            className="w-full gap-2 text-xs shadow-xs sm:w-auto cursor-pointer"
+            className="w-full gap-2 text-xs shadow-xs sm:w-auto cursor-pointer font-bold"
           >
             <Save className="w-4 h-4" />
-            <span>{isSaving ? 'Saving...' : 'Save All Changes'}</span>
+            <span>{isSaving ? 'Saving...' : 'Save All Settings'}</span>
           </Button>
         </div>
       </div>
@@ -468,7 +472,7 @@ export const AdminStoreSettings: React.FC = () => {
         ))}
       </div>
 
-      <form onSubmit={handleSave} className="space-y-8">
+      <form id="store-settings-form" onSubmit={handleSave} className="space-y-8">
         {/* ==========================================
             TAB: STORE PROFILE & LEGAL IDENTITY
         ========================================== */}
@@ -1895,7 +1899,7 @@ export const AdminStoreSettings: React.FC = () => {
                     <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
                     <div>
                       <div className="text-sm font-semibold text-dark">
-                        {settings.standard_shipping_name || 'Royal Mail Tracked 48'}
+                        {settings.standard_shipping_name || 'Standard Delivery'}
                       </div>
                       <div className="text-xs text-gray-500">
                         {settings.standard_shipping_eta || '2-3 working days'}
@@ -1916,7 +1920,7 @@ export const AdminStoreSettings: React.FC = () => {
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-dark">
-                        {settings.express_shipping_name || 'DPD Next Day Priority'}
+                        {settings.express_shipping_name || 'Express Priority Delivery'}
                       </div>
                       <div className="text-xs text-gray-500">
                         {settings.express_shipping_eta || '1 working day (Order by 2PM)'}
@@ -2121,23 +2125,12 @@ export const AdminStoreSettings: React.FC = () => {
           </section>
         )}
 
-        {/* Bottom Save Bar */}
+        {/* Bottom Status Bar */}
         <div className="flex flex-col gap-4 pt-4 border-t border-gray-200 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-gray-500 flex items-start gap-1.5 sm:items-center">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>Settings synchronize immediately with the storefront and Supabase database.</span>
           </div>
-
-          <Button
-            variant="primary"
-            size="lg"
-            type="submit"
-            disabled={isSaving}
-            className="w-full gap-2 font-bold shadow-xs sm:w-auto cursor-pointer"
-          >
-            <Save className="w-4 h-4" />
-            <span>{isSaving ? 'Saving Changes...' : 'Save All Settings'}</span>
-          </Button>
         </div>
       </form>
     </div>

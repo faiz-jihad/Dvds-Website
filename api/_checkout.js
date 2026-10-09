@@ -201,7 +201,7 @@ export function calculateQuote(items, products, settings, promo, promoCode, deli
   let standard, express, delivery, zoneName = 'United Kingdom';
   if (code === 'GB') {
     const rawStdFee = Number(settings.standard_shipping_fee ?? 0);
-    const stdFee = Number.isFinite(rawStdFee) && rawStdFee >= 0 ? money(rawStdFee) : 349;
+    const stdFee = Number.isFinite(rawStdFee) && rawStdFee >= 0 ? money(rawStdFee) : 0;
     const rawThreshold = settings.free_shipping_threshold != null ? Number(settings.free_shipping_threshold) : null;
     const freeThreshold = rawThreshold != null && Number.isFinite(rawThreshold) && rawThreshold > 0
       ? money(rawThreshold)
@@ -214,16 +214,16 @@ export function calculateQuote(items, products, settings, promo, promoCode, deli
       standard = stdFee;
     }
     const rawExpressFee = Number(settings.express_shipping_fee ?? 0);
-    express = Number.isFinite(rawExpressFee) && rawExpressFee >= 0 ? money(rawExpressFee) : 599;
+    express = Number.isFinite(rawExpressFee) && rawExpressFee >= 0 ? money(rawExpressFee) : 0;
     delivery = {
       standard: {
-        name: settings.standard_shipping_name || 'Royal Mail Tracked 48',
-        eta: settings.standard_shipping_eta || '2-3 working days',
+        name: settings.standard_shipping_name || 'Standard Delivery',
+        eta: settings.standard_shipping_eta || '',
         amount: standard / 100,
       },
       express: {
-        name: settings.express_shipping_name || 'DPD Next Day Priority',
-        eta: settings.express_shipping_eta || '1 working day (Order by 2PM)',
+        name: settings.express_shipping_name || 'Express Priority Delivery',
+        eta: settings.express_shipping_eta || '',
         amount: express / 100,
       },
     };

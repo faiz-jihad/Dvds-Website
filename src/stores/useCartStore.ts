@@ -95,7 +95,7 @@ export const useCartStore = create<CartState>()(
       getShippingFee: () => {
         const subtotal = get().getSubtotal();
         if (subtotal === 0) return 0;
-        const rate = get().standardShippingRate != null ? Number(get().standardShippingRate) : 3.49;
+        const rate = get().standardShippingRate != null ? Number(get().standardShippingRate) : 0;
         if (rate <= 0) return 0;
         const threshold = Number(get().freeShippingThreshold ?? 0);
         if (threshold > 0 && subtotal >= threshold) return 0;
@@ -111,7 +111,7 @@ export const useCartStore = create<CartState>()(
       getFreeShippingProgress: () => {
         const subtotal = get().getSubtotal();
         const threshold = Number(get().freeShippingThreshold ?? 0);
-        const rate = get().standardShippingRate != null ? Number(get().standardShippingRate) : 3.49;
+        const rate = get().standardShippingRate != null ? Number(get().standardShippingRate) : 0;
         const isComplimentary = rate === 0;
         const hasThreshold = threshold > 0;
         const isQualified = isComplimentary || (hasThreshold && subtotal >= threshold);

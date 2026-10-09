@@ -9,8 +9,16 @@ import { EmptyState } from '../components/common/EmptyState';
 import { useCustomerAuth } from '../auth/CustomerAuth';
 import { Seo } from '../components/common/Seo';
 
+import { useQuery } from '@tanstack/react-query';
+import { publicApi } from '../lib/publicApi';
+
 export const CartPage: React.FC = () => {
   const { customer } = useCustomerAuth();
+  const { data: storeSettings } = useQuery({
+    queryKey: ['store', 'settings'],
+    queryFn: publicApi.getStoreSettings,
+    staleTime: 30_000,
+  });
   const {
     items,
     removeItem,
@@ -102,7 +110,7 @@ export const CartPage: React.FC = () => {
                 )
               ) : (
                 <span className="text-gray-700 dark:text-gray-300">
-                  Standard UK Delivery via Royal Mail Tracked 48: <strong className="text-dark dark:text-white">{shipping === 0 ? 'FREE' : formatGBP(shipping)}</strong>
+                  {storeSettings?.standard_shipping_name || 'Standard UK Delivery'}: <strong className="text-dark dark:text-white">{shipping === 0 ? 'FREE' : formatGBP(shipping)}</strong>
                 </span>
               )}
             </span>

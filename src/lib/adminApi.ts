@@ -497,8 +497,11 @@ export const adminApi = {
                 localStorage.removeItem('dvds_store_settings_override');
               }
             } catch {}
-            return { ...DEFAULT_STORE_SETTINGS, ...body.settings, ...input } as StoreSettings;
+            return { ...DEFAULT_STORE_SETTINGS, ...body.settings } as StoreSettings;
           }
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          console.warn('[adminApi.saveStoreSettings] Serverless endpoint returned error:', response.status, errData);
         }
       }
     } catch (apiErr) {
@@ -540,32 +543,29 @@ export const adminApi = {
       );
 
     if (result.error && isSchemaColumnError(result.error)) {
-      const {
-        shipping_zones,
-        checkout_currencies,
-        international_duties_notice,
-        hero_youtube_enabled,
-        hero_youtube_url,
-        hero_youtube_mute,
-        hero_youtube_loop,
-        hero_youtube_start_minutes,
-        hero_youtube_start_seconds,
-        hero_youtube_end_minutes,
-        hero_youtube_end_seconds,
-        hero_trailers,
-        ...legacyValues
-      } = values as any;
-      const legacyPayload = { ...legacyValues, singleton: true, updated_at: new Date().toISOString() };
+      const nonCoreColumns = new Set([
+        'campaign_is_active', 'campaign_title', 'campaign_badge', 'campaign_tagline',
+        'campaign_discount_text', 'campaign_ends_at', 'custom_formats',
+        'hero_youtube_enabled', 'hero_youtube_url', 'hero_youtube_mute', 'hero_youtube_loop',
+        'hero_youtube_start_minutes', 'hero_youtube_start_seconds', 'hero_youtube_end_minutes',
+        'hero_youtube_end_seconds', 'hero_trailers', 'shipping_zones', 'checkout_currencies',
+        'international_duties_notice'
+      ]);
+      const corePayload: Record<string, any> = {};
+      for (const [key, val] of Object.entries(sanitizedPayload)) {
+        if (!nonCoreColumns.has(key)) {
+          corePayload[key] = val;
+        }
+      }
+      corePayload.singleton = true;
+      corePayload.updated_at = new Date().toISOString();
       result = existing
-        ? await client().from('store_settings').update(legacyPayload).eq('id', existing.id).select('*').single()
-        : await client().from('store_settings').insert(legacyPayload).select('*').single();
+        ? await client().from('store_settings').update(corePayload).eq('id', existing.id).select('*').single()
+        : await client().from('store_settings').insert(corePayload).select('*').single();
     }
 
     if (result.error || !result.data) {
-      if (isSchemaColumnError(result.error)) {
-        return { ...DEFAULT_STORE_SETTINGS, ...input } as StoreSettings;
-      }
-      fail(result.error, 'Store settings could not be saved.');
+      fail(result.error, 'Store settings could not be saved to database.');
     }
 
     try {
@@ -574,7 +574,7 @@ export const adminApi = {
       }
     } catch {}
 
-    return { ...DEFAULT_STORE_SETTINGS, ...result.data, ...input } as StoreSettings;
+    return { ...DEFAULT_STORE_SETTINGS, ...result.data } as StoreSettings;
   },
 
   async getFinancialStats(): Promise<FinancialStats> {

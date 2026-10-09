@@ -278,6 +278,13 @@ export const CheckoutPage: React.FC = () => {
     refetchOnWindowFocus: true,
   });
   const quote = quoteQuery.data;
+  const settingsQuery = useQuery({
+    queryKey: ["store", "settings"],
+    queryFn: publicApi.getStoreSettings,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+  const storeSettings = settingsQuery.data;
   const displayPrice = (amount: number) =>
     formatMoney(amount, quote?.currency || currency);
 
@@ -622,7 +629,7 @@ export const CheckoutPage: React.FC = () => {
     <div className="bg-gray-50/70 dark:bg-[#07090E] min-h-screen text-dark dark:text-white transition-colors">
       <Seo
         title="Secure Checkout — DVDs Zone UK"
-        description="Complete your order securely with SSL 256-bit encryption. Fast 2-day delivery via Royal Mail across the United Kingdom."
+        description="Complete your order securely with SSL 256-bit encryption. Fast and reliable delivery across the United Kingdom."
         canonicalPath="/checkout"
         noIndex
       />
@@ -1119,24 +1126,34 @@ export const CheckoutPage: React.FC = () => {
                         <span className="block text-sm font-semibold text-dark dark:text-white">
                           {quote?.delivery[option]?.name ||
                             (option === "standard"
-                              ? "Royal Mail Tracked 48"
-                              : "DPD Next Day Priority")}
+                              ? storeSettings?.standard_shipping_name || "Standard Delivery"
+                              : storeSettings?.express_shipping_name || "Express Priority Delivery")}
                         </span>
                         <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {quote?.delivery[option]?.eta ||
                             (option === "standard"
-                              ? "2-3 working days"
-                              : "1 working day (Order by 2PM)")}
+                              ? storeSettings?.standard_shipping_eta || ""
+                              : storeSettings?.express_shipping_eta || "")}
                         </span>
                       </span>
                       <span
-                        className={`text-sm font-semibold shrink-0 ${quote?.delivery[option]?.amount === 0 ? "text-brand-blue dark:text-blue-400 font-bold" : "text-dark dark:text-white"}`}
+                        className={`text-sm font-semibold shrink-0 ${
+                          (quote
+                            ? quote.delivery[option]?.amount === 0
+                            : (option === "standard" ? Number(storeSettings?.standard_shipping_fee ?? 0) === 0 : Number(storeSettings?.express_shipping_fee ?? 0) === 0))
+                            ? "text-brand-blue dark:text-blue-400 font-bold"
+                            : "text-dark dark:text-white"
+                        }`}
                       >
                         {quote
                           ? quote.delivery[option]!.amount === 0
                             ? "FREE"
                             : displayPrice(quote.delivery[option]!.amount)
-                          : "--"}
+                          : storeSettings
+                            ? (option === "standard" ? Number(storeSettings.standard_shipping_fee ?? 0) : Number(storeSettings.express_shipping_fee ?? 0)) === 0
+                              ? "FREE"
+                              : displayPrice(option === "standard" ? Number(storeSettings.standard_shipping_fee ?? 0) : Number(storeSettings.express_shipping_fee ?? 0))
+                            : "--"}
                       </span>
                     </label>
                   ))}
