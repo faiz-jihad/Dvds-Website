@@ -371,13 +371,15 @@ export const AzDarkLandingNav: React.FC = () => {
             {accountMenuOpen && (
               <div
                 className={cn(
-                  'fixed sm:absolute top-[64px] sm:top-full mt-2 left-3 right-3 sm:left-auto sm:right-0 w-auto sm:w-68 rounded-2xl border p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150',
-                  isDark ? 'bg-[#0E131F] border-white/15 text-white' : 'bg-white border-gray-200 text-gray-900'
+                  'fixed sm:absolute top-[64px] sm:top-full mt-2 left-4 right-4 sm:left-auto sm:right-0 w-auto sm:w-76 rounded-2xl border p-3 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150',
+                  isDark
+                    ? 'bg-[#0E131F] border-white/15 text-white shadow-[0_20px_60px_rgba(0,0,0,0.6)]'
+                    : 'bg-white border-gray-200 text-gray-900 shadow-[0_20px_60px_rgba(0,0,0,0.12)]'
                 )}
               >
                 {/* User Header */}
                 {isAuthenticated ? (
-                  <div className={cn('px-3 py-2 border-b mb-1.5', isDark ? 'border-white/10' : 'border-gray-100')}>
+                  <div className={cn('p-3 rounded-xl border mb-2', isDark ? 'bg-white/[0.03] border-white/10' : 'bg-gray-50/90 border-gray-100')}>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-xs font-bold truncate text-dark dark:text-white">
                         {customer?.full_name || 'Customer'}
@@ -391,9 +393,16 @@ export const AzDarkLandingNav: React.FC = () => {
                     <p className="text-[11px] text-gray-400 truncate mt-0.5">{customer?.email}</p>
                   </div>
                 ) : (
-                  <div className={cn('px-3 py-2 border-b mb-1', isDark ? 'border-white/10' : 'border-gray-100')}>
-                    <p className="text-xs font-bold">DVDs Zone Club</p>
-                    <p className="text-[11px] text-gray-400">Sign in to track orders &amp; media library</p>
+                  <div className={cn('p-3 rounded-xl border mb-2.5', isDark ? 'bg-white/[0.03] border-white/10' : 'bg-gray-50/90 border-gray-100')}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-5 h-5 rounded-md bg-brand-blue/15 text-brand-blue flex items-center justify-center shrink-0">
+                        <Sparkles size={12} />
+                      </div>
+                      <p className="text-xs font-bold text-dark dark:text-white">DVDs Zone Club</p>
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                      Sign in to track orders &amp; media library.
+                    </p>
                   </div>
                 )}
 
@@ -433,50 +442,14 @@ export const AzDarkLandingNav: React.FC = () => {
                   </div>
                 )}
 
-                {/* ── THEME TOGGLE: Dark & Light Mode (Item 6) ── */}
-                <div className={cn('px-3 py-2.5 my-1 rounded-xl border', isDark ? 'bg-white/[0.03] border-white/10' : 'bg-gray-50 border-gray-200')}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Appearance</span>
-                    <span className="text-[10px] font-mono text-gray-400">{isDark ? 'Dark' : 'Light'}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-black/20 dark:bg-black/40">
-                    <button
-                      type="button"
-                      onClick={() => setTheme('dark')}
-                      className={cn(
-                        'flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                        isDark
-                          ? 'bg-brand-blue text-white shadow-xs font-bold'
-                          : 'text-gray-400 hover:text-white hover:bg-white/5'
-                      )}
-                    >
-                      <Moon size={13} />
-                      <span>Dark</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTheme('light')}
-                      className={cn(
-                        'flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                        !isDark
-                          ? 'bg-white text-dark shadow-xs font-bold'
-                          : 'text-gray-400 hover:text-white hover:bg-white/5'
-                      )}
-                    >
-                      <Sun size={13} />
-                      <span>Light</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Account Navigation Links */}
+                {/* Account Navigation Links or Sign-In CTAs */}
                 {isAuthenticated ? (
                   <>
                     <Link
                       to="/account/orders"
                       onClick={() => setAccountMenuOpen(false)}
                       className={cn(
-                        'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors',
+                        'flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors',
                         isDark ? 'text-gray-300 hover:text-white hover:bg-white/10' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                       )}
                     >
@@ -487,13 +460,50 @@ export const AzDarkLandingNav: React.FC = () => {
                       to="/account"
                       onClick={() => setAccountMenuOpen(false)}
                       className={cn(
-                        'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors',
+                        'flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors',
                         isDark ? 'text-gray-300 hover:text-white hover:bg-white/10' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                       )}
                     >
                       <User size={14} className="text-gray-400" />
                       <span>Account Profile</span>
                     </Link>
+
+                    {/* ── THEME TOGGLE (Cleanly separated) ── */}
+                    <div className={cn('p-2.5 my-2 rounded-xl border', isDark ? 'bg-white/[0.03] border-white/10' : 'bg-gray-50 border-gray-200')}>
+                      <div className="flex items-center justify-between gap-2 mb-2 px-0.5">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Appearance</span>
+                        <span className="text-[10px] font-semibold text-gray-400">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-black/20 dark:bg-black/40">
+                        <button
+                          type="button"
+                          onClick={() => setTheme('dark')}
+                          className={cn(
+                            'flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                            isDark
+                              ? 'bg-brand-blue text-white shadow-xs font-bold'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          )}
+                        >
+                          <Moon size={13} />
+                          <span>Dark</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTheme('light')}
+                          className={cn(
+                            'flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                            !isDark
+                              ? 'bg-white text-dark shadow-xs font-bold'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          )}
+                        >
+                          <Sun size={13} />
+                          <span>Light</span>
+                        </button>
+                      </div>
+                    </div>
+
                     <div className={cn('h-px my-1', isDark ? 'bg-white/10' : 'bg-gray-100')} />
                     <button
                       type="button"
@@ -509,26 +519,64 @@ export const AzDarkLandingNav: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Link
-                      to="/login"
-                      onClick={() => setAccountMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 w-full py-2 bg-brand-blue hover:bg-brand-blue-hover text-white text-xs font-bold rounded-xl transition-all shadow-md mt-1"
-                    >
-                      <LogIn size={14} />
-                      <span>Sign In</span>
-                    </Link>
-                    <Link
-                      to="/register"
-                      onClick={() => setAccountMenuOpen(false)}
-                      className={cn(
-                        'flex items-center justify-center gap-2 w-full py-2 text-xs font-semibold rounded-xl transition-all mt-1.5 border',
-                        isDark
-                          ? 'bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border-white/10'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-900 border-gray-200'
-                      )}
-                    >
-                      <span>Create Account</span>
-                    </Link>
+                    <div className="space-y-2 mb-2.5">
+                      <Link
+                        to="/login"
+                        onClick={() => setAccountMenuOpen(false)}
+                        className="flex items-center justify-center gap-2 w-full py-2.5 bg-brand-blue hover:bg-brand-blue-hover text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer active:scale-[0.99]"
+                      >
+                        <LogIn size={14} />
+                        <span>Sign In</span>
+                      </Link>
+                      <Link
+                        to="/register"
+                        onClick={() => setAccountMenuOpen(false)}
+                        className={cn(
+                          'flex items-center justify-center gap-2 w-full py-2.5 text-xs font-bold rounded-xl transition-all border cursor-pointer active:scale-[0.99]',
+                          isDark
+                            ? 'bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white border-white/10'
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-800 hover:text-gray-900 border-gray-200'
+                        )}
+                      >
+                        <span>Create Account</span>
+                      </Link>
+                    </div>
+
+                    {/* ── THEME TOGGLE (Cleanly separated at bottom) ── */}
+                    <div className={cn('p-2.5 rounded-xl border', isDark ? 'bg-white/[0.03] border-white/10' : 'bg-gray-50 border-gray-200')}>
+                      <div className="flex items-center justify-between gap-3 mb-2 px-0.5">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Appearance</span>
+                        <span className="text-[10px] font-semibold text-gray-400">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-black/20 dark:bg-black/40">
+                        <button
+                          type="button"
+                          onClick={() => setTheme('dark')}
+                          className={cn(
+                            'flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                            isDark
+                              ? 'bg-brand-blue text-white shadow-xs font-bold'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          )}
+                        >
+                          <Moon size={13} />
+                          <span>Dark</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTheme('light')}
+                          className={cn(
+                            'flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                            !isDark
+                              ? 'bg-white text-dark shadow-xs font-bold'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          )}
+                        >
+                          <Sun size={13} />
+                          <span>Light</span>
+                        </button>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
