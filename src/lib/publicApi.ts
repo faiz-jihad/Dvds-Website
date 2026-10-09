@@ -126,13 +126,7 @@ export const publicApi = {
 
   async getStoreSettings(): Promise<StoreSettings> {
     const sb = client();
-    let localOverride: Partial<StoreSettings> = {};
-    try {
-      const stored = typeof window !== 'undefined' ? localStorage.getItem('dvds_store_settings_override') : null;
-      if (stored) localOverride = JSON.parse(stored);
-    } catch {}
-
-    if (!sb) return { ...DEFAULT_STORE_SETTINGS, ...localOverride };
+    if (!sb) return { ...DEFAULT_STORE_SETTINGS };
     const { data, error } = await sb.from('store_settings').select('*').eq('singleton', true).maybeSingle();
     if (error || !data) throw new Error('Store settings are unavailable. Please retry.');
 
@@ -142,15 +136,14 @@ export const publicApi = {
       hero_youtube_enabled: data.hero_youtube_enabled ?? DEFAULT_STORE_SETTINGS.hero_youtube_enabled ?? false,
       hero_youtube_url: data.hero_youtube_url ?? DEFAULT_STORE_SETTINGS.hero_youtube_url ?? '',
       hero_trailers: Array.isArray(data.hero_trailers) ? data.hero_trailers : (DEFAULT_STORE_SETTINGS.hero_trailers || []),
-      ...localOverride,
-      deal_discount_price: Number(localOverride.deal_discount_price ?? data.deal_discount_price ?? 0),
-      free_shipping_threshold: Number(localOverride.free_shipping_threshold ?? data.free_shipping_threshold ?? 0),
-      standard_shipping_fee: Number(localOverride.standard_shipping_fee ?? data.standard_shipping_fee ?? 0),
-      express_shipping_fee: Number(localOverride.express_shipping_fee ?? data.express_shipping_fee ?? 0),
-      low_stock_threshold: Number(localOverride.low_stock_threshold ?? data.low_stock_threshold ?? 5),
-      budget_collection_threshold: Number(localOverride.budget_collection_threshold ?? data.budget_collection_threshold ?? 15),
-      vip_promo_discount: Number(localOverride.vip_promo_discount ?? data.vip_promo_discount ?? 0),
-      vip_min_spend: Number(localOverride.vip_min_spend ?? data.vip_min_spend ?? 0),
+      deal_discount_price: Number(data.deal_discount_price ?? 0),
+      free_shipping_threshold: Number(data.free_shipping_threshold ?? 0),
+      standard_shipping_fee: Number(data.standard_shipping_fee ?? 3.49),
+      express_shipping_fee: Number(data.express_shipping_fee ?? 5.99),
+      low_stock_threshold: Number(data.low_stock_threshold ?? 5),
+      budget_collection_threshold: Number(data.budget_collection_threshold ?? 15),
+      vip_promo_discount: Number(data.vip_promo_discount ?? 0),
+      vip_min_spend: Number(data.vip_min_spend ?? 0),
     } as StoreSettings;
 
     // Strict privacy protection: clean jurisdiction to United Kingdom
@@ -166,9 +159,9 @@ export const publicApi = {
     if (!result.registered_company_name || result.registered_company_name.includes('AZ Rayan')) {
       result.registered_company_name = 'DVDs Zone';
     }
-    const rawEmail = (data.support_email?.trim() || localOverride.support_email?.trim() || '');
+    const rawEmail = data.support_email?.trim() || '';
     result.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge')) ? 'azrayanltd@gmail.com' : rawEmail;
-    result.support_phone = data.support_phone?.trim() || localOverride.support_phone?.trim() || '00447400320038';
+    result.support_phone = data.support_phone?.trim() || '00447400320038';
     return result;
   },
 

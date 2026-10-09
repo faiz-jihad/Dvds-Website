@@ -78,29 +78,46 @@ export const CartDrawer: React.FC = () => {
                 </button>
               </div>
 
-              {/* Free UK Delivery Indicator */}
+              {/* Delivery Indicator */}
               <div className="bg-gray-50 dark:bg-[#141A26] px-4 py-3 border-b border-gray-100 dark:border-white/10 sm:px-6">
                 <div className="flex items-start justify-between gap-2 text-xs mb-1.5">
                   <span className="flex min-w-0 items-start gap-1.5 font-medium text-dark dark:text-white">
                     <Truck className="w-3.5 h-3.5 text-brand-blue" />
-                    {progress.threshold <= 0 || progress.remaining <= 0 ? (
+                    {progress.isComplimentary ? (
                       <span className="text-brand-blue dark:text-blue-400 font-semibold">
                         Free Tracked UK Delivery Applied!
                       </span>
+                    ) : progress.hasThreshold ? (
+                      progress.isQualified ? (
+                        <span className="text-brand-blue dark:text-blue-400 font-semibold">
+                          Free Tracked UK Delivery Applied!
+                        </span>
+                      ) : (
+                        <>
+                          Add <strong className="text-brand-blue font-semibold">{formatGBP(progress.remaining)}</strong> for Free UK Delivery
+                        </>
+                      )
                     ) : (
-                      <>
-                        Add <strong className="text-brand-blue font-semibold">{formatGBP(progress.remaining)}</strong> for Free UK Delivery
-                      </>
+                      <span>
+                        UK Tracked 48 Delivery: <strong className="text-dark dark:text-white">{shipping === 0 ? 'FREE' : formatGBP(shipping)}</strong>
+                      </span>
                     )}
                   </span>
-                  <span className="text-brand-blue dark:text-blue-400 font-mono text-[11px] font-semibold">{progress.threshold <= 0 ? 'FREE' : `${progress.percentage}%`}</span>
+                  {progress.hasThreshold && (
+                    <span className="text-brand-blue dark:text-blue-400 font-mono text-[11px] font-semibold">{progress.percentage}%</span>
+                  )}
+                  {progress.isComplimentary && (
+                    <span className="text-brand-blue dark:text-blue-400 font-mono text-[11px] font-semibold">FREE</span>
+                  )}
                 </div>
-                <div className="w-full h-1.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-brand-blue transition-all duration-300"
-                    style={{ width: `${progress.percentage}%` }}
-                  />
-                </div>
+                {progress.hasThreshold && (
+                  <div className="w-full h-1.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-brand-blue transition-all duration-300"
+                      style={{ width: `${progress.percentage}%` }}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Items List */}

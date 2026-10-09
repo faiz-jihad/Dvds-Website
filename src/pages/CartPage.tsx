@@ -81,29 +81,46 @@ export const CartPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Free Shipping Progress Alert */}
+        {/* Delivery Progress Alert */}
         <div className="mb-8 p-4 bg-white dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 rounded-xl shadow-xs">
           <div className="flex items-start justify-between gap-3 text-xs mb-2">
             <span className="flex min-w-0 items-start gap-2 font-medium text-dark dark:text-gray-200">
               <Truck className="w-4 h-4 text-brand-blue dark:text-blue-400 shrink-0 mt-0.5" />
-              {progress.threshold <= 0 || progress.remaining <= 0 ? (
+              {progress.isComplimentary ? (
                 <span className="text-brand-blue dark:text-blue-400 font-bold">
                   Free Tracked UK Delivery applied — 100% complimentary shipping on all UK orders.
                 </span>
+              ) : progress.hasThreshold ? (
+                progress.isQualified ? (
+                  <span className="text-brand-blue dark:text-blue-400 font-bold">
+                    Free Tracked UK Delivery applied! (Orders over {formatGBP(progress.threshold)})
+                  </span>
+                ) : (
+                  <>
+                    Add <strong className="text-brand-blue dark:text-blue-400 font-bold">{formatGBP(progress.remaining)}</strong> more to qualify for Free UK Delivery
+                  </>
+                )
               ) : (
-                <>
-                  Add <strong className="text-brand-blue dark:text-blue-400 font-bold">{formatGBP(progress.remaining)}</strong> more to qualify for Free UK Delivery
-                </>
+                <span className="text-gray-700 dark:text-gray-300">
+                  Standard UK Delivery via Royal Mail Tracked 48: <strong className="text-dark dark:text-white">{shipping === 0 ? 'FREE' : formatGBP(shipping)}</strong>
+                </span>
               )}
             </span>
-            <span className="font-mono text-brand-blue dark:text-blue-400 font-semibold">{progress.threshold <= 0 ? 'FREE' : `${progress.percentage}%`}</span>
+            {progress.hasThreshold && (
+              <span className="font-mono text-brand-blue dark:text-blue-400 font-semibold">{progress.percentage}%</span>
+            )}
+            {progress.isComplimentary && (
+              <span className="font-mono text-brand-blue dark:text-blue-400 font-semibold">FREE</span>
+            )}
           </div>
-          <div className="w-full h-2 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-brand-blue dark:bg-blue-500 transition-all duration-300"
-              style={{ width: `${progress.percentage}%` }}
-            />
-          </div>
+          {progress.hasThreshold && (
+            <div className="w-full h-2 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-brand-blue dark:bg-blue-500 transition-all duration-300"
+                style={{ width: `${progress.percentage}%` }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">

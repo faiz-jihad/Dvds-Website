@@ -23,7 +23,7 @@ interface CartState {
   getDiscountAmount: () => number;
   getTotal: () => number;
   getItemCount: () => number;
-  getFreeShippingProgress: () => { threshold: number; remaining: number; percentage: number };
+  getFreeShippingProgress: () => { threshold: number; remaining: number; percentage: number; isComplimentary: boolean; hasThreshold: boolean; isQualified: boolean };
 }
 
 export const useCartStore = create<CartState>()(
@@ -95,7 +95,7 @@ export const useCartStore = create<CartState>()(
       getShippingFee: () => {
         const subtotal = get().getSubtotal();
         if (subtotal === 0) return 0;
-        const rate = Number(get().standardShippingRate ?? 0);
+        const rate = get().standardShippingRate != null ? Number(get().standardShippingRate) : 3.49;
         if (rate <= 0) return 0;
         const threshold = Number(get().freeShippingThreshold ?? 0);
         if (threshold > 0 && subtotal >= threshold) return 0;
@@ -111,14 +111,24 @@ export const useCartStore = create<CartState>()(
       getFreeShippingProgress: () => {
         const subtotal = get().getSubtotal();
         const threshold = Number(get().freeShippingThreshold ?? 0);
-        const rate = Number(get().standardShippingRate ?? 0);
-        if (rate <= 0 || threshold <= 0) {
-          return { threshold: 0, remaining: 0, percentage: 100 };
+        const rate = get().standardShippingRate != null ? Number(get().standardShippingRate) : 3.49;
+        const isComplimentary = rate === 0;
+        const hasThreshold = threshold > 0;
+        const isQualified = isComplimentary || (hasThreshold && subtotal >= threshold);
+
+        if (isComplimentary) {
+          return { threshold: 0, remaining: 0, percentage: 100, isComplimentary: true, hasThreshold: false, isQualified: true };
+        }
+        if (!hasThreshold) {
+          return { threshold: 0, remaining: 0, percentage: 0, isComplimentary: false, hasThreshold: false, isQualified: false };
         }
         return {
           threshold,
           remaining: Math.round(Math.max(0, threshold - subtotal) * 100) / 100,
           percentage: Math.min(100, Math.round((subtotal / threshold) * 100)),
+          isComplimentary: false,
+          hasThreshold: true,
+          isQualified,
         };
       },
     }),

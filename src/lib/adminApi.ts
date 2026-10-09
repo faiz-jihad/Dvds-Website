@@ -433,13 +433,8 @@ export const adminApi = {
   async getStoreSettings(): Promise<StoreSettings | null> {
     const { data, error } = await client().from('store_settings').select('*').eq('singleton', true).maybeSingle();
     if (error) fail(error, 'Store settings could not be loaded.');
-    let localOverride: Partial<StoreSettings> = {};
-    try {
-      const stored = typeof window !== 'undefined' ? localStorage.getItem('dvds_store_settings_override') : null;
-      if (stored) localOverride = JSON.parse(stored);
-    } catch {}
     if (!data) return null;
-    const settings = { ...DEFAULT_STORE_SETTINGS, ...data, ...localOverride } as StoreSettings;
+    const settings = { ...DEFAULT_STORE_SETTINGS, ...data } as StoreSettings;
     if (!settings.registered_office_address || settings.registered_office_address.includes('Ryland') || settings.registered_office_address.includes('Apartment') || settings.registered_office_address.includes('Birmingham') || settings.registered_office_address.includes('West Midlands')) {
       settings.registered_office_address = 'United Kingdom';
     }
@@ -452,17 +447,16 @@ export const adminApi = {
     if (!settings.registered_company_name || settings.registered_company_name.includes('AZ Rayan')) {
       settings.registered_company_name = 'DVDs Zone';
     }
-    const rawEmail = (data.support_email?.trim() || localOverride.support_email?.trim() || '');
+    const rawEmail = data.support_email?.trim() || '';
     settings.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge')) ? 'azrayanltd@gmail.com' : rawEmail;
-    settings.support_phone = data.support_phone?.trim() || localOverride.support_phone?.trim() || '00447400320038';
+    settings.support_phone = data.support_phone?.trim() || '00447400320038';
     return settings;
   },
 
   async saveStoreSettings(input: StoreSettings): Promise<StoreSettings> {
     if (input.shipping_zones) validateShippingZones(input.shipping_zones);
     if (input.checkout_currencies && (!input.checkout_currencies.includes('GBP') || input.checkout_currencies.some((currency) => !CURRENCIES.includes(currency)))) throw new Error('Enable GBP and select supported checkout currencies.');
-    const { data: existing, error: readError } = await client().from('store_settings').select('*').eq('singleton', true).maybeSingle();
-    if (readError) fail(readError, 'Store settings could not be loaded before saving.');
+    
     const { id, ...values } = input;
     // Strictly sanitize address to protect personal privacy and standardize jurisdiction
     if (values.registered_office_address?.includes('Ryland') || values.registered_office_address?.includes('Apartment') || values.registered_office_address?.includes('Birmingham') || values.registered_office_address?.includes('West Midlands')) {
@@ -482,12 +476,38 @@ export const adminApi = {
     values.support_phone = values.support_phone?.trim() || '00447400320038';
     const payload = { ...values, singleton: true, updated_at: new Date().toISOString() };
 
-    // Always persist to localStorage for instant UI updates & fallback
+    // Method 1: Save via authoritative backend serverless route with service-role credentials
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('dvds_store_settings_override', JSON.stringify({ ...input, ...values }));
+      const auth = client().auth;
+      const session = typeof auth?.getSession === 'function' ? (await auth.getSession()).data?.session : null;
+      if (session?.access_token) {
+        const response = await fetch('/api/admin-store-settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ settings: payload }),
+        });
+        if (response.ok) {
+          const body = await response.json();
+          if (body?.settings) {
+            try {
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('dvds_store_settings_override');
+              }
+            } catch {}
+            return { ...DEFAULT_STORE_SETTINGS, ...body.settings, ...input } as StoreSettings;
+          }
+        }
       }
-    } catch {}
+    } catch (apiErr) {
+      console.warn('[adminApi.saveStoreSettings] Backend endpoint note:', apiErr);
+    }
+
+    // Method 2: Direct Supabase client update fallback
+    const { data: existing, error: readError } = await client().from('store_settings').select('*').eq('singleton', true).maybeSingle();
+    if (readError) fail(readError, 'Store settings could not be loaded before saving.');
 
     // Filter payload strictly to columns that exist in the database schema to avoid 42703 column errors
     const allowedKeys = existing ? new Set(Object.keys(existing)) : null;
@@ -519,7 +539,6 @@ export const adminApi = {
         )
       );
 
-    // If saving fails due to columns not existing in DB schema (e.g. shipping_zones, checkout_currencies, youtube fields)
     if (result.error && isSchemaColumnError(result.error)) {
       const {
         shipping_zones,
@@ -540,32 +559,21 @@ export const adminApi = {
       result = existing
         ? await client().from('store_settings').update(legacyPayload).eq('id', existing.id).select('*').single()
         : await client().from('store_settings').insert(legacyPayload).select('*').single();
-
-      if (result.error && isSchemaColumnError(result.error)) {
-        const {
-          payment_card_enabled,
-          payment_bank_transfer_enabled,
-          bank_name,
-          bank_account_name,
-          bank_sort_code,
-          bank_account_number,
-          bank_iban,
-          ...coreValues
-        } = legacyValues;
-        const corePayload = { ...coreValues, singleton: true, updated_at: new Date().toISOString() };
-        result = existing
-          ? await client().from('store_settings').update(corePayload).eq('id', existing.id).select('*').single()
-          : await client().from('store_settings').insert(corePayload).select('*').single();
-      }
     }
 
     if (result.error || !result.data) {
       if (isSchemaColumnError(result.error)) {
-        // Full settings already persisted in localStorage for instant admin & storefront use
         return { ...DEFAULT_STORE_SETTINGS, ...input } as StoreSettings;
       }
       fail(result.error, 'Store settings could not be saved.');
     }
+
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('dvds_store_settings_override');
+      }
+    } catch {}
+
     return { ...DEFAULT_STORE_SETTINGS, ...result.data, ...input } as StoreSettings;
   },
 

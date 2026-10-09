@@ -200,9 +200,11 @@ export function calculateQuote(items, products, settings, promo, promoCode, deli
   if (!code) throw new CheckoutError('Choose a valid delivery country.');
   let standard, express, delivery, zoneName = 'United Kingdom';
   if (code === 'GB') {
-    const stdFee = money(settings.standard_shipping_fee);
-    const freeThreshold = settings.free_shipping_threshold != null && Number(settings.free_shipping_threshold) > 0
-      ? money(settings.free_shipping_threshold)
+    const rawStdFee = Number(settings.standard_shipping_fee ?? 0);
+    const stdFee = Number.isFinite(rawStdFee) && rawStdFee >= 0 ? money(rawStdFee) : 349;
+    const rawThreshold = settings.free_shipping_threshold != null ? Number(settings.free_shipping_threshold) : null;
+    const freeThreshold = rawThreshold != null && Number.isFinite(rawThreshold) && rawThreshold > 0
+      ? money(rawThreshold)
       : null;
     if (stdFee === 0) {
       standard = 0;
@@ -211,7 +213,8 @@ export function calculateQuote(items, products, settings, promo, promoCode, deli
     } else {
       standard = stdFee;
     }
-    express = money(settings.express_shipping_fee);
+    const rawExpressFee = Number(settings.express_shipping_fee ?? 0);
+    express = Number.isFinite(rawExpressFee) && rawExpressFee >= 0 ? money(rawExpressFee) : 599;
     delivery = {
       standard: {
         name: settings.standard_shipping_name || 'Royal Mail Tracked 48',

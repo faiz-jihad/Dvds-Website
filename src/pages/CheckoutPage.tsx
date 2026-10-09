@@ -271,6 +271,7 @@ export const CheckoutPage: React.FC = () => {
         country: address.country,
         currency,
       }),
+    placeholderData: (previousData) => previousData,
     enabled: items.length > 0,
     retry: false,
     staleTime: 0,
@@ -1118,12 +1119,14 @@ export const CheckoutPage: React.FC = () => {
                         <span className="block text-sm font-semibold text-dark dark:text-white">
                           {quote?.delivery[option]?.name ||
                             (option === "standard"
-                              ? "Standard delivery"
-                              : "Express delivery")}
+                              ? "Royal Mail Tracked 48"
+                              : "DPD Next Day Priority")}
                         </span>
                         <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {quote?.delivery[option]?.eta ||
-                            "Delivery estimate shown with your total"}
+                            (option === "standard"
+                              ? "2-3 working days"
+                              : "1 working day (Order by 2PM)")}
                         </span>
                       </span>
                       <span

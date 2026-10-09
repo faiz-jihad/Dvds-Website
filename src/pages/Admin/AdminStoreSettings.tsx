@@ -300,15 +300,15 @@ export const AdminStoreSettings: React.FC = () => {
       director_bio: 'Visionary British-American filmmaker celebrated for nonlinear storytelling, practical effects, and high-format 70mm archival preservation.',
       director_product_ids: [],
       free_shipping_threshold: 0,
-      standard_shipping_fee: 0,
+      standard_shipping_fee: 3.49,
       shipping_zones: [],
       checkout_currencies: ['GBP', 'EUR', 'USD'],
       international_duties_notice: '',
-      express_shipping_fee: 4.99,
+      express_shipping_fee: 5.99,
       standard_shipping_name: 'Royal Mail Tracked 48',
-      standard_shipping_eta: '2-3 Working Days',
-      express_shipping_name: 'Royal Mail Tracked 24',
-      express_shipping_eta: 'Next Working Day',
+      standard_shipping_eta: '2-3 working days',
+      express_shipping_name: 'DPD Next Day Priority',
+      express_shipping_eta: '1 working day (Order by 2PM)',
       low_stock_threshold: 5,
       budget_collection_threshold: 15,
       dispatch_cutoff_time: '14:00 GMT',
@@ -1968,8 +1968,9 @@ export const AdminStoreSettings: React.FC = () => {
                   type="number"
                   step="0.01"
                   min="0"
-                  value={settings.standard_shipping_fee ?? 0}
-                  onChange={(e) => handleChange('standard_shipping_fee', e.target.value === '' ? 0 : Number(e.target.value))}
+                  value={settings.standard_shipping_fee !== undefined && settings.standard_shipping_fee !== null ? settings.standard_shipping_fee : ''}
+                  onChange={(e) => handleChange('standard_shipping_fee', e.target.value === '' ? ('' as any) : Number(e.target.value))}
+                  onBlur={() => handleChange('standard_shipping_fee', Math.max(0, Number(settings.standard_shipping_fee || 0)))}
                   placeholder="0.00"
                   helperText="Set to 0.00 for complimentary delivery, or enter your standard shipping fee (e.g. 3.49)."
                 />
@@ -1978,8 +1979,9 @@ export const AdminStoreSettings: React.FC = () => {
                   type="number"
                   step="0.01"
                   min="0"
-                  value={settings.free_shipping_threshold ?? 0}
-                  onChange={(e) => handleChange('free_shipping_threshold', e.target.value === '' ? 0 : Number(e.target.value))}
+                  value={settings.free_shipping_threshold !== undefined && settings.free_shipping_threshold !== null ? settings.free_shipping_threshold : ''}
+                  onChange={(e) => handleChange('free_shipping_threshold', e.target.value === '' ? ('' as any) : Number(e.target.value))}
+                  onBlur={() => handleChange('free_shipping_threshold', Math.max(0, Number(settings.free_shipping_threshold || 0)))}
                   placeholder="0.00"
                   helperText="Orders at or above this basket total receive free delivery. Set to 0.00 if you do not offer a free threshold."
                 />
@@ -2022,8 +2024,9 @@ export const AdminStoreSettings: React.FC = () => {
                   type="number"
                   step="0.01"
                   min="0"
-                  value={settings.express_shipping_fee ?? 0}
-                  onChange={(e) => handleChange('express_shipping_fee', e.target.value === '' ? 0 : Number(e.target.value))}
+                  value={settings.express_shipping_fee !== undefined && settings.express_shipping_fee !== null ? settings.express_shipping_fee : ''}
+                  onChange={(e) => handleChange('express_shipping_fee', e.target.value === '' ? ('' as any) : Number(e.target.value))}
+                  onBlur={() => handleChange('express_shipping_fee', Math.max(0, Number(settings.express_shipping_fee || 0)))}
                   placeholder="5.99"
                   helperText="Fee charged for priority shipping."
                 />
