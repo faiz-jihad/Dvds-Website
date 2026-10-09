@@ -20,6 +20,10 @@ export default {
           DEFAULT: '#111111',
           soft: '#1B1B1B',
           surface: '#171717',
+          /** Dark mode page backgrounds – kept here so components never hardcode hex */
+          bg: '#07090E',
+          card: '#0E131F',
+          input: '#141A26',
         },
         gray: {
           50: '#F8F8F8',

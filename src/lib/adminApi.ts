@@ -442,6 +442,9 @@ export const adminApi = {
         const meta = JSON.parse(settings.hero_bg_image.slice('HERO_META:'.length));
         if (Array.isArray(meta.hero_trailers)) {
           settings.hero_trailers = meta.hero_trailers;
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('dvds_hero_trailers', JSON.stringify(meta.hero_trailers)); } catch {}
+          }
         }
         if (meta.hero_youtube_enabled !== undefined) settings.hero_youtube_enabled = meta.hero_youtube_enabled;
         if (meta.hero_youtube_url !== undefined) settings.hero_youtube_url = meta.hero_youtube_url;
@@ -549,9 +552,36 @@ export const adminApi = {
               }
             } catch {}
             const merged = { ...DEFAULT_STORE_SETTINGS, ...body.settings } as StoreSettings;
+            if (merged.hero_bg_image && merged.hero_bg_image.startsWith('HERO_META:')) {
+              try {
+                const meta = JSON.parse(merged.hero_bg_image.slice('HERO_META:'.length));
+                if (Array.isArray(meta.hero_trailers)) merged.hero_trailers = meta.hero_trailers;
+                if (meta.hero_youtube_enabled !== undefined) merged.hero_youtube_enabled = meta.hero_youtube_enabled;
+                if (meta.hero_youtube_url !== undefined) merged.hero_youtube_url = meta.hero_youtube_url;
+                if (meta.hero_youtube_mute !== undefined) merged.hero_youtube_mute = meta.hero_youtube_mute;
+                if (meta.hero_youtube_loop !== undefined) merged.hero_youtube_loop = meta.hero_youtube_loop;
+                if (meta.hero_youtube_start_minutes !== undefined) merged.hero_youtube_start_minutes = meta.hero_youtube_start_minutes;
+                if (meta.hero_youtube_start_seconds !== undefined) merged.hero_youtube_start_seconds = meta.hero_youtube_start_seconds;
+                if (meta.hero_youtube_end_minutes !== undefined) merged.hero_youtube_end_minutes = meta.hero_youtube_end_minutes;
+                if (meta.hero_youtube_end_seconds !== undefined) merged.hero_youtube_end_seconds = meta.hero_youtube_end_seconds;
+              } catch {}
+            }
             if (Array.isArray(input.hero_trailers)) {
               merged.hero_trailers = input.hero_trailers;
             }
+            if (input.hero_youtube_enabled !== undefined) merged.hero_youtube_enabled = Boolean(input.hero_youtube_enabled);
+            if (input.hero_youtube_url !== undefined) merged.hero_youtube_url = input.hero_youtube_url;
+            if (input.hero_youtube_mute !== undefined) merged.hero_youtube_mute = input.hero_youtube_mute;
+            if (input.hero_youtube_loop !== undefined) merged.hero_youtube_loop = input.hero_youtube_loop;
+            if (input.hero_youtube_start_minutes !== undefined) merged.hero_youtube_start_minutes = input.hero_youtube_start_minutes;
+            if (input.hero_youtube_start_seconds !== undefined) merged.hero_youtube_start_seconds = input.hero_youtube_start_seconds;
+            if (input.hero_youtube_end_minutes !== undefined) merged.hero_youtube_end_minutes = input.hero_youtube_end_minutes;
+            if (input.hero_youtube_end_seconds !== undefined) merged.hero_youtube_end_seconds = input.hero_youtube_end_seconds;
+            try {
+              if (typeof window !== 'undefined' && Array.isArray(merged.hero_trailers)) {
+                localStorage.setItem('dvds_hero_trailers', JSON.stringify(merged.hero_trailers));
+              }
+            } catch {}
             return merged;
           }
         } else {
@@ -567,12 +597,20 @@ export const adminApi = {
     const { data: existing, error: readError } = await client().from('store_settings').select('*').eq('singleton', true).maybeSingle();
     if (readError) fail(readError, 'Store settings could not be loaded before saving.');
 
+    const virtualColumns = new Set([
+      'hero_youtube_enabled', 'hero_youtube_url', 'hero_youtube_mute', 'hero_youtube_loop',
+      'hero_youtube_start_minutes', 'hero_youtube_start_seconds', 'hero_youtube_end_minutes', 'hero_youtube_end_seconds',
+      'hero_trailers'
+    ]);
+
     // Filter payload strictly to columns that exist in the database schema to avoid 42703 column errors
     const allowedKeys = existing ? new Set(Object.keys(existing)) : null;
     const sanitizedPayload: Record<string, any> = {};
     for (const [key, val] of Object.entries(payload)) {
-      if (!allowedKeys || allowedKeys.has(key)) {
-        sanitizedPayload[key] = val;
+      if (allowedKeys) {
+        if (allowedKeys.has(key)) sanitizedPayload[key] = val;
+      } else {
+        if (!virtualColumns.has(key)) sanitizedPayload[key] = val;
       }
     }
     sanitizedPayload.singleton = true;
@@ -602,7 +640,8 @@ export const adminApi = {
         'campaign_is_active', 'campaign_title', 'campaign_badge', 'campaign_tagline',
         'campaign_discount_text', 'campaign_ends_at', 'custom_formats',
         'shipping_zones', 'checkout_currencies',
-        'international_duties_notice'
+        'international_duties_notice',
+        ...virtualColumns
       ]);
       const corePayload: Record<string, any> = {};
       for (const [key, val] of Object.entries(sanitizedPayload)) {
@@ -628,9 +667,36 @@ export const adminApi = {
     } catch {}
 
     const returnedSettings = { ...DEFAULT_STORE_SETTINGS, ...result.data } as StoreSettings;
+    if (returnedSettings.hero_bg_image && returnedSettings.hero_bg_image.startsWith('HERO_META:')) {
+      try {
+        const meta = JSON.parse(returnedSettings.hero_bg_image.slice('HERO_META:'.length));
+        if (Array.isArray(meta.hero_trailers)) returnedSettings.hero_trailers = meta.hero_trailers;
+        if (meta.hero_youtube_enabled !== undefined) returnedSettings.hero_youtube_enabled = meta.hero_youtube_enabled;
+        if (meta.hero_youtube_url !== undefined) returnedSettings.hero_youtube_url = meta.hero_youtube_url;
+        if (meta.hero_youtube_mute !== undefined) returnedSettings.hero_youtube_mute = meta.hero_youtube_mute;
+        if (meta.hero_youtube_loop !== undefined) returnedSettings.hero_youtube_loop = meta.hero_youtube_loop;
+        if (meta.hero_youtube_start_minutes !== undefined) returnedSettings.hero_youtube_start_minutes = meta.hero_youtube_start_minutes;
+        if (meta.hero_youtube_start_seconds !== undefined) returnedSettings.hero_youtube_start_seconds = meta.hero_youtube_start_seconds;
+        if (meta.hero_youtube_end_minutes !== undefined) returnedSettings.hero_youtube_end_minutes = meta.hero_youtube_end_minutes;
+        if (meta.hero_youtube_end_seconds !== undefined) returnedSettings.hero_youtube_end_seconds = meta.hero_youtube_end_seconds;
+      } catch {}
+    }
     if (Array.isArray(input.hero_trailers)) {
       returnedSettings.hero_trailers = input.hero_trailers;
     }
+    if (input.hero_youtube_enabled !== undefined) returnedSettings.hero_youtube_enabled = Boolean(input.hero_youtube_enabled);
+    if (input.hero_youtube_url !== undefined) returnedSettings.hero_youtube_url = input.hero_youtube_url;
+    if (input.hero_youtube_mute !== undefined) returnedSettings.hero_youtube_mute = input.hero_youtube_mute;
+    if (input.hero_youtube_loop !== undefined) returnedSettings.hero_youtube_loop = input.hero_youtube_loop;
+    if (input.hero_youtube_start_minutes !== undefined) returnedSettings.hero_youtube_start_minutes = input.hero_youtube_start_minutes;
+    if (input.hero_youtube_start_seconds !== undefined) returnedSettings.hero_youtube_start_seconds = input.hero_youtube_start_seconds;
+    if (input.hero_youtube_end_minutes !== undefined) returnedSettings.hero_youtube_end_minutes = input.hero_youtube_end_minutes;
+    if (input.hero_youtube_end_seconds !== undefined) returnedSettings.hero_youtube_end_seconds = input.hero_youtube_end_seconds;
+    try {
+      if (typeof window !== 'undefined' && Array.isArray(returnedSettings.hero_trailers)) {
+        localStorage.setItem('dvds_hero_trailers', JSON.stringify(returnedSettings.hero_trailers));
+      }
+    } catch {}
     return returnedSettings;
   },
 

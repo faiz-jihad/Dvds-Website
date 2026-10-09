@@ -399,7 +399,8 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
             const pId = String(p.id || '').trim().toLowerCase();
             const pSlug = String(p.slug || '').trim().toLowerCase();
             const pTitle = String(p.title || '').trim().toLowerCase();
-            return pId === target || pSlug === target || pTitle === target;
+            const pSku = String(p.sku || '').trim().toLowerCase();
+            return pId === target || pSlug === target || pTitle === target || pSku === target;
           });
         })
         .filter(Boolean) as Product[];
@@ -492,7 +493,8 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
       const pId = String(current.id || '').trim().toLowerCase();
       const pSlug = String(current.slug || '').trim().toLowerCase();
       const pTitle = String(current.title || '').trim().toLowerCase();
-      return (pId === target || pSlug === target || pTitle === target) && Boolean(t.youtube_url?.trim());
+      const pSku = String(current.sku || '').trim().toLowerCase();
+      return (pId === target || pSlug === target || pTitle === target || pSku === target) && Boolean(t.youtube_url?.trim());
     });
     if (adminTrailer) {
       return adminTrailer;

@@ -265,6 +265,8 @@ export const AdminStoreSettings: React.FC = () => {
         updated.hero_trailers = payload.hero_trailers;
       }
       setSettings(updated);
+      queryClient.setQueryData(['admin', 'settings'], updated);
+      queryClient.setQueryData(['store', 'settings'], updated);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
       await queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
       await queryClient.invalidateQueries({ queryKey: ['admin', 'operational-activity'] });
@@ -404,7 +406,8 @@ export const AdminStoreSettings: React.FC = () => {
         return (
           String(p.id).trim().toLowerCase() === target ||
           String(p.slug).trim().toLowerCase() === target ||
-          (p.title && p.title.toLowerCase() === target)
+          (p.title && p.title.toLowerCase() === target) ||
+          (p.sku && p.sku.toLowerCase() === target)
         );
       }) || products[0]
     : products[0];
@@ -1007,7 +1010,8 @@ export const AdminStoreSettings: React.FC = () => {
                         return (
                           String(p.id).trim().toLowerCase() === target ||
                           String(p.slug).trim().toLowerCase() === target ||
-                          (p.title && p.title.toLowerCase() === target)
+                          (p.title && p.title.toLowerCase() === target) ||
+                          (p.sku && p.sku.toLowerCase() === target)
                         );
                       });
                       const trailerVideoId = extractYouTubeVideoId(trailer.youtube_url);

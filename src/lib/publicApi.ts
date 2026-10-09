@@ -145,6 +145,9 @@ export const publicApi = {
         const meta = JSON.parse(data.hero_bg_image.slice('HERO_META:'.length));
         if (Array.isArray(meta.hero_trailers)) {
           heroTrailers = meta.hero_trailers;
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('dvds_hero_trailers', JSON.stringify(meta.hero_trailers)); } catch {}
+          }
         }
         if (meta.hero_youtube_enabled !== undefined) heroYoutubeEnabled = meta.hero_youtube_enabled;
         if (meta.hero_youtube_url !== undefined) heroYoutubeUrl = meta.hero_youtube_url;

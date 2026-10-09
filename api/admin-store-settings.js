@@ -8,6 +8,12 @@ const MASTER_ADMIN_EMAILS = new Set([
   'faizalba74@gmail.com',
 ]);
 
+const VIRTUAL_HERO_COLUMNS = new Set([
+  'hero_youtube_enabled', 'hero_youtube_url', 'hero_youtube_mute', 'hero_youtube_loop',
+  'hero_youtube_start_minutes', 'hero_youtube_start_seconds', 'hero_youtube_end_minutes', 'hero_youtube_end_seconds',
+  'hero_trailers'
+]);
+
 const CORE_COLUMNS = new Set([
   'singleton', 'store_name', 'registered_company_name', 'company_number',
   'registered_office_address', 'warehouse_location', 'support_email', 'support_phone',
@@ -20,9 +26,6 @@ const CORE_COLUMNS = new Set([
   'seo_site_url', 'seo_site_title', 'seo_site_description', 'seo_social_image_url', 'seo_organization_description',
   'hero_badge_text', 'hero_headline_line1', 'hero_headline_highlight', 'hero_subheadline',
   'hero_cta_primary', 'hero_cta_secondary', 'hero_bg_image',
-  'hero_youtube_enabled', 'hero_youtube_url', 'hero_youtube_mute', 'hero_youtube_loop',
-  'hero_youtube_start_minutes', 'hero_youtube_start_seconds', 'hero_youtube_end_minutes', 'hero_youtube_end_seconds',
-  'hero_trailers',
   'announcement_left', 'announcement_center', 'announcement_link',
   'bank_name', 'bank_account_name', 'bank_sort_code', 'bank_account_number', 'bank_iban', 'bank_payment_instructions',
   'campaign_is_active', 'campaign_title', 'campaign_badge', 'campaign_tagline', 'campaign_discount_text', 'campaign_ends_at',
@@ -72,13 +75,17 @@ export default endpoint(async (req) => {
     if (fallbackRow) existing = fallbackRow;
   }
 
-  const allowedColumns = existing ? new Set(Object.keys(existing)) : CORE_COLUMNS;
+  const dbColumns = existing ? new Set(Object.keys(existing)) : CORE_COLUMNS;
 
   // 4. Sanitize and validate fields
   const sanitized = {};
   for (const [key, value] of Object.entries(input)) {
     if (key === 'id') continue;
-    if (allowedColumns.has(key) || CORE_COLUMNS.has(key)) {
+    // Do not pass virtual hero columns directly into Postgres if the column does not physically exist in the DB
+    if (VIRTUAL_HERO_COLUMNS.has(key) && (!existing || !dbColumns.has(key))) {
+      continue;
+    }
+    if (dbColumns.has(key) || CORE_COLUMNS.has(key)) {
       sanitized[key] = value;
     }
   }
@@ -97,44 +104,44 @@ export default endpoint(async (req) => {
       hero_youtube_end_seconds: input.hero_youtube_end_seconds !== undefined ? Number(input.hero_youtube_end_seconds) : 30,
     };
     sanitized.hero_bg_image = `HERO_META:${JSON.stringify(heroMeta)}`;
-    if (Array.isArray(input.hero_trailers)) {
+    if (existing && 'hero_trailers' in existing && Array.isArray(input.hero_trailers)) {
       sanitized.hero_trailers = input.hero_trailers;
     }
   }
 
   // Numeric sanitization for delivery & thresholds (never NaN or empty strings)
-  if ('standard_shipping_fee' in input && (allowedColumns.has('standard_shipping_fee') || CORE_COLUMNS.has('standard_shipping_fee'))) {
+  if ('standard_shipping_fee' in input && dbColumns.has('standard_shipping_fee')) {
     sanitized.standard_shipping_fee = Math.max(0, Math.round(Number(input.standard_shipping_fee || 0) * 100) / 100);
   }
-  if ('free_shipping_threshold' in input && (allowedColumns.has('free_shipping_threshold') || CORE_COLUMNS.has('free_shipping_threshold'))) {
+  if ('free_shipping_threshold' in input && dbColumns.has('free_shipping_threshold')) {
     sanitized.free_shipping_threshold = Math.max(0, Math.round(Number(input.free_shipping_threshold || 0) * 100) / 100);
   }
-  if ('express_shipping_fee' in input && (allowedColumns.has('express_shipping_fee') || CORE_COLUMNS.has('express_shipping_fee'))) {
+  if ('express_shipping_fee' in input && dbColumns.has('express_shipping_fee')) {
     sanitized.express_shipping_fee = Math.max(0, Math.round(Number(input.express_shipping_fee || 0) * 100) / 100);
   }
-  if ('low_stock_threshold' in input && (allowedColumns.has('low_stock_threshold') || CORE_COLUMNS.has('low_stock_threshold'))) {
+  if ('low_stock_threshold' in input && dbColumns.has('low_stock_threshold')) {
     sanitized.low_stock_threshold = Math.max(0, Math.round(Number(input.low_stock_threshold || 5)));
   }
-  if ('budget_collection_threshold' in input && (allowedColumns.has('budget_collection_threshold') || CORE_COLUMNS.has('budget_collection_threshold'))) {
+  if ('budget_collection_threshold' in input && dbColumns.has('budget_collection_threshold')) {
     sanitized.budget_collection_threshold = Math.max(0, Math.round(Number(input.budget_collection_threshold || 8) * 100) / 100);
   }
 
   // Strict compliance & jurisdiction sanitation
-  if (allowedColumns.has('registered_office_address') || CORE_COLUMNS.has('registered_office_address')) sanitized.registered_office_address = 'United Kingdom';
-  if (allowedColumns.has('warehouse_location') || CORE_COLUMNS.has('warehouse_location')) sanitized.warehouse_location = 'United Kingdom';
-  if (allowedColumns.has('store_name') || CORE_COLUMNS.has('store_name')) {
+  if (dbColumns.has('registered_office_address')) sanitized.registered_office_address = 'United Kingdom';
+  if (dbColumns.has('warehouse_location')) sanitized.warehouse_location = 'United Kingdom';
+  if (dbColumns.has('store_name')) {
     if (!sanitized.store_name || sanitized.store_name.includes('AZ Rayan')) sanitized.store_name = 'DVDs Zone';
   }
-  if (allowedColumns.has('registered_company_name') || CORE_COLUMNS.has('registered_company_name')) {
+  if (dbColumns.has('registered_company_name')) {
     if (!sanitized.registered_company_name || sanitized.registered_company_name.includes('AZ Rayan')) sanitized.registered_company_name = 'DVDs Zone';
   }
-  if (allowedColumns.has('support_email') || CORE_COLUMNS.has('support_email')) {
+  if (dbColumns.has('support_email')) {
     const rawEmail = (sanitized.support_email || '').trim();
     sanitized.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge'))
       ? 'azrayanltd@gmail.com'
       : rawEmail;
   }
-  if (allowedColumns.has('support_phone') || CORE_COLUMNS.has('support_phone')) {
+  if (dbColumns.has('support_phone')) {
     sanitized.support_phone = (sanitized.support_phone || '').trim() || '00447400320038';
   }
 
@@ -151,33 +158,42 @@ export default endpoint(async (req) => {
       : await clientInstance.from('store_settings').insert(payloadToSave).select('*').single();
   };
 
+  const isSchemaColumnError = (err) =>
+    Boolean(
+      err && (
+        err.code === '42703' ||
+        err.code === 'PGRST204' ||
+        err.code === 'PGRST200' ||
+        err.code === 'PGRST202' ||
+        err.code === 'PGRST205' ||
+        err.message?.includes('does not exist') ||
+        err.message?.includes('schema cache') ||
+        err.message?.includes('column') ||
+        err.message?.includes('Could not find')
+      )
+    );
+
   const res = await trySave(sanitized, db);
   updated = res.data;
   saveError = res.error;
 
   // If column error occurred, prune unrecognized columns and retry
-  if (saveError && (saveError.code === '42703' || saveError.code === 'PGRST204' || saveError.message?.includes('column') || saveError.message?.includes('Could not find'))) {
+  if (saveError && isSchemaColumnError(saveError)) {
     console.warn('[admin-store-settings] Schema column mismatch on save, retrying with core columns:', saveError.message);
+    const nonCoreColumns = new Set([
+      'campaign_is_active', 'campaign_title', 'campaign_badge', 'campaign_tagline',
+      'campaign_discount_text', 'campaign_ends_at', 'custom_formats',
+      'shipping_zones', 'checkout_currencies', 'international_duties_notice',
+      ...VIRTUAL_HERO_COLUMNS
+    ]);
     const corePayload = {};
-    const coreKeys = [
-      'singleton', 'store_name', 'registered_company_name', 'company_number',
-      'registered_office_address', 'warehouse_location', 'support_email', 'support_phone',
-      'free_shipping_threshold', 'standard_shipping_fee', 'express_shipping_fee',
-      'standard_shipping_name', 'standard_shipping_eta', 'express_shipping_name', 'express_shipping_eta',
-      'low_stock_threshold', 'budget_collection_threshold', 'dispatch_cutoff_time',
-      'deal_product_id', 'deal_discount_price', 'deal_ends_at', 'deal_is_active',
-      'hero_badge_text', 'hero_headline_line1', 'hero_headline_highlight', 'hero_subheadline',
-      'hero_cta_primary', 'hero_cta_secondary', 'hero_bg_image',
-      'hero_youtube_enabled', 'hero_youtube_url', 'hero_youtube_mute', 'hero_youtube_loop',
-      'hero_youtube_start_minutes', 'hero_youtube_start_seconds', 'hero_youtube_end_minutes', 'hero_youtube_end_seconds',
-      'hero_trailers',
-      'announcement_left', 'announcement_center', 'announcement_link',
-      'payment_card_enabled', 'payment_paypal_enabled', 'payment_bank_transfer_enabled',
-      'vip_promo_code', 'vip_promo_discount', 'vip_min_spend', 'updated_at'
-    ];
-    for (const key of coreKeys) {
-      if (key in sanitized) corePayload[key] = sanitized[key];
+    for (const [key, val] of Object.entries(sanitized)) {
+      if (!nonCoreColumns.has(key)) {
+        corePayload[key] = val;
+      }
     }
+    corePayload.singleton = true;
+    corePayload.updated_at = new Date().toISOString();
     const retryRes = await trySave(corePayload, db);
     updated = retryRes.data;
     saveError = retryRes.error;
@@ -207,19 +223,34 @@ export default endpoint(async (req) => {
     throw new CheckoutError(`Failed to persist store settings: ${saveError?.message || 'Unknown error'}`, 500, 'DB_SAVE_ERROR');
   }
 
-  // Authoritatively ensure updated contains the latest hero trailers from input or metadata
-  if (Array.isArray(input.hero_trailers)) {
-    updated.hero_trailers = input.hero_trailers;
-  } else if (updated.hero_bg_image && updated.hero_bg_image.startsWith('HERO_META:')) {
+  // Authoritatively unpack hero trailers and youtube settings from HERO_META or input
+  if (updated.hero_bg_image && updated.hero_bg_image.startsWith('HERO_META:')) {
     try {
       const meta = JSON.parse(updated.hero_bg_image.slice('HERO_META:'.length));
       if (Array.isArray(meta.hero_trailers)) {
         updated.hero_trailers = meta.hero_trailers;
       }
+      if (meta.hero_youtube_enabled !== undefined) updated.hero_youtube_enabled = meta.hero_youtube_enabled;
+      if (meta.hero_youtube_url !== undefined) updated.hero_youtube_url = meta.hero_youtube_url;
+      if (meta.hero_youtube_mute !== undefined) updated.hero_youtube_mute = meta.hero_youtube_mute;
+      if (meta.hero_youtube_loop !== undefined) updated.hero_youtube_loop = meta.hero_youtube_loop;
+      if (meta.hero_youtube_start_minutes !== undefined) updated.hero_youtube_start_minutes = meta.hero_youtube_start_minutes;
+      if (meta.hero_youtube_start_seconds !== undefined) updated.hero_youtube_start_seconds = meta.hero_youtube_start_seconds;
+      if (meta.hero_youtube_end_minutes !== undefined) updated.hero_youtube_end_minutes = meta.hero_youtube_end_minutes;
+      if (meta.hero_youtube_end_seconds !== undefined) updated.hero_youtube_end_seconds = meta.hero_youtube_end_seconds;
     } catch {}
+  }
+  if (Array.isArray(input.hero_trailers)) {
+    updated.hero_trailers = input.hero_trailers;
   }
   if (input.hero_youtube_enabled !== undefined) updated.hero_youtube_enabled = Boolean(input.hero_youtube_enabled);
   if (input.hero_youtube_url !== undefined) updated.hero_youtube_url = input.hero_youtube_url;
+  if (input.hero_youtube_mute !== undefined) updated.hero_youtube_mute = input.hero_youtube_mute;
+  if (input.hero_youtube_loop !== undefined) updated.hero_youtube_loop = input.hero_youtube_loop;
+  if (input.hero_youtube_start_minutes !== undefined) updated.hero_youtube_start_minutes = input.hero_youtube_start_minutes;
+  if (input.hero_youtube_start_seconds !== undefined) updated.hero_youtube_start_seconds = input.hero_youtube_start_seconds;
+  if (input.hero_youtube_end_minutes !== undefined) updated.hero_youtube_end_minutes = input.hero_youtube_end_minutes;
+  if (input.hero_youtube_end_seconds !== undefined) updated.hero_youtube_end_seconds = input.hero_youtube_end_seconds;
 
   return { success: true, settings: updated };
 }, 'POST', { max: 30, windowMs: 60000 });
