@@ -63,6 +63,8 @@ export default endpoint(async (req) => {
         console.warn('[order-status] PayPal capture attempt note:', err.message);
       }
     }
+  }
+
   // Ensure customer payment receipt has been dispatched once order is confirmed paid
   if (order.payment_status === 'paid' && !order.receipt_sent_at) {
     try {
