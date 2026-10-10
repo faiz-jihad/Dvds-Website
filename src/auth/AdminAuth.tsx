@@ -16,7 +16,7 @@ const AdminAuthContext = createContext<AdminAuthValue | null>(null);
 
 async function loadAdmin(userId: string, email: string): Promise<AdminUser | null> {
   if (!supabase) return null;
-  const isMasterAdmin = ['azrayanltd@gmail.com', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk'].includes(email.toLowerCase().trim());
+  const isMasterAdmin = ['azrayanltd@gmail.com', 'admin@dvds-zone.co.uk', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk'].includes(email.toLowerCase().trim());
   const { data, error } = await supabase.from('profiles').select('full_name, role').eq('id', userId).single();
   if (error && !isMasterAdmin) throw new Error(error.message);
   if (isMasterAdmin) {

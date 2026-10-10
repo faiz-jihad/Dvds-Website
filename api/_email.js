@@ -136,7 +136,7 @@ export async function sendCustomerPaymentReceipt(db, order, { paymentReference, 
     }
   }
 
-  const siteUrl = process.env.SITE_URL || 'https://dvdszone.co.uk';
+  const siteUrl = process.env.SITE_URL || 'https://dvds-zone.co.uk';
   const orderDate = new Date(order.created_at || Date.now()).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',

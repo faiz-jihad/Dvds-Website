@@ -59,7 +59,7 @@ export const isNotificationTargetActive = (target: NotificationRole): boolean =>
         const p = JSON.parse(profileRaw);
         if (
           ['admin', 'staff'].includes(p.role) ||
-          ['admin@dvdszone.co.uk', 'admin@azrayan.co.uk', 'azrayanltd@gmail.com'].includes(p.email?.toLowerCase())
+          ['admin@dvds-zone.co.uk', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk', 'azrayanltd@gmail.com'].includes(p.email?.toLowerCase())
         ) {
           return true;
         }
