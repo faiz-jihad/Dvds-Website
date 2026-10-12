@@ -37,9 +37,12 @@ const API_REWRITES = {
   'capture-paypal-order': 'order-status',
 };
 
-// Universal API request handler
-app.all('/api/*', async (req, res, next) => {
-  let endpoint = req.path.replace(/^\/api\//, '').replace(/\/$/, '').split('?')[0];
+// Universal API request handler (compatible with Express v4 and Express v5)
+app.use('/api', async (req, res, next) => {
+  let endpoint = (req.originalUrl || req.url || req.path)
+    .split('?')[0]
+    .replace(/^\/api\//, '')
+    .replace(/\/$/, '');
   if (API_REWRITES[endpoint]) {
     endpoint = API_REWRITES[endpoint];
   }
@@ -79,8 +82,11 @@ if (fs.existsSync(distPath)) {
   }));
 }
 
-// SPA fallback: any non-API route serves index.html
-app.get('*', (req, res) => {
+// SPA fallback: any non-API GET route serves index.html (compatible with Express v4 and v5)
+app.use((req, res) => {
+  if (req.method !== 'GET') {
+    return res.status(404).json({ error: 'Not found' });
+  }
   const indexPath = path.resolve(distPath, 'index.html');
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
