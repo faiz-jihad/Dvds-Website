@@ -1,7 +1,7 @@
 import { formatMoney, countryName } from "../../../shared/commerce.js";
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Package,
   ArrowRight,
@@ -18,8 +18,11 @@ import {
   AlertCircle,
   MapPin,
   ShoppingBag,
+  CreditCard,
+  X,
 } from "lucide-react";
 import { publicApi } from "../../lib/publicApi";
+import { checkoutApi } from "../../lib/checkoutApi";
 import { formatGBP, formatDateUK, cn } from "../../lib/formatters";
 import { StoreDataState } from "../../components/common/StoreDataState";
 import { Button } from "../../components/common/Button";
@@ -34,6 +37,7 @@ import { Seo } from "../../components/common/Seo";
 type FilterTab = "all" | "in_progress" | "delivered" | "awaiting_payment";
 
 export const OrdersPage: React.FC = () => {
+  const navigate = useNavigate();
   const ordersQuery = useQuery({
     queryKey: ["account", "orders"],
     queryFn: () => publicApi.getMyOrders(),
@@ -70,6 +74,7 @@ export const OrdersPage: React.FC = () => {
   const [expandedStepperOrderId, setExpandedStepperOrderId] = useState<
     string | null
   >(null);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
 
   const orders = ordersQuery.data || [];
 
@@ -88,7 +93,11 @@ export const OrdersPage: React.FC = () => {
       } else if (activeTab === "delivered") {
         if (order.status !== "delivered") return false;
       } else if (activeTab === "awaiting_payment") {
-        if (order.payment_status !== "awaiting_payment") return false;
+        if (
+          order.payment_status !== "awaiting_payment" &&
+          order.payment_status !== "pending"
+        )
+          return false;
       }
 
       // Search query filter
@@ -135,7 +144,13 @@ export const OrdersPage: React.FC = () => {
       ["pending", "processing", "dispatched"].includes(o.status),
     ).length;
     const delivered = orders.filter((o) => o.status === "delivered").length;
-    return { total, active, delivered };
+    const pendingPayment = orders.filter(
+      (o) =>
+        (o.payment_status === "pending" ||
+          o.payment_status === "awaiting_payment") &&
+        o.status !== "cancelled",
+    ).length;
+    return { total, active, delivered, pendingPayment };
   }, [orders]);
 
   const handleCopy = (text: string, label: string) => {
@@ -203,6 +218,48 @@ export const OrdersPage: React.FC = () => {
       `Added ${items.length} titles from ${order.order_number} to your basket!`,
       "success",
     );
+  };
+
+  const handleCancelAndReorder = async (order: Order) => {
+    try {
+      setCancellingOrderId(order.id);
+      await checkoutApi.cancel(order.id);
+      handleReorder(order);
+      addToast(
+        "Previous checkout cancelled. Items restored to basket — proceeding to checkout...",
+        "info",
+      );
+      ordersQuery.refetch();
+      navigate("/checkout");
+    } catch (err: any) {
+      addToast(
+        err?.message || "Could not cancel checkout attempt. Please try again.",
+        "error",
+      );
+    } finally {
+      setCancellingOrderId(null);
+    }
+  };
+
+  const handleCancelUnpaidOrder = async (order: Order) => {
+    const confirm = window.confirm(
+      `Are you sure you want to cancel order #${order.order_number}? This will release the reserved items.`,
+    );
+    if (!confirm) return;
+
+    try {
+      setCancellingOrderId(order.id);
+      await checkoutApi.cancel(order.id);
+      addToast(`Order #${order.order_number} has been cancelled.`, "info");
+      ordersQuery.refetch();
+    } catch (err: any) {
+      addToast(
+        err?.message || "Could not cancel order. Please try again.",
+        "error",
+      );
+    } finally {
+      setCancellingOrderId(null);
+    }
   };
 
   if (ordersQuery.isLoading || ordersQuery.error) {
@@ -297,13 +354,18 @@ export const OrdersPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab("awaiting_payment")}
-              className={`px-2.5 py-2 sm:py-1.5 rounded-md transition-all text-center justify-center cursor-pointer text-[11px] sm:text-xs ${
+              className={`px-2.5 py-2 sm:py-1.5 rounded-md transition-all text-center justify-center cursor-pointer text-[11px] sm:text-xs inline-flex items-center gap-1.5 ${
                 activeTab === "awaiting_payment"
                   ? "bg-white dark:bg-[#141A26] text-dark dark:text-white shadow-2xs font-bold border border-transparent dark:border-white/10"
                   : "text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white"
               }`}
             >
-              Awaiting Payment
+              <span>Awaiting Payment</span>
+              {stats.pendingPayment > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white leading-none">
+                  {stats.pendingPayment}
+                </span>
+              )}
             </button>
           </div>
 
@@ -369,6 +431,10 @@ export const OrdersPage: React.FC = () => {
             const isAwaitingPayment =
               order.payment_method === "bank_transfer" &&
               order.payment_status === "awaiting_payment";
+            const isPendingPayment =
+              order.payment_status === "pending" &&
+              order.status !== "cancelled" &&
+              order.payment_method !== "bank_transfer";
             const isStepperOpen = expandedStepperOrderId === order.id;
 
             return (
@@ -448,14 +514,14 @@ export const OrdersPage: React.FC = () => {
                             ? "bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400 border-blue-200 dark:border-blue-900/40"
                             : order.status === "cancelled"
                               ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/40"
-                              : isAwaitingPayment
+                              : isPendingPayment || isAwaitingPayment
                                 ? "bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-900/50"
-                                : "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-900/40"
+                                : "bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-900/40"
                       }`}
                     >
                       {isDelivered && <CheckCircle2 className="w-3.5 h-3.5" />}
                       {isDispatched && <Truck className="w-3.5 h-3.5" />}
-                      {isAwaitingPayment && <Clock className="w-3.5 h-3.5" />}
+                      {(isAwaitingPayment || isPendingPayment) && <Clock className="w-3.5 h-3.5" />}
                       {order.status === "cancelled" && (
                         <AlertCircle className="w-3.5 h-3.5" />
                       )}
@@ -463,6 +529,39 @@ export const OrdersPage: React.FC = () => {
                     </span>
                   </div>
                 </div>
+
+                {/* Pending Payment Notice (Checkout window closed or payment pending) */}
+                {isPendingPayment && (
+                  <div className="bg-amber-50/90 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-5 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5 text-amber-900 dark:text-amber-200">
+                      <Clock size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span>
+                        <strong>Payment Pending:</strong> Checkout window was closed or payment not finalized. You can complete payment now or re-order.
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {order.checkout_url && (
+                        <a
+                          href={order.checkout_url}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white border border-amber-600 shadow-2xs transition-all cursor-pointer"
+                        >
+                          <CreditCard size={13} />
+                          <span>Complete Payment</span>
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleCancelAndReorder(order)}
+                        disabled={cancellingOrderId === order.id}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-[#141A26] hover:bg-gray-50 dark:hover:bg-white/10 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-white/20 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <RotateCcw size={12} className="text-brand-blue" />
+                        <span>Re-checkout</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Awaiting Bank Transfer Notice (if pending proof) */}
                 {isAwaitingPayment && (
@@ -677,6 +776,64 @@ export const OrdersPage: React.FC = () => {
                             <RotateCcw size={13} className="text-brand-blue" />
                             <span>Buy these items again</span>
                           </button>
+                        </div>
+                      ) : isPendingPayment ? (
+                        <div className="space-y-2">
+                          {/* Primary CTA: Complete Payment if checkout_url is available */}
+                          {order.checkout_url ? (
+                            <a
+                              href={order.checkout_url}
+                              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white border border-amber-500 shadow-xs transition-all cursor-pointer"
+                            >
+                              <CreditCard size={14} />
+                              <span>Complete Payment ({order.payment_provider === "paypal" ? "PayPal" : "Card"})</span>
+                              <ExternalLink size={13} />
+                            </a>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleCancelAndReorder(order)}
+                              disabled={cancellingOrderId === order.id}
+                              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white border border-amber-500 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                            >
+                              <CreditCard size={14} />
+                              <span>{cancellingOrderId === order.id ? "Preparing Basket..." : "Pay Now (Restart Checkout)"}</span>
+                              <ArrowRight size={14} />
+                            </button>
+                          )}
+
+                          {/* Secondary: Re-checkout or Cancel Order */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleCancelAndReorder(order)}
+                              disabled={cancellingOrderId === order.id}
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] border border-amber-300 dark:border-amber-700/50 hover:bg-amber-50 dark:hover:bg-amber-950/20 text-amber-900 dark:text-amber-300 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                              title="Cancel this unpaid order and restore items to basket for re-checkout"
+                            >
+                              <RotateCcw size={13} className="text-amber-600 dark:text-amber-400" />
+                              <span>Re-checkout</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleCancelUnpaidOrder(order)}
+                              disabled={cancellingOrderId === order.id}
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#141A26] border border-gray-300 dark:border-white/15 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                            >
+                              <X size={13} className="text-red-500" />
+                              <span>Cancel Order</span>
+                            </button>
+                          </div>
+
+                          {/* Tertiary: View Order Details */}
+                          <Link
+                            to={`/order-success/${order.id}`}
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-gray-50 dark:bg-[#141A26]/60 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <span>View Order Details</span>
+                            <ArrowRight size={13} />
+                          </Link>
                         </div>
                       ) : (
                         <>

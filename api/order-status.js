@@ -80,7 +80,10 @@ export default endpoint(async (req) => {
 
   // The order status reflects verified backend / provider data.
   return {
-    order: publicOrder(order),
+    order: {
+      ...publicOrder(order),
+      checkout_url: order.payment_status === 'pending' && order.status !== 'cancelled' ? (order.checkout_url || null) : null,
+    },
     verified: order.payment_status === 'paid',
     orderId: order.id,
     orderNumber: order.order_number,

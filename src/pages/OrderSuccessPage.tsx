@@ -1,7 +1,7 @@
 import { formatMoney, countryName } from "../../shared/commerce.js";
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   CheckCircle2,
@@ -21,6 +21,9 @@ import {
   Moon,
   ShieldCheck,
   Timer,
+  CreditCard,
+  ExternalLink,
+  RotateCcw,
 } from "lucide-react";
 import {
   checkoutApi,
@@ -45,6 +48,8 @@ interface PaymentProofData {
 }
 
 export const OrderSuccessPage: React.FC = () => {
+  const navigate = useNavigate();
+  const addItem = useCartStore((state: any) => state?.addItem);
   const { theme, toggleTheme } = useThemeStore();
   const isDark = theme === "dark";
   const params = useParams<{ orderId: string; id: string }>();
@@ -210,6 +215,58 @@ export const OrderSuccessPage: React.FC = () => {
       };
     });
   }, [order, paid, bankPending, partiallyRefunded]);
+
+  const handleCancelAndRestart = async () => {
+    if (!order) return;
+    try {
+      setCancelling(true);
+      await checkoutApi.cancel(order.id);
+
+      // Restore items to cart
+      const items = order.items || [];
+      items.forEach((item) => {
+        addItem(
+          {
+            id: item.product_id || item.id,
+            sku: item.product_sku || "ZDV-DVD",
+            title: item.product_title,
+            slug: (item as any).slug || "dvd-edition",
+            description: item.product_title,
+            short_description: null,
+            category_id: null,
+            price: item.unit_price,
+            compare_at_price: null,
+            format: (item as any).format || "DVD",
+            condition: "New",
+            release_year: 2024,
+            runtime_minutes: 120,
+            age_rating: "15",
+            region_code: "2",
+            language: "English",
+            subtitles: "English SDH",
+            stock_quantity: 10,
+            cover_image_url:
+              item.cover_image_url ||
+              (item as any).product_snapshot?.cover_image_url ||
+              "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400",
+            status: "active",
+            is_featured: false,
+            is_new_release: false,
+            is_best_seller: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          item.quantity || 1,
+        );
+      });
+      navigate("/checkout");
+    } catch (err: any) {
+      setMessage(err?.message || "Failed to cancel checkout session.");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProofError("");
     const file = e.target.files?.[0];
@@ -506,29 +563,52 @@ export const OrderSuccessPage: React.FC = () => {
           )}
 
           {order.payment_status === "pending" && !bankPending && !closed && (
-            <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-blue-200/80 dark:border-blue-900/50 bg-gradient-to-r from-blue-50/90 via-sky-50/70 to-indigo-50/80 dark:from-[#0E1726] dark:via-[#111B2E] dark:to-[#0F1829] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left shadow-xs">
+            <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-amber-300 dark:border-amber-700/50 bg-gradient-to-r from-amber-50/90 via-orange-50/70 to-amber-50/80 dark:from-[#1A150B] dark:via-[#1F190D] dark:to-[#17120A] flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left shadow-xs">
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-brand-blue/10 dark:bg-brand-blue/20 flex items-center justify-center text-brand-blue dark:text-blue-400 shrink-0">
-                  <RefreshCw size={18} className="animate-spin" />
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                  <Clock size={20} />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-dark dark:text-white">
-                    Confirming Payment Status
+                    Payment Incomplete / Checkout Tab Closed
                   </h3>
                   <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
-                    Synchronizing confirmation with {order.payment_provider === "stripe" ? "Stripe" : order.payment_provider === "paypal" ? "PayPal" : "payment provider"}. If you have already completed payment, click below to verify immediately.
+                    {order.checkout_url
+                      ? `Your order #${order.order_number} is reserved. Complete payment using the button below, or restart checkout to choose another payment method.`
+                      : `Your order #${order.order_number} was not finalized. If you already completed payment in another tab, click "Verify Payment". Otherwise, restart checkout.`}
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => query.refetch()}
-                disabled={query.isFetching}
-                className="shrink-0 px-4 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center gap-2"
-              >
-                <RefreshCw size={13} className={query.isFetching ? "animate-spin" : ""} />
-                <span>{query.isFetching ? "Verifying..." : "Verify Payment Now"}</span>
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
+                {order.checkout_url && (
+                  <a
+                    href={order.checkout_url}
+                    className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer inline-flex items-center gap-2"
+                  >
+                    <CreditCard size={14} />
+                    <span>Complete Payment ({order.payment_provider === "paypal" ? "PayPal" : "Card"})</span>
+                    <ExternalLink size={13} />
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => query.refetch()}
+                  disabled={query.isFetching}
+                  className="px-3.5 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2"
+                >
+                  <RefreshCw size={13} className={query.isFetching ? "animate-spin" : ""} />
+                  <span>{query.isFetching ? "Checking..." : "Verify Payment"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelAndRestart}
+                  disabled={cancelling}
+                  className="px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141A26] border border-gray-300 dark:border-white/20 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 text-xs font-bold shadow-2xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <RotateCcw size={13} />
+                  <span>{cancelling ? "Cancelling..." : "Restart Checkout"}</span>
+                </button>
+              </div>
             </div>
           )}
 

@@ -145,6 +145,7 @@ export interface Order {
   paypal_capture_id?: string | null;
   stripe_payment_intent_id?: string | null;
   stripe_checkout_session_id?: string | null;
+  checkout_url?: string | null;
   shipping_carrier?: string | null;
   tracking_number?: string | null;
   dispatched_at?: string | null;
