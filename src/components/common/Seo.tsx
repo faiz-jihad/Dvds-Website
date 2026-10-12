@@ -47,14 +47,8 @@ const upsertLink = (rel: string, href?: string, extraAttrs?: Record<string, stri
   if (!existing) document.head.appendChild(element);
 };
 
-const absoluteUrl = (value: string | undefined, baseUrl: string) => {
-  if (!value) return undefined;
-  try {
-    return new URL(value, `${baseUrl}/`).toString();
-  } catch {
-    return undefined;
-  }
-};
+import { getSiteBaseUrl, toAbsoluteUrl } from '../../lib/seo';
+export { getSiteBaseUrl, toAbsoluteUrl };
 
 export const Seo: React.FC<SeoProps> = ({
   title,
@@ -69,9 +63,9 @@ export const Seo: React.FC<SeoProps> = ({
   jsonLd,
 }) => {
   useEffect(() => {
-    const baseUrl = (siteUrl || window.location.origin).replace(/\/$/, '');
-    const canonicalUrl = absoluteUrl(canonicalPath || window.location.pathname, baseUrl);
-    const socialImage = absoluteUrl(image, baseUrl);
+    const baseUrl = (siteUrl || getSiteBaseUrl()).replace(/\/$/, '');
+    const canonicalUrl = toAbsoluteUrl(canonicalPath || (typeof window !== 'undefined' ? window.location.pathname : '/'), baseUrl);
+    const socialImage = image ? toAbsoluteUrl(image, baseUrl) : undefined;
     const robots = noIndex
       ? 'noindex, nofollow'
       : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';

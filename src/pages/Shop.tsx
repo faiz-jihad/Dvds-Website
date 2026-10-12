@@ -7,7 +7,7 @@ import { Button } from '../components/common/Button';
 import { publicApi } from '../lib/publicApi';
 import { formatGBP } from '../lib/formatters';
 import { StoreDataState } from '../components/common/StoreDataState';
-import { Seo } from '../components/common/Seo';
+import { Seo, toAbsoluteUrl } from '../components/common/Seo';
 import { ExclusiveCampaignBanner } from '../components/shop/ExclusiveCampaignBanner';
 
 export const Shop: React.FC = () => {
@@ -82,9 +82,9 @@ export const Shop: React.FC = () => {
   let pageDescription = 'Browse all products, physical media, collectibles, and special editions with 100% free delivery across the UK.';
 
   if (isSpecialOffers) {
-    pageEyebrow = storeSettings?.campaign_badge || 'Exclusive Campaign';
-    pageTitle = storeSettings?.campaign_title || 'Special Offers & Deals';
-    pageDescription = storeSettings?.campaign_tagline || 'Limited-time discounts, product markdowns, and special offers with Royal Mail tracked UK dispatch.';
+    pageEyebrow = 'Special Promotions & Clearance';
+    pageTitle = 'Special Offers & Price Drops';
+    pageDescription = 'Browse physical media price drops, box sets, and rare allocations with 100% free Royal Mail UK delivery.';
   } else if (activeGenre) {
     pageEyebrow = 'Collection';
     pageTitle = `${activeGenre.name} Collection`;
@@ -183,19 +183,19 @@ export const Shop: React.FC = () => {
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
       <Seo
-        title={`${pageTitle} — DVDs Zone UK | Buy Physical Media`}
+        title={`${pageTitle} — ${storeSettings?.store_name || 'DVDs Zone UK'} | Buy Physical Media`}
         description={`${pageDescription} All orders 100% free standard delivery across United Kingdom. Same-day dispatch, delivered to your door within 2 working days via Royal Mail.`}
-        keywords={`${pageTitle}, buy DVDs online UK, physical media catalogue, TV box sets UK, cheap DVDs UK, classic movies on DVD, DVDs Zone`}
+        keywords={`${pageTitle}, buy DVDs online UK, physical media catalogue, TV box sets UK, cheap DVDs UK, classic movies on DVD, ${storeSettings?.store_name || 'DVDs Zone'}`}
         canonicalPath={categoryParam ? `/shop?category=${encodeURIComponent(categoryParam)}` : '/shop'}
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
-        siteName="DVDs Zone"
+        siteName={storeSettings?.store_name || 'DVDs Zone'}
         jsonLd={[
           {
             '@context': 'https://schema.org',
             '@type': 'CollectionPage',
             name: pageTitle,
             description: pageDescription,
-            url: 'https://dvdszone.co.uk/shop',
+            url: toAbsoluteUrl('/shop'),
             mainEntity: {
               '@type': 'ItemList',
               numberOfItems: filteredProducts.length,
@@ -203,8 +203,8 @@ export const Shop: React.FC = () => {
                 '@type': 'ListItem',
                 position: idx + 1,
                 name: prod.title,
-                url: `https://dvdszone.co.uk/product/${prod.slug}`,
-                image: `https://dvdszone.co.uk${prod.cover_image_url}`,
+                url: toAbsoluteUrl(`/product/${prod.slug}`),
+                image: toAbsoluteUrl(prod.cover_image_url),
               })),
             },
           },
@@ -216,13 +216,13 @@ export const Shop: React.FC = () => {
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Home',
-                item: 'https://dvdszone.co.uk/',
+                item: toAbsoluteUrl('/'),
               },
               {
                 '@type': 'ListItem',
                 position: 2,
                 name: 'Catalogue',
-                item: 'https://dvdszone.co.uk/shop',
+                item: toAbsoluteUrl('/shop'),
               },
               ...(categoryParam
                 ? [
@@ -230,7 +230,7 @@ export const Shop: React.FC = () => {
                       '@type': 'ListItem',
                       position: 3,
                       name: pageTitle,
-                      item: `https://dvdszone.co.uk/shop?category=${encodeURIComponent(categoryParam)}`,
+                      item: toAbsoluteUrl(`/shop?category=${encodeURIComponent(categoryParam)}`),
                     },
                   ]
                 : []),
@@ -364,23 +364,23 @@ export const Shop: React.FC = () => {
             <div className="space-y-5">
               {/* Mobile Special Offers button */}
               <div>
-                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-600">Promotions</span>
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">Promotions</span>
                 <button
                   type="button"
                   onClick={() => updateFilter('filter', isSpecialOffers ? 'all' : 'sale')}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-xs font-semibold transition cursor-pointer ${
                     isSpecialOffers
-                      ? 'bg-gradient-to-r from-amber-500/15 to-red-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40 font-bold shadow-2xs'
-                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                      ? 'bg-red-50 dark:bg-red-950/40 text-brand-red border-red-300 dark:border-red-800/60 font-bold shadow-2xs'
+                      : 'bg-white dark:bg-[#141A26] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-brand-red/30 hover:text-brand-red'
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <Flame className={`w-3.5 h-3.5 ${isSpecialOffers ? 'text-amber-500 fill-amber-500 animate-pulse' : 'text-brand-red'}`} />
+                    <Tag className="w-3.5 h-3.5 text-brand-red" />
                     <span>{storeSettings?.campaign_badge || 'Special Offers & Deals'}</span>
                   </span>
                   <div className="flex items-center gap-1.5">
                     {storeSettings?.campaign_discount_text && (
-                      <span className="text-[9px] bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-bold">
+                      <span className="text-[9px] bg-red-100 dark:bg-red-900/40 text-brand-red border border-red-200 dark:border-red-800/50 px-1.5 py-0.5 rounded font-bold">
                         {storeSettings.campaign_discount_text}
                       </span>
                     )}
@@ -460,7 +460,7 @@ export const Shop: React.FC = () => {
                   Exclusive Campaign
                 </h4>
                 {storeSettings?.campaign_discount_text && (
-                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-brand-red bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 px-2 py-0.5 rounded-full">
                     {storeSettings.campaign_discount_text}
                   </span>
                 )}
@@ -470,12 +470,12 @@ export const Shop: React.FC = () => {
                 onClick={() => updateFilter('filter', isSpecialOffers ? 'all' : 'sale')}
                 className={`w-full flex items-center justify-between p-3 rounded-xl border text-xs transition-all cursor-pointer ${
                   isSpecialOffers
-                    ? 'bg-gradient-to-r from-amber-500/15 via-red-500/15 to-transparent text-amber-800 dark:text-amber-300 border-amber-500/50 shadow-md font-bold'
-                    : 'bg-white dark:bg-[#0E131F] hover:bg-amber-500/5 dark:hover:bg-amber-500/10 text-gray-700 dark:text-gray-300 hover:text-amber-600 border-gray-200 dark:border-white/10 hover:border-amber-500/30'
+                    ? 'bg-red-50/80 dark:bg-red-950/30 text-brand-red border-red-300 dark:border-red-800/60 shadow-xs font-bold'
+                    : 'bg-white dark:bg-[#0E131F] hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 hover:text-brand-red border-gray-200 dark:border-white/10 hover:border-brand-red/30'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Flame className={`w-4 h-4 shrink-0 ${isSpecialOffers ? 'text-amber-500 fill-amber-500 animate-pulse' : 'text-amber-500'}`} />
+                  <Tag className="w-4 h-4 shrink-0 text-brand-red" />
                   <div className="text-left">
                     <span className="block leading-tight font-semibold">
                       {storeSettings?.campaign_title || 'Special Offers & Deals'}
@@ -658,6 +658,19 @@ export const Shop: React.FC = () => {
                 settings={storeSettings}
                 dealProduct={dealProduct}
                 saleCount={saleCount}
+                onSelectPriceCap={(price) => {
+                  setMaxPrice(price);
+                  const newParams = new URLSearchParams(searchParams);
+                  if (price === null) {
+                    newParams.delete('maxPrice');
+                  } else {
+                    newParams.set('maxPrice', String(price));
+                  }
+                  setSearchParams(newParams);
+                }}
+                onSelectFormat={(format) => updateFilter('format', format)}
+                selectedPriceCap={maxPrice}
+                selectedFormat={selectedFormat}
               />
             )}
 
@@ -665,31 +678,31 @@ export const Shop: React.FC = () => {
             {!isSpecialOffers && (storeSettings?.campaign_is_active ?? true) && saleCount > 0 && (
               <div
                 onClick={() => updateFilter('filter', 'sale')}
-                className="mb-6 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-red-500/10 to-transparent border border-amber-500/30 flex items-center justify-between gap-3 cursor-pointer hover:border-amber-500/50 transition shadow-xs group"
+                className="mb-6 p-3 sm:p-4 rounded-xl bg-white dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 hover:border-brand-red/40 dark:hover:border-red-500/40 flex items-center justify-between gap-3 cursor-pointer transition shadow-2xs group"
                 role="button"
                 tabIndex={0}
                 aria-label="View exclusive campaign deals"
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-500 shrink-0">
-                    <Flame className="w-4 h-4 animate-pulse" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 dark:bg-red-950/50 text-brand-red shrink-0 border border-red-100 dark:border-red-900/30">
+                    <Tag className="w-4 h-4" />
                   </span>
                   <div className="truncate">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                        {storeSettings?.campaign_badge || 'EXCLUSIVE CAMPAIGN'}
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-brand-red bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-xs border border-red-200/60 dark:border-red-900/40">
+                        {storeSettings?.campaign_badge || 'SPECIAL OFFERS'}
                       </span>
                       <span className="text-xs font-bold text-dark dark:text-white truncate">
-                        {storeSettings?.campaign_title || "Collector's Vault Special"}
+                        {storeSettings?.campaign_title || 'Collector Price Drops & Deals'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate hidden sm:block">
-                      {storeSettings?.campaign_discount_text || 'Up to 50% OFF'} • {saleCount} curated deals available with free UK delivery
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                      {storeSettings?.campaign_discount_text || 'Up to 50% OFF'} • {saleCount} editions currently discounted with free Royal Mail UK delivery
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 shrink-0 group-hover:translate-x-0.5 transition-transform">
-                  <span>Explore Deals</span>
+                <div className="flex items-center gap-1 text-xs font-semibold text-brand-red shrink-0 group-hover:translate-x-1 transition-transform">
+                  <span>View Deals</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </div>

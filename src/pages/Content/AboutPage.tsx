@@ -5,7 +5,7 @@ import { Disc, Shield, Film, Award, Truck, Mail, Phone, MapPin } from 'lucide-re
 import { Button } from '../../components/common/Button';
 import { StoreDataState } from '../../components/common/StoreDataState';
 import { publicApi } from '../../lib/publicApi';
-import { Seo } from '../../components/common/Seo';
+import { Seo, toAbsoluteUrl } from '../../components/common/Seo';
 
 export const AboutPage: React.FC = () => {
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: publicApi.getStoreSettings });
@@ -15,22 +15,23 @@ export const AboutPage: React.FC = () => {
   }
 
   const settings = settingsQuery.data;
+  const storeName = settings.store_name || 'DVD ZONE';
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-16 transition-colors">
       <Seo
-        title="About DVD ZONE UK Physical DVD Retailer | Our Story"
-        description="DVD ZONE is active since 2021, operated by DVDs Zone, based in United Kingdom. Quality DVDs & Entertainment."
+        title={`About ${storeName} UK Physical DVD Retailer | Our Story`}
+        description={settings.seo_organization_description || `${storeName} is based in the United Kingdom. Quality DVDs & Entertainment.`}
         canonicalPath="/about"
-        keywords="about DVD ZONE, UK DVD shop, DVDs Zone, physical media UK, British film store, authentic PAL DVDs"
-        siteName="DVD ZONE"
+        keywords={`about ${storeName}, UK DVD shop, physical media UK, British film store, authentic PAL DVDs`}
+        siteName={storeName}
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'AboutPage',
-          name: 'About DVD ZONE',
-          description: 'UK physical media retailer specialising in DVDs, TV box sets, and entertainment. Based in United Kingdom.',
-          url: 'https://dvdszone.co.uk/about',
-          publisher: { '@type': 'Organization', name: 'DVD ZONE', url: 'https://dvdszone.co.uk' },
+          name: `About ${storeName}`,
+          description: settings.seo_organization_description || 'UK physical media retailer specialising in DVDs, TV box sets, and entertainment. Based in United Kingdom.',
+          url: toAbsoluteUrl('/about'),
+          publisher: { '@type': 'Organization', name: storeName, url: toAbsoluteUrl('/') },
         }}
       />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-12">

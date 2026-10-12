@@ -4,7 +4,7 @@ export const MAX_PRODUCT_PRICE = 150;
 
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   id: 's1000000-0000-0000-0000-000000000001',
-  seo_site_url: 'https://dvdszone.co.uk',
+  seo_site_url: '',
   seo_site_title: 'DVD ZONE — Quality DVDs & Entertainment | UK Physical Media Store',
   seo_site_description:
     'Quality DVDs, TV box sets, and entertainment. Free UK standard delivery. Same-day dispatch. Delivery within 2 working days via Royal Mail.',

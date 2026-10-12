@@ -285,6 +285,8 @@ export interface StoreSettings {
   warehouse_location: string;
   support_email: string;
   support_phone: string;
+  contact_email?: string;
+  contact_phone?: string;
   // Company Bank Account (for manual bank transfer flow)
   bank_name?: string;
   bank_account_name?: string;

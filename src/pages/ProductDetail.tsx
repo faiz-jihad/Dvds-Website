@@ -18,6 +18,7 @@ import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { BbfcBadge } from '../components/common/BbfcBadge';
 import { ImdbBadge } from '../components/common/ImdbBadge';
+import { StoreDataState } from '../components/common/StoreDataState';
 import { QuantitySelector } from '../components/commerce/QuantitySelector';
 import { DvdSpecsTable } from '../components/product/DvdSpecsTable';
 import { ProductCard } from '../components/product/ProductCard';
@@ -25,8 +26,7 @@ import { useCartStore } from '../stores/useCartStore';
 import { useFavouritesStore } from '../stores/useFavouritesStore';
 import { useLastSeenStore } from '../stores/useLastSeenStore';
 import { useUiStore } from '../stores/useUiStore';
-import { StoreDataState } from '../components/common/StoreDataState';
-import { Seo } from '../components/common/Seo';
+import { Seo, toAbsoluteUrl } from '../components/common/Seo';
 
 export const ProductDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -37,6 +37,7 @@ export const ProductDetail: React.FC = () => {
   const productsQuery = useQuery({ queryKey: ['store', 'products'], queryFn: () => publicApi.getProducts() });
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: () => publicApi.getStoreSettings() });
   const product = productQuery.data;
+  const storeSettings = settingsQuery.data;
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -90,12 +91,12 @@ export const ProductDetail: React.FC = () => {
 
   const isFav = isFavourite(product.id);
   const isDeal = Boolean(
-    settingsQuery.data?.deal_is_active &&
-    settingsQuery.data?.deal_product_id === product.id &&
-    (!settingsQuery.data?.campaign_ends_at || Date.parse(settingsQuery.data.campaign_ends_at) > Date.now()) &&
-    Number(settingsQuery.data?.deal_discount_price) > 0
+    storeSettings?.deal_is_active &&
+    storeSettings?.deal_product_id === product.id &&
+    (!storeSettings?.campaign_ends_at || Date.parse(storeSettings.campaign_ends_at) > Date.now()) &&
+    Number(storeSettings?.deal_discount_price) > 0
   );
-  const effectivePrice = isDeal ? Math.min(product.price, Number(settingsQuery.data!.deal_discount_price)) : product.price;
+  const effectivePrice = isDeal ? Math.min(product.price, Number(storeSettings!.deal_discount_price)) : product.price;
   const hasDiscount = (product.compare_at_price && product.compare_at_price > product.price) || isDeal;
   const originalPrice = isDeal ? product.price : product.compare_at_price;
   const isVideoFormat = ['DVD', 'Blu-ray', '4K UHD', 'Box Set'].includes(product.format);
@@ -122,36 +123,38 @@ export const ProductDetail: React.FC = () => {
     );
   };
 
+  const storeName = storeSettings?.store_name || 'DVDs Zone';
+
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-12 transition-colors">
       <Seo
-        title={`${product.title} (DVD / Box Set) | DVDs Zone UK`}
+        title={`${product.title} (${product.format || 'DVD'} / Box Set) | ${storeName}`}
         description={`${product.title}. ${product.description ? product.description.slice(0, 130).replace(/\s\S+$/, '') + '...' : ''} All orders 100% free standard delivery across United Kingdom. Dispatched same day, delivered to your address within 2 working days via Royal Mail.`}
-        keywords={`${product.title} DVD, buy ${product.title} online UK, ${product.category?.name || 'film'} DVD box set, ${product.format || 'DVD'} UK, physical media, DVDs Zone`}
+        keywords={`${product.title} DVD, buy ${product.title} online UK, ${product.category?.name || 'film'} DVD box set, ${product.format || 'DVD'} UK, physical media, ${storeName}`}
         canonicalPath={`/product/${product.slug}`}
         image={activeImage}
         type="product"
-        siteName="DVDs Zone"
+        siteName={storeName}
         jsonLd={[
           {
             '@context': 'https://schema.org',
             '@type': 'Product',
             name: product.title,
             description: product.description || product.title,
-            image: activeImage.startsWith('http') ? activeImage : `https://dvdszone.co.uk${activeImage}`,
-            url: `https://dvdszone.co.uk/product/${product.slug}`,
+            image: toAbsoluteUrl(activeImage),
+            url: toAbsoluteUrl(`/product/${product.slug}`),
             sku: product.sku || product.id,
-            brand: { '@type': 'Brand', name: 'DVDs Zone' },
+            brand: { '@type': 'Brand', name: storeName },
             category: product.category?.name || 'Film & Entertainment',
             offers: {
               '@type': 'Offer',
-              url: `https://dvdszone.co.uk/product/${product.slug}`,
+              url: toAbsoluteUrl(`/product/${product.slug}`),
               priceCurrency: 'GBP',
               price: product.price.toFixed(2),
               itemCondition: 'https://schema.org/NewCondition',
               priceValidUntil: new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0],
               availability: product.stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-              seller: { '@type': 'Organization', name: 'DVDs Zone' },
+              seller: { '@type': 'Organization', name: storeName },
               shippingDetails: {
                 '@type': 'OfferShippingDetails',
                 shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'GBP' },
@@ -174,13 +177,13 @@ export const ProductDetail: React.FC = () => {
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Home',
-                item: 'https://dvdszone.co.uk/',
+                item: toAbsoluteUrl('/'),
               },
               {
                 '@type': 'ListItem',
                 position: 2,
                 name: 'Catalogue',
-                item: 'https://dvdszone.co.uk/shop',
+                item: toAbsoluteUrl('/shop'),
               },
               ...(product.category?.name
                 ? [
@@ -188,13 +191,13 @@ export const ProductDetail: React.FC = () => {
                       '@type': 'ListItem',
                       position: 3,
                       name: product.category.name,
-                      item: `https://dvdszone.co.uk/shop?category=${product.category.slug}`,
+                      item: toAbsoluteUrl(`/shop?category=${product.category.slug}`),
                     },
                     {
                       '@type': 'ListItem',
                       position: 4,
                       name: product.title,
-                      item: `https://dvdszone.co.uk/product/${product.slug}`,
+                      item: toAbsoluteUrl(`/product/${product.slug}`),
                     },
                   ]
                 : [
@@ -202,7 +205,7 @@ export const ProductDetail: React.FC = () => {
                       '@type': 'ListItem',
                       position: 3,
                       name: product.title,
-                      item: `https://dvdszone.co.uk/product/${product.slug}`,
+                      item: toAbsoluteUrl(`/product/${product.slug}`),
                     },
                   ]),
             ],

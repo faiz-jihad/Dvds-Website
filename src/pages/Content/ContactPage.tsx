@@ -7,7 +7,7 @@ import { useUiStore } from '../../stores/useUiStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { publicApi } from '../../lib/publicApi';
 import { StoreDataState } from '../../components/common/StoreDataState';
-import { Seo } from '../../components/common/Seo';
+import { Seo, toAbsoluteUrl } from '../../components/common/Seo';
 
 export const ContactPage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
@@ -134,26 +134,29 @@ export const ContactPage: React.FC = () => {
     return <StoreDataState loading={settingsQuery.isLoading} error={settingsQuery.error || (!settingsQuery.data ? new Error('Contact details are unavailable.') : null)} retry={() => settingsQuery.refetch()} />;
   }
   const settings = settingsQuery.data;
+  const storeName = settings.store_name || 'DVD ZONE';
+  const contactEmail = settings.support_email || 'azrayanltd@gmail.com';
+  const contactPhone = settings.support_phone || '';
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-16 transition-colors">
       <Seo
-        title="Contact DVD ZONE — Customer Service & Inquiries | UK DVD Store"
-        description="Contact DVD ZONE. Headquarter & Vault: DVD ZONE, United Kingdom. Customer service and inquiry email address: azrayanltd@gmail.com. Customer Line: 00447400320038."
+        title={`Contact ${storeName} — Customer Service & Inquiries | UK DVD Store`}
+        description={`Contact ${storeName}. Customer service and inquiry email: ${contactEmail}.${contactPhone ? ` Phone: ${contactPhone}.` : ''}`}
         canonicalPath="/contact"
-        keywords="contact DVD ZONE, UK DVD customer service, DVD customer support, film shop contact, UK DVD inquiries, email azrayanltd@gmail.com"
-        siteName="DVD ZONE"
+        keywords={`contact ${storeName}, UK DVD customer service, DVD customer support, film shop contact, UK DVD inquiries`}
+        siteName={storeName}
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'ContactPage',
-          name: 'Contact DVD ZONE Customer Service',
-          description: 'Get in touch with DVD ZONE customer service and dispatch team in the United Kingdom.',
-          url: 'https://dvdszone.co.uk/contact',
+          name: `Contact ${storeName} Customer Service`,
+          description: `Get in touch with ${storeName} customer service and dispatch team in the United Kingdom.`,
+          url: toAbsoluteUrl('/contact'),
           mainEntity: {
             '@type': 'LocalBusiness',
-            name: 'DVD ZONE',
-            telephone: '+447400320038',
-            email: 'azrayanltd@gmail.com',
+            name: storeName,
+            ...(contactPhone ? { telephone: contactPhone } : {}),
+            email: contactEmail,
             address: {
               '@type': 'PostalAddress',
               addressCountry: 'GB',

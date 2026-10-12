@@ -1,12 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Clock, Flame, ShieldCheck, Truck, ArrowRight, Tag, Star, Percent } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import {
+  Tag,
+  Percent,
+  Truck,
+  ShieldCheck,
+  Clock,
+  ShoppingBag,
+  Check,
+  ArrowRight,
+  Sparkles,
+  Layers,
+  Flame,
+  CheckCircle2,
+} from 'lucide-react';
 import { StoreSettings, Product } from '../../types';
-import { formatGBP } from '../../lib/formatters';
+import { formatGBP, cn } from '../../lib/formatters';
+import { useCartStore } from '../../stores/useCartStore';
+import { useUiStore } from '../../stores/useUiStore';
+import { BbfcBadge } from '../common/BbfcBadge';
 
 interface ExclusiveCampaignBannerProps {
   settings?: StoreSettings | null;
   dealProduct?: Product | null;
   saleCount?: number;
+  onSelectPriceCap?: (price: number | null) => void;
+  onSelectFormat?: (format: string) => void;
+  selectedPriceCap?: number | null;
+  selectedFormat?: string;
 }
 
 interface TimeRemaining {
@@ -40,9 +61,18 @@ export const ExclusiveCampaignBanner: React.FC<ExclusiveCampaignBannerProps> = (
   settings,
   dealProduct,
   saleCount = 0,
+  onSelectPriceCap,
+  onSelectFormat,
+  selectedPriceCap,
+  selectedFormat = 'all',
 }) => {
   const endsAt = settings?.campaign_ends_at || settings?.deal_ends_at;
   const [timeLeft, setTimeLeft] = useState<TimeRemaining | null>(() => calculateTimeRemaining(endsAt));
+  const [isAdded, setIsAdded] = useState(false);
+
+  const addItem = useCartStore((state) => state.addItem);
+  const openCartDrawer = useUiStore((state) => state.openCartDrawer);
+  const addToast = useUiStore((state) => state.addToast);
 
   useEffect(() => {
     if (!endsAt) return;
@@ -52,154 +82,317 @@ export const ExclusiveCampaignBanner: React.FC<ExclusiveCampaignBannerProps> = (
     return () => clearInterval(interval);
   }, [endsAt]);
 
-  const title = settings?.campaign_title || "Collector's Vault Special & Clearance";
-  const badge = settings?.campaign_badge || 'CAMPAIGN EXCLUSIVE';
+  const title = settings?.campaign_title || "Collector's Archive Special Offers";
+  const badge = settings?.campaign_badge || 'ARCHIVE PROMOTIONS';
   const tagline =
     settings?.campaign_tagline ||
-    'Limited boutique physical archive allocation with rare editions, special discounts, and same-day UK dispatch.';
+    'Curated physical media price drops, box set markdowns, and rare warehouse allocations. Brand new, factory sealed, with 100% free Royal Mail UK delivery.';
   const discountText = settings?.campaign_discount_text || 'Up to 50% OFF';
+
+  // Deal of the Day calculations
+  const dealPrice = settings?.deal_discount_price && settings.deal_discount_price > 0
+    ? settings.deal_discount_price
+    : dealProduct?.price ?? 0;
+  const dealOriginalPrice = dealProduct?.compare_at_price || dealProduct?.price || 0;
+  const dealSavings = dealOriginalPrice > dealPrice ? dealOriginalPrice - dealPrice : 0;
+  const dealSavingsPercent = dealOriginalPrice > 0 && dealSavings > 0
+    ? Math.round((dealSavings / dealOriginalPrice) * 100)
+    : null;
+
+  const handleAddDealToBasket = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!dealProduct) return;
+    addItem({ ...dealProduct, price: dealPrice }, 1);
+    setIsAdded(true);
+    addToast(`Added "${dealProduct.title}" to basket at spotlight price ${formatGBP(dealPrice)}`, 'success');
+    openCartDrawer();
+    setTimeout(() => setIsAdded(false), 2000);
+  };
+
+  const isDealActive = Boolean(
+    dealProduct &&
+    settings?.deal_is_active &&
+    (!settings?.deal_ends_at || Date.parse(settings.deal_ends_at) > Date.now()) &&
+    Number(settings?.deal_discount_price || 0) > 0
+  );
 
   return (
     <section
       aria-label="Exclusive Campaign"
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0B0F19] via-[#0E1526] to-[#141C33] text-white p-6 sm:p-8 border border-amber-500/30 shadow-xl mb-8 group"
+      className="relative overflow-hidden rounded-2xl bg-[#0C101A] text-white p-5 sm:p-7 border border-white/10 shadow-xl mb-8 group transition-all"
     >
-      {/* Ambient background glows */}
-      <div className="absolute -top-24 -right-24 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Subtle top amber hairline accent */}
+      <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
 
-      {/* Subtle Grid texture overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"
-        aria-hidden="true"
-      />
+      {/* Top Bar: Badges & Live Status */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-white/10">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Campaign Eyebrow Badge */}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-widest bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            <Tag size={11} className="text-amber-400" />
+            <span>{badge}</span>
+          </span>
 
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-center">
-        {/* Left Column: Campaign Identity & Value Props */}
-        <div className="space-y-3">
-          {/* Badges row */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500/20 to-red-500/20 text-amber-300 border border-amber-500/40 shadow-xs">
-              <Flame size={12} className="text-amber-400 fill-amber-400 animate-pulse" />
-              <span>{badge}</span>
+          {/* Discount Text Pill */}
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[10px] font-extrabold uppercase tracking-wider bg-brand-red text-white shadow-xs">
+            <Percent size={11} />
+            <span>{discountText}</span>
+          </span>
+
+          {/* Active Deals Count */}
+          {saleCount > 0 && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[10px] font-medium bg-white/5 text-gray-300 border border-white/10">
+              <span className="font-bold text-white">{saleCount}</span> Curated Deals Available
             </span>
-
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-brand-red text-white shadow-xs">
-              <Percent size={11} />
-              <span>{discountText}</span>
-            </span>
-
-            {saleCount > 0 && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-gray-300 border border-white/10">
-                <Tag size={10} className="text-amber-300" />
-                <span>{saleCount} Curated Deals Available</span>
-              </span>
-            )}
-          </div>
-
-          {/* Headline */}
-          <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-snug">
-            {title}
-          </h2>
-
-          {/* Tagline */}
-          <p className="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
-            {tagline}
-          </p>
-
-          {/* Perks Bar */}
-          <div className="pt-2 flex flex-wrap items-center gap-4 text-[11px] text-gray-300">
-            <span className="inline-flex items-center gap-1.5">
-              <Truck size={13} className="text-emerald-400" />
-              <span>Free Royal Mail Tracked 48 UK Delivery</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck size={13} className="text-blue-400" />
-              <span>Brand New &amp; Sealed Media Guarantee</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Clock size={13} className="text-amber-400" />
-              <span>Same-Day Dispatch Before 2PM</span>
-            </span>
-          </div>
+          )}
         </div>
 
-        {/* Right Column: Live Countdown Box or Deal of the Day Card */}
-        <div className="flex flex-col sm:flex-row lg:flex-col items-center lg:items-end gap-3 shrink-0">
-          {/* Live Countdown Timer if endsAt is specified */}
-          {timeLeft && !timeLeft.isExpired ? (
-            <div className="w-full sm:w-auto p-3.5 bg-black/40 backdrop-blur-md rounded-xl border border-amber-500/30 text-center shadow-lg">
-              <div className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-widest text-amber-300 mb-2">
-                <Clock size={12} className="animate-spin text-amber-400" style={{ animationDuration: '6s' }} />
-                <span>Campaign Event Ends In</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 font-mono">
-                <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg min-w-[48px]">
-                  <span className="text-lg sm:text-xl font-black text-amber-400 leading-none">
-                    {String(timeLeft.days).padStart(2, '0')}
-                  </span>
-                  <span className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Days</span>
-                </div>
-                <span className="text-amber-400/60 font-black text-sm">:</span>
-                <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg min-w-[48px]">
-                  <span className="text-lg sm:text-xl font-black text-white leading-none">
-                    {String(timeLeft.hours).padStart(2, '0')}
-                  </span>
-                  <span className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Hours</span>
-                </div>
-                <span className="text-amber-400/60 font-black text-sm">:</span>
-                <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg min-w-[48px]">
-                  <span className="text-lg sm:text-xl font-black text-white leading-none">
-                    {String(timeLeft.minutes).padStart(2, '0')}
-                  </span>
-                  <span className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Mins</span>
-                </div>
-                <span className="text-amber-400/60 font-black text-sm">:</span>
-                <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg min-w-[48px]">
-                  <span className="text-lg sm:text-xl font-black text-amber-400 leading-none">
-                    {String(timeLeft.seconds).padStart(2, '0')}
-                  </span>
-                  <span className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Secs</span>
-                </div>
-              </div>
+        {/* Live Event Timer or Delivery Guarantee Pill */}
+        {timeLeft && !timeLeft.isExpired ? (
+          <div className="flex items-center gap-2 bg-black/50 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-mono">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-gray-400 mr-1 hidden sm:inline">
+              Offer Window:
+            </span>
+            <div className="flex items-center gap-1 text-white font-bold">
+              <span className="text-amber-400">{String(timeLeft.days).padStart(2, '0')}d</span>
+              <span className="text-gray-500">:</span>
+              <span>{String(timeLeft.hours).padStart(2, '0')}h</span>
+              <span className="text-gray-500">:</span>
+              <span>{String(timeLeft.minutes).padStart(2, '0')}m</span>
+              <span className="text-gray-500">:</span>
+              <span className="text-amber-400">{String(timeLeft.seconds).padStart(2, '0')}s</span>
             </div>
-          ) : (
-            <div className="w-full sm:w-auto px-4 py-3 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 text-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center justify-center gap-1.5">
-                <Sparkles size={12} />
-                <span>Special Clearance Allocation</span>
-              </span>
-              <p className="text-xs text-gray-300 font-semibold mt-0.5">While Limited Vault Stock Lasts</p>
-            </div>
-          )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 text-xs text-gray-300 bg-white/5 px-2.5 py-1 rounded-sm border border-white/10">
+            <Truck size={13} className="text-emerald-400" />
+            <span className="text-[11px] font-medium">Free Royal Mail Tracked 48 UK Delivery</span>
+          </div>
+        )}
+      </div>
 
-          {/* Spotlight Deal product preview if active */}
-          {dealProduct && settings?.deal_is_active && (
-            <div className="w-full sm:w-auto flex items-center gap-3 p-2.5 bg-white/5 rounded-xl border border-amber-500/20 text-xs">
-              <img
-                src={dealProduct.cover_image_url}
-                alt={dealProduct.title}
-                className="w-10 h-14 object-cover rounded bg-dark border border-white/10 shrink-0"
-              />
-              <div className="min-w-0 pr-2">
-                <span className="text-[9px] font-bold uppercase text-amber-400 block tracking-wider">
-                  Featured Deal Spotlight
-                </span>
-                <p className="font-bold text-white text-xs truncate max-w-[160px]">{dealProduct.title}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="font-extrabold text-amber-400 text-sm">
-                    {formatGBP(settings.deal_discount_price || dealProduct.price)}
-                  </span>
-                  {dealProduct.compare_at_price && (
-                    <span className="text-[10px] text-gray-400 line-through">
-                      {formatGBP(dealProduct.compare_at_price)}
-                    </span>
+      {/* Main Content: Campaign Narrative + Spotlight Deal Showcase */}
+      <div className="pt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        {/* Left Column: Editorial Headline, Narrative & Quick Filter Shortcuts */}
+        <div className={cn(isDealActive ? 'lg:col-span-7' : 'lg:col-span-12', 'space-y-4')}>
+          <div>
+            <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug">
+              {title}
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-300 mt-2 leading-relaxed max-w-2xl font-normal">
+              {tagline}
+            </p>
+          </div>
+
+          {/* Quick Filter Shortcuts for Sale Shoppers */}
+          {onSelectPriceCap && (
+            <div className="pt-1">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 block mb-2">
+                Quick Deal Filters:
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onSelectPriceCap(null)}
+                  className={cn(
+                    'px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer border',
+                    selectedPriceCap === null
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                   )}
-                </div>
+                >
+                  All Sale Titles
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectPriceCap(10)}
+                  className={cn(
+                    'px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer border',
+                    selectedPriceCap === 10
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  )}
+                >
+                  Under £10
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectPriceCap(15)}
+                  className={cn(
+                    'px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer border',
+                    selectedPriceCap === 15
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  )}
+                >
+                  Under £15
+                </button>
+                {onSelectFormat && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => onSelectFormat(selectedFormat === 'Box Set' ? 'all' : 'Box Set')}
+                      className={cn(
+                        'px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer border',
+                        selectedFormat === 'Box Set'
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                          : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                      )}
+                    >
+                      Box Sets
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onSelectFormat(selectedFormat === 'Blu-ray' ? 'all' : 'Blu-ray')}
+                      className={cn(
+                        'px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer border',
+                        selectedFormat === 'Blu-ray'
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                          : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                      )}
+                    >
+                      Blu-ray &amp; 4K
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
+
+          {/* Trust Guarantee Strip */}
+          <div className="pt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-gray-300 border-t border-white/5">
+            <span className="inline-flex items-center gap-1.5">
+              <Truck size={13} className="text-emerald-400 shrink-0" />
+              <span>Royal Mail Tracked 48 • 100% Free UK Delivery</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck size={13} className="text-blue-400 shrink-0" />
+              <span>Brand New &amp; Factory Sealed Guarantee</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock size={13} className="text-amber-400 shrink-0" />
+              <span>Same-Day Dispatch Before 2PM GMT</span>
+            </span>
+          </div>
         </div>
+
+        {/* Right Column: Spotlight Deal of the Day (Collector Showcase) */}
+        {isDealActive && dealProduct && (
+          <div className="lg:col-span-5 w-full">
+            <div className="bg-white/[0.04] backdrop-blur-xs rounded-xl p-3.5 sm:p-4 border border-amber-500/30 hover:border-amber-500/50 transition shadow-lg">
+              {/* Card Header */}
+              <div className="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-white/10">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                  <Sparkles size={11} className="text-amber-400" />
+                  <span>Spotlight Deal of the Day</span>
+                </span>
+                {dealSavingsPercent && dealSavingsPercent > 0 && (
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider bg-brand-red text-white px-2 py-0.5 rounded-sm">
+                    Save {dealSavingsPercent}%
+                  </span>
+                )}
+              </div>
+
+              {/* Product Artwork + Details Layout */}
+              <div className="flex items-start gap-3.5">
+                <Link
+                  to={`/product/${dealProduct.slug}`}
+                  className="block shrink-0 w-20 sm:w-24 aspect-[2/3] rounded overflow-hidden bg-black/40 border border-white/15 relative group/img shadow-md"
+                >
+                  <img
+                    src={dealProduct.cover_image_url}
+                    alt={dealProduct.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+                  />
+                  {dealProduct.spine_number && (
+                    <div className="absolute top-1 left-1 bg-black/90 text-white font-mono text-[8px] font-bold px-1 rounded-2xs border border-white/20">
+                      #{dealProduct.spine_number}
+                    </div>
+                  )}
+                </Link>
+
+                <div className="min-w-0 flex-1 flex flex-col justify-between self-stretch">
+                  <div>
+                    {/* Format + Rating badges */}
+                    <div className="flex items-center gap-1.5 mb-1">
+                      {dealProduct.age_rating && dealProduct.age_rating !== 'All' && (
+                        <BbfcBadge rating={dealProduct.age_rating} size="xs" />
+                      )}
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-white/10 text-gray-200 px-1.5 py-0.5 rounded-2xs">
+                        {dealProduct.format || 'DVD'}
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <Link
+                      to={`/product/${dealProduct.slug}`}
+                      className="font-display font-bold text-sm text-white hover:text-amber-300 transition-colors line-clamp-2 leading-snug"
+                    >
+                      {dealProduct.title}
+                    </Link>
+
+                    {dealProduct.director && (
+                      <span className="text-[10px] text-gray-400 block truncate mt-0.5">
+                        Dir. {dealProduct.director}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Pricing + Add to Basket Action */}
+                  <div className="pt-2">
+                    <div className="flex items-baseline gap-2 mb-2">
+                      <span className="text-lg sm:text-xl font-extrabold text-brand-red dark:text-red-400 font-mono">
+                        {formatGBP(dealPrice)}
+                      </span>
+                      {dealOriginalPrice > dealPrice && (
+                        <span className="text-xs text-gray-400 line-through font-mono">
+                          {formatGBP(dealOriginalPrice)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleAddDealToBasket}
+                        className={cn(
+                          'flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-md text-xs font-bold transition shadow-xs cursor-pointer',
+                          isAdded
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-brand-blue hover:bg-brand-blue-hover text-white'
+                        )}
+                      >
+                        {isAdded ? (
+                          <>
+                            <Check size={13} className="stroke-[2.5]" />
+                            <span>Added</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingBag size={13} />
+                            <span>Add to Basket</span>
+                          </>
+                        )}
+                      </button>
+
+                      <Link
+                        to={`/product/${dealProduct.slug}`}
+                        className="py-1.5 px-2.5 rounded-md text-xs font-medium text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition inline-flex items-center gap-1"
+                      >
+                        <span>Details</span>
+                        <ArrowRight size={11} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

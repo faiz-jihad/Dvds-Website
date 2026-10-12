@@ -107,6 +107,41 @@ function useBreadcrumb() {
   return crumbs;
 }
 
+// Dynamic loaders for prefetching admin panels on hover/idle
+const ADMIN_MODULES: Record<string, () => Promise<unknown>> = {
+  "/admin": () => import("../../pages/Admin/AdminDashboard"),
+  "/admin/products": () => import("../../pages/Admin/AdminProducts"),
+  "/admin/orders": () => import("../../pages/Admin/AdminOrders"),
+  "/admin/inventory": () => import("../../pages/Admin/AdminInventory"),
+  "/admin/promotions": () => import("../../pages/Admin/AdminPromotions"),
+  "/admin/users": () => import("../../pages/Admin/AdminUsers"),
+  "/admin/settings": () => import("../../pages/Admin/AdminStoreSettings"),
+  "/admin/activity": () => import("../../pages/Admin/AdminActivity"),
+  "/admin/taxonomy": () => import("../../pages/Admin/AdminTaxonomy"),
+  "/admin/support": () => import("../../pages/Admin/AdminSupport"),
+};
+
+export const prefetchAdminModule = (href: string) => {
+  try {
+    ADMIN_MODULES[href]?.();
+  } catch {
+    // Ignore prefetch failures in background
+  }
+};
+
+const AdminPanelFallback: React.FC = () => (
+  <div className="space-y-6 max-w-6xl animate-pulse" role="status">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="space-y-2">
+        <div className="h-3 w-40 bg-slate-200 dark:bg-white/10 rounded" />
+        <div className="h-7 w-64 bg-slate-200 dark:bg-white/10 rounded-lg" />
+      </div>
+      <div className="h-9 w-32 bg-slate-200 dark:bg-white/10 rounded-lg" />
+    </div>
+    <div className="h-80 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-6 shadow-2xs" />
+  </div>
+);
+
 export const AdminLayout: React.FC = () => {
   const { user, logout } = useAdminAuth();
   const { isConnected: wsConnected } = useRealtimeStatus();
@@ -145,6 +180,25 @@ export const AdminLayout: React.FC = () => {
   useEffect(() => {
     setUserDropdownOpen(false);
   }, [pathname]);
+
+  // Preload all admin panel modules when browser is idle so tab switching is instantaneous
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const preloadAll = () => {
+      Object.values(ADMIN_MODULES).forEach((loader) => {
+        try {
+          loader();
+        } catch {}
+      });
+    };
+    if ("requestIdleCallback" in window) {
+      const id = (window as any).requestIdleCallback(preloadAll, { timeout: 2000 });
+      return () => (window as any).cancelIdleCallback(id);
+    } else {
+      const timer = setTimeout(preloadAll, 600);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const schemaQuery = useQuery({
     queryKey: ["admin", "schema-health", schemaScope, user?.id],
@@ -187,6 +241,8 @@ export const AdminLayout: React.FC = () => {
                   key={item.href}
                   to={item.href}
                   end={item.end}
+                  onMouseEnter={() => prefetchAdminModule(item.href)}
+                  onFocus={() => prefetchAdminModule(item.href)}
                   onClick={onLinkClick}
                   className={({ isActive }) =>
                     cn(
@@ -547,15 +603,16 @@ export const AdminLayout: React.FC = () => {
         </header>
 
         {/* Content Viewport */}
-        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#07090E] p-4 sm:p-6 lg:p-8 print:p-0 print:overflow-visible print:bg-white print:text-black">
-          {schemaQuery.isLoading || schemaQuery.error ? (
+        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#0B0F19] p-4 sm:p-6 lg:p-8 print:p-0 print:overflow-visible print:bg-white print:text-black">
+          {schemaQuery.error ? (
             <AdminDataState
-              loading={schemaQuery.isLoading}
               error={schemaQuery.error}
               onRetry={() => schemaQuery.refetch()}
             />
           ) : (
-            <Outlet />
+            <React.Suspense fallback={<AdminPanelFallback />}>
+              <Outlet />
+            </React.Suspense>
           )}
         </main>
       </div>

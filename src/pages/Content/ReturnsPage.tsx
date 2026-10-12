@@ -2,7 +2,7 @@ import React from 'react';
 import { ShieldCheck, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/common/Button';
-import { Seo } from '../../components/common/Seo';
+import { Seo, toAbsoluteUrl } from '../../components/common/Seo';
 
 export const ReturnsPage: React.FC = () => {
   return (
@@ -18,7 +18,7 @@ export const ReturnsPage: React.FC = () => {
           '@type': 'WebPage',
           name: 'DVDs Zone 30-Day Returns Policy',
           description: 'Hassle-free 30-day return policy and replacement process for DVDs and Box Sets.',
-          url: 'https://dvdszone.co.uk/returns',
+          url: toAbsoluteUrl('/returns'),
         }}
       />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8">

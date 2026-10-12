@@ -17,7 +17,7 @@ import {
 import { publicApi } from '../../lib/publicApi';
 import { formatGBP } from '../../lib/formatters';
 import { StoreDataState } from '../../components/common/StoreDataState';
-import { Seo } from '../../components/common/Seo';
+import { Seo, toAbsoluteUrl } from '../../components/common/Seo';
 
 export const DeliveryPage: React.FC = () => {
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: () => publicApi.getStoreSettings() });
@@ -54,28 +54,30 @@ export const DeliveryPage: React.FC = () => {
     },
     {
       q: 'What happens if my disc or case arrives damaged?',
-      a: 'We inspect every item before packaging, but transit accidents happen. If a case or disc arrives damaged, email azrayanltd@gmail.com with your order number and we will arrange a quick replacement or refund.',
+      a: `We inspect every item before packaging, but transit accidents happen. If a case or disc arrives damaged, email ${settings.support_email || 'our support team'} with your order number and we will arrange a quick replacement or refund.`,
     },
   ];
+
+  const storeName = settings.store_name || 'DVD ZONE';
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] min-h-screen py-8 sm:py-16 text-dark dark:text-white transition-colors">
       <Seo
-        title="Delivery Information — 100% Free UK Delivery | DVD ZONE"
+        title={`Delivery Information — 100% Free UK Delivery | ${storeName}`}
         description="All orders 100% free standard delivery across United Kingdom. Dispatched same day, delivered to your address within 2 working days via Royal Mail."
         canonicalPath="/delivery"
-        keywords="free UK delivery DVDs, Royal Mail DVD shipping, same day DVD dispatch, UK postage rates, fast DVD shipping UK"
-        siteName="DVD ZONE"
+        keywords={`free UK delivery DVDs, Royal Mail DVD shipping, same day DVD dispatch, UK postage rates, fast DVD shipping UK, ${storeName}`}
+        siteName={storeName}
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'WebPage',
-          name: 'DVD ZONE UK Delivery Information',
+          name: `${storeName} UK Delivery Information`,
           description: 'Free standard UK delivery on all DVD purchases via Royal Mail.',
-          url: 'https://dvdszone.co.uk/delivery',
+          url: toAbsoluteUrl('/delivery'),
           provider: {
             '@type': 'Organization',
-            name: 'DVD ZONE',
-            url: 'https://dvdszone.co.uk',
+            name: storeName,
+            url: toAbsoluteUrl('/'),
           },
         }}
       />

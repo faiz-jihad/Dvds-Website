@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { publicApi } from "../lib/publicApi";
-import { Seo } from "../components/common/Seo";
+import { Seo, toAbsoluteUrl } from "../components/common/Seo";
 import { StoreDataState } from "../components/common/StoreDataState";
 import { AzDarkLandingLayout } from "../components/landing/AzDarkLandingLayout";
 import { DEFAULT_STORE_SETTINGS } from "../data/defaultStoreSettings";
@@ -63,23 +63,23 @@ export const Home: React.FC = () => {
   return (
     <>
       <Seo
-        title="DVD ZONE — Quality DVDs, TV Box Sets & Cinema Entertainment | Free UK Delivery"
-        description="Quality DVDs, TV box sets, and physical entertainment releases. Free UK standard delivery on all orders. Same-day dispatch. Fast 2 working days delivery via Royal Mail."
+        title={settings.seo_site_title || `${settings.store_name || "DVDs Zone"} — Quality DVDs, TV Box Sets & Cinema Entertainment | Free UK Delivery`}
+        description={settings.seo_site_description || "Quality DVDs, TV box sets, and physical entertainment releases. Free UK standard delivery on all orders. Same-day dispatch. Fast 2 working days delivery via Royal Mail."}
         keywords="buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs, DVDs Zone"
         canonicalPath="/"
-        image="/catalog/the-mandalorian-seasons-1-3.jpeg"
-        siteName="DVDs Zone"
+        image={settings.seo_social_image_url || "/catalog/the-mandalorian-seasons-1-3.jpeg"}
+        siteName={settings.store_name || "DVDs Zone"}
         jsonLd={[
           {
             "@context": "https://schema.org",
             "@type": "WebSite",
-            name: "DVDs Zone",
-            url: "https://dvdszone.co.uk/",
+            name: settings.store_name || "DVDs Zone",
+            url: toAbsoluteUrl("/"),
             potentialAction: {
               "@type": "SearchAction",
               target: {
                 "@type": "EntryPoint",
-                urlTemplate: "https://dvdszone.co.uk/search?q={search_term_string}"
+                urlTemplate: toAbsoluteUrl("/search?q={search_term_string}")
               },
               "query-input": "required name=search_term_string"
             }
@@ -87,18 +87,18 @@ export const Home: React.FC = () => {
           {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
-            name: "DVDs Zone — Quality DVDs & Entertainment Catalogue",
+            name: `${settings.store_name || "DVDs Zone"} — Quality DVDs & Entertainment Catalogue`,
             description:
-              "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",
-            url: "https://dvdszone.co.uk/",
+              settings.seo_site_description || "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",
+            url: toAbsoluteUrl("/"),
             mainEntity: {
               "@type": "ItemList",
               itemListElement: products.slice(0, 12).map((prod, idx) => ({
                 "@type": "ListItem",
                 position: idx + 1,
                 name: prod.title,
-                url: `https://dvdszone.co.uk/product/${prod.slug}`,
-                image: `https://dvdszone.co.uk${prod.cover_image_url}`,
+                url: toAbsoluteUrl(`/product/${prod.slug}`),
+                image: toAbsoluteUrl(prod.cover_image_url),
               })),
             },
           }

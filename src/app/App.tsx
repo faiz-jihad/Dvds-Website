@@ -25,7 +25,7 @@ export const App: React.FC = () => {
           <RealtimeProvider>
             <React.Suspense
               fallback={(
-                <div className={`min-h-screen flex items-center justify-center ${window.location.pathname === '/' ? 'bg-[#050505]' : 'bg-white'}`} role="status">
+                <div className={`min-h-screen flex items-center justify-center ${window.location.pathname === '/' ? 'bg-[#050505]' : 'bg-white dark:bg-[#07090E]'}`} role="status">
                   <span className="sr-only">Loading page</span>
                 </div>
               )}
