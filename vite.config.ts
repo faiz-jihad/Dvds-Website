@@ -23,7 +23,7 @@ const devApiPlugin = () => ({
       'cron-reports',
     ]);
     server.middlewares.use(async (req: any, res: any, next: any) => {
-      let route = req.url?.split('?')[0]?.replace('/api/', '');
+      let route = req.url?.split('?')[0]?.replace(/^\/api\//, '').replace(/\/$/, '');
       if (route === 'stripe/webhook') route = 'stripe-webhook';
       if (route === 'verify-stripe-payment' || route === 'capture-paypal-order') route = 'order-status';
       const filePath = path.resolve(__dirname, `api/${route}.js`);
@@ -79,6 +79,11 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
+    port: 3000,
+  },
+  preview: {
+    host: true,
     port: 3000,
   },
 });

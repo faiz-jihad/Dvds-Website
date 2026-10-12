@@ -210,7 +210,7 @@ export const CheckoutPage: React.FC = () => {
     queryFn: checkoutApi.configuration,
     staleTime: 30_000,
   });
-  const currencies = configQuery.data?.currencies?.length
+  const currencies: string[] = configQuery.data?.currencies?.length
     ? configQuery.data.currencies
     : ["GBP", "EUR", "USD"];
   const [tier, setTier] = useState<"standard" | "express">(
@@ -568,6 +568,7 @@ export const CheckoutPage: React.FC = () => {
             ? cause.message
             : "PayPal payment could not be started. Please retry.",
         );
+        window.scrollTo({ top: 0, behavior: "smooth" });
         setAttempt(currentCheckoutAttempt());
         await quoteQuery.refetch();
       } finally {
@@ -616,6 +617,7 @@ export const CheckoutPage: React.FC = () => {
           ? cause.message
           : "Payment checkout could not be started. Please retry.",
       );
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setAttempt(currentCheckoutAttempt());
       await quoteQuery.refetch();
     } finally {
@@ -1028,10 +1030,10 @@ export const CheckoutPage: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <p className="text-gray-600 dark:text-gray-300 mt-1.5 truncate">
+                          <p className="text-gray-600 dark:text-gray-300 mt-1.5 line-clamp-2 break-words">
                             {addr.address_line_1}
                           </p>
-                          <p className="text-gray-500 dark:text-gray-400 truncate">
+                          <p className="text-gray-500 dark:text-gray-400 line-clamp-1 break-words">
                             {[addr.city, addr.county, addr.postcode]
                               .filter(Boolean)
                               .join(", ")}
@@ -1155,7 +1157,7 @@ export const CheckoutPage: React.FC = () => {
                     value={currency}
                     onChange={(event) => setCurrency(event.target.value)}
                   >
-                    {currencies.map((code) => (
+                    {currencies.map((code: string) => (
                       <option key={code} value={code}>
                         {CURRENCY_DISPLAY[code] || code}
                       </option>
@@ -1342,6 +1344,25 @@ export const CheckoutPage: React.FC = () => {
                       </div>
                     </label>
                   ))}
+
+                {quote?.duties_notice && (
+                  <div className="mt-3.5 p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 text-xs">
+                    <label className="flex items-start gap-2.5 cursor-pointer leading-relaxed">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 accent-blue-600 w-4 h-4 rounded shrink-0"
+                        checked={internationalAcknowledged}
+                        disabled={busy || Boolean(attempt)}
+                        onChange={(event) =>
+                          setInternationalAcknowledged(event.target.checked)
+                        }
+                      />
+                      <span>
+                        <strong>Customs Notice:</strong> {quote.duties_notice} I understand that these charges may be payable on arrival.
+                      </span>
+                    </label>
+                  </div>
+                )}
               </div>
             </fieldset>
             <fieldset
@@ -1477,7 +1498,7 @@ export const CheckoutPage: React.FC = () => {
 
                             <div className="flex items-center gap-1.5 shrink-0">
                               <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded">
-                                {isAvailable ? option.badge : "Unavailable"}
+                                {isAvailable ? option.badge : "Temporarily unavailable"}
                               </span>
                               {isAvailable && (
                                 <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 px-1.5 py-0.5 rounded">
@@ -1513,7 +1534,7 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </fieldset>
           </div>
-          <aside className="lg:sticky lg:top-28 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-4 sm:p-6 shadow-xs text-dark dark:text-white">
+          <aside className="hidden lg:block lg:sticky lg:top-28 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-4 sm:p-6 shadow-xs text-dark dark:text-white">
             <h2 className="text-base sm:text-lg font-semibold text-dark dark:text-white">
               Order summary{" "}
               <span className="text-xs sm:text-sm font-normal text-gray-400 dark:text-gray-400">
@@ -1652,7 +1673,7 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </dl>
             {quote?.duties_notice && (
-              <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300 mt-4 sm:mt-5 leading-relaxed">
+              <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300 mt-4 sm:mt-5 leading-relaxed cursor-pointer">
                 <input
                   type="checkbox"
                   className="mt-0.5 accent-blue-600 w-4 h-4 rounded shrink-0"
@@ -1661,7 +1682,6 @@ export const CheckoutPage: React.FC = () => {
                   onChange={(event) =>
                     setInternationalAcknowledged(event.target.checked)
                   }
-                  required
                 />
                 <span>
                   {quote.duties_notice} I understand that these charges may be
@@ -1718,6 +1738,18 @@ export const CheckoutPage: React.FC = () => {
           paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
         }}
       >
+        {quoteQuery.isError && (
+          <div className="max-w-6xl mx-auto mb-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/40 text-[11px] text-red-700 dark:text-red-300 flex items-center justify-between gap-2">
+            <span className="truncate flex-1">{quoteQuery.error.message}</span>
+            <button
+              type="button"
+              onClick={() => quoteQuery.refetch()}
+              className="font-bold underline text-red-800 dark:text-red-200 shrink-0 cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2.5 sm:gap-3">
           <div className="min-w-0 flex-1">
             <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 dark:text-gray-500 block leading-none mb-1">

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { calculateQuote, normalizeItems, paymentMethods, hash, validAccess, publicOrder, authorizeOrder, initializeOrder, endpoint, quoteDbClient, CheckoutError } from '../api/_checkout.js';
+import { calculateQuote, normalizeItems, paymentMethods, hash, validAccess, publicOrder, authorizeOrder, initializeOrder, endpoint, quoteDbClient, CheckoutError, isAllowedOrigin, siteOrigin } from '../api/_checkout.js';
 import stripeWebhook from '../api/stripe-webhook.js';
 import paypalWebhook from '../api/paypal-webhook.js';
 import Stripe from 'stripe';
@@ -162,4 +162,30 @@ test('PayPal rejects failed transmission verification before any payment write',
     globalThis.fetch = originalFetch;
     keys.forEach((key) => { if (previous[key] === undefined) delete process.env[key]; else process.env[key] = previous[key]; });
   }
+});
+
+test('isAllowedOrigin allows local LAN IPs, production domains, and rejects untrusted origins', () => {
+  assert.equal(isAllowedOrigin(undefined), true);
+  assert.equal(isAllowedOrigin(''), true);
+  assert.equal(isAllowedOrigin('http://localhost:5173'), true);
+  assert.equal(isAllowedOrigin('http://127.0.0.1:3000'), true);
+  assert.equal(isAllowedOrigin('http://192.168.1.105:5173'), true);
+  assert.equal(isAllowedOrigin('http://10.0.0.8:5173'), true);
+  assert.equal(isAllowedOrigin('http://172.20.10.4:5173'), true);
+  assert.equal(isAllowedOrigin('https://dvds-zone.co.uk'), true);
+  assert.equal(isAllowedOrigin('https://www.dvds-zone.co.uk'), true);
+  assert.equal(isAllowedOrigin('https://dvds-zone-preview.vercel.app'), true);
+
+  assert.equal(isAllowedOrigin('https://evil-hacker.com'), false);
+  assert.equal(isAllowedOrigin('https://phishing-site.org'), false);
+
+  // siteOrigin prioritizes allowed origin on mobile/local network
+  const mobileReq = { headers: { origin: 'http://192.168.1.105:5173', host: '192.168.1.105:5173' } };
+  assert.equal(siteOrigin(mobileReq), 'http://192.168.1.105:5173');
+
+  const prodReq = { headers: { origin: 'https://dvds-zone.co.uk', host: 'dvds-zone.co.uk' } };
+  assert.equal(siteOrigin(prodReq), 'https://dvds-zone.co.uk');
+
+  const untrustedReq = { headers: { origin: 'https://evil.com', host: 'dvds-zone.co.uk', 'x-forwarded-proto': 'https' } };
+  assert.equal(siteOrigin(untrustedReq), 'https://dvds-zone.co.uk');
 });

@@ -22,10 +22,10 @@ async function load(entry, extra = {}) {
         b.onResolve({ filter: /\/useCartStore$/ }, () => ({ path: 'cart', namespace: 'mock' }));
         b.onResolve({ filter: /^@tanstack\/react-query$/ }, () => ({ path: 'query', namespace: 'mock' }));
         b.onLoad({ filter: /.*/, namespace: 'mock' }, ({ path }) => ({ contents: {
-          supabase: 'export const supabase = null; export const isSupabaseConfigured = false;',
+          supabase: 'export const supabase = (typeof mockSupabase !== "undefined" ? mockSupabase : null); export const isSupabaseConfigured = typeof mockSupabase !== "undefined";',
           auth: 'export const useCustomerAuth = () => ({ customer: null });',
           cart: 'export const useCartStore = (selector) => selector(globalThis.cart);',
-          query: 'export const useQuery = () => globalThis.query;',
+          query: 'export const useQuery = () => globalThis.query; export const useQueryClient = () => ({ invalidateQueries: () => {} });',
         }[path] }));
       } }],
     }); cache.set(entry, output.outputFiles[0].text);
@@ -111,4 +111,76 @@ test('checkout renders accessible payment radios, configured delivery, and unava
   assert.ok(html.includes('Continue to secure payment'));
   assert.ok(!html.includes('Pay in 3'));
   assert.ok(!html.includes('13894195'));
+});
+
+test('checkout renders clean mobile-responsive layout and customs notice', async () => {
+  const { CheckoutPage } = await load('src/pages/CheckoutPage.tsx', {
+    cart: { items: [{ product_id: input.items[0].product_id, quantity: 2, product: { title: 'Film', cover_image_url: '/film.jpg' } }], appliedPromoCode: null },
+    query: { data: { items: [{ ...input.items[0], total_price: 20 }], subtotal: 20, total_amount: 25.99, shipping_amount: 5.99, discount_amount: 0, methods: { card: true, paypal: true, bank_transfer: false }, delivery: { standard: { name: 'Royal Mail Tracked 48', eta: '2 days', amount: 0 }, express: { name: 'Royal Mail Priority', eta: '1 day', amount: 3 } }, duties_notice: 'Customs duties notice test' } },
+  });
+  const html = render(CheckoutPage, '/checkout');
+  // Desktop aside is hidden on mobile
+  assert.ok(html.includes('hidden lg:block lg:sticky'));
+  // Mobile accordion toggle is present
+  assert.ok(html.includes('Show order summary'));
+  // Mobile bottom action bar is present
+  assert.ok(html.includes('Total to pay'));
+  assert.ok(html.includes('lg:hidden fixed bottom-0'));
+  // Customs notice is accessible in Step 2 delivery method
+  assert.ok(html.includes('Customs Notice:'));
+  assert.ok(html.includes('Customs duties notice test'));
+});
+
+test('checkoutApi quote gracefully falls back to client calculation when server returns 502/network failure', async () => {
+  const mockSupabase = {
+    from: (table) => {
+      if (table === 'products') {
+        return {
+          select: () => ({
+            in: async () => ({
+              data: [{ id: input.items[0].product_id, sku: 'DVD-01', title: 'Test Film', price: 10, status: 'active', stock_quantity: 5, cover_image_url: '/test.jpg' }],
+            }),
+          }),
+        };
+      }
+      if (table === 'store_settings') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { singleton: true, standard_shipping_fee: 0, express_shipping_fee: 3, free_shipping_threshold: 20, payment_card_enabled: true, payment_paypal_enabled: true },
+              }),
+            }),
+          }),
+        };
+      }
+      return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }) };
+    },
+  };
+
+  const api = await load('src/lib/checkoutApi.ts', {
+    mockSupabase,
+    fetch: async () => {
+      // Simulate 502 Bad Gateway from Cloudflare
+      return {
+        ok: false,
+        status: 502,
+        json: async () => { throw new Error('Invalid JSON from 502 HTML'); },
+      };
+    },
+  });
+
+  const quote = await api.checkoutApi.quote({
+    items: input.items,
+    deliveryTier: 'standard',
+    promoCode: '',
+    currency: 'GBP',
+  });
+
+  assert.equal(quote.subtotal, 20);
+  assert.equal(quote.shipping_amount, 0);
+  assert.equal(quote.total_amount, 20);
+  assert.equal(quote.delivery.standard.name, 'Royal Mail Tracked 48');
+  assert.equal(quote.methods.card, true);
+  assert.equal(quote.methods.paypal, true);
 });

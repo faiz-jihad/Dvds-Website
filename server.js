@@ -39,7 +39,7 @@ const API_REWRITES = {
 
 // Universal API request handler
 app.all('/api/*', async (req, res, next) => {
-  let endpoint = req.path.replace(/^\/api\//, '').split('?')[0];
+  let endpoint = req.path.replace(/^\/api\//, '').replace(/\/$/, '').split('?')[0];
   if (API_REWRITES[endpoint]) {
     endpoint = API_REWRITES[endpoint];
   }

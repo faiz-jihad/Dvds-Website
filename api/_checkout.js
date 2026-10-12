@@ -59,26 +59,57 @@ export function check(result, message = 'The order could not be saved. Please re
 }
 export function isAllowedOrigin(origin, req) {
   if (!origin) return true;
-  const allowed = new Set([
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:5173',
-  ]);
-  if (process.env.SITE_URL) {
-    try { allowed.add(new URL(process.env.SITE_URL).origin); } catch {}
-  }
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    allowed.add(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
-  }
-  if (process.env.VERCEL_URL) {
-    allowed.add(`https://${process.env.VERCEL_URL}`);
-  }
-  if (req?.headers?.host) {
-    const proto = req.headers['x-forwarded-proto'] || 'https';
-    allowed.add(`${proto}://${req.headers.host}`);
-    allowed.add(`http://${req.headers.host}`);
-  }
-  return allowed.has(origin);
+  try {
+    const originUrl = new URL(origin);
+    const hostname = originUrl.hostname.toLowerCase();
+
+    // Localhost, loopback, and local network IPs (e.g. 192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '[::1]' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname)
+    ) {
+      return true;
+    }
+
+    // Live store domains (apex, www, subdomains, Vercel preview)
+    if (
+      hostname === 'dvds-zone.co.uk' ||
+      hostname.endsWith('.dvds-zone.co.uk') ||
+      hostname.endsWith('.vercel.app')
+    ) {
+      return true;
+    }
+
+    if (process.env.SITE_URL) {
+      try {
+        const siteUrl = new URL(process.env.SITE_URL);
+        if (hostname === siteUrl.hostname || hostname.endsWith(`.${siteUrl.hostname}`)) {
+          return true;
+        }
+      } catch {}
+    }
+
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+      const vHost = process.env.VERCEL_PROJECT_PRODUCTION_URL.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
+      if (hostname === vHost) return true;
+    }
+
+    if (process.env.VERCEL_URL) {
+      const vHost = process.env.VERCEL_URL.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
+      if (hostname === vHost) return true;
+    }
+
+    if (req?.headers?.host) {
+      const hostHeader = req.headers.host.split(':')[0].toLowerCase();
+      if (hostname === hostHeader) return true;
+    }
+  } catch {}
+
+  return false;
 }
 
 export function endpoint(action, method = 'POST', rateLimitOptions = { max: 60, windowMs: 60000 }) {
@@ -297,10 +328,19 @@ export async function requestUser(db, req) {
   return data.user;
 }
 export function siteOrigin(req) {
-  if (process.env.SITE_URL) return new URL(process.env.SITE_URL).origin;
+  const origin = req?.headers?.origin;
+  if (origin && isAllowedOrigin(origin, req)) {
+    return origin;
+  }
+  if (req?.headers?.host) {
+    const proto = req.headers['x-forwarded-proto'] || (req.connection?.encrypted ? 'https' : 'http');
+    return `${proto}://${req.headers.host}`;
+  }
+  if (process.env.SITE_URL) {
+    try { return new URL(process.env.SITE_URL).origin; } catch {}
+  }
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  if (req?.headers?.host) return `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
   return 'http://localhost:3000';
 }
 export function stripeClient() {
