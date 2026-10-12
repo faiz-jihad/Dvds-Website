@@ -3,7 +3,7 @@ import { cn } from '../../lib/formatters';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'dark';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   badge?: React.ReactNode;
   badgeText?: string;
@@ -23,6 +23,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const sizes = {
+      xs: 'h-7 px-2.5 text-xs rounded-sm gap-1',
       sm: 'h-9 px-3.5 text-xs rounded-sm gap-1.5',
       md: 'h-11 px-5 text-sm rounded-md gap-2',
       lg: 'h-12 px-7 text-base rounded-md gap-2.5',

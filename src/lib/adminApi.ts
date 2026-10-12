@@ -810,6 +810,11 @@ export const adminApi = {
     return data as ContactMessage;
   },
 
+  async deleteContactMessage(id: string): Promise<void> {
+    const { error } = await client().from('contact_messages').delete().eq('id', id);
+    if (error) fail(error, 'Customer message could not be deleted.');
+  },
+
   async getUsers(): Promise<Profile[]> {
     const { data, error } = await client().from('profiles').select('*').order('created_at', { ascending: false });
     if (error) fail(error, 'Users could not be loaded.');

@@ -4,8 +4,8 @@ export const MAX_PRODUCT_PRICE = 150;
 
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   id: 's1000000-0000-0000-0000-000000000001',
-  seo_site_url: '',
-  seo_site_title: 'DVD ZONE — Quality DVDs & Entertainment | UK Physical Media Store',
+  seo_site_url: 'https://dvds-zone.co.uk',
+  seo_site_title: 'DVDS Zone — Quality DVDs, TV Box Sets & Entertainment | UK Store',
   seo_site_description:
     'Quality DVDs, TV box sets, and entertainment. Free UK standard delivery. Same-day dispatch. Delivery within 2 working days via Royal Mail.',
   seo_social_image_url:
@@ -67,7 +67,7 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   vip_promo_code: 'ZONE10',
   vip_promo_discount: 10.0,
   vip_min_spend: 20.0,
-  store_name: 'DVD ZONE',
+  store_name: 'DVDS Zone',
   registered_company_name: 'DVDs Zone',
   company_number: '13894195',
   registered_office_address: 'United Kingdom',

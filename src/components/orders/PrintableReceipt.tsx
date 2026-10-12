@@ -50,7 +50,7 @@ export const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order, class
               DVDs Zone • Online DVD & Entertainment Specialist • United Kingdom
             </p>
             <p className="text-xs text-gray-500">
-              azrayanltd@gmail.com • www.dvdszone.co.uk
+              azrayanltd@gmail.com • www.dvds-zone.co.uk
             </p>
           </div>
 

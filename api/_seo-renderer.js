@@ -375,7 +375,8 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
     modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
 
     // Global dynamic replacements to ensure no hardcoded domain or legacy contacts persist
-    if (baseUrl && baseUrl !== 'https://dvdszone.co.uk') {
+    if (baseUrl && baseUrl !== 'https://dvds-zone.co.uk') {
+      modifiedHtml = modifiedHtml.replaceAll('https://dvds-zone.co.uk', baseUrl);
       modifiedHtml = modifiedHtml.replaceAll('https://dvdszone.co.uk', baseUrl);
     }
     const emailReplacement = settings?.support_email || settings?.contact_email;

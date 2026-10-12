@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const MASTER_ADMIN_EMAILS = new Set([
   'azrayanltd@gmail.com',
+  'admin@dvds-zone.co.uk',
   'admin@dvdszone.co.uk',
   'admin@azrayan.co.uk',
   'faizalba74@gmail.com',

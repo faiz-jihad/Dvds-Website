@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS public.store_settings (
   seo_site_title TEXT NOT NULL DEFAULT 'AZ Rayan DVDs — Films Worth Owning | UK Physical Media Store',
   seo_site_description TEXT NOT NULL DEFAULT 'Curated boutique DVD editions, rare British cinema, collector box sets, and modern sci-fi classics dispatched from London.',
   seo_social_image_url TEXT NOT NULL DEFAULT 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&auto=format&fit=crop&q=80',
-  seo_organization_description TEXT NOT NULL DEFAULT 'Independent physical media archive and boutique DVD purveyor based in London, UK.',
+  seo_organization_description TEXT NOT NULL DEFAULT 'Independent physical media archive and boutique DVD purveyor based in UK.',
   hero_badge_text TEXT NOT NULL DEFAULT 'SPRING ARCHIVE RELEASE — MARCH 2026',
   hero_headline_line1 TEXT NOT NULL DEFAULT 'Films worth',
   hero_headline_highlight TEXT NOT NULL DEFAULT 'owning.',

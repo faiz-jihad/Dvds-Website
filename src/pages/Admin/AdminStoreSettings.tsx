@@ -653,8 +653,8 @@ export const AdminStoreSettings: React.FC = () => {
                   type="url"
                   value={settings.seo_site_url || ''}
                   onChange={(e) => handleChange('seo_site_url', e.target.value)}
-                  placeholder="https://dvdszone.co.uk"
-                  helperText="Primary production domain URL."
+                  placeholder="https://dvds-zone.co.uk"
+                  helperText="Primary production domain URL (e.g. https://dvds-zone.co.uk)."
                 />
 
                 <Input
