@@ -486,6 +486,11 @@ export const adminApi = {
     return settings;
   },
 
+  async updateStoreSettings(patch: Partial<StoreSettings>): Promise<StoreSettings> {
+    const current = (await this.getStoreSettings()) || DEFAULT_STORE_SETTINGS;
+    return this.saveStoreSettings({ ...current, ...patch });
+  },
+
   async saveStoreSettings(input: StoreSettings): Promise<StoreSettings> {
     if (input.shipping_zones) validateShippingZones(input.shipping_zones);
     if (input.checkout_currencies && (!input.checkout_currencies.includes('GBP') || input.checkout_currencies.some((currency) => !CURRENCIES.includes(currency)))) throw new Error('Enable GBP and select supported checkout currencies.');

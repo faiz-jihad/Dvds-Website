@@ -27,6 +27,21 @@ export const PromoBannerPopup: React.FC<PromoBannerPopupProps> = ({
 
   const settings = propSettings ?? settingsQuery.data;
 
+  const promotionsQuery = useQuery({
+    queryKey: ['store', 'active-promotions'],
+    queryFn: () => publicApi.getActivePromotions(),
+    staleTime: 30_000,
+  });
+
+  const activePromotions = promotionsQuery.data || [];
+  // Find matching promotion configured in settings or use the first active promotion
+  const activePromo =
+    activePromotions.find(
+      (p) =>
+        p.code.trim().toUpperCase() ===
+        (settings?.vip_promo_code || '').trim().toUpperCase()
+    ) || activePromotions[0];
+
   const [isOpen, setIsOpen] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -34,6 +49,7 @@ export const PromoBannerPopup: React.FC<PromoBannerPopupProps> = ({
 
   const isEnabled = settings?.campaign_popup_enabled ?? true;
   const isActive = settings?.campaign_is_active ?? true;
+  const hasActiveOffer = Boolean(activePromo || settings?.vip_promo_code);
 
   const image = settings?.campaign_banner_image ||
     '/promos/special-offer-banner.jpg';
@@ -41,16 +57,18 @@ export const PromoBannerPopup: React.FC<PromoBannerPopupProps> = ({
     "A little something for your collection";
   const tagline = settings?.campaign_tagline ||
     'Discover selected editions and collector favourites.';
-  const promoCode = (settings?.vip_promo_code || 'ZONE10')
+
+  const promoCode = (activePromo?.code || settings?.vip_promo_code || 'RAYAN10')
     .trim()
     .toUpperCase();
-  const discount = settings?.vip_promo_discount ?? 10;
-  const minSpend = settings?.vip_min_spend ?? 20;
-  const discountText = settings?.campaign_discount_text || 'Special offer';
-  const endsAt = settings?.campaign_ends_at || settings?.deal_ends_at;
+  const discount = activePromo ? activePromo.value : (settings?.vip_promo_discount ?? 10);
+  const minSpend = activePromo ? activePromo.minimum_order : (settings?.vip_min_spend ?? 15);
+  const promoType = activePromo?.type || 'percentage';
+  const discountText = settings?.campaign_discount_text || (promoType === 'fixed_amount' ? `${formatGBP(discount)} OFF` : `${discount}% OFF`);
+  const endsAt = activePromo?.ends_at || settings?.campaign_ends_at || settings?.deal_ends_at;
 
   useEffect(() => {
-    if (!isEnabled || !isActive) {
+    if (!isEnabled || !isActive || !hasActiveOffer) {
       setIsOpen(false);
       return;
     }
@@ -143,7 +161,7 @@ export const PromoBannerPopup: React.FC<PromoBannerPopupProps> = ({
     navigate('/shop?filter=sale');
   };
 
-  if (!isEnabled || !isActive) return null;
+  if (!isEnabled || !isActive || !hasActiveOffer) return null;
 
   return (
     <>
@@ -223,7 +241,9 @@ export const PromoBannerPopup: React.FC<PromoBannerPopupProps> = ({
                     {promoCode}
                   </p>
                   <p className="mt-1 text-xs text-[#69717d]">
-                    {discount}% off orders over {formatGBP(minSpend)}
+                    {promoType === 'fixed_amount'
+                      ? `${formatGBP(discount)} off orders ${minSpend > 0 ? `over ${formatGBP(minSpend)}` : 'with no minimum spend'}`
+                      : `${discount}% off orders ${minSpend > 0 ? `over ${formatGBP(minSpend)}` : 'with no minimum spend'}`}
                   </p>
                 </div>
 

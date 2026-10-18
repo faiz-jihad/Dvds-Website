@@ -129,9 +129,9 @@ export const OnSiteStripePayment = forwardRef<
     };
   }, [pubKey]);
 
-  // 2. Mount Card Element whenever cardContainerRef is present in DOM
+  // 2. Mount Card Element ONLY when method === 'card' and cardContainerRef is present in DOM
   useEffect(() => {
-    if (!stripe || !elements || !cardContainerRef.current) {
+    if (!stripe || !elements || !cardContainerRef.current || method !== "card") {
       return;
     }
 
@@ -492,32 +492,33 @@ export const OnSiteStripePayment = forwardRef<
             )}
           </button>
         ) : (
-          <div className="space-y-3">
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] p-4 shadow-2xs">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                  <CreditCard size={14} className="text-brand-blue" />
-                  <span>Google Pay &amp; Card credentials</span>
-                </span>
-                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded">
-                  256-bit SSL
-                </span>
-              </div>
-              <div
-                ref={cardContainerRef}
-                id="stripe-on-site-card-element"
-                className="p-3.5 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50/60 dark:bg-black/20 focus-within:border-brand-blue focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/40 transition-all"
-              />
-              <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mt-2 px-0.5">
-                <span className="flex items-center gap-1">
-                  <Lock size={11} className="text-emerald-500" />
-                  <span>Direct on-site 256-bit encryption (No redirects)</span>
-                </span>
-                <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">
-                  Powered by Stripe
-                </span>
-              </div>
+          <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50/70 dark:bg-white/[0.03] p-4 text-xs space-y-2.5">
+            <div className="flex items-center gap-2 text-dark dark:text-white font-semibold">
+              <span className="flex items-center gap-1 font-bold">
+                <span className="text-[#4285F4]">G</span>
+                <span className="text-[#EA4335]">o</span>
+                <span className="text-[#FBBC05]">o</span>
+                <span className="text-[#4285F4]">g</span>
+                <span className="text-[#34A853]">l</span>
+                <span className="text-[#EA4335]">e</span>
+                <span className="ml-0.5">Pay</span>
+              </span>
+              <span className="text-gray-400">•</span>
+              <span className="text-gray-600 dark:text-gray-300">Device Wallet</span>
             </div>
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-[11px]">
+              Google Pay is available automatically through the <strong>Express Checkout</strong> section at the top of the page when using Google Chrome or Android with a card in your Google Account.
+            </p>
+            {onSwitchMethod && (
+              <button
+                type="button"
+                onClick={() => onSwitchMethod("card")}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-blue text-white text-xs font-semibold hover:bg-blue-600 transition cursor-pointer mt-1"
+              >
+                <CreditCard size={13} />
+                <span>Pay with Card instead</span>
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -550,42 +551,24 @@ export const OnSiteStripePayment = forwardRef<
             )}
           </button>
         ) : (
-          <div className="space-y-3">
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 text-blue-900 dark:text-blue-300 text-xs">
-              <Smartphone size={16} className="text-brand-blue shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">Apple Pay (Safari on iPhone, iPad &amp; Mac)</p>
-                <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
-                  Apple Pay authenticates instantly with Face ID / Touch ID on Apple devices. On this browser, you can enter your card credentials directly below with on-site encryption (no redirects):
-                </p>
-              </div>
+          <div className="rounded-xl border border-blue-200/70 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20 p-4 text-xs space-y-2.5">
+            <div className="flex items-center gap-2 text-blue-900 dark:text-blue-300 font-semibold">
+              <Smartphone size={16} className="text-brand-blue shrink-0" />
+              <span>Apple Pay requires an Apple device (Safari on iPhone, iPad &amp; Mac)</span>
             </div>
-
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] p-4 shadow-2xs">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                  <CreditCard size={14} className="text-brand-blue" />
-                  <span>Card credentials (Instant on-site payment)</span>
-                </span>
-                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded">
-                  256-bit SSL
-                </span>
-              </div>
-              <div
-                ref={cardContainerRef}
-                id="stripe-on-site-card-element"
-                className="p-3.5 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50/60 dark:bg-black/20 focus-within:border-brand-blue focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/40 transition-all"
-              />
-              <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mt-2 px-0.5">
-                <span className="flex items-center gap-1">
-                  <Lock size={11} className="text-emerald-500" />
-                  <span>Direct on-site 256-bit encryption (No redirects)</span>
-                </span>
-                <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">
-                  Powered by Stripe
-                </span>
-              </div>
-            </div>
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-[11px]">
+              Biometric Touch ID / Face ID verification is not supported on this Windows PC or non-Apple browser. To complete your order on this device, please select <strong>Visa, Mastercard &amp; Debit Card</strong> below.
+            </p>
+            {onSwitchMethod && (
+              <button
+                type="button"
+                onClick={() => onSwitchMethod("card")}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-blue text-white text-xs font-semibold hover:bg-blue-600 transition cursor-pointer mt-1"
+              >
+                <CreditCard size={13} />
+                <span>Pay with Debit/Credit Card instead</span>
+              </button>
+            )}
           </div>
         )}
       </div>

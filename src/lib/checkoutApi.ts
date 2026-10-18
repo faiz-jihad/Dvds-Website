@@ -104,12 +104,15 @@ async function fallbackClientQuote(input: Pick<CheckoutInput, 'items' | 'deliver
 
   let discount_amount = 0;
   if (promoData && promoData.is_active) {
-    if (promoData.type === 'percentage') {
-      discount_amount = Number(((subtotal * Number(promoData.value)) / 100).toFixed(2));
-    } else {
-      discount_amount = Number(Number(promoData.value).toFixed(2));
+    const minOrder = Number(promoData.minimum_order ?? 0);
+    if (subtotal >= minOrder) {
+      if (promoData.type === 'percentage') {
+        discount_amount = Number(((subtotal * Number(promoData.value)) / 100).toFixed(2));
+      } else {
+        discount_amount = Number(Number(promoData.value).toFixed(2));
+      }
+      discount_amount = Math.min(subtotal, discount_amount);
     }
-    discount_amount = Math.min(subtotal, discount_amount);
   }
 
   const shipping_amount = input.deliveryTier === 'express' ? expFee : standardFee;

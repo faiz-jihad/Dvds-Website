@@ -8,9 +8,33 @@ import { DEFAULT_STORE_SETTINGS } from "../data/defaultStoreSettings";
 import { DEFAULT_PRODUCTS } from "../data/defaultProducts";
 
 const FALLBACK_CATEGORIES: Category[] = [
-  { id: 'c-tv-box-sets', name: 'TV Box Sets', slug: 'tv-box-sets', description: 'Complete TV seasons & Box Sets', image_url: '/catalog/the-mandalorian-seasons-1-3.jpeg', is_active: true, sort_order: 1 },
-  { id: 'c-film', name: 'Film & Cinema', slug: 'film', description: 'Feature films and classic movies', image_url: '/catalog/greyhound.jpeg', is_active: true, sort_order: 2 },
-  { id: 'c-doc', name: 'Documentary & Music', slug: 'documentary-music', description: 'Documentary and concert films', image_url: '/catalog/the-beatles-get-back.jpeg', is_active: true, sort_order: 3 },
+  {
+    id: "c-tv-box-sets",
+    name: "TV Box Sets",
+    slug: "tv-box-sets",
+    description: "Complete TV seasons & Box Sets",
+    image_url: "/catalog/the-mandalorian-seasons-1-3.jpeg",
+    is_active: true,
+    sort_order: 1,
+  },
+  {
+    id: "c-film",
+    name: "Film & Cinema",
+    slug: "film",
+    description: "Feature films and classic movies",
+    image_url: "/catalog/greyhound.jpeg",
+    is_active: true,
+    sort_order: 2,
+  },
+  {
+    id: "c-doc",
+    name: "Documentary & Music",
+    slug: "documentary-music",
+    description: "Documentary and concert films",
+    image_url: "/catalog/the-beatles-get-back.jpeg",
+    is_active: true,
+    sort_order: 3,
+  },
 ];
 
 export const Home: React.FC = () => {
@@ -39,23 +63,34 @@ export const Home: React.FC = () => {
     refetchOnWindowFocus: true,
   });
 
-  const products = (productsQuery.data && productsQuery.data.length > 0)
-    ? productsQuery.data
-    : DEFAULT_PRODUCTS;
-  const categories = (categoriesQuery.data && categoriesQuery.data.length > 0)
-    ? categoriesQuery.data
-    : FALLBACK_CATEGORIES;
+  const products =
+    productsQuery.data && productsQuery.data.length > 0
+      ? productsQuery.data
+      : DEFAULT_PRODUCTS;
+  const categories =
+    categoriesQuery.data && categoriesQuery.data.length > 0
+      ? categoriesQuery.data
+      : FALLBACK_CATEGORIES;
   const genres = genresQuery.data || [];
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
 
   return (
     <>
       <Seo
-        title={settings.seo_site_title || `${settings.store_name || "DVDs Zone"} — Quality DVDs, TV Box Sets & Cinema Entertainment | Free UK Delivery`}
-        description={settings.seo_site_description || "Quality DVDs, TV box sets, and physical entertainment releases. Free UK standard delivery on all orders. Same-day dispatch. Fast 2 working days delivery via Royal Mail."}
+        title={
+          settings.seo_site_title ||
+          `${settings.store_name || "DVDs Zone"} — Quality DVDs, TV Box Sets & Cinema Entertainment | Free UK Delivery`
+        }
+        description={
+          settings.seo_site_description ||
+          "Quality DVDs, TV box sets, and physical entertainment releases. Free UK standard delivery on all orders. Same-day dispatch. Fast 2 working days delivery via Royal Mail."
+        }
         keywords="buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs, DVDs Zone"
         canonicalPath="/"
-        image={settings.seo_social_image_url || "/catalog/the-mandalorian-seasons-1-3.jpeg"}
+        image={
+          settings.seo_social_image_url ||
+          "/catalog/the-mandalorian-seasons-1-3.jpeg"
+        }
         siteName={settings.store_name || "DVDs Zone"}
         jsonLd={[
           {
@@ -67,17 +102,18 @@ export const Home: React.FC = () => {
               "@type": "SearchAction",
               target: {
                 "@type": "EntryPoint",
-                urlTemplate: toAbsoluteUrl("/search?q={search_term_string}")
+                urlTemplate: toAbsoluteUrl("/search?q={search_term_string}"),
               },
-              "query-input": "required name=search_term_string"
-            }
+              "query-input": "required name=search_term_string",
+            },
           },
           {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
             name: `${settings.store_name || "DVDs Zone"} — Quality DVDs & Entertainment Catalogue`,
             description:
-              settings.seo_site_description || "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",
+              settings.seo_site_description ||
+              "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",
             url: toAbsoluteUrl("/"),
             mainEntity: {
               "@type": "ItemList",
@@ -89,7 +125,7 @@ export const Home: React.FC = () => {
                 image: toAbsoluteUrl(prod.cover_image_url),
               })),
             },
-          }
+          },
         ]}
       />
       <AzDarkLandingLayout

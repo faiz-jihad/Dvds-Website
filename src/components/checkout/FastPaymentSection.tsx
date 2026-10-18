@@ -133,6 +133,17 @@ export const FastPaymentSection: React.FC<FastPaymentSectionProps> = ({
             applePay: isDark ? "white" : "black",
             googlePay: isDark ? "white" : "black",
           },
+          buttonType: {
+            applePay: "check-out",
+            googlePay: "checkout",
+          },
+          paymentMethods: {
+            link: "never",
+            applePay: "auto",
+            googlePay: "auto",
+            amazonPay: "auto",
+            paypal: "auto",
+          },
         });
 
         element.on("availablepaymentmethodschange", (event) => {

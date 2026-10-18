@@ -29,8 +29,29 @@ type PromoFilterStatus = 'all' | 'active' | 'paused' | 'expired';
 export const AdminPromotions: React.FC = () => {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ['admin', 'promotions'], queryFn: () => adminApi.getPromotions() });
+  const settingsQuery = useQuery({ queryKey: ['admin', 'settings'], queryFn: () => adminApi.getStoreSettings() });
   const promotions = query.data || [];
   const addToast = useUiStore((state) => state.addToast);
+
+  const activePopupCode = (settingsQuery.data?.vip_promo_code || '').trim().toUpperCase();
+
+  const handleSetAsPopupOffer = async (promo: Promotion) => {
+    try {
+      const updated = await adminApi.updateStoreSettings({
+        vip_promo_code: promo.code.trim().toUpperCase(),
+        vip_promo_discount: promo.value,
+        vip_min_spend: promo.minimum_order,
+      });
+      queryClient.setQueryData(['admin', 'settings'], updated);
+      queryClient.setQueryData(['store', 'settings'], updated);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
+      queryClient.invalidateQueries({ queryKey: ['store', 'settings'] });
+      queryClient.invalidateQueries({ queryKey: ['store', 'active-promotions'] });
+      addToast(`Promo "${promo.code}" sekarang aktif di pop-up banner pengunjung!`, 'success');
+    } catch (err: any) {
+      addToast(err?.message || 'Gagal mengatur kupon pop-up banner', 'error');
+    }
+  };
 
   // Search and Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -339,18 +360,34 @@ export const AdminPromotions: React.FC = () => {
                   return (
                     <tr key={promotion.id} className="hover:bg-slate-50/70 dark:hover:bg-white/5 transition-colors">
                       <td className="p-3.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-extrabold text-brand-blue bg-blue-50 dark:bg-blue-950/40 px-2 py-1 rounded border border-blue-200/80 dark:border-blue-900/50">
-                            {promotion.code}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => copyCode(promotion.code)}
-                            className="text-gray-400 hover:text-dark dark:hover:text-white transition-colors p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
-                            title="Copy code to clipboard"
-                          >
-                            <Copy size={13} />
-                          </button>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-extrabold text-brand-blue bg-blue-50 dark:bg-blue-950/40 px-2 py-1 rounded border border-blue-200/80 dark:border-blue-900/50">
+                              {promotion.code}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => copyCode(promotion.code)}
+                              className="text-gray-400 hover:text-dark dark:hover:text-white transition-colors p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
+                              title="Copy code to clipboard"
+                            >
+                              <Copy size={13} />
+                            </button>
+                          </div>
+                          {activePopupCode === promotion.code.toUpperCase() ? (
+                            <span className="inline-flex items-center gap-1 w-fit rounded-full px-2 py-0.5 text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-900/50">
+                              ★ Pop-up Offer Aktif
+                            </span>
+                          ) : promotion.is_active && !isExpired ? (
+                            <button
+                              type="button"
+                              onClick={() => handleSetAsPopupOffer(promotion)}
+                              className="text-[10px] text-gray-500 hover:text-brand-blue font-medium underline text-left w-fit cursor-pointer"
+                              title="Tampilkan kupon ini di pop-up banner pengunjung"
+                            >
+                              + Pasang ke Pop-up
+                            </button>
+                          ) : null}
                         </div>
                       </td>
 

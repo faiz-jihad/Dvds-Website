@@ -49,6 +49,7 @@ import { formatGBP } from '../../lib/formatters';
 import { AdminDataState } from '../../components/admin/AdminDataState';
 import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
 import { ExclusiveCampaignBanner } from '../../components/shop/ExclusiveCampaignBanner';
+import { Link } from 'react-router-dom';
 
 const toDateTimeLocalValue = (isoString?: string | null): string => {
   if (!isoString) return '';
@@ -172,6 +173,8 @@ export const AdminStoreSettings: React.FC = () => {
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({ queryKey: ['admin', 'settings'], queryFn: () => adminApi.getStoreSettings() });
   const productsQuery = useQuery({ queryKey: ['admin', 'products'], queryFn: () => adminApi.getProducts() });
+  const promotionsQuery = useQuery({ queryKey: ['admin', 'promotions'], queryFn: () => adminApi.getPromotions() });
+  const promotions = promotionsQuery.data || [];
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const dirty = useRef(false);
   const products = productsQuery.data || [];
@@ -1840,35 +1843,79 @@ export const AdminStoreSettings: React.FC = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <Input
-                  label="Offer / Promo Code"
-                  value={settings.vip_promo_code || ''}
-                  onChange={(e) => handleChange('vip_promo_code', e.target.value.toUpperCase())}
-                  placeholder="VIP999"
-                  helperText="The voucher code visitors copy and enter at checkout."
-                />
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <label className="block text-xs font-semibold text-gray-700">
+                    Pilih Kupon Promo untuk Pop-up Penawaran (Terhubung dari Menu Promotions)
+                  </label>
+                  <Link
+                    to="/admin/promotions"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-brand-blue hover:underline"
+                  >
+                    Kelola Semua Promo di Admin &gt; Promotions &rarr;
+                  </Link>
+                </div>
 
-                <Input
-                  label="Discount Percentage (%)"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={settings.vip_promo_discount ?? 10}
-                  onChange={(e) => handleChange('vip_promo_discount', Math.max(0, Math.min(100, Number(e.target.value))))}
-                  helperText="Percentage reduction applied to cart subtotal."
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <div className="sm:col-span-2">
+                    <select
+                      value={settings.vip_promo_code || ''}
+                      onChange={(e) => {
+                        const val = e.target.value.toUpperCase();
+                        handleChange('vip_promo_code', val);
+                        const matched = promotions.find((p) => p.code.toUpperCase() === val);
+                        if (matched) {
+                          handleChange('vip_promo_discount', matched.value);
+                          handleChange('vip_min_spend', matched.minimum_order);
+                        }
+                      }}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-dark shadow-2xs focus:border-brand-blue focus:outline-hidden"
+                    >
+                      <option value="">-- Pilih Promo dari Menu Promotions --</option>
+                      {promotions.map((p) => (
+                        <option key={p.id} value={p.code}>
+                          {p.code} — {p.type === 'fixed_amount' ? formatGBP(p.value) : `${p.value}%`} OFF • Min {formatGBP(p.minimum_order)} {p.is_active ? '(Aktif)' : '(Dijeda)'}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-gray-500 mt-1.5">
+                      Kupon ini otomatis terhubung 1 pintu dengan menu <strong>Promotions</strong>. Pengunjung yang menyalin kode ini saat checkout akan langsung tervalidasi.
+                    </p>
+                  </div>
 
-                <Input
-                  label="Minimum Order Spend (£)"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={settings.vip_min_spend ?? 15}
-                  onChange={(e) => handleChange('vip_min_spend', Math.max(0, Number(e.target.value)))}
-                  helperText="Minimum subtotal required to activate code."
-                />
+                  <div>
+                    <Input
+                      label="Kode Kupon Aktif"
+                      value={settings.vip_promo_code || ''}
+                      onChange={(e) => {
+                        const val = e.target.value.toUpperCase();
+                        handleChange('vip_promo_code', val);
+                        const matched = promotions.find((p) => p.code.toUpperCase() === val);
+                        if (matched) {
+                          handleChange('vip_promo_discount', matched.value);
+                          handleChange('vip_min_spend', matched.minimum_order);
+                        }
+                      }}
+                      placeholder="Misal: RAYAN10"
+                      helperText="Kode kupon yang disalin oleh pengunjung."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/80 rounded-lg p-3.5 border border-gray-200/80">
+                  <div className="text-xs">
+                    <span className="text-gray-500 block">Besaran Diskon:</span>
+                    <span className="font-bold text-dark text-sm">
+                      {settings.vip_promo_discount ?? 10}%
+                    </span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-gray-500 block">Minimal Belanja:</span>
+                    <span className="font-bold text-dark text-sm">
+                      {formatGBP(settings.vip_min_spend ?? 15)}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Exact Live Visual Box Preview matching the visitor pop-up */}
@@ -1882,7 +1929,7 @@ export const AdminStoreSettings: React.FC = () => {
                       Your offer code
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold tracking-wider text-dark">
-                      {settings.vip_promo_code || 'VIP999'}
+                      {settings.vip_promo_code || 'RAYAN10'}
                     </p>
                     <p className="mt-1 text-xs text-[#69717d]">
                       {settings.vip_promo_discount ?? 10}% off orders over {formatGBP(settings.vip_min_spend ?? 15)}

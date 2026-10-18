@@ -124,6 +124,33 @@ export const publicApi = {
     return data || [];
   },
 
+  async getActivePromotions(): Promise<Promotion[]> {
+    const sb = client();
+    if (!sb) {
+      return [
+        {
+          id: '11111111-1111-1111-1111-111111111111',
+          code: 'RAYAN10',
+          type: 'percentage',
+          value: 10,
+          minimum_order: 15,
+          is_active: true,
+        },
+      ];
+    }
+    const { data, error } = await sb
+      .from('promotions')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+    if (error) return [];
+    return (data || []).map((row: any) => ({
+      ...row,
+      value: Number(row.value),
+      minimum_order: Number(row.minimum_order),
+    }));
+  },
+
   async getStoreSettings(): Promise<StoreSettings> {
     const sb = client();
     if (!sb) return { ...DEFAULT_STORE_SETTINGS };
