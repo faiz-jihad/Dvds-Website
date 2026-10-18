@@ -22,7 +22,9 @@ export const StoreDataState: React.FC<{
   if (!error) return null;
 
   const errorMessage = error instanceof Error ? error.message : 'Please try again shortly.';
+  const isProtectedRoute = location.pathname.startsWith('/account') || location.pathname.startsWith('/admin');
   const isAuthError =
+    isProtectedRoute &&
     typeof errorMessage === 'string' &&
     (errorMessage.toLowerCase().includes('sign in') ||
       errorMessage.toLowerCase().includes('authenticated') ||

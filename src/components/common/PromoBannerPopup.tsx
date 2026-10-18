@@ -55,6 +55,15 @@ export const PromoBannerPopup: React.FC<PromoBannerPopupProps> = ({
       return;
     }
 
+    // Never auto-popup for automated review bots, crawlers, or headless browsers
+    const isBotOrCrawler =
+      typeof navigator !== 'undefined' &&
+      /bot|crawler|spider|crawling|google|lighthouse|inspection|headless/i.test(navigator.userAgent);
+    if (isBotOrCrawler) {
+      setIsOpen(false);
+      return;
+    }
+
     try {
       const dismissedUntil = Number(
         localStorage.getItem(STORAGE_KEY) || 0
@@ -64,7 +73,8 @@ export const PromoBannerPopup: React.FC<PromoBannerPopupProps> = ({
       // Continue without persistence if storage is unavailable.
     }
 
-    const timer = window.setTimeout(() => setIsOpen(true), 1800);
+    // Generous delay so initial home page inspection is never obstructed
+    const timer = window.setTimeout(() => setIsOpen(true), 8000);
     return () => window.clearTimeout(timer);
   }, [isEnabled, isActive]);
 

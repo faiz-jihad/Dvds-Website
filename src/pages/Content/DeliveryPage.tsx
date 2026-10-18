@@ -16,24 +16,14 @@ import {
 } from 'lucide-react';
 import { publicApi } from '../../lib/publicApi';
 import { formatGBP } from '../../lib/formatters';
-import { StoreDataState } from '../../components/common/StoreDataState';
+import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
 import { Seo, toAbsoluteUrl } from '../../components/common/Seo';
 
 export const DeliveryPage: React.FC = () => {
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: () => publicApi.getStoreSettings() });
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  if (settingsQuery.isLoading || settingsQuery.error || !settingsQuery.data) {
-    return (
-      <StoreDataState
-        loading={settingsQuery.isLoading}
-        error={settingsQuery.error || (!settingsQuery.data ? new Error('Delivery information is currently unavailable.') : null)}
-        retry={() => settingsQuery.refetch()}
-      />
-    );
-  }
-
-  const settings = settingsQuery.data;
+  const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
 
   const faqs = [
     {

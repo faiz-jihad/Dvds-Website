@@ -3,19 +3,19 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Disc, Shield, Film, Award, Truck, Mail, Phone, MapPin } from 'lucide-react';
 import { Button } from '../../components/common/Button';
-import { StoreDataState } from '../../components/common/StoreDataState';
 import { publicApi } from '../../lib/publicApi';
 import { Seo, toAbsoluteUrl } from '../../components/common/Seo';
+import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
 
 export const AboutPage: React.FC = () => {
-  const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: publicApi.getStoreSettings });
+  const settingsQuery = useQuery({
+    queryKey: ['store', 'settings'],
+    queryFn: publicApi.getStoreSettings,
+    staleTime: 60_000,
+  });
 
-  if (settingsQuery.isLoading || settingsQuery.error || !settingsQuery.data) {
-    return <StoreDataState loading={settingsQuery.isLoading} error={settingsQuery.error || (!settingsQuery.data ? new Error('Company information is unavailable.') : null)} retry={() => settingsQuery.refetch()} />;
-  }
-
-  const settings = settingsQuery.data;
-  const storeName = settings.store_name || 'DVD ZONE';
+  const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
+  const storeName = settings.store_name || 'DVDs Zone';
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-16 transition-colors">

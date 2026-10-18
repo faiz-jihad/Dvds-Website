@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
 import { publicApi } from '../../lib/publicApi';
 import { formatGBP } from '../../lib/formatters';
-import { StoreDataState } from '../../components/common/StoreDataState';
+import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
 import { Seo } from '../../components/common/Seo';
 
 const createFaqs = (freeShippingThreshold: number, dispatchCutoff: string, standardService: string) => [
@@ -32,10 +32,8 @@ const createFaqs = (freeShippingThreshold: number, dispatchCutoff: string, stand
 export const FaqPage: React.FC = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: () => publicApi.getStoreSettings() });
-  if (settingsQuery.isLoading || settingsQuery.error || !settingsQuery.data) {
-    return <StoreDataState loading={settingsQuery.isLoading} error={settingsQuery.error || (!settingsQuery.data ? new Error('Store information is unavailable.') : null)} retry={() => settingsQuery.refetch()} />;
-  }
-  const faqs = createFaqs(settingsQuery.data.free_shipping_threshold, settingsQuery.data.dispatch_cutoff_time, settingsQuery.data.standard_shipping_name);
+  const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
+  const faqs = createFaqs(settings.free_shipping_threshold, settings.dispatch_cutoff_time, settings.standard_shipping_name);
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] min-h-screen py-8 sm:py-16 text-dark dark:text-white transition-colors">

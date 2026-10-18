@@ -9,6 +9,7 @@ import { AzMovieShelfRow } from './AzMovieShelfRow';
 import { AzDvdMovieCard } from './AzDvdMovieCard';
 import { AzCuratedCollectionBanner } from './AzCuratedCollectionBanner';
 import { AzDirectorSpotlightBanner } from './AzDirectorSpotlightBanner';
+import { AzAppPurposeSection } from './AzAppPurposeSection';
 import { cn } from '../../lib/formatters';
 
 interface AzDarkLandingLayoutProps {
@@ -272,6 +273,9 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
             )}
           </div>
         )}
+
+        {/* ── Official Store Transparency, Identity & Google OAuth Purpose Section ── */}
+        <AzAppPurposeSection settings={settings} />
       </main>
     </div>
   );

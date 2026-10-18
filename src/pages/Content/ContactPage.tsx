@@ -6,7 +6,7 @@ import { Input } from '../../components/common/Input';
 import { useUiStore } from '../../stores/useUiStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { publicApi } from '../../lib/publicApi';
-import { StoreDataState } from '../../components/common/StoreDataState';
+import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
 import { Seo, toAbsoluteUrl } from '../../components/common/Seo';
 
 export const ContactPage: React.FC = () => {
@@ -130,11 +130,8 @@ export const ContactPage: React.FC = () => {
     } finally { setSubmitting(false); }
   };
 
-  if (settingsQuery.isLoading || settingsQuery.error || !settingsQuery.data) {
-    return <StoreDataState loading={settingsQuery.isLoading} error={settingsQuery.error || (!settingsQuery.data ? new Error('Contact details are unavailable.') : null)} retry={() => settingsQuery.refetch()} />;
-  }
-  const settings = settingsQuery.data;
-  const storeName = settings.store_name || 'DVD ZONE';
+  const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
+  const storeName = settings.store_name || 'DVDs Zone';
   const contactEmail = settings.support_email || 'azrayanltd@gmail.com';
   const contactPhone = settings.support_phone || '';
 

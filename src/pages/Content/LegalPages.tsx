@@ -1,9 +1,9 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { StoreDataState } from '../../components/common/StoreDataState';
 import { publicApi } from '../../lib/publicApi';
 import { StoreSettings } from '../../types';
 import { Seo } from '../../components/common/Seo';
+import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
 
 interface LegalPageProps {
   title: string;
@@ -13,13 +13,13 @@ interface LegalPageProps {
 }
 
 const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath, children }) => {
-  const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: publicApi.getStoreSettings });
+  const settingsQuery = useQuery({
+    queryKey: ['store', 'settings'],
+    queryFn: publicApi.getStoreSettings,
+    staleTime: 60_000,
+  });
 
-  if (settingsQuery.isLoading || settingsQuery.error || !settingsQuery.data) {
-    return <StoreDataState loading={settingsQuery.isLoading} error={settingsQuery.error || (!settingsQuery.data ? new Error('Legal company information is unavailable.') : null)} retry={() => settingsQuery.refetch()} />;
-  }
-
-  const settings = settingsQuery.data;
+  const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] min-h-screen py-8 sm:py-16 text-dark dark:text-white transition-colors">

@@ -2,9 +2,16 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { publicApi } from "../lib/publicApi";
 import { Seo, toAbsoluteUrl } from "../components/common/Seo";
-import { StoreDataState } from "../components/common/StoreDataState";
 import { AzDarkLandingLayout } from "../components/landing/AzDarkLandingLayout";
+import { Category } from "../types";
 import { DEFAULT_STORE_SETTINGS } from "../data/defaultStoreSettings";
+import { DEFAULT_PRODUCTS } from "../data/defaultProducts";
+
+const FALLBACK_CATEGORIES: Category[] = [
+  { id: 'c-tv-box-sets', name: 'TV Box Sets', slug: 'tv-box-sets', description: 'Complete TV seasons & Box Sets', image_url: '/catalog/the-mandalorian-seasons-1-3.jpeg', is_active: true, sort_order: 1 },
+  { id: 'c-film', name: 'Film & Cinema', slug: 'film', description: 'Feature films and classic movies', image_url: '/catalog/greyhound.jpeg', is_active: true, sort_order: 2 },
+  { id: 'c-doc', name: 'Documentary & Music', slug: 'documentary-music', description: 'Documentary and concert films', image_url: '/catalog/the-beatles-get-back.jpeg', is_active: true, sort_order: 3 },
+];
 
 export const Home: React.FC = () => {
   const productsQuery = useQuery({
@@ -32,31 +39,12 @@ export const Home: React.FC = () => {
     refetchOnWindowFocus: true,
   });
 
-  const isLoading =
-    productsQuery.isLoading ||
-    categoriesQuery.isLoading ||
-    genresQuery.isLoading;
-  const error =
-    productsQuery.error || categoriesQuery.error || genresQuery.error;
-
-  if (isLoading || error) {
-    return (
-      <div className="min-h-[50vh] bg-[#07090E] flex items-center justify-center text-white">
-        <StoreDataState
-          loading={isLoading}
-          error={error || null}
-          retry={() => {
-            productsQuery.refetch();
-            categoriesQuery.refetch();
-            genresQuery.refetch();
-          }}
-        />
-      </div>
-    );
-  }
-
-  const products = productsQuery.data || [];
-  const categories = categoriesQuery.data || [];
+  const products = (productsQuery.data && productsQuery.data.length > 0)
+    ? productsQuery.data
+    : DEFAULT_PRODUCTS;
+  const categories = (categoriesQuery.data && categoriesQuery.data.length > 0)
+    ? categoriesQuery.data
+    : FALLBACK_CATEGORIES;
   const genres = genresQuery.data || [];
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
 
