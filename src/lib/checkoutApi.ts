@@ -63,8 +63,18 @@ async function fallbackClientQuote(input: Pick<CheckoutInput, 'items' | 'deliver
 
   let promoData: any = null;
   if (input.promoCode) {
-    const { data: p } = await supabase.from('promotions').select('*').eq('code', input.promoCode.trim().toUpperCase()).maybeSingle();
+    const cleanCode = input.promoCode.trim().toUpperCase();
+    const { data: p } = await supabase.from('promotions').select('*').eq('code', cleanCode).maybeSingle();
     promoData = p;
+    if (!promoData && settings?.vip_promo_code && cleanCode === settings.vip_promo_code.trim().toUpperCase()) {
+      promoData = {
+        code: cleanCode,
+        type: 'percentage',
+        value: Number(settings.vip_promo_discount ?? 10),
+        minimum_order: Number(settings.vip_min_spend ?? 0),
+        is_active: true,
+      };
+    }
   }
 
   const lines = input.items.map((item) => {

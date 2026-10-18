@@ -309,7 +309,16 @@ export async function quoteCheckout(db, input) {
     bank_payment_instructions: settings.bank_payment_instructions?.trim() || DEFAULT_BANK_SETTINGS.bank_payment_instructions,
   };
   const code = String(input.promoCode || '').trim().toUpperCase();
-  const promo = code ? check(await db.from('promotions').select('*').eq('code', code).maybeSingle()) : null;
+  let promo = code ? check(await db.from('promotions').select('*').eq('code', code).maybeSingle()) : null;
+  if (!promo && code && effectiveSettings.vip_promo_code && code === effectiveSettings.vip_promo_code.trim().toUpperCase()) {
+    promo = {
+      code,
+      type: 'percentage',
+      value: Number(effectiveSettings.vip_promo_discount ?? 10),
+      minimum_order: Number(effectiveSettings.vip_min_spend ?? 0),
+      is_active: true,
+    };
+  }
   const currency = String(input.currency || 'GBP').toUpperCase();
   const allowedCurrencies = Array.isArray(effectiveSettings.checkout_currencies) && effectiveSettings.checkout_currencies.length > 0
     ? Array.from(new Set(['GBP', 'EUR', 'USD', ...effectiveSettings.checkout_currencies]))

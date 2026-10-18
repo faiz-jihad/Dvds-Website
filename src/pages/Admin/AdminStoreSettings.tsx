@@ -36,6 +36,7 @@ import {
   Upload,
   ImageIcon,
   Loader2,
+  Copy,
 } from 'lucide-react';
 import { extractYouTubeVideoId } from '../../components/landing/AzCinematicHero';
 import { adminApi } from '../../lib/adminApi';
@@ -1823,7 +1824,7 @@ export const AdminStoreSettings: React.FC = () => {
               )}
             </div>
 
-            {/* VIP Promo Code Settings */}
+            {/* VIP Promo Code Settings & Visitor Popup Offer */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
               <div className="border-b border-gray-100 pb-3">
                 <div className="flex items-center gap-2">
@@ -1831,21 +1832,21 @@ export const AdminStoreSettings: React.FC = () => {
                     <Tag className="w-4 h-4" />
                   </span>
                   <h3 className="font-display font-bold text-sm text-dark">
-                    VIP Club Voucher &amp; Member Promo Code
+                    Promo Banner Pop-up &amp; VIP Offer Code
                   </h3>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Configure default VIP membership code, discount rate, and minimum spend eligibility.
+                  This controls the offer code shown on the visitor promotional banner pop-up and applies instantly at checkout.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <Input
-                  label="VIP Promo Code"
+                  label="Offer / Promo Code"
                   value={settings.vip_promo_code || ''}
                   onChange={(e) => handleChange('vip_promo_code', e.target.value.toUpperCase())}
-                  placeholder="ZONE10"
-                  helperText="Checkout voucher code for collectors club."
+                  placeholder="VIP999"
+                  helperText="The voucher code visitors copy and enter at checkout."
                 />
 
                 <Input
@@ -1864,10 +1865,34 @@ export const AdminStoreSettings: React.FC = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={settings.vip_min_spend ?? 20}
+                  value={settings.vip_min_spend ?? 15}
                   onChange={(e) => handleChange('vip_min_spend', Math.max(0, Number(e.target.value)))}
                   helperText="Minimum subtotal required to activate code."
                 />
+              </div>
+
+              {/* Exact Live Visual Box Preview matching the visitor pop-up */}
+              <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
+                  Live Pop-up Offer Badge Preview
+                </span>
+                <div className="flex items-center justify-between gap-3 border-y border-[#e8eaf0] bg-white rounded-lg p-4 shadow-2xs">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-[#79818c]">
+                      Your offer code
+                    </p>
+                    <p className="mt-1 font-mono text-lg font-bold tracking-wider text-dark">
+                      {settings.vip_promo_code || 'VIP999'}
+                    </p>
+                    <p className="mt-1 text-xs text-[#69717d]">
+                      {settings.vip_promo_discount ?? 10}% off orders over {formatGBP(settings.vip_min_spend ?? 15)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-lg border border-[#dfe3ea] px-3 py-1.5 text-xs font-medium text-gray-600 bg-[#fbfcfd]">
+                    <Copy size={13} />
+                    <span>Copy code</span>
+                  </div>
+                </div>
               </div>
             </div>
 
