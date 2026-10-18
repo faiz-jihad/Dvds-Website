@@ -140,6 +140,9 @@ export const publicApi = {
     let heroYoutubeEndMinutes = data.hero_youtube_end_minutes;
     let heroYoutubeEndSeconds = data.hero_youtube_end_seconds;
 
+    let campaignBannerImage = data.campaign_banner_image;
+    let campaignPopupEnabled = data.campaign_popup_enabled;
+
     if (data.hero_bg_image && data.hero_bg_image.startsWith('HERO_META:')) {
       try {
         const meta = JSON.parse(data.hero_bg_image.slice('HERO_META:'.length));
@@ -157,6 +160,8 @@ export const publicApi = {
         if (meta.hero_youtube_start_seconds !== undefined) heroYoutubeStartSeconds = meta.hero_youtube_start_seconds;
         if (meta.hero_youtube_end_minutes !== undefined) heroYoutubeEndMinutes = meta.hero_youtube_end_minutes;
         if (meta.hero_youtube_end_seconds !== undefined) heroYoutubeEndSeconds = meta.hero_youtube_end_seconds;
+        if (meta.campaign_banner_image !== undefined) campaignBannerImage = meta.campaign_banner_image;
+        if (meta.campaign_popup_enabled !== undefined) campaignPopupEnabled = meta.campaign_popup_enabled;
       } catch {}
     }
 
@@ -192,8 +197,8 @@ export const publicApi = {
       budget_collection_threshold: Number(data.budget_collection_threshold ?? 15),
       vip_promo_discount: Number(data.vip_promo_discount ?? 0),
       vip_min_spend: Number(data.vip_min_spend ?? 0),
-      campaign_banner_image: data.campaign_banner_image || DEFAULT_STORE_SETTINGS.campaign_banner_image || '/promos/special-offer-banner.jpg',
-      campaign_popup_enabled: data.campaign_popup_enabled ?? DEFAULT_STORE_SETTINGS.campaign_popup_enabled ?? true,
+      campaign_banner_image: campaignBannerImage || DEFAULT_STORE_SETTINGS.campaign_banner_image || '/promos/special-offer-banner.jpg',
+      campaign_popup_enabled: campaignPopupEnabled ?? DEFAULT_STORE_SETTINGS.campaign_popup_enabled ?? true,
     } as StoreSettings;
 
     // Strict privacy protection: clean jurisdiction to United Kingdom
