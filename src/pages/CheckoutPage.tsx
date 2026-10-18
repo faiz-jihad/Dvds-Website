@@ -59,34 +59,20 @@ const isAppleDevice =
   (/Macintosh|iPhone|iPad|iPod/.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
 
-const VisaCardIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
-  <div className="flex items-center gap-1.5 shrink-0">
+const CardWalletsBadge: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
+  <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
     <CreditCard size={18} className="text-gray-700 dark:text-gray-200" />
-    <span className="font-extrabold italic text-[11px] tracking-tight text-[#1A1F71] dark:text-[#5B7FFF] bg-blue-50 dark:bg-blue-900/40 px-1 py-0.2 rounded border border-blue-200/60 dark:border-blue-700/50">
+    <span className="font-black italic text-[10px] tracking-tight text-[#1A1F71] dark:text-[#5B7FFF] bg-blue-50 dark:bg-blue-900/40 px-1 py-0.2 rounded border border-blue-200/60 dark:border-blue-700/50">
       VISA
     </span>
+    <span className="flex items-center -space-x-1" title="Mastercard">
+      <span className="w-3.5 h-3.5 rounded-full bg-[#EB001B] inline-block opacity-90" />
+      <span className="w-3.5 h-3.5 rounded-full bg-[#F79E1B] inline-block opacity-90" />
+    </span>
+    <span className="font-extrabold text-[10px] tracking-tight text-[#006FCF] dark:text-[#2E90FA] bg-sky-50 dark:bg-sky-900/40 px-1 py-0.2 rounded border border-sky-200/60 dark:border-sky-700/50">
+      AMEX
+    </span>
   </div>
-);
-
-const ApplePayIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.56.64-.97 1.7-0.85 2.73 1 .08 1.94-.48 2.56-1.23z" />
-  </svg>
-);
-
-const GooglePayIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
-  <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
-    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-  </svg>
-);
-
-const AmazonPayIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-    <path fill="#FF9900" d="M14.7 15.8c-2.3 1.6-5.6 2.5-8.5 2.5-4 0-7.6-1.5-10.3-4.1-.3-.3-.3-.5 0-.8.5-.4 1.1-.8 1.8-1.2.3-.2.5-.1.7.1 2.2 2 5.2 3.3 8.4 3.3 2.3 0 4.9-.7 7-2.1.4-.3.8 0 .9.4.2.5.2 1.1-.1 1.9h.1zm2.7-1.7c-.3-.4-.6-.5-1-.5-.4 0-.9.3-1.1.5-2.2 2-5.1 3.2-8.3 3.2-3.6 0-6.8-1.4-9.2-3.7-.3-.3-.6-.3-.9 0l-1 1c-.3.3-.3.6 0 .9 2.9 2.8 6.8 4.5 11.1 4.5 3.7 0 7.2-1.4 9.7-3.8.4-.3.4-.8 0-1.1l-.5-.5 1.2-1v.5zm9.6 6.1c-.4-.5-2.4-.3-3.3-.1-.3 0-.4-.3-.3-.4.8-1.1 2.4-4.3 2.2-4.7-.3-.3-3.3 1.3-4.6 1.9-.3.1-.4 0-.5-.1-.3-.6-1-2.3-1.5-2.8-.1-.3 0-.4.3-.5 3.4-1.1 7.9-1.5 8.3-1 .4.5-.1 5.7-.5 7.7 0 .3-.3.4-.5.2 0-.2.2-.1.4-.2z"/>
-  </svg>
 );
 
 const PaypalIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
@@ -96,53 +82,17 @@ const PaypalIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" })
   </svg>
 );
 
-const ApplePayBadge: React.FC<{ className?: string }> = ({ className = "h-5" }) => (
-  <div className="flex items-center gap-1 bg-black text-white px-2 py-0.5 rounded font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
-    <ApplePayIcon className="w-3.5 h-3.5 fill-white" />
-    <span>Pay</span>
-  </div>
-);
-
-const AmazonPayBadge: React.FC<{ className?: string }> = ({ className = "h-5" }) => (
-  <div className="flex items-center gap-1 bg-[#232F3E] text-white px-2 py-0.5 rounded font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
-    <span className="text-white font-black">amazon</span>
-    <span className="text-[#FF9900] font-black">pay</span>
-  </div>
-);
-
 const methods = [
   {
     id: "card" as const,
     backendId: "card" as const,
-    name: "Visa, Mastercard & Debit Card",
-    icon: VisaCardIcon,
+    name: "Credit / Debit Card (Visa, Mastercard, Amex)",
+    icon: CardWalletsBadge,
     description:
-      "Pay securely with any Visa, Mastercard, American Express, or UK debit card.",
+      "Pay securely with Visa, Mastercard, American Express, or UK debit card via Stripe.",
     detail:
       "Enter your card details directly below for instant on-site payment with 256-bit bank-grade encryption (no redirects).",
-    badge: "Powered by Stripe",
-  },
-  {
-    id: "apple_pay" as const,
-    backendId: "card" as const,
-    name: "Apple Pay",
-    icon: ApplePayBadge,
-    description:
-      "Instant 1-touch checkout with Touch ID or Face ID via Stripe.",
-    detail:
-      "Pay instantly using cards stored in your Apple Wallet. Processed safely with biometric authentication via Stripe.",
-    badge: "Powered by Stripe",
-  },
-  {
-    id: "amazon_pay" as const,
-    backendId: "card" as const,
-    name: "Amazon Pay",
-    icon: AmazonPayBadge,
-    description:
-      "Use your Amazon account payment methods and addresses via Stripe.",
-    detail:
-      "Sign in to your Amazon account to complete payment securely without re-entering card details, processed via Stripe.",
-    badge: "Powered by Stripe",
+    badge: "Powered by Stripe (On-Site)",
   },
   {
     id: "paypal" as const,
@@ -220,7 +170,7 @@ export const CheckoutPage: React.FC = () => {
   const [method, setMethod] = useState<UiPaymentMethod>(
     () => {
       const saved = savedDraft?.method as UiPaymentMethod;
-      if (saved === "card" || saved === "apple_pay" || saved === "amazon_pay" || saved === "paypal") {
+      if (saved === "card" || saved === "paypal") {
         return saved;
       }
       return "card";
@@ -1760,13 +1710,9 @@ export const CheckoutPage: React.FC = () => {
                     ? "Updating total..."
                     : method === "card"
                       ? `Pay Now • ${quote ? displayPrice(quote.total_amount) : ""}`
-                      : method === "apple_pay"
-                        ? "Pay with Apple Pay"
-                        : method === "amazon_pay"
-                          ? "Pay with Amazon Pay"
-                          : method === "paypal"
-                            ? "Continue with PayPal"
-                            : "Continue to secure payment"}
+                      : method === "paypal"
+                        ? "Continue with PayPal"
+                        : "Continue to secure payment"}
               </span>
               <ArrowRight size={17} className="shrink-0" />
             </button>
@@ -1835,13 +1781,9 @@ export const CheckoutPage: React.FC = () => {
                 ? "Please wait..."
                 : quoteQuery.isFetching
                   ? "Updating..."
-                  : method === "apple_pay"
-                    ? "Pay with Apple Pay"
-                    : method === "amazon_pay"
-                      ? "Pay with Amazon Pay"
-                      : method === "paypal"
-                        ? "Pay with PayPal"
-                        : "Pay Now"}
+                  : method === "paypal"
+                    ? "Pay with PayPal"
+                    : "Pay Now"}
             </span>
             <ArrowRight size={15} className="shrink-0" />
           </button>
