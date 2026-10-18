@@ -116,6 +116,31 @@ if (fs.existsSync(distPath)) {
 let cachedIndexHtml = null;
 let lastIndexMtime = 0;
 
+// Standalone Legal Pages (Privacy Policy & Terms of Service for Google OAuth verification)
+app.get(['/privacy', '/privacy/'], (req, res, next) => {
+  const privacyPath = path.resolve(distPath, 'privacy/index.html');
+  const fallbackPath = path.resolve(__dirname, 'public/privacy/index.html');
+  if (fs.existsSync(privacyPath)) {
+    return res.sendFile(privacyPath);
+  }
+  if (fs.existsSync(fallbackPath)) {
+    return res.sendFile(fallbackPath);
+  }
+  next();
+});
+
+app.get(['/terms', '/terms/'], (req, res, next) => {
+  const termsPath = path.resolve(distPath, 'terms/index.html');
+  const fallbackPath = path.resolve(__dirname, 'public/terms/index.html');
+  if (fs.existsSync(termsPath)) {
+    return res.sendFile(termsPath);
+  }
+  if (fs.existsSync(fallbackPath)) {
+    return res.sendFile(fallbackPath);
+  }
+  next();
+});
+
 // SPA fallback: any non-API GET route serves index.html with dynamic SEO metadata injection
 app.use(async (req, res) => {
   if (req.method !== 'GET') {
