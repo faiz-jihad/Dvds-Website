@@ -14,6 +14,7 @@ import {
   MapPin,
   Plus,
   RefreshCw,
+  ShieldCheck,
   Truck,
   Wallet,
   X,
@@ -59,22 +60,6 @@ const isAppleDevice =
   (/Macintosh|iPhone|iPad|iPod/.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
 
-const CardWalletsBadge: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
-  <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-    <CreditCard size={18} className="text-gray-700 dark:text-gray-200" />
-    <span className="font-black italic text-[10px] tracking-tight text-[#1A1F71] dark:text-[#5B7FFF] bg-blue-50 dark:bg-blue-900/40 px-1 py-0.2 rounded border border-blue-200/60 dark:border-blue-700/50">
-      VISA
-    </span>
-    <span className="flex items-center -space-x-1" title="Mastercard">
-      <span className="w-3.5 h-3.5 rounded-full bg-[#EB001B] inline-block opacity-90" />
-      <span className="w-3.5 h-3.5 rounded-full bg-[#F79E1B] inline-block opacity-90" />
-    </span>
-    <span className="font-extrabold text-[10px] tracking-tight text-[#006FCF] dark:text-[#2E90FA] bg-sky-50 dark:bg-sky-900/40 px-1 py-0.2 rounded border border-sky-200/60 dark:border-sky-700/50">
-      AMEX
-    </span>
-  </div>
-);
-
 const PaypalIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
     <path fill="#003087" d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.789.789 0 0 1 .777-.665h6.634c3.15 0 5.485 1.34 5.992 4.238.455 2.603-.96 4.846-3.456 5.768-.13.048-.2.185-.164.321.41 1.547.012 3.018-1.127 3.821-1.18.831-2.98.831-4.872.831H7.81a.789.789 0 0 0-.734.723z"/>
@@ -82,31 +67,46 @@ const PaypalIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" })
   </svg>
 );
 
-const ApplePayBadge: React.FC<{ className?: string }> = () => (
-  <div className="flex items-center gap-1 bg-black text-white px-2 py-0.5 rounded font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 fill-white" aria-hidden="true">
-      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.56.64-.97 1.7-0.85 2.73 1 .08 1.94-.48 2.56-1.23z" />
-    </svg>
-    <span>Pay</span>
-  </div>
-);
-
-const GooglePayBadge: React.FC<{ className?: string }> = () => (
-  <div className="flex items-center gap-1 bg-white dark:bg-[#141A26] border border-gray-200 dark:border-white/10 px-2 py-0.5 rounded font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
-    <span className="font-extrabold flex items-center gap-0.5 text-xs">
-      <span className="text-[#4285F4]">G</span>
-      <span className="text-[#EA4335]">P</span>
-      <span className="text-[#FBBC05]">a</span>
-      <span className="text-[#34A853]">y</span>
+const CardWalletsBadge: React.FC = () => (
+  <div className="flex items-center gap-1.5 shrink-0" aria-label="Supported cards: Visa, Mastercard, American Express">
+    <span className="inline-flex items-center justify-center h-5 px-1.5 rounded bg-[#1A1F71] text-white font-black italic text-[9px] tracking-wider shadow-2xs">
+      VISA
+    </span>
+    <span className="inline-flex items-center justify-center h-5 px-1 rounded bg-[#252525] border border-white/10 shadow-2xs" title="Mastercard">
+      <span className="flex items-center -space-x-1.5">
+        <span className="w-3.5 h-3.5 rounded-full bg-[#EB001B] inline-block" />
+        <span className="w-3.5 h-3.5 rounded-full bg-[#F79E1B] inline-block opacity-90" />
+      </span>
+    </span>
+    <span className="inline-flex items-center justify-center h-5 px-1.5 rounded bg-[#006FCF] text-white font-black text-[9px] tracking-tight shadow-2xs">
+      AMEX
     </span>
   </div>
 );
 
-const AmazonPayBadge: React.FC<{ className?: string }> = () => (
-  <div className="flex items-center gap-1 bg-[#232F3E] text-white px-2 py-0.5 rounded font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
-    <span className="text-white font-black">amazon</span>
-    <span className="text-[#FF9900] font-black">pay</span>
-  </div>
+const ApplePayBadge: React.FC = () => (
+  <span className="inline-flex items-center gap-1 bg-black text-white px-2 py-0.5 rounded-md font-semibold text-[11px] tracking-tight shrink-0 shadow-2xs border border-white/10">
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 fill-white" aria-hidden="true">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.56.64-.97 1.7-0.85 2.73 1 .08 1.94-.48 2.56-1.23z" />
+    </svg>
+    <span>Pay</span>
+  </span>
+);
+
+const GooglePayBadge: React.FC = () => (
+  <span className="inline-flex items-center gap-0.5 bg-white dark:bg-[#1a2233] border border-gray-200 dark:border-white/10 px-2 py-0.5 rounded-md font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
+    <span className="text-[#4285F4]">G</span>
+    <span className="text-[#EA4335]">P</span>
+    <span className="text-[#FBBC05]">a</span>
+    <span className="text-[#34A853]">y</span>
+  </span>
+);
+
+const AmazonPayBadge: React.FC = () => (
+  <span className="inline-flex items-center gap-1 bg-[#232F3E] text-white px-2 py-0.5 rounded-md font-bold text-[11px] tracking-tight shrink-0 shadow-2xs border border-white/10">
+    <span className="text-white font-extrabold tracking-tight">amazon</span>
+    <span className="text-[#FF9900] font-extrabold tracking-tight">pay</span>
+  </span>
 );
 
 const methods = [
@@ -114,56 +114,86 @@ const methods = [
     id: "card" as const,
     backendId: "card" as const,
     name: "Visa, Mastercard & Debit Card",
-    icon: CardWalletsBadge,
-    description:
-      "Pay securely with any Visa, Mastercard, American Express, or UK debit card.",
-    detail:
-      "Enter your card details directly below for instant on-site payment with 256-bit bank-grade encryption (no redirects).",
-    badge: "Powered by Stripe",
+    description: "Pay securely with any Visa, Mastercard, American Express, or UK debit card.",
+    detail: "Enter your card details directly below for instant on-site payment with 256-bit bank-grade encryption (no redirects).",
+    tag: "Popular",
+    icon: () => (
+      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/40 flex items-center justify-center shrink-0 text-brand-blue dark:text-blue-400">
+        <CreditCard size={20} />
+      </div>
+    ),
+    badges: <CardWalletsBadge />,
   },
   {
     id: "apple_pay" as const,
     backendId: "card" as const,
     name: "Apple Pay",
-    icon: ApplePayBadge,
-    description:
-      "Instant checkout with Touch ID or Face ID directly on-site.",
-    detail:
-      "Pay instantly using cards stored in your Apple Wallet with biometric authentication (no redirects).",
-    badge: "Powered by Stripe",
+    description: "Instant checkout with Touch ID or Face ID directly on-site.",
+    detail: "Pay instantly using cards stored in your Apple Wallet with biometric authentication (no redirects).",
+    tag: isAppleDevice ? "Available on this device" : "1-Tap",
+    icon: () => (
+      <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center shrink-0 shadow-2xs border border-white/10">
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 fill-white" aria-hidden="true">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.56.64-.97 1.7-0.85 2.73 1 .08 1.94-.48 2.56-1.23z" />
+        </svg>
+      </div>
+    ),
+    badges: <ApplePayBadge />,
   },
   {
     id: "google_pay" as const,
     backendId: "card" as const,
     name: "Google Pay",
-    icon: GooglePayBadge,
-    description:
-      "Pay with cards saved to your Google Account.",
-    detail:
-      "Instant on-site authentication with Google Pay (no redirects).",
-    badge: "Powered by Stripe",
+    description: "Pay with cards saved to your Google Account.",
+    detail: "Instant on-site authentication with Google Pay (no redirects).",
+    tag: "Google Wallet",
+    icon: () => (
+      <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#1a2233] border border-gray-200 dark:border-white/10 flex items-center justify-center shrink-0 shadow-2xs">
+        <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+        </svg>
+      </div>
+    ),
+    badges: <GooglePayBadge />,
   },
   {
     id: "amazon_pay" as const,
     backendId: "card" as const,
     name: "Amazon Pay",
-    icon: AmazonPayBadge,
-    description:
-      "Use your Amazon account payment methods and addresses securely.",
-    detail:
-      "Sign in to complete payment securely without re-entering card details (no redirects).",
-    badge: "Powered by Stripe",
+    description: "Use your Amazon account payment methods and addresses securely.",
+    detail: "Sign in to complete payment securely without re-entering card details (no redirects).",
+    tag: "A-to-z Guarantee",
+    icon: () => (
+      <div className="w-10 h-10 rounded-xl bg-[#232F3E] text-white flex items-center justify-center shrink-0 shadow-2xs border border-white/10">
+        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+          <path fill="#FFFFFF" d="M13.9 14.5c-.3.4-.8.6-1.3.6-.8 0-1.4-.4-1.4-1.2 0-1.1 1-1.6 2.7-1.7v2.3zm2.5 3.2c-.2.2-.5.3-.8.2-.5-.3-1.1-.9-1.3-1.2-.8 1-1.8 1.4-3.1 1.4-1.8 0-3.3-1.1-3.3-3.1 0-1.8 1.3-3.1 3.2-3.3 1.4-.2 3.1-.3 3.1-1.3 0-.8-.7-1.3-1.9-1.3-1.1 0-1.7.4-1.9 1.4 0 .2-.2.4-.4.4l-1.9-.2c-.2 0-.3-.2-.3-.4.4-1.9 2-3 4.5-3 2.4 0 4.1 1.2 4.1 3.5v4.5c0 .9.4 1.3.7 1.8.2.2.2.5 0 .7l-1.6 1.1z"/>
+          <path fill="#FF9900" d="M21.8 17.5c-2.4 2.1-5.8 3.2-9.4 3.2-4.5 0-8.6-1.8-11.4-4.8-.2-.2-.2-.5 0-.7.3-.3.6-.3.8-.1 2.6 2.7 6.3 4.3 10.5 4.3 3.3 0 6.5-1 8.7-2.9.3-.3.7-.1.8.2.2.3.2.6 0 .8z"/>
+        </svg>
+      </div>
+    ),
+    badges: <AmazonPayBadge />,
   },
   {
     id: "paypal" as const,
     backendId: "paypal" as const,
     name: "PayPal",
-    icon: PaypalIcon,
-    description:
-      "Pay with your PayPal balance, linked bank account, or PayPal credit.",
-    detail:
-      "Continue to PayPal to approve your payment securely, then return to your order confirmation.",
-    badge: "PayPal checkout",
+    description: "Pay with your PayPal balance, linked bank account, or PayPal credit.",
+    detail: "Continue to PayPal to approve your payment securely, then return to your order confirmation.",
+    tag: "Pay in 3 Available",
+    icon: () => (
+      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#003087]/15 to-[#0079C1]/15 dark:from-[#003087]/30 dark:to-[#0079C1]/30 border border-[#003087]/20 dark:border-[#0079C1]/30 flex items-center justify-center shrink-0 shadow-2xs">
+        <PaypalIcon className="w-5 h-5" />
+      </div>
+    ),
+    badges: (
+      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#003087] dark:text-[#0079C1] bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-700/50">
+        <PaypalIcon className="w-3.5 h-3.5" />
+        <span>Checkout</span>
+      </span>
+    ),
   },
 ];
 
@@ -1459,7 +1489,7 @@ export const CheckoutPage: React.FC = () => {
               <div
                 role="radiogroup"
                 aria-label="Payment method"
-                className="space-y-2.5 sm:space-y-3 clear-both mt-1"
+                className="space-y-3 clear-both mt-1"
               >
                 {methods
                   .filter((option) => {
@@ -1480,14 +1510,22 @@ export const CheckoutPage: React.FC = () => {
                     <div
                       key={option.id}
                       className={cn(
-                        "rounded-xl border transition-all overflow-hidden text-left",
+                        "group relative rounded-2xl border transition-all duration-200 overflow-hidden text-left",
                         selected
-                          ? "border-brand-blue bg-blue-50/30 dark:bg-blue-950/25 ring-2 ring-brand-blue/40 shadow-xs"
+                          ? "border-blue-600 dark:border-blue-500 bg-white dark:bg-[#131A29] shadow-sm ring-1 ring-blue-600/20 dark:ring-blue-500/25"
                           : isAvailable
-                            ? "border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26]/60 hover:border-blue-300 dark:hover:border-blue-700/60"
+                            ? "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] hover:border-gray-300 dark:hover:border-white/20 hover:shadow-2xs"
                             : "border-gray-200/50 dark:border-white/5 bg-gray-50/50 dark:bg-white/5 opacity-50 cursor-not-allowed"
                       )}
                     >
+                      {/* Active Left Focus Bar */}
+                      <div
+                        className={cn(
+                          "absolute left-0 top-0 bottom-0 w-1 transition-all duration-200",
+                          selected ? "bg-blue-600 dark:bg-blue-500" : "bg-transparent"
+                        )}
+                      />
+
                       {/* Clickable Header Row */}
                       <div
                         onClick={() => {
@@ -1495,10 +1533,10 @@ export const CheckoutPage: React.FC = () => {
                             setMethod(option.id);
                           }
                         }}
-                        className="p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3.5 cursor-pointer select-none active:bg-gray-50/50 dark:active:bg-white/[0.02]"
+                        className="p-3.5 sm:p-4 pl-4 sm:pl-4.5 flex items-center gap-3 sm:gap-3.5 cursor-pointer select-none"
                       >
-                        {/* Native Radio Button */}
-                        <div className="pt-0.5 shrink-0">
+                        {/* Custom Tactile Radio Button */}
+                        <div className="shrink-0 flex items-center justify-center">
                           <input
                             id={`payment-opt-${option.id}`}
                             type="radio"
@@ -1507,48 +1545,72 @@ export const CheckoutPage: React.FC = () => {
                             checked={selected}
                             disabled={!isAvailable || busy}
                             onChange={() => setMethod(option.id)}
-                            className="w-4 h-4 text-brand-blue accent-blue-600 cursor-pointer"
+                            className="sr-only"
                           />
+                          <div
+                            aria-hidden="true"
+                            className={cn(
+                              "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200",
+                              selected
+                                ? "border-blue-600 dark:border-blue-500 bg-blue-600 dark:bg-blue-500 shadow-xs"
+                                : "border-gray-300 dark:border-white/20 bg-white dark:bg-transparent group-hover:border-gray-400 dark:group-hover:border-white/40"
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                "w-2 h-2 rounded-full bg-white transition-transform duration-200 ease-out",
+                                selected ? "scale-100" : "scale-0"
+                              )}
+                            />
+                          </div>
                         </div>
+
+                        {/* Brand Squircle Icon */}
+                        <Icon />
 
                         {/* Title, Badges & Description */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="flex items-center gap-2 min-w-0">
-                              <div className="h-5 flex items-center justify-center shrink-0">
-                                <Icon className="w-5 h-5 text-dark dark:text-white" />
-                              </div>
                               <label
                                 htmlFor={`payment-opt-${option.id}`}
-                                className="text-xs sm:text-sm font-bold text-dark dark:text-white cursor-pointer"
+                                className="text-xs sm:text-sm font-bold text-dark dark:text-white cursor-pointer group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
                               >
                                 {option.name}
                               </label>
+                              {option.tag && (
+                                <span className="text-[10px] font-semibold tracking-tight text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800/50 px-1.5 py-0.5 rounded-md">
+                                  {option.tag}
+                                </span>
+                              )}
                             </div>
 
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded">
-                                {isAvailable ? option.badge : "Temporarily unavailable"}
-                              </span>
-                              {isAvailable && (
-                                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 px-1.5 py-0.5 rounded">
-                                  ACTIVE
+                            {/* Right Brand Badges */}
+                            <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                              {isAvailable ? option.badges : (
+                                <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded">
+                                  Unavailable
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                          <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
                             {option.description}
                           </p>
+
+                          {/* Mobile Badges Strip (visible on small screens) */}
+                          <div className="flex sm:hidden items-center gap-1.5 mt-2 pt-1 border-t border-gray-100 dark:border-white/5">
+                            {isAvailable ? option.badges : null}
+                          </div>
                         </div>
                       </div>
 
-                      {/* Selected Detail Strip */}
+                      {/* Selected Detail Drawer */}
                       {selected && (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="bg-blue-50/70 dark:bg-blue-950/40 p-3 sm:p-4 border-t border-blue-100 dark:border-blue-900/40 text-xs leading-relaxed text-blue-900 dark:text-blue-300"
+                          className="border-t border-gray-100 dark:border-white/10 bg-gray-50/60 dark:bg-white/[0.02] p-3.5 sm:p-4 text-xs leading-relaxed"
                         >
                           {option.id !== "paypal" ? (
                             <OnSiteStripePayment
@@ -1582,10 +1644,29 @@ export const CheckoutPage: React.FC = () => {
                               onSwitchMethod={(target) => setMethod(target)}
                             />
                           ) : (
-                            <div className="flex items-start gap-2.5">
-                              <Lock size={13} className="shrink-0 mt-0.5 text-brand-blue dark:text-blue-400" />
-                              <div className="space-y-1">
-                                <span>{option.detail}</span>
+                            <div className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-950/20 p-3 sm:p-3.5 flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-[#003087]/10 dark:bg-[#0079C1]/20 flex items-center justify-center shrink-0 mt-0.5">
+                                <PaypalIcon className="w-4 h-4" />
+                              </div>
+                              <div className="space-y-1.5 flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <span className="font-semibold text-dark dark:text-white text-xs">
+                                    PayPal Secure Authorization
+                                  </span>
+                                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-800/40 px-1.5 py-0.5 rounded">
+                                    Buyer Protection Included
+                                  </span>
+                                </div>
+                                <p className="text-gray-600 dark:text-gray-300 text-xs leading-relaxed">
+                                  Pay using your PayPal balance, linked bank account, or choose <strong>PayPal Pay in 3</strong> to spread the cost into 3 interest-free monthly payments. You will return here automatically once authorized.
+                                </p>
+                                <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400 pt-1">
+                                  <span className="flex items-center gap-1">
+                                    <Lock size={11} className="text-emerald-600 dark:text-emerald-400" /> 256-bit encrypted session
+                                  </span>
+                                  <span>•</span>
+                                  <span>Stock reserved for 30 minutes</span>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -1594,6 +1675,23 @@ export const CheckoutPage: React.FC = () => {
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Guaranteed Security & Compliance Trust Bar */}
+              <div className="mt-4 pt-3.5 border-t border-gray-100 dark:border-white/5 flex flex-wrap items-center justify-between gap-2.5 text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="font-medium text-dark dark:text-gray-200">256-Bit SSL Encrypted Checkout</span>
+                  <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">•</span>
+                  <span className="hidden sm:inline">Zero card details stored</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-gray-400" /> PCI-DSS Level 1
+                  </span>
+                  <span>•</span>
+                  <span>Stripe &amp; PayPal Verified</span>
+                </div>
               </div>
             </fieldset>
           </div>
