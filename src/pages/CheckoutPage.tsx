@@ -82,17 +82,77 @@ const PaypalIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" })
   </svg>
 );
 
+const ApplePayBadge: React.FC<{ className?: string }> = () => (
+  <div className="flex items-center gap-1 bg-black text-white px-2 py-0.5 rounded font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 fill-white" aria-hidden="true">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.56.64-.97 1.7-0.85 2.73 1 .08 1.94-.48 2.56-1.23z" />
+    </svg>
+    <span>Pay</span>
+  </div>
+);
+
+const GooglePayBadge: React.FC<{ className?: string }> = () => (
+  <div className="flex items-center gap-1 bg-white dark:bg-[#141A26] border border-gray-200 dark:border-white/10 px-2 py-0.5 rounded font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
+    <span className="font-extrabold flex items-center gap-0.5 text-xs">
+      <span className="text-[#4285F4]">G</span>
+      <span className="text-[#EA4335]">P</span>
+      <span className="text-[#FBBC05]">a</span>
+      <span className="text-[#34A853]">y</span>
+    </span>
+  </div>
+);
+
+const AmazonPayBadge: React.FC<{ className?: string }> = () => (
+  <div className="flex items-center gap-1 bg-[#232F3E] text-white px-2 py-0.5 rounded font-bold text-[11px] tracking-tight shrink-0 shadow-2xs">
+    <span className="text-white font-black">amazon</span>
+    <span className="text-[#FF9900] font-black">pay</span>
+  </div>
+);
+
 const methods = [
   {
     id: "card" as const,
     backendId: "card" as const,
-    name: "Credit / Debit Card (Visa, Mastercard, Amex)",
+    name: "Visa, Mastercard & Debit Card",
     icon: CardWalletsBadge,
     description:
-      "Pay securely with Visa, Mastercard, American Express, or UK debit card via Stripe.",
+      "Pay securely with any Visa, Mastercard, American Express, or UK debit card.",
     detail:
       "Enter your card details directly below for instant on-site payment with 256-bit bank-grade encryption (no redirects).",
-    badge: "Powered by Stripe (On-Site)",
+    badge: "Powered by Stripe",
+  },
+  {
+    id: "apple_pay" as const,
+    backendId: "card" as const,
+    name: "Apple Pay",
+    icon: ApplePayBadge,
+    description:
+      "Instant checkout with Touch ID or Face ID directly on-site.",
+    detail:
+      "Pay instantly using cards stored in your Apple Wallet with biometric authentication (no redirects).",
+    badge: "Powered by Stripe",
+  },
+  {
+    id: "google_pay" as const,
+    backendId: "card" as const,
+    name: "Google Pay",
+    icon: GooglePayBadge,
+    description:
+      "Pay with cards saved to your Google Account.",
+    detail:
+      "Instant on-site authentication with Google Pay (no redirects).",
+    badge: "Powered by Stripe",
+  },
+  {
+    id: "amazon_pay" as const,
+    backendId: "card" as const,
+    name: "Amazon Pay",
+    icon: AmazonPayBadge,
+    description:
+      "Use your Amazon account payment methods and addresses securely.",
+    detail:
+      "Sign in to complete payment securely without re-entering card details (no redirects).",
+    badge: "Powered by Stripe",
   },
   {
     id: "paypal" as const,
@@ -170,7 +230,13 @@ export const CheckoutPage: React.FC = () => {
   const [method, setMethod] = useState<UiPaymentMethod>(
     () => {
       const saved = savedDraft?.method as UiPaymentMethod;
-      if (saved === "card" || saved === "paypal") {
+      if (
+        saved === "card" ||
+        saved === "apple_pay" ||
+        saved === "google_pay" ||
+        saved === "amazon_pay" ||
+        saved === "paypal"
+      ) {
         return saved;
       }
       return "card";
@@ -529,8 +595,8 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    // 2. STRIPE ON-SITE PAYMENT (Card):
-    if (method === "card" && onSitePaymentRef.current) {
+    // 2. STRIPE ON-SITE PAYMENT (Card, Apple Pay, Google Pay, Amazon Pay):
+    if (onSitePaymentRef.current && method !== "paypal") {
       if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
         setError("Please enter a valid email address.");
         const emailEl = document.getElementById("checkout-email");
@@ -1484,10 +1550,10 @@ export const CheckoutPage: React.FC = () => {
                           onClick={(e) => e.stopPropagation()}
                           className="bg-blue-50/70 dark:bg-blue-950/40 p-3 sm:p-4 border-t border-blue-100 dark:border-blue-900/40 text-xs leading-relaxed text-blue-900 dark:text-blue-300"
                         >
-                          {option.id === "card" ? (
+                          {option.id !== "paypal" ? (
                             <OnSiteStripePayment
                               ref={onSitePaymentRef}
-                              method="card"
+                              method={option.id}
                               items={basket}
                               totalAmount={quote?.total_amount || 0}
                               currency={quote?.currency || currency}
@@ -1710,9 +1776,15 @@ export const CheckoutPage: React.FC = () => {
                     ? "Updating total..."
                     : method === "card"
                       ? `Pay Now • ${quote ? displayPrice(quote.total_amount) : ""}`
-                      : method === "paypal"
-                        ? "Continue with PayPal"
-                        : "Continue to secure payment"}
+                      : method === "apple_pay"
+                        ? `Pay with Apple Pay • ${quote ? displayPrice(quote.total_amount) : ""}`
+                        : method === "google_pay"
+                          ? `Pay with Google Pay • ${quote ? displayPrice(quote.total_amount) : ""}`
+                          : method === "amazon_pay"
+                            ? `Pay with Amazon Pay • ${quote ? displayPrice(quote.total_amount) : ""}`
+                            : method === "paypal"
+                              ? "Continue with PayPal"
+                              : "Continue to secure payment"}
               </span>
               <ArrowRight size={17} className="shrink-0" />
             </button>
@@ -1781,9 +1853,15 @@ export const CheckoutPage: React.FC = () => {
                 ? "Please wait..."
                 : quoteQuery.isFetching
                   ? "Updating..."
-                  : method === "paypal"
-                    ? "Pay with PayPal"
-                    : "Pay Now"}
+                  : method === "apple_pay"
+                    ? "Pay with Apple Pay"
+                    : method === "google_pay"
+                      ? "Pay with Google Pay"
+                      : method === "amazon_pay"
+                        ? "Pay with Amazon Pay"
+                        : method === "paypal"
+                          ? "Pay with PayPal"
+                          : "Pay Now"}
             </span>
             <ArrowRight size={15} className="shrink-0" />
           </button>
