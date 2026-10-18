@@ -18,11 +18,13 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Address, UiPaymentMethod } from "../../types";
-import { checkoutApi } from "../../lib/checkoutApi";
+import { checkoutApi, forgetCheckoutAttempt } from "../../lib/checkoutApi";
 import { countryCode, formatMoney } from "../../../shared/commerce.js";
 
 export interface OnSiteStripePaymentHandle {
   submitPayment: () => void;
+  isCardComplete: () => boolean;
+  hasCardData: () => boolean;
 }
 
 export interface OnSiteStripePaymentProps {
@@ -287,10 +289,14 @@ export const OnSiteStripePayment = forwardRef<
   // Handler for Direct On-Site Card Submit
   const handleCardSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!stripe || !cardElement || isSubmitting || disabled) return;
+    if (!stripe || !cardElement) {
+      onError("Card payment service is initializing. Please click Pay Now again to proceed.");
+      return;
+    }
+    if (isSubmitting || disabled) return;
 
     if (!cardComplete) {
-      onError("Please enter your complete card details (number, expiry, and CVC).");
+      onError("Please enter your complete 16-digit card number, expiry date, and CVC.");
       const el = document.getElementById("stripe-on-site-card-element");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
@@ -300,6 +306,7 @@ export const OnSiteStripePayment = forwardRef<
     onPaymentStart?.();
 
     try {
+      forgetCheckoutAttempt();
       // 1. Create on-site PaymentIntent on backend
       const intentResult = await checkoutApi.createPaymentIntent({
         items,
@@ -376,34 +383,14 @@ export const OnSiteStripePayment = forwardRef<
 
   // Expose imperative trigger to parent checkout page
   useImperativeHandle(ref, () => ({
+    isCardComplete() {
+      return Boolean(cardComplete);
+    },
+    hasCardData() {
+      return Boolean(cardElement);
+    },
     submitPayment() {
-      if (method === "card") {
-        handleCardSubmit();
-      } else if (method === "apple_pay") {
-        if (canPayWallet?.applePay && paymentRequest) {
-          paymentRequest.show();
-        } else if (cardElement) {
-          handleCardSubmit();
-        } else {
-          onError("Please enter your card credentials below.");
-        }
-      } else if (method === "google_pay") {
-        if (canPayWallet?.googlePay && paymentRequest) {
-          paymentRequest.show();
-        } else if (cardElement) {
-          handleCardSubmit();
-        } else {
-          onError("Please enter your card credentials below.");
-        }
-      } else if (method === "amazon_pay") {
-        if (cardElement) {
-          handleCardSubmit();
-        } else {
-          onError("Please enter your card credentials below.");
-        }
-      } else {
-        handleCardSubmit();
-      }
+      handleCardSubmit();
     },
   }));
 

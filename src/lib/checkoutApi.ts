@@ -174,7 +174,13 @@ export const checkoutApi = {
   async create(method: PaymentMethodType, input: CheckoutInput) {
     const fingerprint = JSON.stringify({ method, ...input });
     let attempt = currentCheckoutAttempt();
-    if (attempt && attempt.fingerprint !== fingerprint) throw new CheckoutApiError('Resume or cancel the previous checkout before starting another order.', 'ATTEMPT_PENDING');
+    if (attempt && attempt.fingerprint !== fingerprint) {
+      if (attempt.orderId) {
+        post('cancel-checkout', { orderId: attempt.orderId }).catch(() => {});
+      }
+      forgetCheckoutAttempt();
+      attempt = null;
+    }
     if (!attempt) {
       attempt = { fingerprint, requestId: crypto.randomUUID(), accessToken: crypto.randomUUID(), items: input.items, input, method };
       sessionStorage.setItem(ATTEMPT_KEY, JSON.stringify(attempt));
@@ -207,7 +213,13 @@ export const checkoutApi = {
   async createPaymentIntent(input: CheckoutInput) {
     const fingerprint = JSON.stringify({ method: 'card', ...input });
     let attempt = currentCheckoutAttempt();
-    if (attempt && attempt.fingerprint !== fingerprint) throw new CheckoutApiError('Resume or cancel the previous checkout before starting another order.', 'ATTEMPT_PENDING');
+    if (attempt && attempt.fingerprint !== fingerprint) {
+      if (attempt.orderId) {
+        post('cancel-checkout', { orderId: attempt.orderId }).catch(() => {});
+      }
+      forgetCheckoutAttempt();
+      attempt = null;
+    }
     if (!attempt) {
       attempt = { fingerprint, requestId: crypto.randomUUID(), accessToken: crypto.randomUUID(), items: input.items, input, method: 'card' };
       sessionStorage.setItem(ATTEMPT_KEY, JSON.stringify(attempt));

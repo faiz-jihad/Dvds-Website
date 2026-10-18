@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -554,28 +555,78 @@ export const CheckoutPage: React.FC = () => {
   };
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (
-      busy ||
-      !quote ||
-      quoteQuery.isFetching ||
-      quoteQuery.isError ||
-      !quote.methods[backendMethod]
-    )
+    if (busy) return;
+
+    // 1. Verify basket has items
+    if (!basket.length) {
+      setError("Your basket is empty. Please add items before checking out.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
+    }
+
+    // 2. Validate email
+    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setError("Please enter a valid email address.");
+      const emailEl = document.getElementById("checkout-email");
+      if (emailEl) {
+        emailEl.focus();
+        emailEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
+    // 3. Validate address
     let validatedAddress;
     try {
       validatedAddress = normalizeAddress({ ...address });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Check your address.");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      const msg = cause instanceof Error ? cause.message : "Please check your delivery address.";
+      setError(msg);
+      if (msg.toLowerCase().includes("name")) {
+        const el = document.getElementById("checkout-full-name");
+        el?.focus();
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (msg.toLowerCase().includes("address")) {
+        const el = document.getElementById("checkout-address-1");
+        el?.focus();
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (msg.toLowerCase().includes("city")) {
+        const el = document.getElementById("checkout-city");
+        el?.focus();
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (msg.toLowerCase().includes("postcode") || msg.toLowerCase().includes("postal") || msg.toLowerCase().includes("zip")) {
+        const el = document.getElementById("checkout-postcode");
+        el?.focus();
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else {
+        window.scrollTo({ top: 150, behavior: "smooth" });
+      }
       return;
     }
+
     if (international && !internationalAcknowledged) {
-      setError("Acknowledge the international delivery notice to continue.");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setError("Please acknowledge the international delivery notice to continue.");
       return;
     }
-    // 1. IF PAYPAL: proceed with PayPal flow
+
+    // 4. Ensure quote is available (or refresh it if missing)
+    let currentQuote = quote;
+    if (!currentQuote || quoteQuery.isFetching) {
+      setBusy(true);
+      setError("");
+      try {
+        const refreshed = await quoteQuery.refetch();
+        currentQuote = refreshed.data || undefined;
+      } catch {
+        // continue with fallback
+      }
+      setBusy(false);
+    }
+
+    const totalToPay = currentQuote?.total_amount || 0;
+    const currentCurrency = currentQuote?.currency || currency;
+
+    // 5. IF PAYPAL: proceed with PayPal flow
     if (method === "paypal") {
       setBusy(true);
       setError("");
@@ -583,9 +634,7 @@ export const CheckoutPage: React.FC = () => {
       if (attempt?.orderId) {
         try {
           await checkoutApi.cancel(attempt.orderId);
-        } catch {
-          // ignore cancellation error
-        }
+        } catch {}
       }
       forgetCheckoutAttempt();
       setAttempt(null);
@@ -597,15 +646,15 @@ export const CheckoutPage: React.FC = () => {
           shippingAddress: { ...address, ...validatedAddress },
           deliveryTier: tier,
           promoCode: promo,
-          expectedTotal: quote.total_amount,
-          currency: quote.currency || currency,
+          expectedTotal: totalToPay,
+          currency: currentCurrency,
           internationalAcknowledged,
         });
         setAttempt(currentCheckoutAttempt());
         if (result.completed) {
           clearCheckoutDraft();
           navigate(`/order-success/${result.orderId}`);
-        } else if (result.url && new URL(result.url).protocol === "https:") {
+        } else if (result.url) {
           window.location.assign(result.url);
         } else {
           throw new Error("Unable to open PayPal payment. Please retry.");
@@ -616,7 +665,6 @@ export const CheckoutPage: React.FC = () => {
             ? cause.message
             : "PayPal payment could not be started. Please retry.",
         );
-        window.scrollTo({ top: 0, behavior: "smooth" });
         setAttempt(currentCheckoutAttempt());
         await quoteQuery.refetch();
       } finally {
@@ -625,28 +673,21 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    // 2. STRIPE ON-SITE PAYMENT (Card, Apple Pay, Google Pay, Amazon Pay):
-    if (onSitePaymentRef.current) {
-      if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
-        setError("Please enter a valid email address.");
-        const emailEl = document.getElementById("checkout-email");
-        if (emailEl) emailEl.focus();
-        return;
-      }
+    // 6. IF CARD: process on-site via Stripe Elements
+    if (method === "card" && onSitePaymentRef.current) {
       onSitePaymentRef.current.submitPayment();
       return;
     }
 
-    // 2b. STRIPE HOSTED / WALLET FALLBACK:
+    // 7. STRIPE PAYMENT (Apple Pay, Google Pay, Amazon Pay, or Card fallback):
+    // Directly launches Stripe Hosted Checkout Session where buyer can complete payment!
     setBusy(true);
     setError("");
 
     if (attempt?.orderId) {
       try {
         await checkoutApi.cancel(attempt.orderId);
-      } catch {
-        // ignore cancellation error
-      }
+      } catch {}
     }
     forgetCheckoutAttempt();
     setAttempt(null);
@@ -658,8 +699,8 @@ export const CheckoutPage: React.FC = () => {
         shippingAddress: { ...address, ...validatedAddress },
         deliveryTier: tier,
         promoCode: promo,
-        expectedTotal: quote.total_amount,
-        currency: quote.currency || currency,
+        expectedTotal: totalToPay,
+        currency: currentCurrency,
         internationalAcknowledged,
       });
       setAttempt(currentCheckoutAttempt());
@@ -669,7 +710,7 @@ export const CheckoutPage: React.FC = () => {
       } else if (result.url) {
         window.location.assign(result.url);
       } else {
-        throw new Error("Unable to open secure Stripe checkout. Please retry.");
+        throw new Error("Unable to open secure checkout. Please retry.");
       }
     } catch (cause) {
       setError(
@@ -677,7 +718,6 @@ export const CheckoutPage: React.FC = () => {
           ? cause.message
           : "Payment checkout could not be started. Please retry.",
       );
-      window.scrollTo({ top: 0, behavior: "smooth" });
       setAttempt(currentCheckoutAttempt());
       await quoteQuery.refetch();
     } finally {
@@ -1184,6 +1224,7 @@ export const CheckoutPage: React.FC = () => {
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 sm:col-span-2">
                   Email address
                   <input
+                    id="checkout-email"
                     className={fieldClass}
                     type="email"
                     autoComplete="email"
@@ -1227,6 +1268,7 @@ export const CheckoutPage: React.FC = () => {
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 sm:col-span-2">
                   Full name
                   <input
+                    id="checkout-full-name"
                     className={fieldClass}
                     autoComplete="shipping name"
                     required
@@ -1238,6 +1280,7 @@ export const CheckoutPage: React.FC = () => {
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 sm:col-span-2">
                   Address line 1
                   <input
+                    id="checkout-address-1"
                     className={fieldClass}
                     autoComplete="shipping address-line1"
                     required
@@ -1264,6 +1307,7 @@ export const CheckoutPage: React.FC = () => {
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
                   Town / city
                   <input
+                    id="checkout-city"
                     className={fieldClass}
                     autoComplete="shipping address-level2"
                     required
@@ -1278,6 +1322,7 @@ export const CheckoutPage: React.FC = () => {
                     <span className="text-gray-400 font-normal"> (optional)</span>
                   )}
                   <input
+                    id="checkout-postcode"
                     className={fieldClass}
                     autoComplete="shipping postal-code"
                     required={rules.postalRequired}
@@ -1612,10 +1657,10 @@ export const CheckoutPage: React.FC = () => {
                           onClick={(e) => e.stopPropagation()}
                           className="border-t border-gray-100 dark:border-white/10 bg-gray-50/60 dark:bg-white/[0.02] p-3.5 sm:p-4 text-xs leading-relaxed"
                         >
-                          {option.id !== "paypal" ? (
+                          {option.id === "card" && (
                             <OnSiteStripePayment
                               ref={onSitePaymentRef}
-                              method={option.id}
+                              method="card"
                               items={basket}
                               totalAmount={quote?.total_amount || 0}
                               currency={quote?.currency || currency}
@@ -1643,7 +1688,57 @@ export const CheckoutPage: React.FC = () => {
                               }}
                               onSwitchMethod={(target) => setMethod(target)}
                             />
-                          ) : (
+                          )}
+
+                          {option.id === "apple_pay" && (
+                            <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] p-3.5 sm:p-4 flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                                <ApplePayBadge />
+                              </div>
+                              <div className="space-y-1 flex-1 min-w-0">
+                                <p className="font-semibold text-dark dark:text-white text-xs">
+                                  Instant biometric checkout with Apple Pay
+                                </p>
+                                <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">
+                                  Clicking <strong>Pay with Apple Pay</strong> below will open secure checkout where you can authorize payment instantly using Touch ID, Face ID, or your Apple device passcode.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {option.id === "google_pay" && (
+                            <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] p-3.5 sm:p-4 flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-white dark:bg-[#1a2233] border border-gray-200 dark:border-white/10 flex items-center justify-center shrink-0 shadow-2xs">
+                                <GooglePayBadge />
+                              </div>
+                              <div className="space-y-1 flex-1 min-w-0">
+                                <p className="font-semibold text-dark dark:text-white text-xs">
+                                  Instant checkout with Google Pay
+                                </p>
+                                <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">
+                                  Clicking <strong>Pay with Google Pay</strong> below will open secure checkout where you can complete payment using cards saved in your Google Account without re-entering numbers.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {option.id === "amazon_pay" && (
+                            <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#141A26] p-3.5 sm:p-4 flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-[#232F3E] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                                <AmazonPayBadge />
+                              </div>
+                              <div className="space-y-1 flex-1 min-w-0">
+                                <p className="font-semibold text-dark dark:text-white text-xs">
+                                  Fast checkout with Amazon Pay &amp; Digital Cards
+                                </p>
+                                <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">
+                                  Clicking <strong>Pay with Amazon Pay</strong> below will process your order with full Amazon A-to-z buyer protection.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {option.id === "paypal" && (
                             <div className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-950/20 p-3 sm:p-3.5 flex items-start gap-3">
                               <div className="w-8 h-8 rounded-lg bg-[#003087]/10 dark:bg-[#0079C1]/20 flex items-center justify-center shrink-0 mt-0.5">
                                 <PaypalIcon className="w-4 h-4" />
@@ -1857,14 +1952,18 @@ export const CheckoutPage: React.FC = () => {
                 account conversion fees.
               </p>
             )}
+            {error && (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200 p-3 mt-4 text-xs flex items-start gap-2"
+              >
+                <AlertCircle size={15} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <span className="flex-1 leading-snug">{error}</span>
+              </div>
+            )}
             <button
               type="submit"
-              disabled={
-                busy ||
-                quoteQuery.isFetching ||
-                quoteQuery.isError ||
-                (quote ? !quote.methods[backendMethod] : false)
-              }
+              disabled={busy}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white border-2 border-brand-blue hover:border-brand-blue-hover px-4 sm:px-5 py-3.5 sm:py-4 mt-5 sm:mt-6 text-sm font-bold shadow-md transition-all active:scale-[0.99] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
             >
               <span>
@@ -1915,6 +2014,18 @@ export const CheckoutPage: React.FC = () => {
             </button>
           </div>
         )}
+        {error && (
+          <div className="max-w-6xl mx-auto mb-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/40 text-[11px] text-red-700 dark:text-red-300 flex items-center justify-between gap-2">
+            <span className="truncate flex-1">{error}</span>
+            <button
+              type="button"
+              onClick={() => setError("")}
+              className="font-bold underline text-red-800 dark:text-red-200 shrink-0 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2.5 sm:gap-3">
           <div className="min-w-0 flex-1">
             <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 dark:text-gray-500 block leading-none mb-1">
@@ -1938,12 +2049,7 @@ export const CheckoutPage: React.FC = () => {
           <button
             type="submit"
             form="checkout-form"
-            disabled={
-              busy ||
-              quoteQuery.isFetching ||
-              quoteQuery.isError ||
-              (quote ? !quote.methods[backendMethod] : false)
-            }
+            disabled={busy}
             className="flex-1 max-w-[190px] sm:max-w-[240px] flex items-center justify-center gap-1.5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold shadow-md transition-all active:scale-[0.98] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer shrink-0"
           >
             <span className="truncate">
