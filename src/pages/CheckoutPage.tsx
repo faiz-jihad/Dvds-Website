@@ -596,7 +596,7 @@ export const CheckoutPage: React.FC = () => {
     }
 
     // 2. STRIPE ON-SITE PAYMENT (Card, Apple Pay, Google Pay, Amazon Pay):
-    if (onSitePaymentRef.current && method !== "paypal") {
+    if (onSitePaymentRef.current) {
       if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
         setError("Please enter a valid email address.");
         const emailEl = document.getElementById("checkout-email");
