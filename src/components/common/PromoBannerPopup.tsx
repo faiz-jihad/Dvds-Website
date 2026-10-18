@@ -184,7 +184,7 @@ export const PromoBannerPopup: React.FC<PromoBannerPopupProps> = ({
 
             <div className="p-6 sm:p-7">
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#60718b]">
-                AZ Rayan DVDs · {discountText}
+                {(settings?.store_name || 'DVDs Zone')} · {(settings?.campaign_badge || discountText)}
               </p>
 
               <h2
