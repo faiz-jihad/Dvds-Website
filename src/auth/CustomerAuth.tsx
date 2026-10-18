@@ -9,6 +9,8 @@ export interface CustomerAuthContextValue {
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   register: (email: string, password: string, fullName: string) => Promise<{ success: boolean; message?: string }>;
   loginWithGoogle: (customRedirectPath?: string) => Promise<{ success: boolean; message?: string }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
+  updatePassword: (newPassword: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   updateProfileState: (updated: Partial<Profile>) => void;
 }
@@ -286,6 +288,50 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
     []
   );
 
+  // Production Reset Password Email Request
+  const resetPassword = useCallback(
+    async (email: string): Promise<{ success: boolean; message?: string }> => {
+      if (!isSupabaseConfigured || !supabase) {
+        return { success: false, message: 'Authentication database is not configured.' };
+      }
+      try {
+        const cleanEmail = email.trim().toLowerCase();
+        const redirectTo = `${window.location.origin}/reset-password`;
+        const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+          redirectTo,
+        });
+        if (error) {
+          return { success: false, message: error.message };
+        }
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, message: err?.message || 'Failed to send password reset email.' };
+      }
+    },
+    []
+  );
+
+  // Production Update Password
+  const updatePassword = useCallback(
+    async (newPassword: string): Promise<{ success: boolean; message?: string }> => {
+      if (!isSupabaseConfigured || !supabase) {
+        return { success: false, message: 'Authentication database is not configured.' };
+      }
+      try {
+        const { error } = await supabase.auth.updateUser({
+          password: newPassword.trim(),
+        });
+        if (error) {
+          return { success: false, message: error.message };
+        }
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, message: err?.message || 'Failed to update password.' };
+      }
+    },
+    []
+  );
+
   // Production Logout
   const logout = useCallback(async () => {
     localStorage.removeItem(CUSTOMER_STORAGE_KEY);
@@ -316,10 +362,12 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
       login,
       register,
       loginWithGoogle,
+      resetPassword,
+      updatePassword,
       logout,
       updateProfileState,
     }),
-    [customer, isLoading, login, register, loginWithGoogle, logout, updateProfileState]
+    [customer, isLoading, login, register, loginWithGoogle, resetPassword, updatePassword, logout, updateProfileState]
   );
 
   return <CustomerAuthContext.Provider value={value}>{children}</CustomerAuthContext.Provider>;

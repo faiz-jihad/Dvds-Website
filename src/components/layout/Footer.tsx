@@ -27,8 +27,11 @@ export const Footer: React.FC = () => {
   });
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
-  const storeName = settings.store_name || 'DVD ZONE';
-  const registeredCompanyName = settings.registered_company_name || 'DVD Zone';
+  const storeName = settings.store_name || 'DVDS Zone';
+  const registeredCompanyName =
+    settings.registered_company_name && settings.registered_company_name !== 'DVD Zone' && settings.registered_company_name !== 'DVDs Zone'
+      ? settings.registered_company_name
+      : 'AZRAYAN LTD';
   const companyNumber = settings.company_number || '13894195';
   const companiesHouseUrl =
     settings.companies_house_url ||
@@ -64,7 +67,7 @@ export const Footer: React.FC = () => {
               />
             </Link>
             <p className="text-xs text-neutral-400 leading-relaxed mb-4 max-w-xs">
-              {storeName} — {businessLocation}
+              <span className="text-white font-medium">{storeName}</span> operated by <span className="text-neutral-300 font-medium">{registeredCompanyName}</span> — {businessLocation}
             </p>
             <div className="space-y-2 text-xs text-neutral-400">
               <div className="flex items-center gap-2">
@@ -227,7 +230,7 @@ export const Footer: React.FC = () => {
               <MapPin className="w-3.5 h-3.5 text-white fill-white" />
               <span>United Kingdom</span>
             </div>
-            <span>© {new Date().getFullYear()} {registeredCompanyName}. All Rights Reserved.</span>
+            <span>© {new Date().getFullYear()} {storeName} operated by {registeredCompanyName}. All Rights Reserved.</span>
           </div>
 
           {/* Right: Legal Links & Guides */}
@@ -307,7 +310,7 @@ export const Footer: React.FC = () => {
 
         {/* Business Information Microtext */}
         <div className="pt-3 text-[10px] text-neutral-500 text-left">
-          {registeredCompanyName} — {businessLocation}
+          {storeName} is operated by {registeredCompanyName} (Company No. {companyNumber}) — {businessLocation}
         </div>
         <p className="pt-2 text-[10px] leading-relaxed text-neutral-400 text-left sm:text-center">
           All our DVDs are Region 2 (UK) and Region 0 (UK).

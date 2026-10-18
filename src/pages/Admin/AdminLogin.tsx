@@ -186,6 +186,12 @@ export const AdminLogin: React.FC = () => {
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                     Password
                   </label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs font-semibold text-brand-blue hover:text-brand-blue/80 transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">

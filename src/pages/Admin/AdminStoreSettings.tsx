@@ -33,9 +33,13 @@ import {
   Mail,
   Phone,
   ShieldCheck,
+  Upload,
+  ImageIcon,
+  Loader2,
 } from 'lucide-react';
 import { extractYouTubeVideoId } from '../../components/landing/AzCinematicHero';
 import { adminApi } from '../../lib/adminApi';
+import { uploadAdminImage } from '../../lib/adminMedia';
 import { StoreSettings, HeroTrailerItem } from '../../types';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
@@ -187,6 +191,25 @@ export const AdminStoreSettings: React.FC = () => {
     }) : prev);
   };
 
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const bannerInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleBannerImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingBanner(true);
+    try {
+      const publicUrl = await uploadAdminImage(file);
+      handleChange('campaign_banner_image', publicUrl);
+      addToast('Promotional banner uploaded to Object Storage successfully!', 'success');
+    } catch (err: any) {
+      addToast(err?.message || 'Failed to upload promotional banner image.', 'error');
+    } finally {
+      setIsUploadingBanner(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!settings) return;
@@ -240,6 +263,8 @@ export const AdminStoreSettings: React.FC = () => {
         deal_discount_price: Math.max(0, Number(settings.deal_discount_price ?? 0)),
         deal_ends_at: settings.campaign_ends_at || settings.deal_ends_at || null,
         campaign_ends_at: settings.campaign_ends_at || settings.deal_ends_at || null,
+        campaign_banner_image: (settings.campaign_banner_image || '').trim() || '/promos/special-offer-banner.jpg',
+        campaign_popup_enabled: Boolean(settings.campaign_popup_enabled ?? true),
         vip_promo_code: (settings.vip_promo_code || 'ZONE10').trim().toUpperCase(),
         vip_promo_discount: Math.max(0, Math.min(100, Number(settings.vip_promo_discount ?? 10))),
         vip_min_spend: Math.max(0, Number(settings.vip_min_spend ?? 20)),
@@ -308,6 +333,8 @@ export const AdminStoreSettings: React.FC = () => {
       deal_discount_price: 0,
       deal_ends_at: null,
       deal_is_active: false,
+      campaign_banner_image: '/promos/special-offer-banner.jpg',
+      campaign_popup_enabled: true,
       director_badge: 'DIRECTOR SPOTLIGHT',
       director_name: 'Christopher Nolan',
       director_quote: 'Physical media is the only way to preserve the true cinematic experience without compression algorithms.',
@@ -1563,6 +1590,133 @@ export const AdminStoreSettings: React.FC = () => {
                         {preset.label}
                       </button>
                     ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Special Offer Banner Image & Visitor Popup Display */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                      <ImageIcon className="w-4 h-4" />
+                    </span>
+                    <h2 className="font-display font-bold text-base text-dark">
+                      Promotional Banner Image &amp; Visitor Pop-up
+                    </h2>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Upload a high-impact promotional image saved directly in Supabase Object Storage. Featured in the Special Offers banner and interactive promotional pop-up.
+                  </p>
+                </div>
+
+                {/* Popup Enable/Disable Toggle */}
+                <label className="flex items-center gap-3 bg-gray-50 border border-gray-200 hover:border-amber-400 px-4 py-2.5 rounded-xl cursor-pointer transition select-none">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-amber-500 rounded"
+                    checked={Boolean(settings.campaign_popup_enabled ?? true)}
+                    onChange={(e) => handleChange('campaign_popup_enabled', e.target.checked)}
+                  />
+                  <div className="text-left">
+                    <span className="block text-xs font-bold text-dark">
+                      {settings.campaign_popup_enabled ?? true ? 'Visitor Pop-up Active' : 'Visitor Pop-up Disabled'}
+                    </span>
+                    <span className="block text-[10px] text-gray-400">
+                      {settings.campaign_popup_enabled ?? true ? 'Timed modal & bottom launcher' : 'Special offer hidden from pop-up'}
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Upload & URL Input Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+                <div className="md:col-span-7 space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      Upload to Object Storage (Supabase Storage)
+                    </label>
+                    <input
+                      ref={bannerInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleBannerImageUpload}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => bannerInputRef.current?.click()}
+                        disabled={isUploadingBanner}
+                        className="flex items-center gap-2 text-xs cursor-pointer"
+                      >
+                        {isUploadingBanner ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                            <span>Uploading to Object Storage...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Upload New Banner Image</span>
+                          </>
+                        )}
+                      </Button>
+
+                      {settings.campaign_banner_image && settings.campaign_banner_image !== '/promos/special-offer-banner.jpg' && (
+                        <button
+                          type="button"
+                          onClick={() => handleChange('campaign_banner_image', '/promos/special-offer-banner.jpg')}
+                          className="text-xs text-gray-500 hover:text-dark underline cursor-pointer"
+                        >
+                          Reset to default
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-1.5">
+                      Recommended: 16:9 or 21:9 landscape banner (JPG, PNG, or WEBP, max 5MB). Directly hosted on Supabase Object Storage bucket.
+                    </p>
+                  </div>
+
+                  <div>
+                    <Input
+                      label="Banner Image URL / CDN Link"
+                      type="url"
+                      value={settings.campaign_banner_image || ''}
+                      onChange={(e) => handleChange('campaign_banner_image', e.target.value)}
+                      placeholder="/promos/special-offer-banner.jpg or https://..."
+                      helperText="Direct public image URL stored in settings."
+                    />
+                  </div>
+                </div>
+
+                {/* Banner Live Visual Preview */}
+                <div className="md:col-span-5">
+                  <span className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Live Banner Preview
+                  </span>
+                  <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-gray-200 bg-gray-900 shadow-inner group">
+                    <img
+                      src={settings.campaign_banner_image || '/promos/special-offer-banner.jpg'}
+                      alt="Campaign Banner Preview"
+                      className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/promos/special-offer-banner.jpg';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-3">
+                      <div className="text-white">
+                        <span className="inline-block px-1.5 py-0.5 rounded bg-amber-500 text-black text-[9px] font-black uppercase tracking-wider mb-1">
+                          {settings.campaign_badge || 'SPECIAL OFFER'}
+                        </span>
+                        <p className="text-xs font-bold leading-tight drop-shadow-sm line-clamp-1">
+                          {settings.campaign_title || "Collector's Special Offers"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

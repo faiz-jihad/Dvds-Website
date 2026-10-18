@@ -61,6 +61,7 @@ export interface Product {
   director?: string | null;
   imdb_rating?: number | null;
   imdb_id?: string | null;
+  trailer_url?: string | null;
 }
 
 export interface CartItem {
@@ -247,6 +248,8 @@ export interface StoreSettings {
   campaign_tagline?: string;
   campaign_discount_text?: string;
   campaign_ends_at?: string | null;
+  campaign_banner_image?: string;
+  campaign_popup_enabled?: boolean;
   custom_formats?: string[];
 
   // Director / Curator Spotlight

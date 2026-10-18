@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   CreditCard,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { publicApi } from "../../lib/publicApi";
 import { checkoutApi } from "../../lib/checkoutApi";
@@ -75,8 +76,32 @@ export const OrdersPage: React.FC = () => {
     string | null
   >(null);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [verifyingOrderId, setVerifyingOrderId] = useState<string | null>(null);
+  const autoCheckedRef = useRef<Set<string>>(new Set());
 
   const orders = ordersQuery.data || [];
+
+  // Automatically attempt verification for pending online orders once
+  useEffect(() => {
+    orders.forEach((order) => {
+      if (
+        order.payment_status === "pending" &&
+        order.status !== "cancelled" &&
+        (order.payment_provider === "paypal" || order.payment_provider === "stripe") &&
+        !autoCheckedRef.current.has(order.id)
+      ) {
+        autoCheckedRef.current.add(order.id);
+        checkoutApi
+          .orderStatus(order.id, undefined, order.paypal_order_id || undefined)
+          .then((updated) => {
+            if (updated && updated.payment_status === "paid") {
+              ordersQuery.refetch();
+            }
+          })
+          .catch(() => {});
+      }
+    });
+  }, [orders, ordersQuery]);
 
   // Reset pagination to first page whenever filter tab or search changes
   useEffect(() => {
@@ -259,6 +284,26 @@ export const OrdersPage: React.FC = () => {
       );
     } finally {
       setCancellingOrderId(null);
+    }
+  };
+
+  const handleVerifyPayment = async (order: Order) => {
+    try {
+      setVerifyingOrderId(order.id);
+      const updated = await checkoutApi.orderStatus(order.id, undefined, order.paypal_order_id || undefined);
+      if (updated && updated.payment_status === "paid") {
+        addToast(`Order #${order.order_number} payment verified successfully!`, "success");
+        ordersQuery.refetch();
+      } else {
+        addToast(
+          "Payment has not been confirmed by the provider yet. If you completed payment, please wait a few seconds and try again.",
+          "info",
+        );
+      }
+    } catch (err: any) {
+      addToast(err?.message || "Could not verify payment status at this moment.", "error");
+    } finally {
+      setVerifyingOrderId(null);
     }
   };
 
@@ -540,10 +585,20 @@ export const OrdersPage: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleVerifyPayment(order)}
+                        disabled={verifyingOrderId === order.id}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-blue hover:bg-brand-blue/90 text-white shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                        title="Check and confirm payment status with provider"
+                      >
+                        <RefreshCw size={12} className={verifyingOrderId === order.id ? "animate-spin" : ""} />
+                        <span>{verifyingOrderId === order.id ? "Verifying..." : "Verify Payment"}</span>
+                      </button>
                       {order.checkout_url && (
                         <a
                           href={order.checkout_url}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white border border-amber-600 shadow-2xs transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-[#141A26] hover:bg-gray-50 dark:hover:bg-white/10 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-white/20 shadow-2xs transition-all cursor-pointer"
                         >
                           <CreditCard size={13} />
                           <span>Complete Payment</span>
@@ -779,22 +834,33 @@ export const OrdersPage: React.FC = () => {
                         </div>
                       ) : isPendingPayment ? (
                         <div className="space-y-2">
-                          {/* Primary CTA: Complete Payment if checkout_url is available */}
+                          {/* Primary CTA: Verify Payment if user already completed checkout */}
+                          <button
+                            type="button"
+                            onClick={() => handleVerifyPayment(order)}
+                            disabled={verifyingOrderId === order.id}
+                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-brand-blue hover:bg-brand-blue/90 text-white border border-brand-blue shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            <RefreshCw size={14} className={verifyingOrderId === order.id ? "animate-spin" : ""} />
+                            <span>{verifyingOrderId === order.id ? "Checking Payment..." : "Already Paid? Verify Status"}</span>
+                          </button>
+
+                          {/* Secondary CTA: Complete Payment if checkout_url is available */}
                           {order.checkout_url ? (
                             <a
                               href={order.checkout_url}
-                              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white border border-amber-500 shadow-xs transition-all cursor-pointer"
+                              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800/50 shadow-2xs transition-all cursor-pointer"
                             >
-                              <CreditCard size={14} />
-                              <span>Complete Payment ({order.payment_provider === "paypal" ? "PayPal" : "Card"})</span>
-                              <ExternalLink size={13} />
+                              <CreditCard size={13} />
+                              <span>Pay on PayPal ({order.payment_provider === "paypal" ? "PayPal" : "Card"})</span>
+                              <ExternalLink size={12} />
                             </a>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleCancelAndReorder(order)}
                               disabled={cancellingOrderId === order.id}
-                              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white border border-amber-500 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white border border-amber-500 shadow-xs transition-all cursor-pointer disabled:opacity-50"
                             >
                               <CreditCard size={14} />
                               <span>{cancellingOrderId === order.id ? "Preparing Basket..." : "Pay Now (Restart Checkout)"}</span>

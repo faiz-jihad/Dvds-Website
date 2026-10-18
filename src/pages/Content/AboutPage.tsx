@@ -40,13 +40,13 @@ export const AboutPage: React.FC = () => {
             <Disc className="w-6 h-6 sm:w-8 sm:h-8 stroke-[1.75]" />
           </div>
           <span className="text-xs font-mono uppercase tracking-widest text-brand-blue dark:text-blue-400 font-semibold">
-            ABOUT DVD ZONE
+            ABOUT DVDS ZONE
           </span>
           <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-dark dark:text-white tracking-tight">
             Quality DVDs &amp; Entertainment
           </h1>
           <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed font-light max-w-xl mx-auto">
-            DVD ZONE is active since 2021, operated by DVDs Zone, based in United Kingdom.
+            {storeName} is active since 2021, operated by {settings.registered_company_name || 'AZRAYAN LTD'}, based in United Kingdom.
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export const AboutPage: React.FC = () => {
           </div>
           <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/10">
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {settings.registered_company_name} · Company no. {settings.company_number}
+              {settings.registered_company_name || 'AZRAYAN LTD'} · Company no. {settings.company_number || '13894195'}
             </p>
             <a
               href={settings.companies_house_url}

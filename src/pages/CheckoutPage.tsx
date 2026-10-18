@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -48,6 +48,7 @@ import {
   saveCheckoutDraft,
 } from "../lib/checkoutDraft";
 import { FastPaymentSection } from "../components/checkout/FastPaymentSection";
+import { OnSiteStripePayment, OnSiteStripePaymentHandle } from "../components/checkout/OnSiteStripePayment";
 import { Seo } from "../components/common/Seo";
 
 const fieldClass =
@@ -118,7 +119,7 @@ const methods = [
     description:
       "Pay securely with any Visa, Mastercard, American Express, or UK debit card.",
     detail:
-      "You will be redirected to Stripe's secure 256-bit bank-grade checkout to complete payment with your card.",
+      "Enter your card details directly below for instant on-site payment with 256-bit bank-grade encryption (no redirects).",
     badge: "Powered by Stripe",
   },
   {
@@ -241,6 +242,7 @@ export const CheckoutPage: React.FC = () => {
   const [saveNewAddress, setSaveNewAddress] = useState<boolean>(
     () => savedDraft?.saveNewAddress ?? true,
   );
+  const onSitePaymentRef = useRef<OnSiteStripePaymentHandle>(null);
   // Wallet methods detected by Stripe Express Checkout Element on this device/browser
   const [fastMethods, setFastMethods] = useState<{
     applePay?: boolean;
@@ -577,7 +579,19 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    // 2. STRIPE PAYMENT (Card, Apple Pay, Amazon Pay):
+    // 2. STRIPE ON-SITE PAYMENT (Card):
+    if (method === "card" && onSitePaymentRef.current) {
+      if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
+        setError("Please enter a valid email address.");
+        const emailEl = document.getElementById("checkout-email");
+        if (emailEl) emailEl.focus();
+        return;
+      }
+      onSitePaymentRef.current.submitPayment();
+      return;
+    }
+
+    // 2b. STRIPE HOSTED / WALLET FALLBACK:
     setBusy(true);
     setError("");
 
@@ -1520,12 +1534,45 @@ export const CheckoutPage: React.FC = () => {
                           onClick={(e) => e.stopPropagation()}
                           className="bg-blue-50/70 dark:bg-blue-950/40 p-3 sm:p-4 border-t border-blue-100 dark:border-blue-900/40 text-xs leading-relaxed text-blue-900 dark:text-blue-300"
                         >
-                          <div className="flex items-start gap-2.5">
-                            <Lock size={13} className="shrink-0 mt-0.5 text-brand-blue dark:text-blue-400" />
-                            <div className="space-y-1">
-                              <span>{option.detail}</span>
+                          {option.id === "card" ? (
+                            <OnSiteStripePayment
+                              ref={onSitePaymentRef}
+                              method="card"
+                              items={basket}
+                              totalAmount={quote?.total_amount || 0}
+                              currency={quote?.currency || currency}
+                              email={email}
+                              address={address}
+                              tier={tier}
+                              promo={promo}
+                              internationalAcknowledged={internationalAcknowledged}
+                              stripePublishableKey={configQuery.data?.stripePublishableKey}
+                              isDark={isDark}
+                              disabled={busy || !quote || quoteQuery.isFetching}
+                              showPayButton={false}
+                              onPaymentStart={() => {
+                                setBusy(true);
+                                setError("");
+                              }}
+                              onPaymentComplete={(orderId) => {
+                                clearCheckoutDraft();
+                                navigate(`/order-success/${orderId}`);
+                              }}
+                              onError={(err) => {
+                                setError(err);
+                                setBusy(false);
+                                setAttempt(currentCheckoutAttempt());
+                              }}
+                              onSwitchMethod={(target) => setMethod(target)}
+                            />
+                          ) : (
+                            <div className="flex items-start gap-2.5">
+                              <Lock size={13} className="shrink-0 mt-0.5 text-brand-blue dark:text-blue-400" />
+                              <div className="space-y-1">
+                                <span>{option.detail}</span>
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1711,18 +1758,20 @@ export const CheckoutPage: React.FC = () => {
                   ? "Please wait..."
                   : quoteQuery.isFetching
                     ? "Updating total..."
-                    : method === "apple_pay"
-                      ? "Pay with Apple Pay"
-                      : method === "amazon_pay"
-                        ? "Pay with Amazon Pay"
-                        : method === "paypal"
-                          ? "Continue with PayPal"
-                          : "Continue to secure payment"}
+                    : method === "card"
+                      ? `Pay Now • ${quote ? displayPrice(quote.total_amount) : ""}`
+                      : method === "apple_pay"
+                        ? "Pay with Apple Pay"
+                        : method === "amazon_pay"
+                          ? "Pay with Amazon Pay"
+                          : method === "paypal"
+                            ? "Continue with PayPal"
+                            : "Continue to secure payment"}
               </span>
               <ArrowRight size={17} className="shrink-0" />
             </button>
             <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400 mt-2.5 sm:mt-3 text-center">
-              You will review and complete payment securely {method === "paypal" ? "via PayPal" : "via Stripe (256-bit SSL encrypted)"}.
+              You will complete payment securely {method === "paypal" ? "via PayPal" : "via Stripe (256-bit SSL encrypted directly on-site)"}.
             </p>
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-gray-100 dark:border-white/10">
               <Truck size={15} /> Delivery to {countryName(address.country)}

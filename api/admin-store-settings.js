@@ -12,7 +12,7 @@ const MASTER_ADMIN_EMAILS = new Set([
 const VIRTUAL_HERO_COLUMNS = new Set([
   'hero_youtube_enabled', 'hero_youtube_url', 'hero_youtube_mute', 'hero_youtube_loop',
   'hero_youtube_start_minutes', 'hero_youtube_start_seconds', 'hero_youtube_end_minutes', 'hero_youtube_end_seconds',
-  'hero_trailers'
+  'hero_trailers', 'campaign_banner_image', 'campaign_popup_enabled'
 ]);
 
 const CORE_COLUMNS = new Set([
@@ -30,6 +30,7 @@ const CORE_COLUMNS = new Set([
   'announcement_left', 'announcement_center', 'announcement_link',
   'bank_name', 'bank_account_name', 'bank_sort_code', 'bank_account_number', 'bank_iban', 'bank_payment_instructions',
   'campaign_is_active', 'campaign_title', 'campaign_badge', 'campaign_tagline', 'campaign_discount_text', 'campaign_ends_at',
+  'campaign_banner_image', 'campaign_popup_enabled',
   'custom_formats', 'shipping_zones', 'checkout_currencies', 'international_duties_notice',
   'payment_card_enabled', 'payment_paypal_enabled', 'payment_bank_transfer_enabled',
   'updated_at'
@@ -91,8 +92,8 @@ export default endpoint(async (req) => {
     }
   }
 
-  // Persist hero trailers and youtube config into hero_bg_image fallback so it is 100% saved in Postgres
-  if (Array.isArray(input.hero_trailers) || input.hero_youtube_enabled !== undefined) {
+  // Persist hero trailers, youtube config, and campaign banner into hero_bg_image fallback so it is 100% saved in Postgres
+  if (Array.isArray(input.hero_trailers) || input.hero_youtube_enabled !== undefined || input.campaign_banner_image !== undefined || input.campaign_popup_enabled !== undefined) {
     const heroMeta = {
       hero_trailers: Array.isArray(input.hero_trailers) ? input.hero_trailers : [],
       hero_youtube_enabled: Boolean(input.hero_youtube_enabled),
@@ -103,6 +104,8 @@ export default endpoint(async (req) => {
       hero_youtube_start_seconds: Number(input.hero_youtube_start_seconds || 0),
       hero_youtube_end_minutes: input.hero_youtube_end_minutes !== undefined ? Number(input.hero_youtube_end_minutes) : 1,
       hero_youtube_end_seconds: input.hero_youtube_end_seconds !== undefined ? Number(input.hero_youtube_end_seconds) : 30,
+      campaign_banner_image: input.campaign_banner_image || '/promos/special-offer-banner.jpg',
+      campaign_popup_enabled: input.campaign_popup_enabled ?? true,
     };
     sanitized.hero_bg_image = `HERO_META:${JSON.stringify(heroMeta)}`;
     if (existing && 'hero_trailers' in existing && Array.isArray(input.hero_trailers)) {
@@ -131,10 +134,10 @@ export default endpoint(async (req) => {
   if (dbColumns.has('registered_office_address')) sanitized.registered_office_address = 'United Kingdom';
   if (dbColumns.has('warehouse_location')) sanitized.warehouse_location = 'United Kingdom';
   if (dbColumns.has('store_name')) {
-    if (!sanitized.store_name || sanitized.store_name.includes('AZ Rayan')) sanitized.store_name = 'DVDs Zone';
+    if (!sanitized.store_name) sanitized.store_name = 'DVDS Zone';
   }
   if (dbColumns.has('registered_company_name')) {
-    if (!sanitized.registered_company_name || sanitized.registered_company_name.includes('AZ Rayan')) sanitized.registered_company_name = 'DVDs Zone';
+    if (!sanitized.registered_company_name || sanitized.registered_company_name === 'DVDs Zone' || sanitized.registered_company_name === 'DVD Zone') sanitized.registered_company_name = 'AZRAYAN LTD';
   }
   if (dbColumns.has('support_email')) {
     const rawEmail = (sanitized.support_email || '').trim();
@@ -239,6 +242,8 @@ export default endpoint(async (req) => {
       if (meta.hero_youtube_start_seconds !== undefined) updated.hero_youtube_start_seconds = meta.hero_youtube_start_seconds;
       if (meta.hero_youtube_end_minutes !== undefined) updated.hero_youtube_end_minutes = meta.hero_youtube_end_minutes;
       if (meta.hero_youtube_end_seconds !== undefined) updated.hero_youtube_end_seconds = meta.hero_youtube_end_seconds;
+      if (meta.campaign_banner_image !== undefined) updated.campaign_banner_image = meta.campaign_banner_image;
+      if (meta.campaign_popup_enabled !== undefined) updated.campaign_popup_enabled = meta.campaign_popup_enabled;
     } catch {}
   }
   if (Array.isArray(input.hero_trailers)) {
@@ -252,6 +257,8 @@ export default endpoint(async (req) => {
   if (input.hero_youtube_start_seconds !== undefined) updated.hero_youtube_start_seconds = input.hero_youtube_start_seconds;
   if (input.hero_youtube_end_minutes !== undefined) updated.hero_youtube_end_minutes = input.hero_youtube_end_minutes;
   if (input.hero_youtube_end_seconds !== undefined) updated.hero_youtube_end_seconds = input.hero_youtube_end_seconds;
+  if (input.campaign_banner_image !== undefined) updated.campaign_banner_image = input.campaign_banner_image;
+  if (input.campaign_popup_enabled !== undefined) updated.campaign_popup_enabled = input.campaign_popup_enabled;
 
   return { success: true, settings: updated };
 }, 'POST', { max: 30, windowMs: 60000 });

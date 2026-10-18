@@ -44,6 +44,8 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   campaign_tagline: 'Limited boutique archive allocation with rare box sets, special discounts, and same-day UK dispatch.',
   campaign_discount_text: 'Up to 50% OFF',
   campaign_ends_at: null,
+  campaign_banner_image: '/promos/special-offer-banner.jpg',
+  campaign_popup_enabled: true,
   custom_formats: ['Standard', 'DVD', 'Blu-ray', '4K UHD', 'Box Set', 'Merchandise', 'Physical'],
   director_badge: 'DIRECTOR SPOTLIGHT',
   director_name: 'Christopher Nolan',

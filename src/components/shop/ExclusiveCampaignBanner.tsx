@@ -121,11 +121,24 @@ export const ExclusiveCampaignBanner: React.FC<ExclusiveCampaignBannerProps> = (
       aria-label="Exclusive Campaign"
       className="relative overflow-hidden rounded-2xl bg-[#0C101A] text-white p-5 sm:p-7 border border-white/10 shadow-xl mb-8 group transition-all"
     >
+      {/* Visual Campaign Banner Backdrop (Object Storage Promo Image) */}
+      {(settings?.campaign_banner_image || '/promos/special-offer-banner.jpg') && (
+        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0">
+          <img
+            src={settings?.campaign_banner_image || '/promos/special-offer-banner.jpg'}
+            alt="Promotional Campaign Banner"
+            className="w-full h-full object-cover object-center opacity-25 scale-105 group-hover:scale-100 transition-transform duration-700 blur-[0.5px]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0C101A] via-[#0C101A]/90 to-[#0C101A]/75" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0C101A] via-transparent to-[#0C101A]/60" />
+        </div>
+      )}
+
       {/* Subtle top amber hairline accent */}
-      <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+      <div className="relative z-10 absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
 
       {/* Top Bar: Badges & Live Status */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-white/10">
+      <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-white/10">
         <div className="flex flex-wrap items-center gap-2">
           {/* Campaign Eyebrow Badge */}
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-widest bg-amber-500/15 text-amber-300 border border-amber-500/30">
@@ -176,7 +189,7 @@ export const ExclusiveCampaignBanner: React.FC<ExclusiveCampaignBannerProps> = (
       </div>
 
       {/* Main Content: Campaign Narrative + Spotlight Deal Showcase */}
-      <div className="pt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+      <div className="relative z-10 pt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
         {/* Left Column: Editorial Headline, Narrative & Quick Filter Shortcuts */}
         <div className={cn(isDealActive ? 'lg:col-span-7' : 'lg:col-span-12', 'space-y-4')}>
           <div>

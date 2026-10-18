@@ -454,6 +454,8 @@ export const adminApi = {
         if (meta.hero_youtube_start_seconds !== undefined) settings.hero_youtube_start_seconds = meta.hero_youtube_start_seconds;
         if (meta.hero_youtube_end_minutes !== undefined) settings.hero_youtube_end_minutes = meta.hero_youtube_end_minutes;
         if (meta.hero_youtube_end_seconds !== undefined) settings.hero_youtube_end_seconds = meta.hero_youtube_end_seconds;
+        if (meta.campaign_banner_image !== undefined) settings.campaign_banner_image = meta.campaign_banner_image;
+        if (meta.campaign_popup_enabled !== undefined) settings.campaign_popup_enabled = meta.campaign_popup_enabled;
       } catch {}
     }
     if ((!Array.isArray(settings.hero_trailers) || settings.hero_trailers.length === 0) && typeof window !== 'undefined') {

@@ -32,7 +32,9 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Package,
+  Clock,
 } from "lucide-react";
+import { extractYouTubeVideoId } from "../../components/landing/AzCinematicHero";
 import { adminApi } from "../../lib/adminApi";
 import { uploadAdminImage } from "../../lib/adminMedia";
 import { Product, DvdFormat, AgeRating, ProductStatus } from "../../types";
@@ -328,6 +330,13 @@ export const AdminProducts: React.FC = () => {
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [statusMenuOpenId, setStatusMenuOpenId] = useState<string | null>(null);
 
+  // Hero Video Trailer State
+  const [trailerUrl, setTrailerUrl] = useState("");
+  const [trailerStartMin, setTrailerStartMin] = useState(0);
+  const [trailerStartSec, setTrailerStartSec] = useState(0);
+  const [trailerEndMin, setTrailerEndMin] = useState(1);
+  const [trailerEndSec, setTrailerEndSec] = useState(30);
+
   const handleUpdateStatus = async (
     product: Product,
     newStatus: ProductStatus,
@@ -503,6 +512,11 @@ export const AdminProducts: React.FC = () => {
     setIsNewRelease(true);
     setIsBestSeller(false);
     setUploadMode("upload");
+    setTrailerUrl("");
+    setTrailerStartMin(0);
+    setTrailerStartSec(0);
+    setTrailerEndMin(1);
+    setTrailerEndSec(30);
   };
 
   const openCreateModal = () => {
@@ -562,6 +576,31 @@ export const AdminProducts: React.FC = () => {
     setIsNewRelease(Boolean(prod.is_new_release));
     setIsBestSeller(Boolean(prod.is_best_seller));
     setUploadMode("upload");
+
+    // Load existing trailer from store settings or product
+    const existingTrailer = (storeSettings?.hero_trailers || []).find((t) => {
+      const target = String(t.product_id || "").trim().toLowerCase();
+      return (
+        target === String(prod.id).trim().toLowerCase() ||
+        target === String(prod.slug).trim().toLowerCase() ||
+        (prod.title && target === prod.title.toLowerCase()) ||
+        (prod.sku && target === prod.sku.toLowerCase())
+      );
+    });
+    if (existingTrailer) {
+      setTrailerUrl(existingTrailer.youtube_url || "");
+      setTrailerStartMin(existingTrailer.start_minutes ?? 0);
+      setTrailerStartSec(existingTrailer.start_seconds ?? 0);
+      setTrailerEndMin(existingTrailer.end_minutes ?? 1);
+      setTrailerEndSec(existingTrailer.end_seconds ?? 30);
+    } else {
+      setTrailerUrl(prod.trailer_url || "");
+      setTrailerStartMin(0);
+      setTrailerStartSec(0);
+      setTrailerEndMin(1);
+      setTrailerEndSec(30);
+    }
+
     setIsModalOpen(true);
   };
 
@@ -821,6 +860,56 @@ export const AdminProducts: React.FC = () => {
         selectedGenreIds,
         allImgs,
       );
+
+      // Sync hero trailer with store settings if trailerUrl exists or was modified
+      try {
+        const currentSettings = storeSettings || await adminApi.getStoreSettings();
+        if (currentSettings) {
+          const trailers = [...(currentSettings.hero_trailers || [])];
+          const prodId = saved.id;
+          const tIndex = trailers.findIndex((t) => {
+            const target = String(t.product_id || "").trim().toLowerCase();
+            return (
+              target === String(prodId).trim().toLowerCase() ||
+              target === String(saved.slug).trim().toLowerCase() ||
+              (saved.title && target === saved.title.toLowerCase()) ||
+              (saved.sku && target === saved.sku.toLowerCase())
+            );
+          });
+
+          if (trailerUrl.trim()) {
+            const payload = {
+              product_id: prodId,
+              youtube_url: trailerUrl.trim(),
+              start_minutes: trailerStartMin,
+              start_seconds: trailerStartSec,
+              end_minutes: trailerEndMin,
+              end_seconds: trailerEndSec,
+            };
+            if (tIndex >= 0) {
+              trailers[tIndex] = { ...trailers[tIndex], ...payload };
+            } else {
+              trailers.push(payload);
+            }
+            await adminApi.saveStoreSettings({
+              ...currentSettings,
+              hero_trailers: trailers,
+            });
+            await queryClient.invalidateQueries({ queryKey: ["admin", "settings"] });
+            await queryClient.invalidateQueries({ queryKey: ["store", "settings"] });
+          } else if (tIndex >= 0 && !trailerUrl.trim()) {
+            trailers.splice(tIndex, 1);
+            await adminApi.saveStoreSettings({
+              ...currentSettings,
+              hero_trailers: trailers,
+            });
+            await queryClient.invalidateQueries({ queryKey: ["admin", "settings"] });
+            await queryClient.invalidateQueries({ queryKey: ["store", "settings"] });
+          }
+        }
+      } catch (settingsErr) {
+        console.warn("Failed to sync hero trailer settings:", settingsErr);
+      }
 
       addToast(
         `${editingProduct ? "Updated" : "Added"} "${saved.title}" successfully`,
@@ -1810,6 +1899,124 @@ export const AdminProducts: React.FC = () => {
                   placeholder="e.g. 024"
                   className="w-full h-10 px-3 border border-gray-200 rounded-lg text-xs font-mono text-dark focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                 />
+              </div>
+
+              {/* Hero Video Trailer Section */}
+              <div className="p-4 bg-gradient-to-r from-red-50/50 via-white to-gray-50 border border-red-100 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                      <Film className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-dark flex items-center gap-1.5">
+                        <span>Hero Video Trailer (YouTube Link)</span>
+                        <span className="text-[10px] font-normal px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                          Homepage Hero
+                        </span>
+                      </h4>
+                      <p className="text-[10px] text-gray-500">
+                        Link video trailer YouTube untuk produk ini. Jika produk ini termasuk dalam 6 produk terbaru, video ini akan otomatis diputar sebagai background cinematic di beranda.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <FieldLabel
+                      label="YouTube Trailer URL atau Video ID"
+                      hint="e.g. https://www.youtube.com/watch?v=AwwbhhjQ9Xk"
+                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={trailerUrl}
+                        onChange={(e) => setTrailerUrl(e.target.value)}
+                        placeholder="https://youtu.be/... atau Video ID"
+                        className="w-full h-10 px-3 pr-24 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition bg-white"
+                      />
+                      {extractYouTubeVideoId(trailerUrl) && (
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 pointer-events-none">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span className="font-mono">{extractYouTubeVideoId(trailerUrl)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Start Time */}
+                    <div className="bg-white p-2.5 rounded-lg border border-gray-200">
+                      <span className="block text-[11px] font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                        <Clock className="w-3 h-3 text-blue-600" />
+                        <span>Waktu Mulai Playback</span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <label className="block text-[9px] text-gray-500 mb-0.5">Menit</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="999"
+                            value={trailerStartMin}
+                            onChange={(e) => setTrailerStartMin(Math.max(0, parseInt(e.target.value) || 0))}
+                            className="w-full h-8 px-2 border border-gray-200 rounded text-xs text-center font-mono focus:outline-none focus:border-blue-500"
+                            placeholder="0"
+                          />
+                        </div>
+                        <span className="text-gray-400 font-bold mt-3">:</span>
+                        <div className="flex-1">
+                          <label className="block text-[9px] text-gray-500 mb-0.5">Detik</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="59"
+                            value={trailerStartSec}
+                            onChange={(e) => setTrailerStartSec(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                            className="w-full h-8 px-2 border border-gray-200 rounded text-xs text-center font-mono focus:outline-none focus:border-blue-500"
+                            placeholder="00"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* End Time */}
+                    <div className="bg-white p-2.5 rounded-lg border border-gray-200">
+                      <span className="block text-[11px] font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                        <Clock className="w-3 h-3 text-amber-500" />
+                        <span>Waktu Selesai (Cut / Loop)</span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <label className="block text-[9px] text-gray-500 mb-0.5">Menit</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="999"
+                            value={trailerEndMin}
+                            onChange={(e) => setTrailerEndMin(Math.max(0, parseInt(e.target.value) || 0))}
+                            className="w-full h-8 px-2 border border-gray-200 rounded text-xs text-center font-mono focus:outline-none focus:border-blue-500"
+                            placeholder="1"
+                          />
+                        </div>
+                        <span className="text-gray-400 font-bold mt-3">:</span>
+                        <div className="flex-1">
+                          <label className="block text-[9px] text-gray-500 mb-0.5">Detik</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="59"
+                            value={trailerEndSec}
+                            onChange={(e) => setTrailerEndSec(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                            className="w-full h-8 px-2 border border-gray-200 rounded text-xs text-center font-mono focus:outline-none focus:border-blue-500"
+                            placeholder="30"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

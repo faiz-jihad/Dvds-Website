@@ -69,6 +69,8 @@ const AdminLogin = lazyWithRetry(() => import('../pages/Admin/AdminLogin'), 'Adm
 const AdminUsers = lazyWithRetry(() => import('../pages/Admin/AdminUsers'), 'AdminUsers');
 const LoginPage = lazyWithRetry(() => import('../pages/Auth/LoginPage'), 'LoginPage');
 const RegisterPage = lazyWithRetry(() => import('../pages/Auth/RegisterPage'), 'RegisterPage');
+const ForgotPasswordPage = lazyWithRetry(() => import('../pages/Auth/ForgotPasswordPage'), 'ForgotPasswordPage');
+const ResetPasswordPage = lazyWithRetry(() => import('../pages/Auth/ResetPasswordPage'), 'ResetPasswordPage');
 
 import { RouteErrorBoundary } from '../components/common/RouteErrorBoundary';
 
@@ -105,6 +107,8 @@ export const router = createBrowserRouter([
       // Customer Authentication
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
+      { path: 'forgot-password', element: <ForgotPasswordPage /> },
+      { path: 'reset-password', element: <ResetPasswordPage /> },
 
       // Customer Account
       {

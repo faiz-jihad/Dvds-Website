@@ -192,6 +192,8 @@ export const publicApi = {
       budget_collection_threshold: Number(data.budget_collection_threshold ?? 15),
       vip_promo_discount: Number(data.vip_promo_discount ?? 0),
       vip_min_spend: Number(data.vip_min_spend ?? 0),
+      campaign_banner_image: data.campaign_banner_image || DEFAULT_STORE_SETTINGS.campaign_banner_image || '/promos/special-offer-banner.jpg',
+      campaign_popup_enabled: data.campaign_popup_enabled ?? DEFAULT_STORE_SETTINGS.campaign_popup_enabled ?? true,
     } as StoreSettings;
 
     // Strict privacy protection: clean jurisdiction to United Kingdom

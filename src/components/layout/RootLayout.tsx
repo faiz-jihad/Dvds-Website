@@ -8,6 +8,7 @@ import { CartDrawer } from '../commerce/CartDrawer';
 import { SearchOverlay } from '../commerce/SearchOverlay';
 import { MobileNavDrawer } from './MobileNavDrawer';
 import { ToastContainer } from '../common/Toast';
+import { PromoBannerPopup } from '../common/PromoBannerPopup';
 import { publicApi } from '../../lib/publicApi';
 import { useCartStore } from '../../stores/useCartStore';
 import { useUiStore } from '../../stores/useUiStore';
@@ -109,6 +110,7 @@ export const RootLayout: React.FC = () => {
       <SearchOverlay />
       <MobileNavDrawer />
       <ToastContainer />
+      {!paymentRoute && <PromoBannerPopup settings={settingsQuery.data} />}
 
       {/* Floating Action Search Button (WhatsApp style floating button on mobile) */}
       {!paymentRoute && (

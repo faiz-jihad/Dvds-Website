@@ -2,7 +2,8 @@ import { CheckoutError, recordPayment } from './_checkout.js';
 
 export async function paypalRequest(path, options = {}) {
   if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET) throw new CheckoutError('PayPal is temporarily unavailable.', 503);
-  const base = ['live','production'].includes(process.env.PAYPAL_ENVIRONMENT) ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+  const env = String(process.env.PAYPAL_ENVIRONMENT || '').trim().toLowerCase();
+  const base = ['live', 'production'].includes(env) ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
   const tokenResponse = await fetch(`${base}/v1/oauth2/token`, { method: 'POST', headers: {
     Authorization: `Basic ${Buffer.from(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`).toString('base64')}`,
     'Content-Type': 'application/x-www-form-urlencoded',
@@ -20,12 +21,26 @@ export async function capturePayPal(db, order, paypalId) {
   if (['paid','refunded','partially_refunded'].includes(order.payment_status)) return;
   if (order.status === 'cancelled') throw new CheckoutError('This order has been cancelled. Start a new checkout.', 409, 'ATTEMPT_CLOSED');
   let result = await paypalRequest(`/v2/checkout/orders/${encodeURIComponent(paypalId)}`);
-  if (result.status === 'APPROVED') result = await paypalRequest(`/v2/checkout/orders/${encodeURIComponent(paypalId)}/capture`, { method: 'POST', headers: { 'PayPal-Request-Id': `capture-${order.id}`, Prefer: 'return=representation' }, body: '{}' });
-  if (result.status !== 'COMPLETED') return;
+  if (result.status === 'APPROVED') {
+    try {
+      result = await paypalRequest(`/v2/checkout/orders/${encodeURIComponent(paypalId)}/capture`, {
+        method: 'POST',
+        headers: { 'PayPal-Request-Id': `capture-${order.id}`, Prefer: 'return=representation' },
+        body: '{}'
+      });
+    } catch (captureErr) {
+      console.warn('[capturePayPal] Capture call note, re-checking order:', captureErr.message);
+      result = await paypalRequest(`/v2/checkout/orders/${encodeURIComponent(paypalId)}`);
+    }
+  }
+  if (result.status !== 'COMPLETED') {
+    console.warn(`[capturePayPal] PayPal order ${paypalId} status is '${result.status}', not COMPLETED.`);
+    return;
+  }
   const unit = result.purchase_units?.[0];
   const captures = unit?.payments?.captures || [];
   const capture = captures.find((item) => item.status === 'COMPLETED');
-  if (!capture || captures.length !== 1 || (unit.custom_id && unit.custom_id !== order.id)) throw new CheckoutError('PayPal payment details could not be verified.', 409);
+  if (!capture || (unit?.custom_id && unit.custom_id !== order.id)) throw new CheckoutError('PayPal payment details could not be verified.', 409);
   await recordPayment(db, order, paypalId, capture.id, Number(capture.amount.value), capture.amount.currency_code);
   try {
     const { data: freshOrder } = await db.from('orders').select('*, items:order_items(*)').eq('id', order.id).maybeSingle();

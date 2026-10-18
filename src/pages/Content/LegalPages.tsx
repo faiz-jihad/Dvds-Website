@@ -37,7 +37,7 @@ const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath
         <aside className="mt-10 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-5 space-y-1.5 shadow-xs">
           <strong className="block text-dark dark:text-white font-bold">Legal Operator &amp; Heritage</strong>
           <p><strong>DVDS Zone</strong> (trading brand <strong>DVD ZONE</strong>) is active since <strong>2021</strong>.</p>
-          <p>Operating entity: <strong>DVDs Zone</strong>, registered in England and Wales.</p>
+          <p>Operating entity: <strong>{settings.registered_company_name || 'AZRAYAN LTD'}</strong>, registered in England and Wales.</p>
           <p>Company number: {settings.company_number || '13894195'}</p>
           <p>Official Website: <a href="https://dvds-zone.co.uk" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">https://dvds-zone.co.uk</a></p>
           <p>{settings.warehouse_location || 'United Kingdom'}</p>
@@ -77,14 +77,14 @@ export const PrivacyPage: React.FC = () => (
             </div>
             <div className="p-3 bg-white dark:bg-[#141A26] rounded-lg border border-blue-100/80 dark:border-blue-900/30">
               <span className="text-[10px] font-mono uppercase tracking-wider text-brand-blue dark:text-blue-400 block font-semibold">Operating Entity</span>
-              <strong className="text-dark dark:text-white text-sm block mt-0.5">DVDs Zone</strong>
+              <strong className="text-dark dark:text-white text-sm block mt-0.5">{settings.registered_company_name || 'AZRAYAN LTD'}</strong>
               <span className="text-[11px] text-gray-600 dark:text-gray-300">Company No. {settings.company_number || '13894195'} (England &amp; Wales)</span>
             </div>
           </div>
         </div>
 
         <p>
-          <strong>Last updated:</strong> October 2026. This Privacy Policy applies to the website, online storefront, and applications operating under <strong>DVDS Zone</strong> (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), accessible at <a href="https://dvds-zone.co.uk" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">https://dvds-zone.co.uk</a>, operated by <strong>DVDs Zone</strong> (Company Registered in England and Wales No. {settings.company_number || '13894195'}, active since 2021).
+          <strong>Last updated:</strong> October 2026. This Privacy Policy applies to the website, online storefront, and applications operating under <strong>DVDS Zone</strong> (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), accessible at <a href="https://dvds-zone.co.uk" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">https://dvds-zone.co.uk</a>, operated by <strong>{settings.registered_company_name || 'AZRAYAN LTD'}</strong> (Company Registered in England and Wales No. {settings.company_number || '13894195'}, active since 2021).
         </p>
 
         <p>
@@ -250,7 +250,7 @@ export const PrivacyPage: React.FC = () => (
           <div className="p-4 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-1 text-xs">
             <p><strong>Operating Brand:</strong> DVDS Zone</p>
             <p><strong>Website:</strong> <a href="https://dvds-zone.co.uk" className="text-brand-blue dark:text-blue-400 font-mono hover:underline">https://dvds-zone.co.uk</a></p>
-            <p><strong>Registered Entity:</strong> DVDs Zone (Company No. {settings.company_number || '13894195'})</p>
+            <p><strong>Registered Entity:</strong> {settings.registered_company_name || 'AZRAYAN LTD'} (Company No. {settings.company_number || '13894195'})</p>
             <p><strong>Jurisdiction:</strong> England and Wales, United Kingdom</p>
             <p><strong>Privacy &amp; Data Rights Email:</strong> <a href="mailto:azrayanltd@gmail.com" className="text-brand-blue dark:text-blue-400 font-mono hover:underline font-medium">azrayanltd@gmail.com</a></p>
             <p><strong>Customer Telephone Hotline:</strong> <a href="tel:+447400320038" className="text-brand-blue dark:text-blue-400 font-mono hover:underline font-medium">00447400320038</a></p>

@@ -38,6 +38,7 @@ export interface OnSiteStripePaymentProps {
   stripePublishableKey?: string | null;
   isDark: boolean;
   disabled?: boolean;
+  showPayButton?: boolean;
   onPaymentStart?: () => void;
   onPaymentComplete: (orderId: string) => void;
   onError: (message: string) => void;
@@ -62,6 +63,7 @@ export const OnSiteStripePayment = forwardRef<
       stripePublishableKey,
       isDark,
       disabled = false,
+      showPayButton = true,
       onPaymentStart,
       onPaymentComplete,
       onError,
@@ -426,24 +428,26 @@ export const OnSiteStripePayment = forwardRef<
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleCardSubmit}
-          disabled={!cardComplete || isSubmitting || disabled}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? (
-            <>
-              <RefreshCw size={13} className="animate-spin" />
-              <span>Processing secure payment...</span>
-            </>
-          ) : (
-            <>
-              <span>Pay Now • {formatMoney(totalAmount, currency)}</span>
-              <ArrowRight size={14} />
-            </>
-          )}
-        </button>
+        {showPayButton && (
+          <button
+            type="button"
+            onClick={handleCardSubmit}
+            disabled={!cardComplete || isSubmitting || disabled}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? (
+              <>
+                <RefreshCw size={13} className="animate-spin" />
+                <span>Processing secure payment...</span>
+              </>
+            ) : (
+              <>
+                <span>Pay Now • {formatMoney(totalAmount, currency)}</span>
+                <ArrowRight size={14} />
+              </>
+            )}
+          </button>
+        )}
       </div>
     );
   }

@@ -290,26 +290,6 @@ export const AzDarkLandingNav: React.FC = () => {
               </div>
             </button>
           </div>
-
-          {/* ── Special Offers Button (Item 4: Positioned immediately to the right of search engine) ── */}
-          <Link
-            to="/shop?filter=sale"
-            className={cn(
-              'h-11 px-3.5 sm:px-4 rounded-xl text-xs font-bold tracking-wide transition-all cursor-pointer flex items-center gap-2 shrink-0 border shadow-xs',
-              isSaleActive
-                ? 'text-brand-red bg-brand-red/20 border-brand-red/40'
-                : isDark
-                  ? 'text-brand-red bg-brand-red/10 border-brand-red/25 hover:bg-brand-red/20'
-                  : 'text-brand-red bg-red-50 border-red-200 hover:bg-red-100'
-            )}
-            title="Browse Special Offers & Limited Sales"
-          >
-            <Tag size={13} className="text-brand-red shrink-0" />
-            <span className="hidden xl:inline">Special Offers</span>
-            <span className="text-[10px] font-black uppercase px-1.5 py-0.5 bg-brand-red text-white rounded-full">
-              Sale
-            </span>
-          </Link>
         </div>
 
         {/* ── RIGHT: Notifications, Theme Switcher, Account, Basket ── */}

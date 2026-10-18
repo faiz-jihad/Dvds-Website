@@ -18,8 +18,11 @@ export const AzDarkLandingFooter: React.FC = () => {
   });
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
-  const storeName = settings.store_name || 'DVD ZONE';
-  const registeredCompanyName = settings.registered_company_name || 'DVDs Zone';
+  const storeName = settings.store_name || 'DVDS Zone';
+  const registeredCompanyName =
+    settings.registered_company_name && settings.registered_company_name !== 'DVD Zone' && settings.registered_company_name !== 'DVDs Zone'
+      ? settings.registered_company_name
+      : 'AZRAYAN LTD';
   const warehouseLocation = settings.warehouse_location || 'United Kingdom';
   const supportEmail = (!settings.support_email || settings.support_email.includes('azrayan.co.uk') || settings.support_email.includes('concierge')) ? 'azrayanltd@gmail.com' : settings.support_email;
   const supportPhone = settings.support_phone || '00447400320038';
@@ -47,7 +50,7 @@ export const AzDarkLandingFooter: React.FC = () => {
               />
             </Link>
             <p className={cn('text-xs leading-relaxed max-w-xs', isDark ? 'text-gray-400' : 'text-gray-600')}>
-              {storeName} — Quality DVDs &amp; Entertainment. Active since 2021, operated by {registeredCompanyName || 'DVDs Zone'}. United Kingdom.
+              {storeName} — Quality DVDs &amp; Entertainment. Active since 2021, operated by {registeredCompanyName}. United Kingdom.
             </p>
             <div className={cn('flex items-center gap-1.5 text-xs pt-1', isDark ? 'text-gray-400' : 'text-gray-600')}>
               <MapPin size={13} className="text-brand-blue shrink-0" />
@@ -201,7 +204,7 @@ export const AzDarkLandingFooter: React.FC = () => {
           )}
         >
           <p>
-            &copy; {new Date().getFullYear()} {registeredCompanyName || 'DVDs Zone'}. All rights reserved. Registered in United Kingdom.
+            &copy; {new Date().getFullYear()} {storeName} operated by {registeredCompanyName}. All rights reserved. Registered in United Kingdom.
           </p>
           <div className={cn('flex items-center gap-4 text-xs', isDark ? 'text-gray-400' : 'text-gray-600')}>
             <span>Stripe Verified</span>

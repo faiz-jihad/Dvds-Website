@@ -377,46 +377,23 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
     }
   }, [settings?.hero_youtube_mute]);
 
-  // Prioritize films specifically selected by admin in hero_trailers, otherwise fall back to active featured
+  // Automatically display the newest uploaded active products in the Hero carousel (max 6 products)
   const featured = React.useMemo(() => {
-    // 1. Resolve configured trailers from settings or localStorage fallback
-    let configuredTrailers = settings?.hero_trailers;
-    if ((!configuredTrailers || configuredTrailers.length === 0) && typeof window !== 'undefined') {
-      try {
-        const local = localStorage.getItem('dvds_hero_trailers');
-        if (local) {
-          const parsed = JSON.parse(local);
-          if (Array.isArray(parsed) && parsed.length > 0) configuredTrailers = parsed;
-        }
-      } catch {}
-    }
-
-    if (configuredTrailers && configuredTrailers.length > 0) {
-      const configured = configuredTrailers
-        .map((t) => {
-          const target = String(t.product_id || '').trim().toLowerCase();
-          return products.find((p) => {
-            const pId = String(p.id || '').trim().toLowerCase();
-            const pSlug = String(p.slug || '').trim().toLowerCase();
-            const pTitle = String(p.title || '').trim().toLowerCase();
-            const pSku = String(p.sku || '').trim().toLowerCase();
-            return pId === target || pSlug === target || pTitle === target || pSku === target;
-          });
-        })
-        .filter(Boolean) as Product[];
-      if (configured.length > 0) {
-        // Strictly show ONLY the films configured by the admin in Store Settings
-        return configured;
-      }
-    }
-
     const active = products.filter((p) => p.status === 'active');
-    const inStock = active.filter((p) => p.stock_quantity > 0);
-    const pool = inStock.length > 0 ? inStock : active;
+    if (active.length === 0) return [];
 
-    const highlighted = pool.filter((p) => p.is_featured || p.is_best_seller || p.is_new_release);
-    return (highlighted.length >= 3 ? highlighted : pool).slice(0, 6);
-  }, [products, settings?.hero_trailers]);
+    // Sort by created_at descending so newly uploaded products always appear first at the front
+    const sorted = [...active].sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      if (dateA && dateB && dateA !== dateB) return dateB - dateA;
+      // In-stock items prioritized as tiebreaker
+      return (b.stock_quantity > 0 ? 1 : 0) - (a.stock_quantity > 0 ? 1 : 0);
+    });
+
+    // Return max 6 newest uploaded products
+    return sorted.slice(0, 6);
+  }, [products]);
 
   const addItem = useCartStore((s) => s.addItem);
   const { openCartDrawer, addToast } = useUiStore();
