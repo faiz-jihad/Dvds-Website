@@ -18,4 +18,4 @@ Allow: /catalog/
 Allow: /product/
 Allow: /
 
-Sitemap: /sitemap.xml
+Sitemap: https://dvds-zone.co.uk/sitemap.xml
