@@ -90,6 +90,13 @@
     color: #94A3B8;
   }
 
+  /* Safe contrast protection for promotional popup modal */
+  .dark .promo-popup-card {
+    background-color: #0E131F !important;
+    color: #F8FAFC !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
   /* Dark mode background surfaces (Client & Admin) */
   .dark .bg-white {
     background-color: #0E131F;
