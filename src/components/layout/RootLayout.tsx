@@ -73,7 +73,7 @@ export const RootLayout: React.FC = () => {
       <div className="flex flex-1 min-w-0 relative">
         {!paymentRoute && <AzPublicSidebar fallbackProducts={productsQuery.data || []} />}
 
-        <main className="flex-1 min-w-0 flex flex-col">
+        <main className="flex-1 min-w-0 flex flex-col pb-16 md:pb-0">
           <React.Suspense
             fallback={
               <div className="min-h-[50vh] flex items-center justify-center" role="status">

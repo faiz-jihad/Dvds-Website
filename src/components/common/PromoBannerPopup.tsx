@@ -174,7 +174,7 @@ export const PromoBannerPopup: React.FC<PromoBannerPopupProps> = ({
           onClick={() => setIsOpen(true)}
           className={cn(
             'fixed z-40 flex items-center gap-2 rounded-full px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-bold shadow-xl border backdrop-blur-md transition-all duration-300 active:scale-95 hover:scale-[1.03] cursor-pointer',
-            'bottom-[max(1rem,env(safe-area-inset-bottom))] left-3.5 sm:left-6',
+            'bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-6 left-3.5 md:left-6',
             'bg-white text-gray-900 border-gray-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.12)] hover:bg-white',
             'dark:bg-[#111622]/95 dark:text-white dark:border-white/15 dark:hover:bg-[#182030] dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)]'
           )}
