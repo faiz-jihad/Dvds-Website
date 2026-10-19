@@ -18,6 +18,7 @@ import { StoreSettings, Product } from '../../types';
 import { formatGBP, cn } from '../../lib/formatters';
 import { useCartStore } from '../../stores/useCartStore';
 import { useUiStore } from '../../stores/useUiStore';
+import { useThemeStore } from '../../stores/useThemeStore';
 import { BbfcBadge } from '../common/BbfcBadge';
 
 interface ExclusiveCampaignBannerProps {
@@ -66,6 +67,7 @@ export const ExclusiveCampaignBanner: React.FC<ExclusiveCampaignBannerProps> = (
   selectedPriceCap,
   selectedFormat = 'all',
 }) => {
+  const isDark = useThemeStore((s) => s.theme) === 'dark';
   const endsAt = settings?.campaign_ends_at || settings?.deal_ends_at;
   const [timeLeft, setTimeLeft] = useState<TimeRemaining | null>(() => calculateTimeRemaining(endsAt));
   const [isAdded, setIsAdded] = useState(false);
@@ -119,7 +121,12 @@ export const ExclusiveCampaignBanner: React.FC<ExclusiveCampaignBannerProps> = (
   return (
     <section
       aria-label="Exclusive Campaign"
-      className="relative overflow-hidden rounded-2xl bg-[#0C101A] text-white p-5 sm:p-7 border border-white/10 shadow-xl mb-8 group transition-all"
+      className={cn(
+        'relative overflow-hidden rounded-2xl sm:rounded-3xl p-4 sm:p-7 border mb-8 group transition-all',
+        isDark
+          ? 'bg-[#0C101A] text-white border-white/10 shadow-2xl'
+          : 'bg-gradient-to-br from-[#0E131F] via-[#0C101A] to-[#080B12] text-white border-gray-300/40 shadow-xl'
+      )}
     >
       {/* Visual Campaign Banner Backdrop (Object Storage Promo Image) */}
       {(settings?.campaign_banner_image || '/promos/special-offer-banner.jpg') && (
@@ -193,10 +200,10 @@ export const ExclusiveCampaignBanner: React.FC<ExclusiveCampaignBannerProps> = (
         {/* Left Column: Editorial Headline, Narrative & Quick Filter Shortcuts */}
         <div className={cn(isDealActive ? 'lg:col-span-7' : 'lg:col-span-12', 'space-y-4')}>
           <div>
-            <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug">
+            <h2 className="font-display text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight leading-snug">
               {title}
             </h2>
-            <p className="text-xs sm:text-sm text-gray-300 mt-2 leading-relaxed max-w-2xl font-normal">
+            <p className="text-xs sm:text-sm text-gray-300 mt-1.5 sm:mt-2 leading-relaxed max-w-2xl font-normal">
               {tagline}
             </p>
           </div>
