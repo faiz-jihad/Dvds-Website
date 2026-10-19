@@ -130,7 +130,7 @@ export const publicApi = {
       return [
         {
           id: '11111111-1111-1111-1111-111111111111',
-          code: 'RAYAN10',
+          code: 'SPREAD12',
           type: 'percentage',
           value: 10,
           minimum_order: 15,
@@ -138,17 +138,27 @@ export const publicApi = {
         },
       ];
     }
-    const { data, error } = await sb
-      .from('promotions')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
-    if (error) return [];
-    return (data || []).map((row: any) => ({
-      ...row,
-      value: Number(row.value),
-      minimum_order: Number(row.minimum_order),
-    }));
+    try {
+      const { data, error } = await sb
+        .from('promotions')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      if (error || !data) return [];
+      return data
+        .filter((p: any) => {
+          if (p.starts_at && new Date(p.starts_at).getTime() > Date.now()) return false;
+          if (p.ends_at && new Date(p.ends_at).getTime() < Date.now()) return false;
+          return true;
+        })
+        .map((row: any) => ({
+          ...row,
+          value: Number(row.value),
+          minimum_order: Number(row.minimum_order),
+        }));
+    } catch {
+      return [];
+    }
   },
 
   async getStoreSettings(): Promise<StoreSettings> {
@@ -245,18 +255,6 @@ export const publicApi = {
     result.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge')) ? 'azrayanltd@gmail.com' : rawEmail;
     result.support_phone = data.support_phone?.trim() || '00447400320038';
     return result;
-  },
-
-  async getActivePromotions(): Promise<Promotion[]> {
-    const sb = client();
-    if (!sb) return [];
-    const now = new Date().toISOString();
-    const { data, error } = await sb.from('promotions').select('*').eq('is_active', true)
-      .lte('starts_at', now).or(`ends_at.is.null,ends_at.gte.${now}`).order('created_at', { ascending: false });
-    if (error) throw new Error('Promotions could not be loaded. Please retry.');
-    return (data || []).map((promotion) => ({ ...promotion,
-      value: Number(promotion.value), minimum_order: Number(promotion.minimum_order),
-    })) as Promotion[];
   },
 
   async createCheckoutSession(input: CheckoutInput) {
