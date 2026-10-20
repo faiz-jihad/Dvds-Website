@@ -21,6 +21,8 @@ const devApiPlugin = () => ({
       'paypal-webhook',
       'verify-turnstile',
       'cron-reports',
+      'admin-store-settings',
+      'admin-delete-order',
     ]);
     server.middlewares.use(async (req: any, res: any, next: any) => {
       let route = req.url?.split('?')[0]?.replace(/^\/api\//, '').replace(/\/$/, '');

@@ -36,6 +36,7 @@ import {
   Package,
   Ban,
   AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 import { adminApi } from '../../lib/adminApi';
 import { AdminPagination, useAdminPagination } from '../../components/admin/AdminPagination';
@@ -206,6 +207,10 @@ export const AdminOrders: React.FC = () => {
   const [customCancelReason, setCustomCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
 
+  // Deletion states
+  const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const openCancelModal = (order: Order, isFakeProof = false) => {
     setCancellingOrder({ order, isFakeProof });
     setCancelReasonPreset(
@@ -311,6 +316,35 @@ export const AdminOrders: React.FC = () => {
       addToast(err instanceof Error ? err.message : 'Failed to confirm bank transfer payment', 'error');
     } finally {
       setIsConfirmingBank(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!deletingOrder) return;
+    setIsDeleting(true);
+    try {
+      await adminApi.deleteOrder(deletingOrder.id);
+      await queryClient.invalidateQueries({ queryKey: ['admin'] });
+      await queryClient.invalidateQueries({ queryKey: ['order'] });
+      await queryClient.invalidateQueries({ queryKey: ['my-orders'] });
+
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem(`order_proof_${deletingOrder.id}`);
+          localStorage.removeItem(`order_proof_${deletingOrder.order_number}`);
+        }
+      } catch {}
+
+      if (selectedOrder?.id === deletingOrder.id) {
+        setSelectedOrder(null);
+      }
+
+      addToast(`Transaction ${deletingOrder.order_number} has been deleted successfully.`, 'success');
+      setDeletingOrder(null);
+    } catch (err: any) {
+      addToast(err instanceof Error ? err.message : 'Failed to delete transaction', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -753,18 +787,33 @@ export const AdminOrders: React.FC = () => {
 
                       {/* Action */}
                       <td className="py-4 px-4 align-middle text-right whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openOrder(o);
-                          }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-brand-blue hover:text-white hover:border-brand-blue text-dark text-xs font-semibold shadow-2xs transition-all group-hover:border-brand-blue group-hover:text-brand-blue cursor-pointer"
-                        >
-                          <Eye size={12} />
-                          <span>View</span>
-                          <ChevronRight size={12} className="opacity-60" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openOrder(o);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-brand-blue hover:text-white hover:border-brand-blue text-dark text-xs font-semibold shadow-2xs transition-all group-hover:border-brand-blue group-hover:text-brand-blue cursor-pointer"
+                            title="View order details"
+                          >
+                            <Eye size={12} />
+                            <span>View</span>
+                            <ChevronRight size={12} className="opacity-60" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingOrder(o);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-rose-200 bg-white hover:bg-rose-600 hover:text-white hover:border-rose-600 text-rose-600 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+                            title="Delete transaction"
+                          >
+                            <Trash2 size={12} />
+                            <span className="hidden sm:inline">Delete</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -973,6 +1022,17 @@ export const AdminOrders: React.FC = () => {
                           Cancel order
                         </Button>
                       )}
+
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeletingOrder(selectedOrder)}
+                        className="gap-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                        title="Delete this transaction permanently"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete Transaction
+                      </Button>
                     </div>
                   </div>
 
@@ -1765,6 +1825,83 @@ export const AdminOrders: React.FC = () => {
               >
                 <Ban className="w-3.5 h-3.5" />
                 Confirm Cancellation
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Delete Transaction Confirmation Modal */}
+      {deletingOrder && (
+        <Modal
+          isOpen={Boolean(deletingOrder)}
+          onClose={() => !isDeleting && setDeletingOrder(null)}
+          title="Delete Transaction"
+          description={`Order #${deletingOrder.order_number} (${formatMoney(deletingOrder.total_amount, deletingOrder.currency)})`}
+          maxWidth="md"
+        >
+          <div className="space-y-4 text-xs">
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 space-y-1.5">
+              <p className="font-bold text-rose-950 flex items-center gap-1.5 text-sm">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                Permanent Deletion Warning
+              </p>
+              <p className="text-[11px] text-rose-800 leading-relaxed">
+                Are you sure you want to delete transaction <strong>#{deletingOrder.order_number}</strong>?
+                This will permanently remove the order, ordered items, and payment logs from the database.
+                This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-gray-500 font-medium">Customer:</span>
+                <span className="font-semibold text-dark truncate max-w-[200px]">
+                  {deletingOrder.shipping_address?.full_name || deletingOrder.email}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500 font-medium">Placed On:</span>
+                <span className="font-medium text-dark">{formatDateUK(deletingOrder.created_at)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500 font-medium">Payment Status:</span>
+                <span className="font-bold uppercase tracking-wider text-[10px] text-gray-700">
+                  {deletingOrder.payment_status}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500 font-medium">Fulfilment Status:</span>
+                <span className="font-bold uppercase tracking-wider text-[10px] text-gray-700">
+                  {deletingOrder.status}
+                </span>
+              </div>
+              <div className="flex justify-between pt-1.5 border-t border-gray-200 font-bold">
+                <span className="text-dark">Total Amount:</span>
+                <span className="font-mono text-dark font-extrabold">
+                  {formatMoney(deletingOrder.total_amount, deletingOrder.currency)}
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-gray-200 flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeletingOrder(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteOrder}
+                isLoading={isDeleting}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete Transaction
               </Button>
             </div>
           </div>

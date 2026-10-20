@@ -395,6 +395,51 @@ export const adminApi = {
     return normalizeOrder(data);
   },
 
+  async deleteOrder(orderId: string): Promise<void> {
+    // 1. Try secure API endpoint /api/admin-delete-order
+    try {
+      const session = (await client().auth.getSession()).data?.session;
+      const token = session?.access_token;
+      const res = await fetch('/api/admin-delete-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ orderId }),
+      });
+
+      if (res.ok) {
+        const json = await res.json().catch(() => null);
+        if (json?.success) return;
+      } else {
+        const errJson = await res.json().catch(() => null);
+        if (errJson?.error && !String(res.status).startsWith('5')) {
+          throw new AdminBackendError(errJson.error, errJson.code || 'DELETE_FAILED');
+        }
+      }
+    } catch (err: any) {
+      if (err instanceof AdminBackendError) throw err;
+      // Fall through to direct database deletion fallback
+    }
+
+    // 2. Direct database deletion fallback via Supabase client
+    try {
+      await client().from('payment_events').delete().eq('order_id', orderId);
+    } catch {}
+    try {
+      await client().from('order_status_history').delete().eq('order_id', orderId);
+    } catch {}
+    try {
+      await client().from('order_items').delete().eq('order_id', orderId);
+    } catch {}
+
+    const { data, error } = await client().from('orders').delete().eq('id', orderId).select('id').single();
+    if (error || !data) {
+      fail(error, 'Transaction/order could not be deleted.');
+    }
+  },
+
   async adjustStock(productId: string, delta: number, reason: string): Promise<Product> {
     if (!Number.isInteger(delta) || delta === 0 || reason.trim().length < 3) {
       throw new AdminBackendError('Enter a non-zero whole-number adjustment and a reason of at least 3 characters.');
