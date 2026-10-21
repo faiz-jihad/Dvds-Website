@@ -76,7 +76,7 @@ export const RegisterPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      const res = await register(email, password, fullName);
+      const res = await register(email, password, fullName, phone, address);
       if (res.success) {
         // After registration, save phone to profile if supabase is available
         try {

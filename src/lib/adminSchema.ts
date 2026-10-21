@@ -1,4 +1,4 @@
-export type AdminSchemaScope = 'dashboard' | 'homepage' | 'products' | 'taxonomy' | 'inventory' | 'orders' | 'promotions' | 'support' | 'users' | 'settings' | 'activity' | 'reports' | 'all';
+export type AdminSchemaScope = 'dashboard' | 'homepage' | 'products' | 'taxonomy' | 'inventory' | 'orders' | 'promotions' | 'reviews' | 'support' | 'users' | 'settings' | 'activity' | 'reports' | 'all';
 
 const checks = {
   profiles: 'id,email,full_name,role,created_at',
@@ -17,6 +17,7 @@ const checks = {
   contact_messages: 'id,name,email,message,status',
   homepage_config: 'id,config_data',
   media_assets: 'id,asset_data,created_at',
+  reviews: 'id,product_id,user_id,rating,title,status,is_verified_purchase,created_at',
 } as const;
 
 type Table = keyof typeof checks;
@@ -28,6 +29,7 @@ const dependencies: Record<Exclude<AdminSchemaScope, 'all'>, readonly Table[]> =
   inventory: ['products', 'categories', 'genres', 'product_genres', 'inventory_movements', 'store_settings'],
   orders: ['orders', 'order_items'],
   promotions: ['promotions'],
+  reviews: ['reviews', 'products', 'profiles'],
   support: ['contact_messages', 'profiles'],
   users: ['profiles'],
   settings: ['store_settings', 'products', 'categories', 'genres', 'product_genres'],

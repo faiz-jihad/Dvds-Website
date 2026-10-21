@@ -22,6 +22,8 @@ import { StoreDataState } from '../components/common/StoreDataState';
 import { QuantitySelector } from '../components/commerce/QuantitySelector';
 import { DvdSpecsTable } from '../components/product/DvdSpecsTable';
 import { ProductCard } from '../components/product/ProductCard';
+import { StarRating } from '../components/common/StarRating';
+import { ProductReviewsSection } from '../components/product/ProductReviewsSection';
 import { useCartStore } from '../stores/useCartStore';
 import { useFavouritesStore } from '../stores/useFavouritesStore';
 import { useLastSeenStore } from '../stores/useLastSeenStore';
@@ -353,6 +355,31 @@ export const ProductDetail: React.FC = () => {
                   </p>
                 )}
 
+                {/* Customer Rating Stars */}
+                <div className="flex items-center gap-2 mt-2">
+                  <a
+                    href="#customer-reviews"
+                    className="inline-flex items-center gap-2 group cursor-pointer hover:opacity-90 transition"
+                  >
+                    <StarRating rating={product.average_rating || 0} size="sm" />
+                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 group-hover:text-brand-blue dark:group-hover:text-blue-400 transition-colors">
+                      {product.average_rating && product.average_rating > 0
+                        ? `${Number(product.average_rating).toFixed(1)} / 5.0`
+                        : 'No reviews yet'}
+                      {product.review_count && product.review_count > 0
+                        ? ` (${product.review_count} ${product.review_count === 1 ? 'review' : 'reviews'})`
+                        : ''}
+                    </span>
+                  </a>
+                  <span className="text-gray-400 text-xs font-mono">•</span>
+                  <a
+                    href="#customer-reviews"
+                    className="text-xs font-semibold text-brand-blue dark:text-blue-400 hover:underline"
+                  >
+                    Write a review
+                  </a>
+                </div>
+
                 {product.short_description && (
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed">
                     {product.short_description}
@@ -478,6 +505,9 @@ export const ProductDetail: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Customer Reviews & Ratings */}
+        <ProductReviewsSection product={product} />
 
         {/* Related Titles */}
         {relatedProducts.length > 0 && (

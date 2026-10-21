@@ -23,6 +23,8 @@ const devApiPlugin = () => ({
       'cron-reports',
       'admin-store-settings',
       'admin-delete-order',
+      'customer-register',
+      'customer-confirm',
     ]);
     server.middlewares.use(async (req: any, res: any, next: any) => {
       let route = req.url?.split('?')[0]?.replace(/^\/api\//, '').replace(/\/$/, '');

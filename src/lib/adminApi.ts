@@ -1,5 +1,5 @@
 import { isSupabaseConfigured, supabase } from './supabase';
-import { Category, FinancialStats, FulfilmentStatus, Genre, Order, OrderStatus, Product, Promotion, StoreSettings, Profile, UserRole } from '../types';
+import { Category, FinancialStats, FulfilmentStatus, Genre, Order, OrderStatus, Product, Promotion, StoreSettings, Profile, UserRole, Review, ReviewStatus } from '../types';
 import { adminSchemaChecks, AdminSchemaScope } from './adminSchema';
 import { DEFAULT_STORE_SETTINGS, MAX_PRODUCT_PRICE } from '../data/defaultStoreSettings';
 import { CURRENCIES, validateShippingZones } from '../../shared/commerce.js';
@@ -884,4 +884,114 @@ export const adminApi = {
     if (error) fail(error, 'User could not be deleted.');
   },
 
+  // --------------------------------------------------------------------------
+  // Customer Reviews Moderation
+  // --------------------------------------------------------------------------
+
+  async getAdminReviews(options: {
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Promise<{ reviews: Review[]; total: number }> {
+    const page = Math.max(1, options.page || 1);
+    const limit = Math.max(1, Math.min(100, options.limit || 20));
+    const offset = (page - 1) * limit;
+
+    let query = client()
+      .from('reviews')
+      .select('*, product:products(id, title, cover_image_url, sku, slug)', { count: 'exact' });
+
+    if (options.status && options.status !== 'all') {
+      query = query.eq('status', options.status);
+    }
+
+    if (options.search && options.search.trim()) {
+      const term = options.search.trim();
+      query = query.or(`title.ilike.%${term}%,comment.ilike.%${term}%,reviewer_name.ilike.%${term}%`);
+    }
+
+    query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+
+    const { data, count, error } = await query;
+    if (error) {
+      // Fallback query if nested relation has an issue
+      const fallback = await client()
+        .from('reviews')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (fallback.error) fail(fallback.error, 'Customer reviews could not be loaded.');
+      return { reviews: (fallback.data || []) as Review[], total: fallback.count || 0 };
+    }
+
+    return { reviews: (data || []) as Review[], total: count || 0 };
+  },
+
+  async updateReviewStatus(
+    id: string,
+    status: ReviewStatus,
+    moderationNote?: string
+  ): Promise<Review> {
+    const { data: auth, error: authErr } = await client().auth.getUser();
+    if (authErr || !auth?.user) fail(authErr, 'Sign in again to moderate reviews.');
+
+    const payload: Record<string, any> = {
+      status,
+      moderated_by: auth.user.id,
+      moderated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    if (moderationNote !== undefined) {
+      payload.moderation_note = moderationNote.trim() || null;
+    }
+
+    const { data, error } = await client()
+      .from('reviews')
+      .update(payload)
+      .eq('id', id)
+      .select('*, product:products(id, title, cover_image_url, sku, slug)')
+      .single();
+
+    if (error || !data) fail(error, 'Review moderation status could not be updated.');
+    return data as Review;
+  },
+
+  async deleteReview(id: string): Promise<void> {
+    const { error } = await client().from('reviews').delete().eq('id', id);
+    if (error) fail(error, 'Review could not be deleted.');
+  },
+
+  async getReviewStats(): Promise<{ total: number; pending: number; approved: number; rejected: number }> {
+    try {
+      const { data, error } = await client()
+        .from('reviews')
+        .select('status');
+
+      if (error || !data) return { total: 0, pending: 0, approved: 0, rejected: 0 };
+
+      let pending = 0;
+      let approved = 0;
+      let rejected = 0;
+
+      for (const row of data) {
+        if (row.status === 'pending') pending++;
+        else if (row.status === 'approved') approved++;
+        else if (row.status === 'rejected') rejected++;
+      }
+
+      return {
+        total: data.length,
+        pending,
+        approved,
+        rejected,
+      };
+    } catch {
+      return { total: 0, pending: 0, approved: 0, rejected: 0 };
+    }
+  },
+
 };
+

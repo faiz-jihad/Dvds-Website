@@ -62,6 +62,56 @@ export interface Product {
   imdb_rating?: number | null;
   imdb_id?: string | null;
   trailer_url?: string | null;
+  average_rating?: number | null;
+  review_count?: number | null;
+}
+
+export type ReviewStatus = 'pending' | 'approved' | 'rejected';
+
+export interface Review {
+  id: string;
+  product_id: string;
+  user_id: string;
+  order_id?: string | null;
+  rating: number;
+  title: string;
+  comment: string;
+  reviewer_name: string;
+  is_verified_purchase: boolean;
+  status: ReviewStatus;
+  moderated_by?: string | null;
+  moderated_at?: string | null;
+  moderation_note?: string | null;
+  created_at: string;
+  updated_at: string;
+  product?: {
+    id: string;
+    title: string;
+    cover_image_url?: string;
+    sku?: string;
+    slug?: string;
+  };
+}
+
+export interface ReviewSummary {
+  average_rating: number;
+  total_reviews: number;
+  five_star: number;
+  four_star: number;
+  three_star: number;
+  two_star: number;
+  one_star: number;
+  verified_count: number;
+}
+
+export interface ReviewEligibility {
+  authenticated: boolean;
+  can_review: boolean;
+  has_reviewed: boolean;
+  is_verified_purchase: boolean;
+  existing_review?: Review | null;
+  order_id?: string | null;
+  message?: string;
 }
 
 export interface CartItem {

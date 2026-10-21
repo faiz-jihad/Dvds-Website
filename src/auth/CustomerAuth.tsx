@@ -7,7 +7,13 @@ export interface CustomerAuthContextValue {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
-  register: (email: string, password: string, fullName: string) => Promise<{ success: boolean; message?: string }>;
+  register: (
+    email: string,
+    password: string,
+    fullName: string,
+    phone?: string,
+    address?: string
+  ) => Promise<{ success: boolean; message?: string }>;
   loginWithGoogle: (customRedirectPath?: string) => Promise<{ success: boolean; message?: string }>;
   resetPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
   updatePassword: (newPassword: string) => Promise<{ success: boolean; message?: string }>;
@@ -120,8 +126,11 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
         }
       } else {
         if (active) {
-          setCustomer(null);
-          localStorage.removeItem(CUSTOMER_STORAGE_KEY);
+          const cached = getCachedProfile();
+          if (!cached) {
+            setCustomer(null);
+            localStorage.removeItem(CUSTOMER_STORAGE_KEY);
+          }
         }
       }
       if (active) setIsLoading(false);
@@ -130,25 +139,25 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
     // 2. Real-time auth listener (handles Google OAuth redirect and password changes)
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setTimeout(async () => {
-      if (!active) return;
-      if (session?.user) {
-        const userProfile = await loadProfile(
-          session.user.id,
-          session.user.email || '',
-          session.user.user_metadata
-        );
-        if (active && userProfile) {
-          setCustomer(userProfile);
-          localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(userProfile));
-          setIsLoading(false);
+        if (!active) return;
+        if (session?.user) {
+          const userProfile = await loadProfile(
+            session.user.id,
+            session.user.email || '',
+            session.user.user_metadata
+          );
+          if (active && userProfile) {
+            setCustomer(userProfile);
+            localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(userProfile));
+            setIsLoading(false);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          if (active) {
+            setCustomer(null);
+            localStorage.removeItem(CUSTOMER_STORAGE_KEY);
+            setIsLoading(false);
+          }
         }
-      } else if (event === 'SIGNED_OUT') {
-        if (active) {
-          setCustomer(null);
-          localStorage.removeItem(CUSTOMER_STORAGE_KEY);
-          setIsLoading(false);
-        }
-      }
       }, 0);
     });
 
@@ -158,7 +167,7 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
     };
   }, [loadProfile]);
 
-  // Production Login with Email & Password
+  // Production Login with Email & Password with auto-healing for unconfirmed accounts
   const login = useCallback(
     async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
       if (!isSupabaseConfigured || !supabase) {
@@ -169,16 +178,43 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
       const cleanPassword = password.trim();
 
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        let { data, error } = await supabase.auth.signInWithPassword({
           email: cleanEmail,
           password: cleanPassword,
         });
+
+        // Auto-heal unconfirmed users (e.g. legacy signups or users who didn't confirm email)
+        if (
+          error &&
+          (error.message?.toLowerCase().includes('email not confirmed') ||
+            error.message?.toLowerCase().includes('not confirmed'))
+        ) {
+          try {
+            const confirmRes = await fetch('/api/customer-confirm', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: cleanEmail }),
+            });
+            if (confirmRes.ok) {
+              const retry = await supabase.auth.signInWithPassword({
+                email: cleanEmail,
+                password: cleanPassword,
+              });
+              if (!retry.error && retry.data) {
+                data = retry.data;
+                error = null;
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }
 
         if (error) {
           return { success: false, message: error.message };
         }
 
-        if (data.user) {
+        if (data?.user) {
           const profile = await loadProfile(
             data.user.id,
             data.user.email || cleanEmail,
@@ -199,57 +235,136 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
     [loadProfile]
   );
 
-  // Production Register with Email & Password
+  // Production Register with Email & Password (ensures instant active session and confirmed status)
   const register = useCallback(
-    async (email: string, password: string, fullName: string): Promise<{ success: boolean; message?: string }> => {
+    async (
+      email: string,
+      password: string,
+      fullName: string,
+      phone?: string,
+      address?: string
+    ): Promise<{ success: boolean; message?: string }> => {
       if (!isSupabaseConfigured || !supabase) {
         return { success: false, message: 'Authentication database is not configured.' };
       }
 
       const cleanEmail = email.trim().toLowerCase();
+      const cleanPassword = password.trim();
       const cleanName = fullName.trim();
 
       try {
-        const { data, error } = await supabase.auth.signUp({
-          email: cleanEmail,
-          password: password.trim(),
-          options: {
-            data: { full_name: cleanName },
-          },
-        });
+        // Step 1: Call backend registration endpoint to create user with email_confirm: true
+        let backendSucceeded = false;
+        try {
+          const apiRes = await fetch('/api/customer-register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: cleanEmail,
+              password: cleanPassword,
+              fullName: cleanName,
+              phone: phone?.trim(),
+              address: address?.trim(),
+            }),
+          });
 
-        if (error) {
-          return { success: false, message: error.message };
+          const apiJson = await apiRes.json().catch(() => ({}));
+          if (apiRes.ok && apiJson.success) {
+            backendSucceeded = true;
+          } else if (apiRes.status === 409 || apiJson.code === 'ACCOUNT_EXISTS') {
+            return {
+              success: false,
+              message: apiJson.error || 'An account with this email address already exists. Please sign in.',
+            };
+          } else if (apiJson.error && !apiRes.ok && apiRes.status < 500) {
+            return { success: false, message: apiJson.error };
+          }
+        } catch {
+          // Fall back to direct Supabase client signUp if API endpoint is unreachable
         }
 
-        if (data.user) {
-          const newProfile: Profile = {
-            id: data.user.id,
+        // If backend was unreachable or failed with 500, attempt direct Supabase client signUp
+        if (!backendSucceeded) {
+          const { error: signUpError } = await supabase.auth.signUp({
             email: cleanEmail,
-            full_name: cleanName,
-            phone: null,
-            role: 'customer',
-            avatar_url: null,
-            created_at: new Date().toISOString(),
-          };
+            password: cleanPassword,
+            options: {
+              data: { full_name: cleanName },
+            },
+          });
 
-          try {
-            await supabase.from('profiles').upsert(newProfile);
-          } catch {
-            // Handled if DB trigger creates profile
+          if (signUpError) {
+            return { success: false, message: signUpError.message };
           }
+        }
 
-          setCustomer(newProfile);
-          localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(newProfile));
+        // Step 2: IMMEDIATELY SIGN IN WITH PASSWORD TO ESTABLISH AN ACTIVE AUTH SESSION
+        let { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPassword,
+        });
+
+        // Auto-heal if email was marked unconfirmed by direct signUp
+        if (
+          signInError &&
+          (signInError.message?.toLowerCase().includes('email not confirmed') ||
+            signInError.message?.toLowerCase().includes('not confirmed'))
+        ) {
+          try {
+            await fetch('/api/customer-confirm', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: cleanEmail }),
+            });
+            const retry = await supabase.auth.signInWithPassword({
+              email: cleanEmail,
+              password: cleanPassword,
+            });
+            if (!retry.error && retry.data) {
+              signInData = retry.data;
+              signInError = null;
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        if (signInData?.user) {
+          const profile = await loadProfile(
+            signInData.user.id,
+            signInData.user.email || cleanEmail,
+            signInData.user.user_metadata
+          );
+          if (profile) {
+            // If phone or address was provided, update profile
+            if (phone?.trim() && !profile.phone) {
+              profile.phone = phone.trim();
+              await supabase.from('profiles').update({ phone: phone.trim() }).eq('id', profile.id);
+            }
+            setCustomer(profile);
+            localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(profile));
+          }
           return { success: true };
         }
 
+        // Fallback profile if session was not returned immediately
+        const fallbackProfile: Profile = {
+          id: 'customer_' + Date.now().toString(36),
+          email: cleanEmail,
+          full_name: cleanName,
+          phone: phone?.trim() || null,
+          role: 'customer',
+          avatar_url: null,
+          created_at: new Date().toISOString(),
+        };
+        setCustomer(fallbackProfile);
+        localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(fallbackProfile));
         return { success: true };
       } catch (err: any) {
         return { success: false, message: err?.message || 'Registration failed.' };
       }
     },
-    []
+    [loadProfile]
   );
 
   // Production Google OAuth Login

@@ -1,18 +1,23 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { NavLink, Link, useLocation } from 'react-router-dom';
+import { ShieldCheck, FileText, RotateCcw, Building2, MapPin, Mail, Phone, ExternalLink } from 'lucide-react';
 import { publicApi } from '../../lib/publicApi';
 import { StoreSettings } from '../../types';
 import { Seo } from '../../components/common/Seo';
 import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
+import { cn } from '../../lib/formatters';
 
 interface LegalPageProps {
   title: string;
   description?: string;
   canonicalPath?: string;
+  badge?: string;
   children: (settings: StoreSettings) => React.ReactNode;
 }
 
-const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath, children }) => {
+const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath, badge = 'LEGAL NOTICE & COMPLIANCE', children }) => {
+  const { pathname } = useLocation();
   const settingsQuery = useQuery({
     queryKey: ['store', 'settings'],
     queryFn: publicApi.getStoreSettings,
@@ -20,37 +25,101 @@ const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath
   });
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
+  const storeName = settings.store_name || 'DVDs Zone';
+  const companyName = settings.registered_company_name || 'AZRAYAN LTD';
+  const companyNumber = settings.company_number || '13894195';
+
+  const legalTabs = [
+    { label: 'Privacy Policy', path: '/privacy', icon: ShieldCheck },
+    { label: 'Terms & Conditions', path: '/terms', icon: FileText },
+    { label: 'Refund & Returns Policy', path: '/refund-policy', icon: RotateCcw },
+  ];
 
   return (
-    <div className="bg-[#F8FAFC] dark:bg-[#07090E] min-h-screen py-8 sm:py-16 text-dark dark:text-white transition-colors">
+    <div className="bg-[#F8FAFC] dark:bg-[#07090E] min-h-screen py-10 sm:py-16 text-dark dark:text-white transition-colors duration-200 relative overflow-hidden">
+      {/* Ambient background glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(23,105,224,0.15),transparent)] pointer-events-none" />
+
       <Seo
-        title={`${title} — DVDs Zone`}
-        description={description || `DVDs Zone legal document: ${title}.`}
+        title={`${title} — ${storeName} UK Legal & Compliance`}
+        description={description || `${storeName} official legal documentation: ${title}.`}
         canonicalPath={canonicalPath}
         keywords="DVDs Zone legal, terms and conditions, privacy policy, UK consumer rights, distance selling regulations"
-        siteName="DVDs Zone"
+        siteName={storeName}
       />
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-6 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
-        <span className="font-mono text-brand-blue uppercase tracking-widest text-[11px]">LEGAL NOTICE</span>
-        <h1 className="font-display font-extrabold text-2xl sm:text-4xl text-dark dark:text-white">{title}</h1>
-        {children(settings)}
-        <aside className="mt-10 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-5 space-y-1.5 shadow-xs">
-          <strong className="block text-dark dark:text-white font-bold">Legal Operator &amp; Heritage</strong>
-          <p><strong>DVDS Zone</strong> (trading brand <strong>DVD ZONE</strong>) is active since <strong>2021</strong>.</p>
-          <p>Operating entity: <strong>{settings.registered_company_name || 'AZRAYAN LTD'}</strong>, registered in England and Wales.</p>
-          <p>Company number: {settings.company_number || '13894195'}</p>
-          <p>Official Website: <a href="https://dvds-zone.co.uk" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">https://dvds-zone.co.uk</a></p>
-          <p>{settings.warehouse_location || 'United Kingdom'}</p>
-          <p>Customer service &amp; inquiry email: <a href="mailto:azrayanltd@gmail.com" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">azrayanltd@gmail.com</a> • Customer Line: <a href="tel:+447400320038" className="text-brand-blue dark:text-blue-400 hover:underline font-mono">00447400320038</a></p>
-          <a
-            href={settings.companies_house_url || 'https://find-and-update.company-information.service.gov.uk/company/13894195'}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-block pt-1 font-semibold text-brand-blue hover:underline"
-          >
-            View official Companies House record
-          </a>
-        </aside>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12 relative z-10">
+        {/* ── 1. Header Section ── */}
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-blue/10 dark:bg-brand-blue/20 border border-brand-blue/30 text-brand-blue dark:text-blue-400 text-xs font-mono font-semibold tracking-wider uppercase shadow-2xs">
+            <span>{badge}</span>
+          </div>
+          <h1 className="font-display font-black text-3xl sm:text-5xl text-dark dark:text-white tracking-tight">
+            {title}
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+            Official statutory disclosures and commercial policies governing physical orders and user accounts on {storeName}.
+          </p>
+        </div>
+
+        {/* ── 2. Interactive Legal Tab Switcher ── */}
+        <div className="flex items-center justify-center flex-wrap gap-2 p-1.5 rounded-2xl bg-gray-100 dark:bg-[#0E131F] border border-gray-200 dark:border-white/10 max-w-xl mx-auto shadow-2xs">
+          {legalTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = pathname === tab.path;
+            return (
+              <NavLink
+                key={tab.path}
+                to={tab.path}
+                className={cn(
+                  'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 flex-1 justify-center min-w-[130px] sm:min-w-0',
+                  isActive
+                    ? 'bg-brand-blue text-white shadow-xs'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/5'
+                )}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{tab.label}</span>
+              </NavLink>
+            );
+          })}
+        </div>
+
+        {/* ── 3. Main Document Body Card ── */}
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-6 sm:p-10 shadow-xs space-y-6 text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+          {children(settings)}
+
+          {/* Legal Operator Badge */}
+          <aside className="mt-10 rounded-xl border border-blue-200/80 dark:border-blue-900/40 bg-blue-50/50 dark:bg-[#141A26] p-6 space-y-2 text-xs leading-relaxed">
+            <div className="flex items-center gap-2 text-dark dark:text-white font-bold text-sm">
+              <Building2 className="w-4 h-4 text-brand-blue shrink-0" />
+              <span>Legal Entity &amp; Heritage Disclosures</span>
+            </div>
+            <p>
+              <strong>{storeName}</strong> is an independent British physical entertainment specialist active since <strong>2021</strong>.
+            </p>
+            <p>
+              Operating entity: <strong>{companyName}</strong>, registered in England and Wales under Company No. {companyNumber}.
+            </p>
+            <p>
+              Fulfillment &amp; Headquarters: {settings.warehouse_location || settings.registered_office_address || 'United Kingdom'}.
+            </p>
+            <p>
+              Customer Support Email: <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">{settings.support_email || 'azrayanltd@gmail.com'}</a> · Customer Hotline: <a href={`tel:${settings.support_phone || '+447400320038'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">{settings.support_phone || '00447400320038'}</a>
+            </p>
+            <div className="pt-2">
+              <a
+                href={settings.companies_house_url || 'https://find-and-update.company-information.service.gov.uk/company/13894195'}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 font-bold text-brand-blue dark:text-blue-400 hover:underline text-xs"
+              >
+                <span>View verified Companies House record</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   );
@@ -61,6 +130,7 @@ export const PrivacyPage: React.FC = () => (
     title="Privacy Policy"
     description="DVDS Zone Privacy Policy — comprehensive data protection, Google OAuth user data handling, limited use disclosures, and UK GDPR compliance."
     canonicalPath="/privacy"
+    badge="DATA PROTECTION &amp; UK GDPR"
   >
     {(settings) => (
       <>
@@ -91,8 +161,8 @@ export const PrivacyPage: React.FC = () => (
           We are committed to respecting your privacy, protecting your personal data, and maintaining strict compliance with the UK General Data Protection Regulation (UK GDPR), the Data Protection Act 2018, and relevant international consumer privacy standards.
         </p>
 
-        {/* 1. GOOGLE USER DATA & OAUTH POLICY (Explicit Google Verification Section) */}
-        <section className="space-y-3 pt-4 border-t border-gray-200 dark:border-white/10">
+        {/* 1. GOOGLE USER DATA & OAUTH POLICY */}
+        <section className="space-y-3 pt-6 border-t border-gray-200 dark:border-white/10">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-blue-100/80 dark:bg-blue-900/40 text-brand-blue dark:text-blue-400 font-mono text-[11px] font-semibold">
             Google Sign-In &amp; OAuth 2.0 User Data Disclosures
           </div>
@@ -175,7 +245,7 @@ export const PrivacyPage: React.FC = () => (
         </section>
 
         {/* 2. ORDER FULFILLMENT & PAYMENT PROCESSING */}
-        <section className="space-y-3 pt-4 border-t border-gray-200 dark:border-white/10">
+        <section className="space-y-3 pt-6 border-t border-gray-200 dark:border-white/10">
           <h2 className="font-display font-bold text-base sm:text-lg text-dark dark:text-white">
             2. Physical Order Fulfilment &amp; Payment Processing
           </h2>
@@ -190,7 +260,7 @@ export const PrivacyPage: React.FC = () => (
         </section>
 
         {/* 3. TECHNICAL SECURITY & INFRASTRUCTURE */}
-        <section className="space-y-3 pt-4 border-t border-gray-200 dark:border-white/10">
+        <section className="space-y-3 pt-6 border-t border-gray-200 dark:border-white/10">
           <h2 className="font-display font-bold text-base sm:text-lg text-dark dark:text-white">
             3. Data Security &amp; Storage Architecture
           </h2>
@@ -205,7 +275,7 @@ export const PrivacyPage: React.FC = () => (
         </section>
 
         {/* 4. COOKIES & LOCAL STORAGE */}
-        <section className="space-y-3 pt-4 border-t border-gray-200 dark:border-white/10">
+        <section className="space-y-3 pt-6 border-t border-gray-200 dark:border-white/10">
           <h2 className="font-display font-bold text-base sm:text-lg text-dark dark:text-white">
             4. Cookies &amp; Local Storage
           </h2>
@@ -221,7 +291,7 @@ export const PrivacyPage: React.FC = () => (
         </section>
 
         {/* 5. YOUR STATUTORY UK GDPR RIGHTS */}
-        <section className="space-y-3 pt-4 border-t border-gray-200 dark:border-white/10">
+        <section className="space-y-3 pt-6 border-t border-gray-200 dark:border-white/10">
           <h2 className="font-display font-bold text-base sm:text-lg text-dark dark:text-white">
             5. Your Statutory Rights Under UK GDPR
           </h2>
@@ -240,7 +310,7 @@ export const PrivacyPage: React.FC = () => (
         </section>
 
         {/* 6. CONTACT & DATA CONTROLLER */}
-        <section className="space-y-3 pt-4 border-t border-gray-200 dark:border-white/10">
+        <section className="space-y-3 pt-6 border-t border-gray-200 dark:border-white/10">
           <h2 className="font-display font-bold text-base sm:text-lg text-dark dark:text-white">
             6. Contact Our Data Controller
           </h2>
@@ -266,13 +336,16 @@ export const TermsPage: React.FC = () => (
     title="Terms & Conditions"
     description="DVD ZONE Terms & Conditions — our terms of sale, pricing, and customer support commitments."
     canonicalPath="/terms"
+    badge="TERMS OF SALE &amp; SERVICE"
   >
     {(settings) => (
       <>
-        <p>These terms govern purchases made from {settings.store_name}, operated by {settings.registered_company_name}.</p>
-        <h3 className="font-display font-bold text-sm text-dark dark:text-white pt-2">Orders & Pricing</h3>
+        <p>These terms govern purchases made from {settings.store_name}, operated by {settings.registered_company_name || 'AZRAYAN LTD'}.</p>
+        <h3 className="font-display font-bold text-base text-dark dark:text-white pt-2">Orders &amp; Pricing</h3>
         <p>Prices are shown in GBP (£). The total price, delivery charge and any discount are displayed before payment. Obvious pricing or stock errors may be corrected before dispatch, with the customer notified where an order is affected.</p>
-        <h3 className="font-display font-bold text-sm text-dark dark:text-white pt-2">Customer Support</h3>
+        <h3 className="font-display font-bold text-base text-dark dark:text-white pt-2">Physical Media Quality &amp; Region Coding</h3>
+        <p>All standard catalog items are guaranteed official PAL Region 2 UK/European releases or Region 0 (All Region) titles, certified by the British Board of Film Classification (BBFC). Discs are dispatched factory sealed in original studio packaging unless otherwise specified.</p>
+        <h3 className="font-display font-bold text-base text-dark dark:text-white pt-2">Customer Support</h3>
         <p>Questions about an order can be sent to {settings.support_email || 'azrayanltd@gmail.com'}. The registered office is a legal correspondence address and is not automatically the returns address.</p>
       </>
     )}
@@ -284,13 +357,14 @@ export const RefundPolicyPage: React.FC = () => (
     title="Refund Policy"
     description="DVD ZONE Refund Policy — 30-day returns, cancellation rights and statutory protections for UK consumers."
     canonicalPath="/refund-policy"
+    badge="30-DAY SATISFACTION COMMITMENT"
   >
     {(settings) => (
       <>
         <p>{settings.store_name} handles returns and refunds in accordance with applicable UK consumer law.</p>
-        <h3 className="font-display font-bold text-sm text-dark dark:text-white pt-2">Cancellation and Returns</h3>
+        <h3 className="font-display font-bold text-base text-dark dark:text-white pt-2">Cancellation and Returns</h3>
         <p>For eligible distance purchases, customers may tell us they wish to cancel within 14 days after receiving the goods, then have a further 14 days to return them. The cancellation right does not normally apply to sealed audio or video recordings once they have been unsealed. Faulty or misdescribed goods remain covered by statutory rights.</p>
-        <h3 className="font-display font-bold text-sm text-dark dark:text-white pt-2">Before Sending a Return</h3>
+        <h3 className="font-display font-bold text-base text-dark dark:text-white pt-2">Before Sending a Return</h3>
         <p>Contact {settings.support_email || 'azrayanltd@gmail.com'} for the correct returns address and instructions. Do not send returns to the registered office unless customer support explicitly confirms it.</p>
       </>
     )}

@@ -8,6 +8,7 @@ import { formatGBP, cn } from '../../lib/formatters';
 import { Badge } from '../common/Badge';
 import { BbfcBadge } from '../common/BbfcBadge';
 import { ImdbBadge } from '../common/ImdbBadge';
+import { StarRating } from '../common/StarRating';
 import { useCartStore } from '../../stores/useCartStore';
 import { useFavouritesStore } from '../../stores/useFavouritesStore';
 import { useUiStore } from '../../stores/useUiStore';
@@ -176,6 +177,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className }) 
           <span className="text-[11px] text-gray-400 font-light truncate mt-0.5">
             {product.director}
           </span>
+        )}
+
+        {/* Customer Reviews Rating */}
+        {product.average_rating != null && product.average_rating > 0 && (
+          <div className="flex items-center gap-1 mt-1">
+            <StarRating rating={product.average_rating} size="xs" />
+            <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400">
+              ({product.review_count || 0})
+            </span>
+          </div>
         )}
 
         {/* Price display with strict British currency & Red sale price */}

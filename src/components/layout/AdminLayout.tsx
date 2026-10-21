@@ -26,6 +26,7 @@ import {
   Shield,
   Sun,
   Moon,
+  Star,
 } from "lucide-react";
 import { cn } from "../../lib/formatters";
 import { useAdminAuth } from "../../auth/AdminAuth";
@@ -73,6 +74,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
       { label: "Promotions", href: "/admin/promotions", icon: Tag },
+      { label: "Customer Reviews", href: "/admin/reviews", icon: Star },
       { label: "Customer Enquiries", href: "/admin/support", icon: Mail },
     ],
   },
