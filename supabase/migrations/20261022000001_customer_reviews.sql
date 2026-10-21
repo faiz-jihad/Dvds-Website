@@ -4,6 +4,31 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Ensure is_admin helper exists
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(
+    EXISTS (
+      SELECT 1
+      FROM public.profiles
+      WHERE id = auth.uid()
+        AND role IN ('admin', 'staff')
+    )
+    OR
+    (COALESCE(auth.jwt() ->> 'email', '') IN ('azrayanltd@gmail.com', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk'))
+    OR
+    (COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') IN ('admin', 'staff')),
+    FALSE
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, anon;
+
 -- 1. Create Reviews Table
 CREATE TABLE IF NOT EXISTS public.reviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
