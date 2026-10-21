@@ -18,6 +18,8 @@ import {
   Check,
   X,
   Filter,
+  Copy,
+  Database,
 } from 'lucide-react';
 import { adminApi } from '../../lib/adminApi';
 import { Review, ReviewStatus } from '../../types';
@@ -28,6 +30,7 @@ import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { formatDateUK, formatDateTimeUK, cn } from '../../lib/formatters';
 import { useUiStore } from '../../stores/useUiStore';
+import reviewsMigrationSql from '../../../supabase/migrations/20261022000001_customer_reviews.sql?raw';
 
 export const AdminReviews: React.FC = () => {
   const queryClient = useQueryClient();
@@ -41,6 +44,14 @@ export const AdminReviews: React.FC = () => {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [moderationNote, setModerationNote] = useState('');
   const [deleteConfirmReview, setDeleteConfirmReview] = useState<Review | null>(null);
+  const [copiedSql, setCopiedSql] = useState(false);
+
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(reviewsMigrationSql);
+    setCopiedSql(true);
+    addToast('Migration SQL copied to clipboard! Paste and run in Supabase SQL Editor.', 'success');
+    setTimeout(() => setCopiedSql(false), 3000);
+  };
 
   // 1. Fetch reviews
   const reviewsQuery = useQuery({
@@ -149,6 +160,102 @@ export const AdminReviews: React.FC = () => {
   }
 
   if (reviewsQuery.isError) {
+    const errMessage = reviewsQuery.error instanceof Error ? reviewsQuery.error.message : String(reviewsQuery.error || '');
+    const isSchemaError =
+      errMessage.toLowerCase().includes('reviews') ||
+      errMessage.toLowerCase().includes('schema cache') ||
+      errMessage.toLowerCase().includes('missing') ||
+      (reviewsQuery.error as any)?.code === 'SCHEMA_NOT_READY' ||
+      (reviewsQuery.error as any)?.code === 'PGRST205';
+
+    if (isSchemaError) {
+      return (
+        <div className="rounded-2xl border-2 border-brand-blue/30 bg-white dark:bg-[#0E131F] p-6 sm:p-8 shadow-xl space-y-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-brand-blue/10 text-brand-blue dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Database className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-xs font-mono uppercase tracking-widest text-brand-blue font-bold">
+                Database Migration Required
+              </span>
+              <h2 className="font-display font-extrabold text-xl sm:text-2xl text-dark dark:text-white mt-1">
+                Table &ldquo;public.reviews&rdquo; Needs To Be Created In Supabase
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed max-w-2xl">
+                The customer reviews, ratings, and verified purchase features require the <code>reviews</code> table,
+                Row Level Security policies, and purchase verification triggers to be executed in your connected Supabase project.
+              </p>
+            </div>
+          </div>
+
+          {/* 3 Step Instruction Guide */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-100 dark:border-white/10 text-xs">
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#141A26] border border-gray-200 dark:border-white/10">
+              <span className="w-6 h-6 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs mb-2">1</span>
+              <span className="font-bold text-dark dark:text-white block">Copy Migration SQL</span>
+              <span className="text-gray-500 dark:text-gray-400 mt-1 block">
+                Click the &ldquo;Copy Migration SQL&rdquo; button below to copy the complete DDL script.
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#141A26] border border-gray-200 dark:border-white/10">
+              <span className="w-6 h-6 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs mb-2">2</span>
+              <span className="font-bold text-dark dark:text-white block">Open Supabase SQL Editor</span>
+              <span className="text-gray-500 dark:text-gray-400 mt-1 block">
+                Open your Supabase dashboard SQL editor for project <code>arkeqzfzkeyxdnuykawj</code>.
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#141A26] border border-gray-200 dark:border-white/10">
+              <span className="w-6 h-6 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs mb-2">3</span>
+              <span className="font-bold text-dark dark:text-white block">Run &amp; Recheck</span>
+              <span className="text-gray-500 dark:text-gray-400 mt-1 block">
+                Paste and click &ldquo;Run&rdquo;. Once complete, click &ldquo;Check Again&rdquo; below to activate moderation!
+              </span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Button
+              variant="primary"
+              size="md"
+              onClick={handleCopySql}
+              className="inline-flex items-center gap-2 text-xs font-bold"
+            >
+              {copiedSql ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              <span>{copiedSql ? 'Copied to Clipboard!' : 'Copy Migration SQL'}</span>
+            </Button>
+
+            <a
+              href="https://supabase.com/dashboard/project/arkeqzfzkeyxdnuykawj/sql/new"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/15 bg-white dark:bg-[#141A26] hover:bg-gray-50 dark:hover:bg-white/10 text-dark dark:text-white text-xs font-bold transition shadow-xs"
+            >
+              <ExternalLink className="w-4 h-4 text-brand-blue" />
+              <span>Open Supabase SQL Editor ↗</span>
+            </a>
+
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                reviewsQuery.refetch();
+                statsQuery.refetch();
+              }}
+              disabled={reviewsQuery.isRefetching}
+              className="inline-flex items-center gap-2 text-xs font-semibold"
+            >
+              <RefreshCw className={cn('w-4 h-4', reviewsQuery.isRefetching && 'animate-spin')} />
+              <span>Check Again</span>
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <AdminDataState
         error={reviewsQuery.error}
