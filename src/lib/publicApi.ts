@@ -5,6 +5,7 @@ import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
 import { DEFAULT_PRODUCTS } from '../data/defaultProducts';
 import { DEFAULT_CATEGORIES } from '../data/defaultCategories';
 import { DEFAULT_GENRES } from '../data/defaultGenres';
+import { DEFAULT_CUSTOMER_REVIEWS } from '../data/defaultReviews';
 
 function client() {
   if (!isSupabaseConfigured || !supabase) return null;
@@ -1180,7 +1181,7 @@ export const publicApi = {
       const res = await fetch(`/api/reviews?testimonials=true&limit=${encodeURIComponent(limit)}`);
       if (res.ok) {
         const json = await res.json();
-        if (Array.isArray(json.testimonials)) {
+        if (Array.isArray(json.testimonials) && json.testimonials.length > 0) {
           return json.testimonials as Review[];
         }
       }
@@ -1189,36 +1190,39 @@ export const publicApi = {
     }
 
     const sb = client();
-    if (!sb) return [];
-
-    try {
-      const { data, error } = await sb
-        .from('reviews')
-        .select(`
-          id,
-          rating,
-          title,
-          comment,
-          reviewer_name,
-          is_verified_purchase,
-          created_at,
-          product:products (
+    if (sb) {
+      try {
+        const { data, error } = await sb
+          .from('reviews')
+          .select(`
             id,
+            rating,
             title,
-            slug,
-            cover_image_url
-          )
-        `)
-        .eq('status', 'approved')
-        .order('rating', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(limit);
+            comment,
+            reviewer_name,
+            is_verified_purchase,
+            created_at,
+            product:products (
+              id,
+              title,
+              slug,
+              cover_image_url
+            )
+          `)
+          .eq('status', 'approved')
+          .order('rating', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(limit);
 
-      if (error || !data) return [];
-      return data as unknown as Review[];
-    } catch {
-      return [];
+        if (!error && data && data.length > 0) {
+          return data as unknown as Review[];
+        }
+      } catch {
+        // Fall through
+      }
     }
+
+    return DEFAULT_CUSTOMER_REVIEWS.slice(0, limit);
   },
 
   /**
