@@ -6,8 +6,9 @@ import {
   CustomGoogleReviewsSection,
   DEFAULT_GOOGLE_REVIEW_URL,
 } from './CustomGoogleReviewsSection';
+import { GoogleReviews } from './GoogleReviews';
 
-export { CustomGoogleReviewsSection };
+export { CustomGoogleReviewsSection, GoogleReviews };
 
 /**
  * Official Google G Logo SVG with verified 4-color branding:
@@ -90,10 +91,10 @@ export const GoogleReviewsBanner: React.FC<GoogleReviewsBannerProps> = ({
   // Verified rating display helper (strictly only if verifiedRating is provided and valid)
   const hasVerifiedRating = typeof verifiedRating === 'number' && verifiedRating > 0 && verifiedRating <= 5;
 
-  // Full-width homepage custom reviews section
+  // Full-width homepage Google reviews section (powered by Trustmary)
   if (variant === 'section') {
     return (
-      <CustomGoogleReviewsSection
+      <GoogleReviews
         reviewUrl={resolvedUrl}
         className={className}
       />

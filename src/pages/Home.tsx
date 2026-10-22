@@ -79,13 +79,13 @@ export const Home: React.FC = () => {
       <Seo
         title={
           settings.seo_site_title ||
-          `${settings.store_name || "DVDs Zone"} — Quality DVDs, TV Box Sets & Cinema Entertainment | Free UK Delivery`
+          `${settings.store_name || "DVDs Zone"} (DVD Zone UK) — Quality DVDs, TV Box Sets & Cinema Entertainment | Free UK Delivery`
         }
         description={
           settings.seo_site_description ||
-          "Quality DVDs, TV box sets, and physical entertainment releases. Free UK standard delivery on all orders. Same-day dispatch. Fast 2 working days delivery via Royal Mail."
+          "DVDs Zone (also known as DVD Zone UK) is an online store for physical DVDs, TV box sets, and cinema entertainment. Free UK standard delivery on all orders. Same-day dispatch. Fast 2 working days delivery via Royal Mail."
         }
-        keywords="buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs, DVDs Zone"
+        keywords="DVD Zone, DVDs Zone, DVD Zone UK, DVDs Zone UK, dvdzone, dvdszone, buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs"
         canonicalPath="/"
         image={
           settings.seo_social_image_url ||
@@ -97,6 +97,14 @@ export const Home: React.FC = () => {
             "@context": "https://schema.org",
             "@type": "WebSite",
             name: settings.store_name || "DVDs Zone",
+            alternateName: [
+              "DVD Zone",
+              "DVDZone",
+              "DVDsZone",
+              "DVD Zone UK",
+              "DVDs Zone UK",
+              "DVDs-Zone",
+            ],
             url: toAbsoluteUrl("/"),
             potentialAction: {
               "@type": "SearchAction",
@@ -106,6 +114,24 @@ export const Home: React.FC = () => {
               },
               "query-input": "required name=search_term_string",
             },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "OnlineStore",
+            name: settings.store_name || "DVDs Zone",
+            alternateName: [
+              "DVD Zone",
+              "DVDZone",
+              "DVDsZone",
+              "DVD Zone UK",
+              "DVDs Zone UK",
+              "DVDs-Zone",
+            ],
+            url: toAbsoluteUrl("/"),
+            sameAs: [
+              "https://g.page/r/CcbYihBj8jECEBM",
+              "https://g.page/r/CcbYihBj8jECEBM/review",
+            ],
           },
           {
             "@context": "https://schema.org",

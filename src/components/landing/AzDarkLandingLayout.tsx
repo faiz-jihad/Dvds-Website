@@ -10,6 +10,7 @@ import { AzDvdMovieCard } from './AzDvdMovieCard';
 import { AzCuratedCollectionBanner } from './AzCuratedCollectionBanner';
 import { AzDirectorSpotlightBanner } from './AzDirectorSpotlightBanner';
 import { GoogleReviewsBanner } from './GoogleReviewsBanner';
+import { GoogleReviews } from './GoogleReviews';
 import { cn } from '../../lib/formatters';
 
 interface AzDarkLandingLayoutProps {
@@ -274,9 +275,9 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
           </div>
         )}
 
-        {/* ── Google Customer Reviews Banner ── */}
+        {/* ── Google Customer Reviews (Trustmary Widget Integration) ── */}
         <div className="pt-4 sm:pt-6">
-          <GoogleReviewsBanner reviewUrl={settings?.google_review_url} variant="section" />
+          <GoogleReviews reviewUrl={settings?.google_review_url} />
         </div>
 
       </main>

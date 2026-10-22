@@ -62,8 +62,16 @@ test('5. Configurable review URL with safe fallback when unconfigured', () => {
 test('6. Homepage integration in AzDarkLandingLayout', () => {
   const content = readFileSync(resolve(rootDir, 'src/components/landing/AzDarkLandingLayout.tsx'), 'utf8');
 
-  assert.ok(content.includes("import { GoogleReviewsBanner } from './GoogleReviewsBanner'"), 'AzDarkLandingLayout must import GoogleReviewsBanner');
-  assert.ok(content.includes('<GoogleReviewsBanner reviewUrl={settings?.google_review_url}'), 'AzDarkLandingLayout must render GoogleReviewsBanner with settings');
+  assert.ok(
+    content.includes("import { GoogleReviews } from './GoogleReviews'") ||
+      content.includes("import { GoogleReviewsBanner } from './GoogleReviewsBanner'"),
+    'AzDarkLandingLayout must import GoogleReviews or GoogleReviewsBanner'
+  );
+  assert.ok(
+    content.includes('<GoogleReviews reviewUrl={settings?.google_review_url}') ||
+      content.includes('<GoogleReviewsBanner reviewUrl={settings?.google_review_url}'),
+    'AzDarkLandingLayout must render GoogleReviews or GoogleReviewsBanner with settings'
+  );
 });
 
 test('7. Footer integration in AzDarkLandingFooter', () => {

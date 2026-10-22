@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Star,
   ExternalLink,
@@ -7,9 +8,10 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Quote,
   Sparkles,
   Info,
+  AlertCircle,
+  HelpCircle,
 } from 'lucide-react';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { cn } from '../../lib/formatters';
@@ -38,6 +40,7 @@ export const GoogleGLogo: React.FC<{ size?: number; className?: string }> = ({ s
 );
 
 export const DEFAULT_GOOGLE_REVIEW_URL = 'https://g.page/r/CcbYihBj8jECEBM/review';
+export const VERIFIED_PLACE_ID = 'ChIJYdgB6iQsgiYRxtiKEGPyMQI';
 
 export interface CustomGoogleReviewsSectionProps {
   /** Optional review URL override. Falls back to VITE_GOOGLE_REVIEW_URL or verified default */
@@ -52,6 +55,20 @@ export interface CustomGoogleReviewsSectionProps {
   className?: string;
 }
 
+interface GoogleReviewsApiResponse {
+  configured: boolean;
+  error: boolean;
+  status?: string;
+  placeId?: string;
+  place_name?: string;
+  rating?: number | null;
+  user_ratings_total?: number;
+  google_maps_url?: string | null;
+  reviews?: VerifiedGoogleReview[];
+  message?: string;
+  instructions?: Record<string, string>;
+}
+
 /**
  * CustomGoogleReviewsSection
  *
@@ -60,9 +77,10 @@ export interface CustomGoogleReviewsSectionProps {
  * KEY FEATURES:
  * 1. Zero Third-Party Widgets: No Elfsight script, no subscription fees, no monthly impression limits.
  * 2. Absolute Authenticity: Only genuine reviews are displayed. Never fabricates names, stars, or testimonials.
- * 3. Graceful Empty / Invitation State: If no verified reviews are populated yet, it renders an
+ * 3. Live Google Places API Integration: Secure backend proxy (/api/google-reviews) keeps API secrets off frontend.
+ * 4. Graceful Empty / Invitation State: If no verified reviews are populated yet, it renders an
  *    accessible invitation card with a direct "Write a Google Review" CTA.
- * 4. Safe Links: Outgoing review links use target="_blank" and rel="noopener noreferrer".
+ * 5. Safe Links: Outgoing review links use target="_blank" and rel="noopener noreferrer".
  */
 export const CustomGoogleReviewsSection: React.FC<CustomGoogleReviewsSectionProps> = ({
   reviewUrl,
@@ -74,8 +92,21 @@ export const CustomGoogleReviewsSection: React.FC<CustomGoogleReviewsSectionProp
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === 'dark';
   const [currentPage, setCurrentPage] = useState(0);
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
 
-  // Resolve Review URL
+  // 1. Fetch live genuine reviews from backend proxy
+  const { data: apiData, isLoading } = useQuery<GoogleReviewsApiResponse>({
+    queryKey: ['google-reviews-live'],
+    queryFn: async () => {
+      const res = await fetch('/api/google-reviews');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+    staleTime: 60 * 60 * 1000, // 1 hour cache
+    retry: 1,
+  });
+
+  // 2. Resolve Review URL
   const envUrl = typeof import.meta !== 'undefined' && (import.meta as any).env
     ? ((import.meta as any).env.VITE_GOOGLE_REVIEW_URL as string | undefined)
     : undefined;
@@ -88,22 +119,43 @@ export const CustomGoogleReviewsSection: React.FC<CustomGoogleReviewsSectionProp
 
   const isConfigured = Boolean(resolvedReviewUrl && /^https?:\/\//i.test(resolvedReviewUrl));
 
-  // Genuine reviews filtering (must have author and valid rating 1-5)
-  const validReviews = Array.isArray(reviews)
-    ? reviews.filter((r) => r && r.author_name && r.rating >= 1 && r.rating <= 5)
-    : [];
+  // 3. Merge live reviews from Google Places API and manually verified reviews
+  const rawReviewsList = [
+    ...(Array.isArray(apiData?.reviews) ? apiData.reviews : []),
+    ...(Array.isArray(reviews) ? reviews : []),
+  ];
+
+  // Deduplicate reviews by id or author_name
+  const seenIds = new Set<string>();
+  const validReviews: VerifiedGoogleReview[] = [];
+
+  for (const r of rawReviewsList) {
+    if (r && r.author_name && typeof r.rating === 'number' && r.rating >= 1 && r.rating <= 5) {
+      const key = r.id || `${r.author_name}-${r.rating}`;
+      if (!seenIds.has(key)) {
+        seenIds.add(key);
+        validReviews.push(r);
+      }
+    }
+  }
 
   const hasReviews = validReviews.length > 0;
 
-  // Pagination for reviews grid/carousel (3 per page on desktop)
+  // Pagination for reviews grid (3 per page on desktop)
   const pageSize = 3;
   const totalPages = Math.ceil(validReviews.length / pageSize);
   const displayedReviews = validReviews.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
-  // Calculate verified average only if genuine reviews exist
-  const averageRating = hasReviews
+  // Calculate verified average rating only when genuine reviews exist
+  const averageRating = typeof apiData?.rating === 'number' && apiData.rating > 0
+    ? apiData.rating
+    : hasReviews
     ? validReviews.reduce((sum, r) => sum + r.rating, 0) / validReviews.length
     : null;
+
+  const totalRatingsCount = typeof apiData?.user_ratings_total === 'number' && apiData.user_ratings_total > 0
+    ? apiData.user_ratings_total
+    : validReviews.length;
 
   return (
     <section
@@ -169,7 +221,7 @@ export const CustomGoogleReviewsSection: React.FC<CustomGoogleReviewsSectionProp
                 </div>
                 <span className="text-xs font-bold">{averageRating.toFixed(1)} / 5.0</span>
                 <span className={cn('text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>
-                  ({validReviews.length} {validReviews.length === 1 ? 'verified review' : 'verified reviews'})
+                  ({totalRatingsCount} {totalRatingsCount === 1 ? 'verified review' : 'verified reviews'})
                 </span>
               </div>
             )}
@@ -205,10 +257,36 @@ export const CustomGoogleReviewsSection: React.FC<CustomGoogleReviewsSectionProp
           </div>
         </div>
 
-        {/* ── Content Area: Reviews Cards Grid OR Clean Community Invitation State ── */}
-        {hasReviews ? (
+        {/* ── Content Area: Loading / Genuine Reviews / Clean Setup State ── */}
+        {isLoading ? (
+          /* Subtle skeleton cards while checking live API */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className={cn(
+                  'p-6 rounded-xl border animate-pulse space-y-4',
+                  isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-white/10" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-3 w-28 bg-gray-200 dark:bg-white/10 rounded" />
+                    <div className="h-2.5 w-16 bg-gray-200 dark:bg-white/10 rounded" />
+                  </div>
+                </div>
+                <div className="h-3 w-20 bg-gray-200 dark:bg-white/10 rounded" />
+                <div className="space-y-1.5">
+                  <div className="h-3 w-full bg-gray-200 dark:bg-white/10 rounded" />
+                  <div className="h-3 w-4/5 bg-gray-200 dark:bg-white/10 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : hasReviews ? (
+          /* Genuine Review Cards Grid */
           <div className="space-y-6">
-            {/* Review Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {displayedReviews.map((review) => (
                 <div
@@ -296,7 +374,7 @@ export const CustomGoogleReviewsSection: React.FC<CustomGoogleReviewsSectionProp
                         rel="noopener noreferrer"
                         className="text-[#4285F4] hover:underline inline-flex items-center gap-1 font-semibold"
                       >
-                        <span>View Source</span>
+                        <span>View on Google</span>
                         <ExternalLink size={10} />
                       </a>
                     )}
@@ -391,7 +469,7 @@ export const CustomGoogleReviewsSection: React.FC<CustomGoogleReviewsSectionProp
               </div>
             </div>
 
-            {/* Action Call */}
+            {/* Primary Action Button */}
             {isConfigured && (
               <div className="pt-2">
                 <a
@@ -405,6 +483,45 @@ export const CustomGoogleReviewsSection: React.FC<CustomGoogleReviewsSectionProp
                   <span>Write a Google Review</span>
                   <ExternalLink size={14} className="opacity-80" />
                 </a>
+              </div>
+            )}
+
+            {/* Clear Setup Status for Business Owner */}
+            {apiData && !apiData.configured && (
+              <div className="pt-4 max-w-xl mx-auto">
+                <button
+                  type="button"
+                  onClick={() => setShowSetupGuide((s) => !s)}
+                  className={cn(
+                    'text-[11px] font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer',
+                    isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+                  )}
+                >
+                  <HelpCircle size={13} />
+                  <span>{showSetupGuide ? 'Hide Google Places Live Sync Setup' : 'How to enable automatic live Google reviews sync'}</span>
+                </button>
+
+                {showSetupGuide && (
+                  <div
+                    className={cn(
+                      'mt-3 p-4 rounded-xl text-left text-xs space-y-2 border transition-all',
+                      isDark ? 'bg-white/5 border-white/10 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-700'
+                    )}
+                  >
+                    <p className="font-bold flex items-center gap-1.5 text-blue-500">
+                      <Info size={14} />
+                      <span>Google Places API Configuration:</span>
+                    </p>
+                    <ol className="list-decimal pl-5 space-y-1 text-[11px]">
+                      <li>
+                        Verified Place ID for DVDs Zone: <code className="font-mono bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-[10px] select-all">{VERIFIED_PLACE_ID}</code>
+                      </li>
+                      <li>Enable <strong>Places API</strong> on your Google Cloud Console project.</li>
+                      <li>Add <code className="font-mono bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-[10px]">GOOGLE_PLACES_API_KEY=your_key</code> in your production backend environment.</li>
+                      <li>Alternatively, add authentic customer reviews directly to <code className="font-mono bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-[10px]">src/data/verifiedGoogleReviews.ts</code>.</li>
+                    </ol>
+                  </div>
+                )}
               </div>
             )}
           </div>

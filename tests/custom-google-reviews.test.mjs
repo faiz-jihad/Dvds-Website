@@ -13,6 +13,7 @@ test('1. CustomGoogleReviewsSection component file exists and exports correctly'
   assert.ok(content.includes('export const CustomGoogleReviewsSection'), 'Must export CustomGoogleReviewsSection');
   assert.ok(content.includes('export const GoogleGLogo'), 'Must export GoogleGLogo');
   assert.ok(content.includes('export const DEFAULT_GOOGLE_REVIEW_URL'), 'Must export DEFAULT_GOOGLE_REVIEW_URL');
+  assert.ok(content.includes('export const VERIFIED_PLACE_ID'), 'Must export VERIFIED_PLACE_ID');
   assert.ok(content.includes('export default CustomGoogleReviewsSection'), 'Must default export CustomGoogleReviewsSection');
 });
 
@@ -95,5 +96,31 @@ test('8. GoogleReviewsBanner delegates section variant to CustomGoogleReviewsSec
   assert.ok(
     bannerContent.includes('CustomGoogleReviewsSection'),
     'GoogleReviewsBanner must import and render CustomGoogleReviewsSection'
+  );
+});
+
+test('9. Backend Google Places API proxy exists and keeps secrets on server', () => {
+  const apiPath = resolve(rootDir, 'api/google-reviews.js');
+  assert.ok(existsSync(apiPath), 'api/google-reviews.js must exist');
+
+  const apiContent = readFileSync(apiPath, 'utf8');
+  assert.ok(apiContent.includes('GOOGLE_PLACES_API_KEY'), 'Must read GOOGLE_PLACES_API_KEY from server environment');
+  assert.ok(!apiContent.includes('VITE_'), 'Must NOT use VITE_ prefix on backend server secret');
+  assert.ok(apiContent.includes('ChIJYdgB6iQsgiYRxtiKEGPyMQI'), 'Must define verified Place ID ChIJYdgB6iQsgiYRxtiKEGPyMQI');
+});
+
+test('10. Client queries /api/google-reviews endpoint without exposing private API keys', () => {
+  const componentContent = readFileSync(
+    resolve(rootDir, 'src/components/landing/CustomGoogleReviewsSection.tsx'),
+    'utf8'
+  );
+  assert.ok(componentContent.includes('/api/google-reviews'), 'Must call /api/google-reviews endpoint');
+  assert.ok(
+    !componentContent.includes('process.env.GOOGLE_PLACES_API_KEY'),
+    'Client component must NOT access process.env.GOOGLE_PLACES_API_KEY directly'
+  );
+  assert.ok(
+    !componentContent.includes('VITE_GOOGLE_PLACES_API_KEY'),
+    'Must NOT expose secret key via frontend VITE_ variable'
   );
 });

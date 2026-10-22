@@ -48,7 +48,7 @@ export const AboutPage: React.FC = () => {
           `${storeName} is an official UK physical media retailer active since 2021, operated by ${companyName}. Specialising in authentic UK PAL DVDs, TV Box Sets, and restored cinema releases.`
         }
         canonicalPath="/about"
-        keywords={`about ${storeName}, UK DVD shop, physical media UK, authentic PAL DVDs, British film store, DVD collector UK`}
+        keywords={`about ${storeName}, DVD Zone, DVDs Zone, DVD Zone UK, DVDs Zone UK, UK DVD shop, physical media UK, authentic PAL DVDs, British film store, DVD collector UK`}
         siteName={storeName}
         jsonLd={{
           '@context': 'https://schema.org',
