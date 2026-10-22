@@ -20,6 +20,7 @@ import {
   sendCustomerBankTransferInstructions,
   sendAdminPaymentProofNotification,
   sendCustomerOrderCancelled,
+  sendCustomerPaymentFailed,
   sendAdminContactInquiry,
   sendCustomerContactAutoReply,
   getActiveEmailProvider,
@@ -1003,6 +1004,45 @@ test('Local Postfix SMTP transport falls back gracefully without throwing when p
 
   assert.ok(result);
   assert.equal(result.success, true);
+});
+
+test('Customer payment failure notification delivers reassuring message, non-charged notice, and retry link', async () => {
+  const logs = [];
+  const mockDb = {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            ilike: () => ({
+              maybeSingle: async () => ({ data: null }),
+            }),
+          }),
+        }),
+      }),
+      insert: async (row) => {
+        logs.push(row);
+        return { data: row, error: null };
+      },
+    }),
+  };
+
+  const mockOrder = {
+    id: randomUUID(),
+    order_number: 'ORD-FAIL-101',
+    email: 'customer.paymentfailed@example.test',
+    total_amount: 45.0,
+    currency: 'GBP',
+  };
+
+  const res = await sendCustomerPaymentFailed(mockDb, mockOrder, {
+    errorReason: 'Card was declined by the issuer (insufficient funds).',
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].email_type, 'order_cancelled');
+  assert.equal(logs[0].recipient, 'customer.paymentfailed@example.test');
+  assert.ok(logs[0].subject.includes('Payment Unsuccessful'));
 });
 
 

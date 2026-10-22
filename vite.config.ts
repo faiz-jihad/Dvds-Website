@@ -25,6 +25,11 @@ const devApiPlugin = () => ({
       'admin-delete-order',
       'customer-register',
       'customer-confirm',
+      'customer-forgot-password',
+      'customer-password-reset-confirm',
+      'send-test-email',
+      'contact-submit',
+      'order-status-update',
     ]);
     server.middlewares.use(async (req: any, res: any, next: any) => {
       let route = req.url?.split('?')[0]?.replace(/^\/api\//, '').replace(/\/$/, '');

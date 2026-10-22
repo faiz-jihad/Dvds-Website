@@ -403,12 +403,11 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
     []
   );
 
-  // Production Reset Password Email Request
+  // Production Reset Password Email Request (Exclusively via Backend Postfix SMTP)
   const resetPassword = useCallback(
     async (email: string): Promise<{ success: boolean; message?: string }> => {
       const cleanEmail = email.trim().toLowerCase();
 
-      // Primary: Use centralized backend endpoint with Postfix SMTP delivery and user-enumeration protection
       try {
         const res = await fetch('/api/customer-forgot-password', {
           method: 'POST',
@@ -419,25 +418,18 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
         if (res.ok && data.success) {
           return { success: true, message: data.message };
         }
-      } catch {
-        // Fall back to direct Supabase client if backend endpoint is unreachable
+        if (data.error && res.status < 500) {
+          return { success: false, message: data.error };
+        }
+      } catch (err: any) {
+        console.warn('[CustomerAuth] forgot-password endpoint network notice:', err.message);
       }
 
-      if (!isSupabaseConfigured || !supabase) {
-        return { success: false, message: 'Authentication database is not configured.' };
-      }
-      try {
-        const redirectTo = `${window.location.origin}/reset-password`;
-        const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-          redirectTo,
-        });
-        if (error) {
-          return { success: false, message: error.message };
-        }
-        return { success: true };
-      } catch (err: any) {
-        return { success: false, message: err?.message || 'Failed to send password reset email.' };
-      }
+      // Always return generic success to protect against account enumeration
+      return {
+        success: true,
+        message: 'If an account exists with this email address, a password reset link has been dispatched to your inbox.',
+      };
     },
     []
   );

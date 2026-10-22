@@ -20,7 +20,28 @@ export default endpoint(
     const siteUrl = process.env.SITE_URL || 'https://dvds-zone.co.uk';
     const redirectTo = `${siteUrl}/reset-password`;
 
-    // 2. Generate secure, cryptographically signed, single-use recovery link via Supabase Auth Admin
+    // 2. Rapid duplicate request suppression: if an email was sent to this address within 60s, return generic success
+    try {
+      const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+      const { data: recentLog } = await db
+        .from('email_logs')
+        .select('id')
+        .eq('recipient', cleanEmail)
+        .eq('email_type', 'customer_password_reset')
+        .gt('sent_at', oneMinuteAgo)
+        .maybeSingle();
+
+      if (recentLog) {
+        return {
+          success: true,
+          message: 'If an account exists with this email address, a password reset link has been dispatched to your inbox.',
+        };
+      }
+    } catch {
+      // Non-blocking
+    }
+
+    // 3. Generate secure, cryptographically signed, single-use recovery link via Supabase Auth Admin
     try {
       const { data, error } = await db.auth.admin.generateLink({
         type: 'recovery',
@@ -48,12 +69,12 @@ export default endpoint(
       console.error('[customer-forgot-password] Exception during recovery link generation:', err.message);
     }
 
-    // 3. User Enumeration Protection: Always return identical public response whether account exists or not
+    // 4. User Enumeration Protection: Always return identical public response whether account exists or not
     return {
       success: true,
       message: 'If an account exists with this email address, a password reset link has been dispatched to your inbox.',
     };
   },
   'POST',
-  { max: 5, windowMs: 900000 } // Rate limit: 5 requests per 15 minutes per IP
+  { max: 10, windowMs: 600000 } // Rate limit: 10 requests per 10 minutes per IP
 );

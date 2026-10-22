@@ -34,6 +34,38 @@ export const ResetPasswordPage: React.FC = () => {
           return;
         }
 
+        // 1. Check for error description in query or hash (e.g. otp_expired, access_denied)
+        const searchParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        const errorDesc = searchParams.get('error_description') || hashParams.get('error_description');
+        const errorCode = searchParams.get('error_code') || hashParams.get('error_code');
+
+        if (errorDesc || errorCode) {
+          if (isMounted) {
+            setHasValidSession(false);
+            setIsVerifyingSession(false);
+          }
+          return;
+        }
+
+        // 2. PKCE code exchange if redirected with ?code=...
+        const code = searchParams.get('code');
+        if (code) {
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            if (!error && data?.session) {
+              if (isMounted) {
+                setHasValidSession(true);
+                setIsVerifyingSession(false);
+              }
+              return;
+            }
+          } catch (codeErr) {
+            console.warn('[ResetPasswordPage] PKCE exchange notice:', codeErr);
+          }
+        }
+
+        // 3. Existing active session check
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           if (isMounted) {
@@ -43,7 +75,7 @@ export const ResetPasswordPage: React.FC = () => {
           return;
         }
 
-        // Listen for recovery state change
+        // 4. Listen for recovery state change
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
           if (!isMounted) return;
           if (event === 'PASSWORD_RECOVERY' || (session && event === 'SIGNED_IN')) {

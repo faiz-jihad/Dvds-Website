@@ -5,6 +5,7 @@ import {
   sendAdminNewOrderNotification,
   sendAdminPaymentVerifiedAlert,
   sendAdminPaymentFailedAlert,
+  sendCustomerPaymentFailed,
   sendCustomerOrderRefunded,
   sendAdminRefundAlert,
 } from './_email.js';
@@ -245,7 +246,7 @@ export default async function stripeWebhookHandler(req, res) {
             .maybeSingle()
             .catch(() => {});
 
-          // Send admin payment failure alert
+          // Send admin payment failure alert & customer notification
           try {
             const failedOrder = await loadOrder(db, orderId).catch(() => null);
             if (failedOrder) {
@@ -254,9 +255,13 @@ export default async function stripeWebhookHandler(req, res) {
                 provider: 'stripe',
                 paymentReference: session.id,
               });
+              await sendCustomerPaymentFailed(db, failedOrder, {
+                errorReason: 'Your payment could not be processed by your bank or card issuer.',
+                provider: 'Stripe',
+              });
             }
           } catch (failAlertErr) {
-            console.warn('[stripe-webhook] Admin payment failure alert note:', failAlertErr.message);
+            console.warn('[stripe-webhook] Payment failure alert note:', failAlertErr.message);
           }
         }
         break;

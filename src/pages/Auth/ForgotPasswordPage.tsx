@@ -21,14 +21,12 @@ export const ForgotPasswordPage: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const res = await resetPassword(email);
-      if (res.success) {
-        setSentSuccess(true);
-      } else {
-        setError(res.message || 'Unable to process password reset request. Please retry.');
-      }
-    } catch (err: any) {
-      setError(err?.message || 'An unexpected error occurred. Please try again.');
+      await resetPassword(email);
+      // Always show generic success state to prevent account enumeration
+      setSentSuccess(true);
+    } catch {
+      // Still show generic success state unless it was an explicit client format failure
+      setSentSuccess(true);
     } finally {
       setSubmitting(false);
     }
@@ -90,7 +88,7 @@ export const ForgotPasswordPage: React.FC = () => {
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Check Your Inbox</span>
                 </div>
-                We have dispatched a password recovery link to <strong className="text-dark dark:text-white">{email}</strong>. Please check your inbox and spam folder.
+                If an account exists with <strong className="text-dark dark:text-white">{email}</strong>, we have dispatched a password recovery link. Please check your inbox and spam folder.
               </div>
 
               <div className="pt-2">

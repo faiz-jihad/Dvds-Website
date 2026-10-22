@@ -14,6 +14,8 @@ import nodemailer from 'nodemailer';
  */
 export async function sendEmail({ to, subject, html, text, replyTo = null, isInternalAlert = false }) {
   const fromEmail = process.env.EMAIL_FROM || 'DVDs Zone <info@dvds-zone.co.uk>';
+  const defaultReplyTo = process.env.EMAIL_REPLY_TO || 'azrayanltd@gmail.com';
+  const effectiveReplyTo = replyTo || defaultReplyTo;
   const smtpHost = process.env.SMTP_HOST || '127.0.0.1';
   const smtpPort = parseInt(process.env.SMTP_PORT || '25', 10);
   const smtpEnabled = process.env.SMTP_ENABLED !== 'false';
@@ -46,7 +48,7 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
       const info = await transporter.sendMail({
         from: fromEmail,
         to: recipients,
-        replyTo: replyTo || undefined,
+        replyTo: effectiveReplyTo,
         subject,
         html,
         text,
@@ -90,8 +92,8 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
         category: 'Transactional',
       };
 
-      if (replyTo) {
-        payload.headers = { 'Reply-To': replyTo };
+      if (effectiveReplyTo) {
+        payload.headers = { 'Reply-To': effectiveReplyTo };
       }
 
       const response = await fetch(endpointUrl, {
@@ -112,7 +114,6 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
       return { success: true, provider: isSandbox ? 'mailtrap_sandbox' : 'mailtrap', id: messageId };
     } catch (err) {
       console.error('[email] Mailtrap delivery failed:', err.message);
-      return { success: false, provider: 'mailtrap', error: err.message };
     }
   }
 
@@ -128,7 +129,7 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
         body: JSON.stringify({
           from: fromEmail,
           to: recipients,
-          reply_to: replyTo || undefined,
+          reply_to: effectiveReplyTo,
           subject,
           html,
           text,
@@ -142,7 +143,6 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
       return { success: true, provider: 'resend', id: data.id };
     } catch (err) {
       console.error('[email] Resend delivery failed:', err.message);
-      return { success: false, provider: 'resend', error: err.message };
     }
   }
 
@@ -160,7 +160,7 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
         body: JSON.stringify({
           personalizations: [{ to: recipients.map((email) => ({ email })) }],
           from: { email: cleanFromEmail, name: 'DVDs Zone' },
-          reply_to: replyTo ? { email: replyTo } : undefined,
+          reply_to: effectiveReplyTo ? { email: effectiveReplyTo } : undefined,
           subject,
           content: [
             { type: 'text/plain', value: text },
@@ -176,7 +176,6 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
       return { success: true, provider: 'sendgrid' };
     } catch (err) {
       console.error('[email] SendGrid delivery failed:', err.message);
-      return { success: false, provider: 'sendgrid', error: err.message };
     }
   }
 
@@ -195,7 +194,7 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
         body: JSON.stringify({
           sender: { name: 'DVDs Zone', email: cleanFromEmail },
           to: recipients.map((email) => ({ email })),
-          replyTo: replyTo ? { email: replyTo } : undefined,
+          replyTo: effectiveReplyTo ? { email: effectiveReplyTo } : undefined,
           subject,
           htmlContent: html,
           textContent: text,
@@ -209,7 +208,6 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
       return { success: true, provider: 'brevo', id: data.messageId };
     } catch (err) {
       console.error('[email] Brevo delivery failed:', err.message);
-      return { success: false, provider: 'brevo', error: err.message };
     }
   }
 
@@ -226,7 +224,7 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
         body: JSON.stringify({
           From: fromEmail,
           To: recipients.join(','),
-          ReplyTo: replyTo || undefined,
+          ReplyTo: effectiveReplyTo,
           Subject: subject,
           HtmlBody: html,
           TextBody: text,
@@ -240,7 +238,6 @@ export async function sendEmail({ to, subject, html, text, replyTo = null, isInt
       return { success: true, provider: 'postmark', id: data.MessageID };
     } catch (err) {
       console.error('[email] Postmark delivery failed:', err.message);
-      return { success: false, provider: 'postmark', error: err.message };
     }
   }
 
@@ -1742,6 +1739,130 @@ ${adminOrderUrl}
     orderNumber: order.order_number,
     recipient: adminEmail,
     emailType: 'admin_payment_failed',
+    subject,
+    result,
+  });
+
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 9.1 Customer Payment Failure Notification
+// ─────────────────────────────────────────────────────────────────────────────
+export async function sendCustomerPaymentFailed(db, order, { errorReason, provider = 'card', retryUrl } = {}) {
+  const recipientEmail = order?.email || order?.customer_email || order?.shipping_address?.email;
+  if (!order || !recipientEmail) {
+    return { success: false, error: 'No recipient email on order.' };
+  }
+
+  // Idempotency: verify if payment failed email was already sent for this order
+  try {
+    const { data: existingLog } = await db
+      .from('email_logs')
+      .select('id')
+      .eq('order_id', order.id)
+      .eq('email_type', 'order_cancelled')
+      .ilike('subject', '%Payment Unsuccessful%')
+      .maybeSingle();
+
+    if (existingLog) {
+      return { success: true, duplicate_skipped: true };
+    }
+  } catch {
+    // Non-blocking
+  }
+
+  const siteUrl = process.env.SITE_URL || 'https://dvds-zone.co.uk';
+  const currency = order.currency || 'GBP';
+  const totalFormatted = formatMoney(order.total_amount, currency);
+  const checkoutUrl = retryUrl || `${siteUrl}/cart`;
+  const subject = `Payment Unsuccessful for Order #${order.order_number} - DVDs Zone`;
+
+  const reasonExplanation =
+    errorReason || 'The transaction could not be authorized by your bank or payment card issuer.';
+
+  const textBody = `DVDs Zone - Payment Notice
+Hello,
+
+We were unable to complete the payment of ${totalFormatted} for your order #${order.order_number}.
+
+Reason:
+${reasonExplanation}
+
+Important Note:
+Your card or account was NOT charged. Your selected items may still be available in stock, but your order has not been placed.
+
+To retry your order with an alternative payment method, please visit:
+${checkoutUrl}
+
+Need assistance?
+If you believe this is an error or need help completing your checkout, please contact our support team at azrayanltd@gmail.com.
+
+DVDs Zone Team
+https://dvds-zone.co.uk
+`;
+
+  const contentHtml = `
+    <p style="color: #64748B; font-size: 14px; margin: 8px 0 16px;">
+      We were unable to complete the payment for your order <strong>#${order.order_number}</strong>.
+    </p>
+
+    <div class="box" style="background: #FEF2F2; border-color: #FECACA;">
+      <strong style="color: #991B1B; font-size: 13px; display: block; margin-bottom: 6px;">Reason for Payment Issue:</strong>
+      <p style="color: #7F1D1D; margin: 0; font-size: 13px; line-height: 1.5;">${reasonExplanation}</p>
+    </div>
+
+    <div class="box" style="background: #F8FAFC; border-color: #E2E8F0;">
+      <table style="width: 100%;">
+        <tr>
+          <td style="color: #64748B; font-size: 13px; padding: 4px 0;">Order Reference:</td>
+          <td style="text-align: right; font-weight: 700; font-size: 13px; color: #0F172A;">#${order.order_number}</td>
+        </tr>
+        <tr>
+          <td style="color: #64748B; font-size: 13px; padding: 4px 0;">Attempted Amount:</td>
+          <td style="text-align: right; font-weight: 800; font-size: 14px; color: #0F172A;">${totalFormatted}</td>
+        </tr>
+        <tr>
+          <td style="color: #64748B; font-size: 13px; padding: 4px 0;">Billing Status:</td>
+          <td style="text-align: right; font-weight: 700; font-size: 13px; color: #059669;">Not Charged</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="color: #475569; font-size: 13px; line-height: 1.6; margin: 16px 0;">
+      No money was debited from your card or account. You can retry your order using a different card, PayPal, or UK Bank Transfer.
+    </p>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${checkoutUrl}" class="btn-action" target="_blank" style="background: #1E40AF; padding: 14px 32px;">Retry Payment</a>
+    </div>
+
+    <p style="color: #94A3B8; font-size: 12px; margin: 16px 0 0; text-align: center;">
+      Questions? Contact us anytime at <a href="mailto:azrayanltd@gmail.com" style="color: #1E40AF;">azrayanltd@gmail.com</a>.
+    </p>
+  `;
+
+  const htmlBody = buildEmailTemplate({
+    title: 'Payment Unsuccessful',
+    subtitle: 'Payment Alert',
+    badgeText: 'Payment Failed',
+    badgeColor: '#DC2626',
+    badgeBg: '#FEE2E2',
+    contentHtml,
+  });
+
+  const result = await sendEmail({
+    to: recipientEmail,
+    subject,
+    html: htmlBody,
+    text: textBody,
+  });
+
+  await logEmailAttempt(db, {
+    orderId: order.id,
+    orderNumber: order.order_number,
+    recipient: recipientEmail,
+    emailType: 'order_cancelled',
     subject,
     result,
   });
