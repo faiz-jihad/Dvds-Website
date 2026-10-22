@@ -12,8 +12,8 @@ import {
 import { useThemeStore } from '../../stores/useThemeStore';
 import { cn } from '../../lib/formatters';
 
-export const DEFAULT_TRUSTMARY_SCRIPT_URL = 'https://widget.trustmary.com/nuWuKC1kqd';
-export const DEFAULT_TRUSTMARY_WIDGET_ID = 'nuWuKC1kqd';
+export const DEFAULT_TRUSTMARY_WIDGET_ID = '5aO76ho2M';
+export const DEFAULT_TRUSTMARY_SCRIPT_URL = 'https://widget.trustmary.com/5aO76ho2M';
 export const DEFAULT_GOOGLE_REVIEW_URL = 'https://g.page/r/CcbYihBj8jECEBM/review';
 
 /**
@@ -39,9 +39,9 @@ export const GoogleGLogo: React.FC<{ size?: number; className?: string }> = ({ s
 );
 
 export interface GoogleReviewsProps {
-  /** Trustmary widget ID (default: 'nuWuKC1kqd') */
+  /** Trustmary widget ID (default: '5aO76ho2M') */
   widgetId?: string;
-  /** Trustmary script source URL (default: 'https://widget.trustmary.com/nuWuKC1kqd') */
+  /** Trustmary script source URL (default: 'https://widget.trustmary.com/5aO76ho2M') */
   scriptUrl?: string;
   /** Google Review URL for direct "Write a Review" CTA (falls back to VITE_GOOGLE_REVIEW_URL or verified default) */
   reviewUrl?: string | null;

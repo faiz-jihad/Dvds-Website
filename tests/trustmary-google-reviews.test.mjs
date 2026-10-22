@@ -21,12 +21,12 @@ test('2. Trustmary widget script URL and widget ID are accurately configured', (
   const content = readFileSync(resolve(rootDir, 'src/components/landing/GoogleReviews.tsx'), 'utf8');
 
   assert.ok(
-    content.includes('https://widget.trustmary.com/nuWuKC1kqd'),
-    'Must configure official Trustmary script URL: https://widget.trustmary.com/nuWuKC1kqd'
+    content.includes('https://widget.trustmary.com/5aO76ho2M'),
+    'Must configure official Trustmary script URL: https://widget.trustmary.com/5aO76ho2M'
   );
   assert.ok(
-    content.includes('nuWuKC1kqd'),
-    'Must configure Trustmary widget ID: nuWuKC1kqd'
+    content.includes('5aO76ho2M'),
+    'Must configure Trustmary widget ID: 5aO76ho2M'
   );
 });
 
