@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ExternalLink, MessageSquarePlus, CheckCircle2, ShieldCheck, RefreshCw } from 'lucide-react';
+import { ExternalLink, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { cn } from '../../lib/formatters';
 
@@ -40,7 +40,9 @@ export interface ElfsightGoogleReviewsProps {
   subtitle?: string;
   /** Optional CSS class */
   className?: string;
-  /** Whether to show the header CTA button */
+  /** Whether to show the custom outer header (false by default to prevent duplicate title/button with Elfsight's built-in header) */
+  showCustomHeader?: boolean;
+  /** Whether to show the outer header CTA button */
   showCta?: boolean;
 }
 
@@ -64,7 +66,8 @@ export const ElfsightGoogleReviews: React.FC<ElfsightGoogleReviewsProps> = ({
   title = 'What Our Customers Say',
   subtitle = 'Authentic feedback and experiences from film collectors and entertainment enthusiasts across the United Kingdom.',
   className,
-  showCta = true,
+  showCustomHeader = false,
+  showCta = false,
 }) => {
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === 'dark';
@@ -103,7 +106,6 @@ export const ElfsightGoogleReviews: React.FC<ElfsightGoogleReviewsProps> = ({
         try {
           (window as any).Eapps.initialize();
         } catch (err) {
-          // Non-fatal init warning
           console.warn('[Elfsight] Initialization note:', err);
         }
       }
@@ -114,9 +116,7 @@ export const ElfsightGoogleReviews: React.FC<ElfsightGoogleReviewsProps> = ({
 
     if (existingScript) {
       if (isMounted) setScriptLoaded(true);
-      // Script is already in DOM, trigger re-scan of newly mounted widget container
       triggerElfsightInit();
-      // Also retry shortly after in case DOM node ref was just attached
       const timer = setTimeout(triggerElfsightInit, 300);
       return () => {
         isMounted = false;
@@ -147,7 +147,6 @@ export const ElfsightGoogleReviews: React.FC<ElfsightGoogleReviewsProps> = ({
 
     return () => {
       isMounted = false;
-      // Note: We intentionally do not remove the script on unmount to preserve singleton caching across SPA route changes.
     };
   }, [resolvedAppId]);
 
@@ -173,66 +172,68 @@ export const ElfsightGoogleReviews: React.FC<ElfsightGoogleReviewsProps> = ({
         style={{ background: 'radial-gradient(circle, #34A853 0%, transparent 70%)' }}
       />
 
-      <div className="relative z-10 p-6 sm:p-8 md:p-10 space-y-6 sm:space-y-8">
-        {/* Header Block: DVDs Zone Branded Title, Google Verified Badge & CTA */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-gray-200/60 dark:border-white/10">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2">
-              <span className={cn(
-                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider',
-                isDark ? 'bg-white/10 text-blue-400 border border-white/10' : 'bg-blue-50 text-blue-700 border border-blue-100'
-              )}>
-                <GoogleGLogo size={14} />
-                <span>Verified Google Reviews</span>
-              </span>
-              <span className={cn(
-                'text-[10px] font-semibold px-2 py-0.5 rounded-full',
-                isDark ? 'text-gray-400 bg-white/5' : 'text-gray-600 bg-gray-100'
-              )}>
-                Independent Customer Feedback
-              </span>
+      <div className="relative z-10 p-5 sm:p-7 md:p-8 space-y-6">
+        {/* Optional Custom Header Block (disabled by default to prevent duplicate title and button with Elfsight's widget) */}
+        {showCustomHeader && (
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-gray-200/60 dark:border-white/10">
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2">
+                <span className={cn(
+                  'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider',
+                  isDark ? 'bg-white/10 text-blue-400 border border-white/10' : 'bg-blue-50 text-blue-700 border border-blue-100'
+                )}>
+                  <GoogleGLogo size={14} />
+                  <span>Verified Google Reviews</span>
+                </span>
+                <span className={cn(
+                  'text-[10px] font-semibold px-2 py-0.5 rounded-full',
+                  isDark ? 'text-gray-400 bg-white/5' : 'text-gray-600 bg-gray-100'
+                )}>
+                  Independent Customer Feedback
+                </span>
+              </div>
+
+              <h2 className={cn('text-2xl sm:text-3xl font-black tracking-tight leading-tight', isDark ? 'text-white' : 'text-gray-900')}>
+                {title}
+              </h2>
+
+              <p className={cn('text-xs sm:text-sm leading-relaxed max-w-xl', isDark ? 'text-gray-300' : 'text-gray-600')}>
+                {subtitle}
+              </p>
             </div>
 
-            <h2 className={cn('text-2xl sm:text-3xl font-black tracking-tight leading-tight', isDark ? 'text-white' : 'text-gray-900')}>
-              {title}
-            </h2>
-
-            <p className={cn('text-xs sm:text-sm leading-relaxed max-w-xl', isDark ? 'text-gray-300' : 'text-gray-600')}>
-              {subtitle}
-            </p>
+            {/* Right Action: Write a Google Review CTA */}
+            {showCta && (
+              <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                {isConfigured ? (
+                  <a
+                    id="write-google-review-cta"
+                    href={resolvedReviewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-200 cursor-pointer shadow-md bg-[#4285F4] hover:bg-[#1a6de0] text-white hover:shadow-[0_0_24px_rgba(66,133,244,0.45)] active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#4285F4] focus:ring-offset-2"
+                    aria-label="Write a Google Review for DVDs Zone (opens Google in a new tab)"
+                  >
+                    <GoogleGLogo size={18} />
+                    <span>Write a Google Review</span>
+                    <ExternalLink size={15} className="opacity-75 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-xs bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400 cursor-not-allowed opacity-80"
+                    title="Google Review link coming soon"
+                    aria-disabled="true"
+                  >
+                    <GoogleGLogo size={16} />
+                    <span>Write a Google Review</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-
-          {/* Right Action: Write a Google Review CTA */}
-          {showCta && (
-            <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {isConfigured ? (
-                <a
-                  id="write-google-review-cta"
-                  href={resolvedReviewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-200 cursor-pointer shadow-md bg-[#4285F4] hover:bg-[#1a6de0] text-white hover:shadow-[0_0_24px_rgba(66,133,244,0.45)] active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#4285F4] focus:ring-offset-2"
-                  aria-label="Write a Google Review for DVDs Zone (opens Google in a new tab)"
-                >
-                  <GoogleGLogo size={18} />
-                  <span>Write a Google Review</span>
-                  <ExternalLink size={15} className="opacity-75 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-xs bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400 cursor-not-allowed opacity-80"
-                  title="Google Review link coming soon"
-                  aria-disabled="true"
-                >
-                  <GoogleGLogo size={16} />
-                  <span>Write a Google Review</span>
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        )}
 
         {/* ── Official Elfsight Widget Container ── */}
         <div className="min-h-[160px] w-full" ref={containerRef}>
@@ -251,25 +252,27 @@ export const ElfsightGoogleReviews: React.FC<ElfsightGoogleReviewsProps> = ({
                 Customer Reviews on Google
               </h3>
               <p className="text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
-                We take pride in delivering original, high-quality physical DVDs and TV box sets across the UK. Share your ordering experience or view verified reviews directly on Google.
+                {subtitle}
               </p>
               {isConfigured && (
                 <div className="pt-2">
                   <a
+                    id="write-google-review-cta"
                     href={resolvedReviewUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#4285F4] hover:bg-[#1a6de0] text-white text-xs font-bold transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#4285F4] hover:bg-[#1a6de0] text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+                    aria-label="Write a Google Review for DVDs Zone (opens Google in a new tab)"
                   >
-                    <MessageSquarePlus size={14} />
-                    <span>View &amp; Write Reviews on Google</span>
-                    <ExternalLink size={12} />
+                    <GoogleGLogo size={16} />
+                    <span>Write a Google Review</span>
+                    <ExternalLink size={13} />
                   </a>
                 </div>
               )}
             </div>
           ) : (
-            /* Official Elfsight Google Reviews widget target */
+            /* Official Elfsight Google Reviews widget target (renders single clean header, title, and "Review us on Google" button) */
             <div
               className={`elfsight-app-${resolvedAppId} w-full transition-opacity duration-300`}
               data-elfsight-app-lazy
@@ -280,7 +283,7 @@ export const ElfsightGoogleReviews: React.FC<ElfsightGoogleReviewsProps> = ({
         {/* Bottom Trust & Compliance Footer */}
         <div
           className={cn(
-            'flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t text-[11px]',
+            'flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t text-[11px]',
             isDark ? 'border-white/10 text-gray-400' : 'border-gray-200 text-gray-500'
           )}
         >
