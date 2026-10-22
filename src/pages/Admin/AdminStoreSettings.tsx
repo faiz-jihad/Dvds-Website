@@ -275,6 +275,7 @@ export const AdminStoreSettings: React.FC = () => {
         support_email: supportEmail || 'info@dvds-zone.co.uk',
         support_phone: (settings.support_phone || '').trim() || '00447400320038',
         google_review_url: (settings.google_review_url || '').trim(),
+        elfsight_app_id: (settings.elfsight_app_id || '').trim(),
         director_product_ids: Array.isArray(settings.director_product_ids)
           ? settings.director_product_ids.filter(Boolean)
           : [],
@@ -412,7 +413,8 @@ export const AdminStoreSettings: React.FC = () => {
       warehouse_location: 'United Kingdom',
       support_email: 'info@dvds-zone.co.uk',
       support_phone: '00447400320038',
-      google_review_url: '',
+      google_review_url: 'https://g.page/r/CcbYihBj8jECEBM/review',
+      elfsight_app_id: '2cb5859b-9d80-46cf-b70f-f54b84bb69c0',
       updated_at: new Date().toISOString(),
     });
   };
@@ -698,14 +700,22 @@ export const AdminStoreSettings: React.FC = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Input
                   label="Google Review URL"
                   type="url"
                   value={settings.google_review_url || ''}
                   onChange={(e) => handleChange('google_review_url', e.target.value)}
-                  placeholder="https://g.page/r/YOUR_PLACE_ID/review or https://search.google.com/local/writereview?placeid=..."
-                  helperText="Get your link from Google Maps → Search Business → 'Get more reviews' → Copy link. If empty, the banner safely falls back to VITE_GOOGLE_REVIEW_URL or shows a coming-soon state."
+                  placeholder="https://g.page/r/CcbYihBj8jECEBM/review"
+                  helperText="Direct link to write a review. If empty, falls back to VITE_GOOGLE_REVIEW_URL."
+                />
+                <Input
+                  label="Elfsight Widget App ID"
+                  type="text"
+                  value={settings.elfsight_app_id || ''}
+                  onChange={(e) => handleChange('elfsight_app_id', e.target.value)}
+                  placeholder="2cb5859b-9d80-46cf-b70f-f54b84bb69c0"
+                  helperText="App ID from your Elfsight embed code. Defaults to 2cb5859b-9d80-46cf-b70f-f54b84bb69c0."
                 />
               </div>
             </div>

@@ -342,6 +342,7 @@ export interface StoreSettings {
   contact_phone?: string;
   // External Reviews
   google_review_url?: string;
+  elfsight_app_id?: string;
   // Company Bank Account (for manual bank transfer flow)
   bank_name?: string;
   bank_account_name?: string;
