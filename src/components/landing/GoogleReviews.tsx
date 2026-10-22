@@ -8,6 +8,7 @@ import {
   Sparkles,
   AlertCircle,
   RefreshCw,
+  MapPin,
 } from 'lucide-react';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { cn } from '../../lib/formatters';
@@ -15,6 +16,8 @@ import { cn } from '../../lib/formatters';
 export const DEFAULT_TRUSTMARY_WIDGET_ID = '5aO76ho2M';
 export const DEFAULT_TRUSTMARY_SCRIPT_URL = 'https://widget.trustmary.com/5aO76ho2M';
 export const DEFAULT_GOOGLE_REVIEW_URL = 'https://g.page/r/CcbYihBj8jECEBM/review';
+export const DEFAULT_GOOGLE_BUSINESS_LISTING_URL =
+  'https://www.google.com/maps/place/DVDs+Zone/@52.4974437,-2.0284367,11z/data=!3m1!4b1!4m14!1m7!3m6!1s0x26822c24ea01d861:0x231f263108ad8c6!2sDVDs+Zone!8m2!3d52.4973492!4d-1.8636315!16s%2Fg%2F11zzy9h3bs';
 
 /**
  * Official Google G Logo SVG with verified 4-color branding:
@@ -61,9 +64,11 @@ export interface GoogleReviewsProps {
  * FEATURES:
  * 1. Safe React script loading via useEffect: checks for existing script tags to prevent duplicate injection.
  * 2. Official Trustmary in-page embed container with data-trustmary-widget attribute.
- * 3. Graceful loading skeleton and ad-blocker fallback states.
- * 4. DVDs Zone cinematic responsive aesthetics with seamless light & dark theme support.
- * 5. Direct, accessible "Write a Google Review" button pointing to DVDs Zone verified Google review page.
+ * 3. Appends script to document.head exclusively, preventing Trustmary from mounting duplicate containers.
+ * 4. Intercepts any review button inside the widget to route directly to DVDs Zone's verified Google Review CTA.
+ * 5. Direct links to official Google Business Listing and verified Google Maps profile.
+ * 6. Graceful loading skeleton and ad-blocker fallback states.
+ * 7. DVDs Zone cinematic responsive aesthetics with seamless light & dark theme support.
  */
 export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
   widgetId = DEFAULT_TRUSTMARY_WIDGET_ID,
@@ -103,11 +108,12 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
       if (!isMounted) return;
       setScriptStatus('loaded');
 
-      // Trigger Trustmary re-initialization if available in window
+      // Trigger Trustmary re-initialization safely if available
       const win = window as any;
       if (win.tmary && typeof win.tmary === 'function') {
         try {
-          win.tmary('refresh');
+          win.tmary('pageview');
+          win.tmary('widgetInit', 'Eol29qAspI');
         } catch (_) {}
       }
       if (win.Trustmary && typeof win.Trustmary.init === 'function') {
@@ -128,7 +134,7 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
       setScriptStatus('loaded');
       handleScriptLoaded();
     } else {
-      // Inject Trustmary script safely
+      // Inject Trustmary script safely into document.head (NEVER inside widget container to prevent duplicates)
       const script = document.createElement('script');
       script.src = scriptUrl;
       script.async = true;
@@ -139,10 +145,16 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
       script.addEventListener('error', handleScriptError);
       scriptElement = script;
 
-      if (containerRef.current) {
-        containerRef.current.appendChild(script);
-      } else {
-        document.body.appendChild(script);
+      document.head.appendChild(script);
+    }
+
+    // Cleanup: ensure only ONE widget target element exists inside containerRef
+    if (containerRef.current) {
+      const widgetElements = containerRef.current.querySelectorAll(`[data-trustmary-widget="${widgetId}"]`);
+      if (widgetElements.length > 1) {
+        for (let i = 1; i < widgetElements.length; i++) {
+          widgetElements[i].remove();
+        }
       }
     }
 
@@ -154,6 +166,38 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
       }
     };
   }, [scriptUrl, widgetId]);
+
+  // Delegated click handler: ensure any "Write a review" action within Trustmary links to Google Review CTA
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWidgetClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      const reviewTarget = target.closest<HTMLElement>('a, button, [role="button"]');
+      if (reviewTarget) {
+        const href = (reviewTarget as HTMLAnchorElement).href || '';
+        const text = (reviewTarget.textContent || '').trim().toLowerCase();
+        if (
+          href.includes('trustmary.com/c/') ||
+          href.includes('form.trustmary.com') ||
+          text.includes('write a review') ||
+          text.includes('leave a review')
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.open(resolvedReviewUrl, '_blank', 'noopener,noreferrer');
+        }
+      }
+    };
+
+    container.addEventListener('click', handleWidgetClick, true);
+    return () => {
+      container.removeEventListener('click', handleWidgetClick, true);
+    };
+  }, [resolvedReviewUrl]);
 
   return (
     <section
@@ -256,7 +300,20 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
         </div>
 
         {/* ── Widget Render Area ── */}
-        <div className="relative min-h-[160px] w-full">
+        <div className="relative min-h-[140px] w-full">
+          {/* Style overrides to eliminate duplicate widget title and align seamlessly with DVDs Zone frame */}
+          <style dangerouslySetInnerHTML={{ __html: `
+            #google-reviews-section [data-trustmary-widget] h2,
+            #google-reviews-section [data-trustmary-widget] [class*="title"],
+            #google-reviews-section [data-trustmary-widget] [data-tm-edit="title"] {
+              display: none !important;
+            }
+            #google-reviews-section .trustmary-widget {
+              margin: 0 auto;
+              width: 100%;
+            }
+          ` }} />
+
           {/* 1. Official Trustmary In-Page Widget Container */}
           <div
             ref={containerRef}
@@ -346,14 +403,25 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
             isDark ? 'border-white/10 text-gray-400' : 'border-gray-200 text-gray-500'
           )}
         >
-          <div className="flex items-center gap-2">
+          <a
+            href={DEFAULT_GOOGLE_BUSINESS_LISTING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 hover:underline hover:text-[#4285F4] transition-colors cursor-pointer group"
+            aria-label="View official DVDs Zone Google Business Profile on Google Maps (opens in a new tab)"
+          >
             <ShieldCheck size={14} className="text-emerald-500 shrink-0" aria-hidden="true" />
-            <span>Direct link to official DVDs Zone Google Business Profile</span>
-          </div>
+            <span className="group-hover:underline">Official DVDs Zone Google Business Profile</span>
+            <ExternalLink size={11} className="opacity-70 group-hover:opacity-100" />
+          </a>
 
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={13} className="text-[#4285F4] shrink-0" aria-hidden="true" />
-            <span>Opens Google in a secure, new browser tab</span>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 size={13} className="text-[#4285F4] shrink-0" aria-hidden="true" />
+              <span>Verified Google Business Listing</span>
+            </span>
+            <span className="opacity-40">•</span>
+            <span className="text-gray-400">100% Genuine Physical Media Collectors</span>
           </div>
         </div>
       </div>
@@ -362,3 +430,4 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
 };
 
 export default GoogleReviews;
+

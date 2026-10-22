@@ -105,3 +105,52 @@ test('8. GoogleReviewsBanner integrates and re-exports GoogleReviews', () => {
     'GoogleReviewsBanner must render GoogleReviews for section variant'
   );
 });
+
+test('9. Script is injected into document.head to prevent duplicate widget mounting', () => {
+  const content = readFileSync(resolve(rootDir, 'src/components/landing/GoogleReviews.tsx'), 'utf8');
+
+  assert.ok(
+    content.includes('document.head.appendChild(script)'),
+    'Must append script to document.head exclusively, preventing in-container duplicate rendering'
+  );
+  assert.ok(
+    !content.includes('containerRef.current.appendChild(script)'),
+    'Must NOT append script into containerRef to prevent duplicate widget renders'
+  );
+});
+
+test('10. Official Google Business listing is exported and linked in bottom trust strip', () => {
+  const content = readFileSync(resolve(rootDir, 'src/components/landing/GoogleReviews.tsx'), 'utf8');
+
+  assert.ok(
+    content.includes('DEFAULT_GOOGLE_BUSINESS_LISTING_URL'),
+    'Must export DEFAULT_GOOGLE_BUSINESS_LISTING_URL'
+  );
+  assert.ok(
+    content.includes('https://www.google.com/maps/place/DVDs+Zone/@52.4974437,-2.0284367,11z/data=!3m1!4b1!4m14!1m7!3m6!1s0x26822c24ea01d861:0x231f263108ad8c6!2sDVDs+Zone!8m2!3d52.4973492!4d-1.8636315!16s%2Fg%2F11zzy9h3bs'),
+    'Must contain verified Google Business Listing URL'
+  );
+});
+
+test('11. index.html includes official Trustmary widget script in document head', () => {
+  const indexHtml = readFileSync(resolve(rootDir, 'index.html'), 'utf8');
+
+  assert.ok(
+    indexHtml.includes('<script src="https://widget.trustmary.com/5aO76ho2M" async></script>'),
+    'index.html head must include Trustmary widget script: https://widget.trustmary.com/5aO76ho2M'
+  );
+});
+
+test('12. Delegated click listener routes Trustmary internal buttons to Google Review CTA', () => {
+  const content = readFileSync(resolve(rootDir, 'src/components/landing/GoogleReviews.tsx'), 'utf8');
+
+  assert.ok(
+    content.includes('handleWidgetClick') || content.includes('form.trustmary.com'),
+    'Must handle delegated clicks to intercept internal Trustmary buttons'
+  );
+  assert.ok(
+    content.includes('window.open(resolvedReviewUrl'),
+    'Must open resolvedReviewUrl when review button is clicked'
+  );
+});
+
