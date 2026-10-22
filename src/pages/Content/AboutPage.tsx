@@ -32,7 +32,7 @@ export const AboutPage: React.FC = () => {
   });
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
-  const storeName = settings.store_name || 'DVDs Zone';
+  const storeName = settings.store_name || 'DVD Zone';
   const companyName = settings.registered_company_name || 'AZRAYAN LTD';
   const companyNumber = settings.company_number || '13894195';
 

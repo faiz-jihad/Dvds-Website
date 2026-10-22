@@ -507,7 +507,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
         modifiedHtml = modifiedHtml.replace('</head>', `${schemaScript}</head>`);
 
         // Inject Crawler fallback in root
-        modifiedHtml = modifiedHtml.replace('<div id="root"></div>', crawlerFallback);
+        modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, crawlerFallback);
 
         return modifiedHtml;
       }
@@ -536,7 +536,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
       modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
       modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
       modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
-      modifiedHtml = modifiedHtml.replace('<div id="root"></div>', `<div id="root">${generatePrivacyHtml(baseUrl, settings)}</div>`);
+      modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `<div id="root">${generatePrivacyHtml(baseUrl, settings)}</div>`);
     }
 
     // 4. HOMEPAGE ROUTE: / (Application Purpose & Public Storefront)
@@ -549,7 +549,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
       }
       modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(baseUrl)}/" />`);
       modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(baseUrl)}/" />`);
-      modifiedHtml = modifiedHtml.replace('<div id="root"></div>', `<div id="root">${generateHomeHtml(baseUrl, settings)}</div>`);
+      modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `<div id="root">${generateHomeHtml(baseUrl, settings)}</div>`);
     }
 
     // 4. OTHER PAGES: adjust canonical URL dynamically

@@ -72,6 +72,7 @@ const LoginPage = lazyWithRetry(() => import('../pages/Auth/LoginPage'), 'LoginP
 const RegisterPage = lazyWithRetry(() => import('../pages/Auth/RegisterPage'), 'RegisterPage');
 const ForgotPasswordPage = lazyWithRetry(() => import('../pages/Auth/ForgotPasswordPage'), 'ForgotPasswordPage');
 const ResetPasswordPage = lazyWithRetry(() => import('../pages/Auth/ResetPasswordPage'), 'ResetPasswordPage');
+const ReviewPage = lazyWithRetry(() => import('../pages/ReviewPage'), 'ReviewPage');
 
 import { RouteErrorBoundary } from '../components/common/RouteErrorBoundary';
 
@@ -94,6 +95,7 @@ export const router = createBrowserRouter([
       { path: 'order-success/:orderId', element: <OrderSuccessPage /> },
       { path: 'order-confirmation/:orderId', element: <OrderSuccessPage /> },
       { path: 'favourites', element: <FavouritesPage /> },
+      { path: 'review', element: <ReviewPage /> },
 
       // Information & Legal
       { path: 'about', element: <AboutPage /> },

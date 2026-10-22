@@ -79,13 +79,13 @@ export const Home: React.FC = () => {
       <Seo
         title={
           settings.seo_site_title ||
-          `${settings.store_name || "DVDs Zone"} (DVD Zone UK) — Quality DVDs, TV Box Sets & Cinema Entertainment | Free UK Delivery`
+          `DVD Zone — ${settings.store_name || "DVDs Zone"} UK | Buy Quality DVDs & TV Box Sets Online | Free UK Delivery`
         }
         description={
           settings.seo_site_description ||
-          "DVDs Zone (also known as DVD Zone UK) is an online store for physical DVDs, TV box sets, and cinema entertainment. Free UK standard delivery on all orders. Same-day dispatch. Fast 2 working days delivery via Royal Mail."
+          "DVD Zone (DVDs Zone UK) is your specialist online store for physical media DVDs, TV series box sets, and cinema classics. Free UK standard delivery on all orders. Same-day dispatch. Fast 2 working days delivery via Royal Mail."
         }
-        keywords="DVD Zone, DVDs Zone, DVD Zone UK, DVDs Zone UK, dvdzone, dvdszone, buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs"
+        keywords="DVD Zone, DVDs Zone, DVD Zone UK, DVDs Zone UK, dvdzone, dvdszone, dvd-zone, dvds-zone, dvd zone store, dvd zone online, buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs"
         canonicalPath="/"
         image={
           settings.seo_social_image_url ||

@@ -1092,6 +1092,139 @@ ${renderPlainTextFooter()}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 5b. Customer Review Invitation Email (Post-Purchase Feedback)
+// ─────────────────────────────────────────────────────────────────────────────
+export async function sendCustomerReviewInvitation(db, order, { reviewUrl, token } = {}) {
+  const recipientEmail = order?.email || order?.customer_email || order?.shipping_address?.email;
+  if (!order || !recipientEmail) {
+    return { success: false, error: 'No recipient email on order.' };
+  }
+
+  // Prevent duplicate invitations for the same order
+  if (order.review_invitation_sent_at) {
+    return { success: false, error: 'Review invitation already sent for this order.' };
+  }
+
+  const siteUrl = BRAND.siteUrl;
+  const address = order.shipping_address || {};
+  const customerName = address.full_name || 'Valued Collector';
+  const items = Array.isArray(order.order_items) ? order.order_items : (Array.isArray(order.items) ? order.items : []);
+
+  // Secure token retrieval or generation
+  let effectiveToken = token || order.review_token;
+  if (!effectiveToken && db) {
+    try {
+      const { data: generated } = await db.rpc('ensure_order_review_token', { p_order_id: order.id });
+      if (generated) effectiveToken = generated;
+    } catch {
+      // Fallback
+    }
+  }
+  if (!effectiveToken) {
+    effectiveToken = globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : 'rev-' + Date.now();
+    try {
+      await db.from('orders').update({ review_token: effectiveToken }).eq('id', order.id);
+    } catch {}
+  }
+
+  const effectiveReviewUrl = reviewUrl || `${siteUrl}/review?order_id=${encodeURIComponent(order.id)}&token=${encodeURIComponent(effectiveToken)}`;
+
+  const subject = `How was your order? Share your review with DVDs Zone - Order #${order.order_number}`;
+  const preheader = `We hope you are enjoying your films! Leave a review for order #${order.order_number}.`;
+
+  const itemsHtml = items.map(item => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;margin-bottom:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+      <div style="flex:1;">
+        <strong style="color:#0f172a;font-size:14px;display:block;">${escapeHtml(item.product_title || 'DVD Title')}</strong>
+        <span style="font-size:12px;color:#64748b;">Quantity: ${item.quantity || 1}</span>
+      </div>
+      <a href="${effectiveReviewUrl}&product_id=${encodeURIComponent(item.product_id || '')}" style="background:#2563eb;color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;padding:8px 14px;border-radius:6px;display:inline-block;">
+        Rate &amp; Review &rarr;
+      </a>
+    </div>
+  `).join('');
+
+  const contentHtml = `
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: ${THEME.textBody};">
+      Hello <strong>${escapeHtml(customerName)}</strong>,
+    </p>
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: ${THEME.textBody};">
+      We hope your DVDs Zone order <strong>#${escapeHtml(order.order_number)}</strong> arrived safely and that you are enjoying your films.
+    </p>
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: ${THEME.textBody};">
+      As an independent UK physical media retailer, your feedback helps fellow cinema enthusiasts choose quality releases and helps us continually improve our archival catalog.
+    </p>
+
+    <div style="margin: 20px 0;">
+      ${itemsHtml}
+    </div>
+
+    ${renderButton({
+      text: 'Write a Customer Review',
+      url: effectiveReviewUrl,
+      variant: 'primary',
+    })}
+
+    <p style="margin: 24px 0 0 0; font-size: 12px; color: ${THEME.textMuted}; line-height: 1.5;">
+      Privacy Notice: For your privacy and protection, only your first name and verified purchase status are displayed publicly on our store. Your email, physical delivery address, and payment details are never published.
+    </p>
+  `;
+
+  const html = renderEmailLayout({
+    preheader,
+    title: 'Your Opinion Matters',
+    subtitle: `Review Order #${order.order_number}`,
+    badgeText: 'Customer Review',
+    badgeType: 'info',
+    contentHtml,
+  });
+
+  const text = `${renderPlainTextHeader('Your Opinion Matters', `Order #${order.order_number}`)}
+Hello ${customerName},
+
+We hope your order #${order.order_number} arrived safely.
+
+We would be very grateful if you could take a moment to share your rating and review for your purchase:
+${effectiveReviewUrl}
+
+PURCHASED ITEMS:
+${items.map((i) => `• ${i.product_title || 'Item'}`).join('\n')}
+
+Thank you for supporting physical media and cinema preservation in the UK.
+${renderPlainTextFooter()}
+`;
+
+  const result = await sendEmail({
+    to: recipientEmail,
+    subject,
+    html,
+    text,
+  });
+
+  await logEmailAttempt(db, {
+    orderId: order.id,
+    orderNumber: order.order_number,
+    recipient: recipientEmail,
+    emailType: 'review_invitation',
+    subject,
+    result,
+  });
+
+  if (result.success && db) {
+    try {
+      await db.from('orders').update({
+        review_invitation_sent_at: new Date().toISOString(),
+        review_token: effectiveToken,
+      }).eq('id', order.id);
+    } catch {
+      // Non-blocking
+    }
+  }
+
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 6. Customer Bank Transfer (BACS) Instructions Email
 // ─────────────────────────────────────────────────────────────────────────────
 export async function sendCustomerBankTransferInstructions(db, order) {

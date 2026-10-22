@@ -101,7 +101,7 @@ const getInitialNotifications = (): AppNotification[] => {
           id: 'init-customer-welcome',
           target: 'customer',
           type: 'promo',
-          title: 'Welcome to DVDs Zone',
+          title: 'Welcome to DVD Zone',
           message: 'Explore our catalog of verified original DVD and Blu-ray editions.',
           link: '/shop',
           read: false,

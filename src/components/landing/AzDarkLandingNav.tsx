@@ -152,12 +152,12 @@ export const AzDarkLandingNav: React.FC = () => {
       )}
     >
       <div className="w-full h-[64px] sm:h-[80px] flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 lg:px-8">
-        {/* ── LEFT: DVDs Zone Brand Logo (Aligned with sidebar width on desktop) ── */}
+        {/* ── LEFT: DVD Zone Brand Logo (Aligned with sidebar width on desktop) ── */}
         <div className="flex items-center shrink-0 w-auto lg:w-[260px] xl:w-[280px]">
-          <Link to="/" className="flex items-center gap-2 group py-1" title="DVDs Zone - Home">
+          <Link to="/" className="flex items-center gap-2 group py-1" title="DVD Zone - Home">
             <img
               src={isDark ? '/brand/logo-dark-theme.png' : '/brand/logo-transparent.png'}
-              alt="DVDs Zone"
+              alt="DVD Zone"
               className="h-8 sm:h-11 md:h-12 w-auto max-w-[125px] sm:max-w-[185px] object-contain transition-transform duration-300 group-hover:scale-[1.02]"
             />
           </Link>

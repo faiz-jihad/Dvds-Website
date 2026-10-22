@@ -122,6 +122,26 @@ export function searchCatalogue(
     let score = 0;
     const matchedFields: string[] = [];
 
+    // --- Brand Storefront Query Tolerance ("dvd zone", "dvds zone", "dvdzone", "zone", "dvd") ---
+    const BRAND_QUERIES = [
+      'dvd zone',
+      'dvds zone',
+      'dvdzone',
+      'dvdszone',
+      'dvd zone uk',
+      'dvds zone uk',
+      'dvd',
+      'dvds',
+      'zone',
+    ];
+    const isBrandSearch = BRAND_QUERIES.includes(query);
+    if (isBrandSearch) {
+      score += 70;
+      if (product.is_featured) score += 20;
+      if (product.is_best_seller) score += 15;
+      matchedFields.push('brand_catalogue_match');
+    }
+
     // --- A. Exact Phrase Title Match ---
     if (titleNorm === query) {
       score += 120;

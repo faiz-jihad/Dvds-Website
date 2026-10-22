@@ -91,7 +91,7 @@ export const GoogleReviewsBanner: React.FC<GoogleReviewsBannerProps> = ({
   // Verified rating display helper (strictly only if verifiedRating is provided and valid)
   const hasVerifiedRating = typeof verifiedRating === 'number' && verifiedRating > 0 && verifiedRating <= 5;
 
-  // Full-width homepage Google reviews section (powered by Trustmary)
+  // Full-width homepage Google reviews section (powered by ReviewsWidget.app)
   if (variant === 'section') {
     return (
       <GoogleReviews

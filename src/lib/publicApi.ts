@@ -249,11 +249,11 @@ export const publicApi = {
     if (!result.warehouse_location || result.warehouse_location.includes('Ryland') || result.warehouse_location.includes('Apartment') || result.warehouse_location.includes('London') || result.warehouse_location.includes('Birmingham') || result.warehouse_location.includes('West Midlands')) {
       result.warehouse_location = 'United Kingdom';
     }
-    if (!result.store_name || result.store_name.includes('AZ Rayan')) {
-      result.store_name = 'DVDs Zone';
+    if (!result.store_name || result.store_name.includes('AZ Rayan') || result.store_name === 'DVDs Zone' || result.store_name === 'DVDS Zone') {
+      result.store_name = 'DVD Zone';
     }
-    if (!result.registered_company_name || result.registered_company_name.includes('AZ Rayan')) {
-      result.registered_company_name = 'DVDs Zone';
+    if (!result.registered_company_name || result.registered_company_name.includes('AZ Rayan') || result.registered_company_name === 'DVDs Zone') {
+      result.registered_company_name = 'DVD Zone';
     }
     const rawEmail = data.support_email?.trim() || '';
     result.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge')) ? 'info@dvds-zone.co.uk' : rawEmail;
@@ -1169,6 +1169,122 @@ export const publicApi = {
     }
 
     return data as Review;
+  },
+
+  /**
+   * Fetch approved customer testimonials for homepage carousel.
+   * Never fabricates fake reviews.
+   */
+  async getHomepageTestimonials(limit = 10): Promise<Review[]> {
+    try {
+      const res = await fetch(`/api/reviews?testimonials=true&limit=${encodeURIComponent(limit)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.testimonials)) {
+          return json.testimonials as Review[];
+        }
+      }
+    } catch {
+      // Fall through to direct Supabase query
+    }
+
+    const sb = client();
+    if (!sb) return [];
+
+    try {
+      const { data, error } = await sb
+        .from('reviews')
+        .select(`
+          id,
+          rating,
+          title,
+          comment,
+          reviewer_name,
+          is_verified_purchase,
+          created_at,
+          product:products (
+            id,
+            title,
+            slug,
+            cover_image_url
+          )
+        `)
+        .eq('status', 'approved')
+        .order('rating', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error || !data) return [];
+      return data as unknown as Review[];
+    } catch {
+      return [];
+    }
+  },
+
+  /**
+   * Verify review eligibility via order verification / review token.
+   */
+  async checkReviewEligibilityWithToken(params: {
+    orderId?: string;
+    productId?: string;
+    token?: string;
+  }): Promise<{
+    eligible: boolean;
+    reason?: string;
+    has_reviewed?: boolean;
+    order?: { id: string; order_number: string };
+    product?: { id: string; title: string; cover_image_url?: string; format?: string; slug?: string };
+    suggested_name?: string;
+    privacy_notice?: string;
+  }> {
+    const query = new URLSearchParams();
+    query.set('check_eligibility', 'true');
+    if (params.orderId) query.set('order_id', params.orderId);
+    if (params.productId) query.set('product_id', params.productId);
+    if (params.token) query.set('token', params.token);
+
+    const headers = await getAuthHeaders();
+    const res = await fetch(`/api/reviews?${query.toString()}`, {
+      method: 'GET',
+      headers,
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || data.error || 'Failed to verify review eligibility.');
+    }
+    return data;
+  },
+
+  /**
+   * Submit a verified post-purchase customer review.
+   */
+  async submitPostPurchaseReview(payload: {
+    orderId?: string;
+    productId?: string;
+    rating: number;
+    title: string;
+    comment: string;
+    reviewerName?: string;
+    token?: string;
+  }): Promise<{
+    success: boolean;
+    status: string;
+    message: string;
+    review_id?: string;
+  }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/reviews', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || data.error || 'Failed to submit review.');
+    }
+    return data;
   },
 };
 

@@ -21,6 +21,7 @@ import {
   CreditCard,
   X,
   RefreshCw,
+  Star,
 } from "lucide-react";
 import { publicApi } from "../../lib/publicApi";
 import { checkoutApi } from "../../lib/checkoutApi";
@@ -761,6 +762,21 @@ export const OrdersPage: React.FC = () => {
                                   each
                                 </span>
                               </div>
+
+                              {/* Verified Review CTA */}
+                              {order.payment_status === "paid" &&
+                                !["cancelled", "refunded"].includes(order.status) &&
+                                item.product_id && (
+                                  <div className="mt-2">
+                                    <Link
+                                      to={`/review?order_id=${order.id}&product_id=${item.product_id}`}
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40 transition-colors"
+                                    >
+                                      <Star size={12} className="fill-amber-400 text-amber-500" />
+                                      <span>Write Review</span>
+                                    </Link>
+                                  </div>
+                                )}
                             </div>
 
                             {/* Line Item Total Price */}

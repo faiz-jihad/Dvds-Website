@@ -547,11 +547,11 @@ export const adminApi = {
     if (!settings.warehouse_location || settings.warehouse_location.includes('Ryland') || settings.warehouse_location.includes('Apartment') || settings.warehouse_location.includes('London') || settings.warehouse_location.includes('Birmingham') || settings.warehouse_location.includes('West Midlands')) {
       settings.warehouse_location = 'United Kingdom';
     }
-    if (!settings.store_name || settings.store_name.includes('AZ Rayan')) {
-      settings.store_name = 'DVDs Zone';
+    if (!settings.store_name || settings.store_name.includes('AZ Rayan') || settings.store_name === 'DVDs Zone' || settings.store_name === 'DVDS Zone') {
+      settings.store_name = 'DVD Zone';
     }
-    if (!settings.registered_company_name || settings.registered_company_name.includes('AZ Rayan')) {
-      settings.registered_company_name = 'DVDs Zone';
+    if (!settings.registered_company_name || settings.registered_company_name.includes('AZ Rayan') || settings.registered_company_name === 'DVDs Zone') {
+      settings.registered_company_name = 'DVD Zone';
     }
     const rawEmail = data.support_email?.trim() || '';
     settings.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge')) ? 'info@dvds-zone.co.uk' : rawEmail;
@@ -576,11 +576,11 @@ export const adminApi = {
     if (values.warehouse_location?.includes('Ryland') || values.warehouse_location?.includes('Apartment') || values.warehouse_location?.includes('Birmingham') || values.warehouse_location?.includes('West Midlands')) {
       values.warehouse_location = 'United Kingdom';
     }
-    if (!values.store_name || values.store_name.includes('AZ Rayan')) {
-      values.store_name = 'DVDs Zone';
+    if (!values.store_name || values.store_name.includes('AZ Rayan') || values.store_name === 'DVDs Zone' || values.store_name === 'DVDS Zone') {
+      values.store_name = 'DVD Zone';
     }
-    if (!values.registered_company_name || values.registered_company_name.includes('AZ Rayan')) {
-      values.registered_company_name = 'DVDs Zone';
+    if (!values.registered_company_name || values.registered_company_name.includes('AZ Rayan') || values.registered_company_name === 'DVDs Zone') {
+      values.registered_company_name = 'DVD Zone';
     }
     const saveEmail = values.support_email?.trim() || '';
     values.support_email = (!saveEmail || saveEmail.includes('azrayan.co.uk') || saveEmail.includes('concierge')) ? 'info@dvds-zone.co.uk' : saveEmail;

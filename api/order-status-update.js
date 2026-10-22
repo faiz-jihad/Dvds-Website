@@ -5,6 +5,7 @@ import {
   sendCustomerOrderProcessing,
   sendCustomerOrderRefunded,
   sendAdminRefundAlert,
+  sendCustomerReviewInvitation,
 } from './_email.js';
 
 export default endpoint(async (req) => {
@@ -104,6 +105,12 @@ export default endpoint(async (req) => {
         });
       } catch (err) {
         console.warn('[order-status-update] Refund email dispatch note:', err.message);
+      }
+    } else if (status === 'delivered' || fulfilmentStatus === 'delivered') {
+      try {
+        emailResult = await sendCustomerReviewInvitation(db, freshOrder);
+      } catch (err) {
+        console.warn('[order-status-update] Review invitation email note:', err.message);
       }
     }
   }

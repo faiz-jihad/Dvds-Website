@@ -13,8 +13,8 @@ import {
 import { useThemeStore } from '../../stores/useThemeStore';
 import { cn } from '../../lib/formatters';
 
-export const DEFAULT_TRUSTMARY_WIDGET_ID = '5aO76ho2M';
-export const DEFAULT_TRUSTMARY_SCRIPT_URL = 'https://widget.trustmary.com/5aO76ho2M';
+export const DEFAULT_REVIEWGRID_ID = '5f7dfa8a-15b8-47ea-9bb9-fe31c19cdcf7';
+export const DEFAULT_REVIEWS_WIDGET_SCRIPT_URL = 'https://reviewswidget.app/embed.js';
 export const DEFAULT_GOOGLE_REVIEW_URL = 'https://g.page/r/CcbYihBj8jECEBM/review';
 export const DEFAULT_GOOGLE_BUSINESS_LISTING_URL =
   'https://www.google.com/maps/place/DVDs+Zone/@52.4974437,-2.0284367,11z/data=!3m1!4b1!4m14!1m7!3m6!1s0x26822c24ea01d861:0x231f263108ad8c6!2sDVDs+Zone!8m2!3d52.4973492!4d-1.8636315!16s%2Fg%2F11zzy9h3bs';
@@ -42,9 +42,9 @@ export const GoogleGLogo: React.FC<{ size?: number; className?: string }> = ({ s
 );
 
 export interface GoogleReviewsProps {
-  /** Trustmary widget ID (default: '5aO76ho2M') */
+  /** ReviewsWidget data-reviewgrid ID (default: '5f7dfa8a-15b8-47ea-9bb9-fe31c19cdcf7') */
   widgetId?: string;
-  /** Trustmary script source URL (default: 'https://widget.trustmary.com/5aO76ho2M') */
+  /** ReviewsWidget script source URL (default: 'https://reviewswidget.app/embed.js') */
   scriptUrl?: string;
   /** Google Review URL for direct "Write a Review" CTA (falls back to VITE_GOOGLE_REVIEW_URL or verified default) */
   reviewUrl?: string | null;
@@ -59,20 +59,19 @@ export interface GoogleReviewsProps {
 /**
  * GoogleReviews
  *
- * Production-ready, responsive Google Reviews component for DVDs Zone powered by Trustmary.
+ * Production-ready, responsive Google Reviews component for DVDs Zone powered by ReviewsWidget.app.
  *
  * FEATURES:
  * 1. Safe React script loading via useEffect: checks for existing script tags to prevent duplicate injection.
- * 2. Official Trustmary in-page embed container with data-trustmary-widget attribute.
- * 3. Appends script to document.head exclusively, preventing Trustmary from mounting duplicate containers.
- * 4. Intercepts any review button inside the widget to route directly to DVDs Zone's verified Google Review CTA.
- * 5. Direct links to official Google Business Listing and verified Google Maps profile.
- * 6. Graceful loading skeleton and ad-blocker fallback states.
- * 7. DVDs Zone cinematic responsive aesthetics with seamless light & dark theme support.
+ * 2. Official ReviewsWidget in-page embed container with data-reviewgrid attribute.
+ * 3. Appends script to document.head exclusively, avoiding container duplication and React Strict Mode issues.
+ * 4. Displays genuine customer reviews returned by the provider without simulating data.
+ * 5. Direct, accessible "Write a Google Review" button pointing to DVDs Zone verified Google review page.
+ * 6. DVDs Zone cinematic responsive aesthetics with seamless light & dark theme support.
  */
 export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
-  widgetId = DEFAULT_TRUSTMARY_WIDGET_ID,
-  scriptUrl = DEFAULT_TRUSTMARY_SCRIPT_URL,
+  widgetId = DEFAULT_REVIEWGRID_ID,
+  scriptUrl = DEFAULT_REVIEWS_WIDGET_SCRIPT_URL,
   reviewUrl,
   title = 'What Our Customers Say',
   subtitle = 'Authentic reviews and collector experiences from DVD enthusiasts across the United Kingdom.',
@@ -100,62 +99,36 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Check if the script is already loaded or injected in DOM to prevent duplicates
-    const scriptSelector = `script[src="${scriptUrl}"]`;
+    // Check if ReviewsWidget embed script is already loaded or in DOM
+    const scriptSelector = `script[src="${scriptUrl}"], script[data-reviewgrid-embed]`;
     let scriptElement = document.querySelector<HTMLScriptElement>(scriptSelector);
 
     const handleScriptLoaded = () => {
       if (!isMounted) return;
       setScriptStatus('loaded');
-
-      // Trigger Trustmary re-initialization safely if available
-      const win = window as any;
-      if (win.tmary && typeof win.tmary === 'function') {
-        try {
-          win.tmary('pageview');
-          win.tmary('widgetInit', 'Eol29qAspI');
-        } catch (_) {}
-      }
-      if (win.Trustmary && typeof win.Trustmary.init === 'function') {
-        try {
-          win.Trustmary.init();
-        } catch (_) {}
-      }
     };
 
     const handleScriptError = () => {
       if (!isMounted) return;
-      console.warn('[GoogleReviews] Trustmary script failed to load. Displaying fallback view.');
+      console.warn('[GoogleReviews] ReviewsWidget script failed to load. Displaying fallback view.');
       setScriptStatus('error');
     };
 
     if (scriptElement) {
-      // Script is already present in DOM
       setScriptStatus('loaded');
       handleScriptLoaded();
     } else {
-      // Inject Trustmary script safely into document.head (NEVER inside widget container to prevent duplicates)
       const script = document.createElement('script');
       script.src = scriptUrl;
       script.async = true;
-      script.id = `trustmary-widget-script-${widgetId}`;
-      script.setAttribute('data-trustmary-script', widgetId);
+      script.id = 'reviewswidget-embed-script';
+      script.setAttribute('data-reviewgrid-script', '1');
 
       script.addEventListener('load', handleScriptLoaded);
       script.addEventListener('error', handleScriptError);
       scriptElement = script;
 
       document.head.appendChild(script);
-    }
-
-    // Cleanup: ensure only ONE widget target element exists inside containerRef
-    if (containerRef.current) {
-      const widgetElements = containerRef.current.querySelectorAll(`[data-trustmary-widget="${widgetId}"]`);
-      if (widgetElements.length > 1) {
-        for (let i = 1; i < widgetElements.length; i++) {
-          widgetElements[i].remove();
-        }
-      }
     }
 
     return () => {
@@ -166,38 +139,6 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
       }
     };
   }, [scriptUrl, widgetId]);
-
-  // Delegated click handler: ensure any "Write a review" action within Trustmary links to Google Review CTA
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleWidgetClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-
-      const reviewTarget = target.closest<HTMLElement>('a, button, [role="button"]');
-      if (reviewTarget) {
-        const href = (reviewTarget as HTMLAnchorElement).href || '';
-        const text = (reviewTarget.textContent || '').trim().toLowerCase();
-        if (
-          href.includes('trustmary.com/c/') ||
-          href.includes('form.trustmary.com') ||
-          text.includes('write a review') ||
-          text.includes('leave a review')
-        ) {
-          e.preventDefault();
-          e.stopPropagation();
-          window.open(resolvedReviewUrl, '_blank', 'noopener,noreferrer');
-        }
-      }
-    };
-
-    container.addEventListener('click', handleWidgetClick, true);
-    return () => {
-      container.removeEventListener('click', handleWidgetClick, true);
-    };
-  }, [resolvedReviewUrl]);
 
   return (
     <section
@@ -301,30 +242,17 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
 
         {/* ── Widget Render Area ── */}
         <div className="relative min-h-[140px] w-full">
-          {/* Style overrides to eliminate duplicate widget title and align seamlessly with DVDs Zone frame */}
-          <style dangerouslySetInnerHTML={{ __html: `
-            #google-reviews-section [data-trustmary-widget] h2,
-            #google-reviews-section [data-trustmary-widget] [class*="title"],
-            #google-reviews-section [data-trustmary-widget] [data-tm-edit="title"] {
-              display: none !important;
-            }
-            #google-reviews-section .trustmary-widget {
-              margin: 0 auto;
-              width: 100%;
-            }
-          ` }} />
-
-          {/* 1. Official Trustmary In-Page Widget Container */}
+          {/* 1. Official ReviewsWidget in-page embed container */}
           <div
             ref={containerRef}
             className="w-full transition-opacity duration-300"
             style={{ minHeight: '120px' }}
           >
-            {/* The official Trustmary embed target div */}
+            {/* The exact official ReviewsWidget embed target div */}
             <div
-              data-trustmary-widget={widgetId}
-              id={`trustmary-widget-${widgetId}`}
-              className="trustmary-widget w-full"
+              data-reviewgrid={widgetId}
+              id={`reviewgrid-${widgetId}`}
+              className="w-full"
             />
           </div>
 
@@ -430,4 +358,5 @@ export const GoogleReviews: React.FC<GoogleReviewsProps> = ({
 };
 
 export default GoogleReviews;
+
 
