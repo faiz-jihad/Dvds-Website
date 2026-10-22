@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
-import { Star, ExternalLink, MessageSquarePlus, CheckCircle2 } from 'lucide-react';
+import React from 'react';
+import { Star, ExternalLink, MessageSquarePlus } from 'lucide-react';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { cn } from '../../lib/formatters';
 import {
-  ElfsightGoogleReviews,
+  CustomGoogleReviewsSection,
   DEFAULT_GOOGLE_REVIEW_URL,
-  DEFAULT_ELFSIGHT_APP_ID,
-} from './ElfsightGoogleReviews';
+} from './CustomGoogleReviewsSection';
 
-export { ElfsightGoogleReviews };
+export { CustomGoogleReviewsSection };
 
 /**
  * Official Google G Logo SVG with verified 4-color branding:
@@ -37,19 +36,18 @@ export const GoogleGLogo: React.FC<{ size?: number; className?: string }> = ({ s
  *
  * Configurable Google Reviews component for DVDs Zone.
  * Supports:
- * - 'section': Full-width customer reviews section powered by genuine Elfsight Google Reviews widget.
+ * - 'section': Full-width lightweight, custom Google reviews section (zero third-party scripts).
  * - 'compact': Sleek trust bar for footers and post-checkout pages.
  *
  * CONFIGURATION:
- * 1. Environment Variables (.env):
+ * 1. Environment Variable (.env):
  *    VITE_GOOGLE_REVIEW_URL=https://g.page/r/CcbYihBj8jECEBM/review
- *    VITE_ELFSIGHT_APP_ID=2cb5859b-9d80-46cf-b70f-f54b84bb69c0
  * 2. Store Settings (CMS):
- *    Passed via `reviewUrl` and `appId` props (e.g. settings?.google_review_url)
+ *    Passed via `reviewUrl` prop (e.g. settings?.google_review_url)
  *
  * COMPLIANCE & INTEGRITY:
- * - Displays authentic customer feedback via Elfsight official widget.
- * - Does NOT display fabricated ratings, review counts, or testimonials.
+ * - Native React implementation with zero third-party widget fees or impression quotas.
+ * - Displays authentic customer feedback only; never fabricates ratings, counts, or testimonials.
  * - Safe link attributes (`target="_blank"`, `rel="noopener noreferrer"`).
  * - Safe disabled state when unconfigured.
  */
@@ -57,9 +55,7 @@ export const GoogleGLogo: React.FC<{ size?: number; className?: string }> = ({ s
 export interface GoogleReviewsBannerProps {
   /** Optional review URL override. Falls back to import.meta.env.VITE_GOOGLE_REVIEW_URL or verified default */
   reviewUrl?: string | null;
-  /** Optional Elfsight widget App ID override */
-  appId?: string | null;
-  /** Layout style: 'section' (full-width homepage banner with Elfsight reviews) or 'compact' (footer / sidebar card) */
+  /** Layout style: 'section' (full-width homepage banner) or 'compact' (footer / sidebar card) */
   variant?: 'section' | 'compact';
   /** Only displayed if verified numeric rating exists (1.0 - 5.0). NEVER fabricate. */
   verifiedRating?: number | null;
@@ -71,7 +67,6 @@ export interface GoogleReviewsBannerProps {
 
 export const GoogleReviewsBanner: React.FC<GoogleReviewsBannerProps> = ({
   reviewUrl,
-  appId,
   variant = 'section',
   verifiedRating,
   verifiedReviewCount,
@@ -95,11 +90,10 @@ export const GoogleReviewsBanner: React.FC<GoogleReviewsBannerProps> = ({
   // Verified rating display helper (strictly only if verifiedRating is provided and valid)
   const hasVerifiedRating = typeof verifiedRating === 'number' && verifiedRating > 0 && verifiedRating <= 5;
 
-  // Full-width homepage reviews section with official Elfsight widget
+  // Full-width homepage custom reviews section
   if (variant === 'section') {
     return (
-      <ElfsightGoogleReviews
-        appId={appId}
+      <CustomGoogleReviewsSection
         reviewUrl={resolvedUrl}
         className={className}
       />

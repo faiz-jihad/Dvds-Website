@@ -276,7 +276,7 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
 
         {/* ── Google Customer Reviews Banner ── */}
         <div className="pt-4 sm:pt-6">
-          <GoogleReviewsBanner reviewUrl={settings?.google_review_url} appId={settings?.elfsight_app_id} variant="section" />
+          <GoogleReviewsBanner reviewUrl={settings?.google_review_url} variant="section" />
         </div>
 
       </main>

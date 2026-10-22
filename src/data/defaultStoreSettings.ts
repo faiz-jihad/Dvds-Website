@@ -78,7 +78,6 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   support_email: 'info@dvds-zone.co.uk',
   support_phone: '00447400320038',
   google_review_url: 'https://g.page/r/CcbYihBj8jECEBM/review',
-  elfsight_app_id: '2cb5859b-9d80-46cf-b70f-f54b84bb69c0',
   bank_name: 'Barclays Bank UK',
   bank_account_name: 'AZRAYAN LTD',
   payment_card_enabled: true,
