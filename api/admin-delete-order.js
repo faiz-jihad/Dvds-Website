@@ -1,6 +1,7 @@
 import { dbClient, endpoint, requestUser, CheckoutError } from './_checkout.js';
 
 const MASTER_ADMIN_EMAILS = new Set([
+  'info@dvds-zone.co.uk',
   'azrayanltd@gmail.com',
   'admin@dvds-zone.co.uk',
   'admin@dvdszone.co.uk',
@@ -66,4 +67,4 @@ export default endpoint(async (req) => {
     orderNumber: order.order_number,
     message: `Transaction ${order.order_number} has been deleted successfully.`
   };
-});
+}, 'POST', { max: 10, windowMs: 60000 });

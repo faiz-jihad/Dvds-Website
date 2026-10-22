@@ -256,7 +256,7 @@ export const publicApi = {
       result.registered_company_name = 'DVDs Zone';
     }
     const rawEmail = data.support_email?.trim() || '';
-    result.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge')) ? 'azrayanltd@gmail.com' : rawEmail;
+    result.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge')) ? 'info@dvds-zone.co.uk' : rawEmail;
     result.support_phone = data.support_phone?.trim() || '00447400320038';
     return result;
   },

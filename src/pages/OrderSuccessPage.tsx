@@ -39,6 +39,7 @@ import { clearCheckoutDraft } from "../lib/checkoutDraft";
 import { useThemeStore } from "../stores/useThemeStore";
 import { Seo } from "../components/common/Seo";
 import { trackCustomerOrder } from "../lib/realtime";
+import { GoogleReviewsBanner } from "../components/landing/GoogleReviewsBanner";
 
 interface PaymentProofData {
   fileName: string;
@@ -1037,6 +1038,12 @@ export const OrderSuccessPage: React.FC = () => {
             onClose={() => setReceiptOpen(false)}
             order={order}
           />
+
+          {paid && !closed && (
+            <div className="mt-8 max-w-xl mx-auto">
+              <GoogleReviewsBanner variant="compact" />
+            </div>
+          )}
 
           <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-3.5 mt-8">
             {!closed && (

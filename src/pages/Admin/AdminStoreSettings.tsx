@@ -186,7 +186,7 @@ export const AdminStoreSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'identity' | 'hero' | 'campaign' | 'curator' | 'logistics' | 'payments' | 'email'>('identity');
   const [isSaving, setIsSaving] = useState(false);
   const [previewTrailerIndex, setPreviewTrailerIndex] = useState(0);
-  const [testEmailAddress, setTestEmailAddress] = useState('azrayanltd@gmail.com');
+  const [testEmailAddress, setTestEmailAddress] = useState('info@dvds-zone.co.uk');
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string; provider?: string } | null>(null);
   const emailLogsQuery = useQuery({
@@ -272,8 +272,9 @@ export const AdminStoreSettings: React.FC = () => {
         company_number: cleanCompanyNumber,
         registered_office_address: 'United Kingdom',
         warehouse_location: 'United Kingdom',
-        support_email: supportEmail || 'azrayanltd@gmail.com',
+        support_email: supportEmail || 'info@dvds-zone.co.uk',
         support_phone: (settings.support_phone || '').trim() || '00447400320038',
+        google_review_url: (settings.google_review_url || '').trim(),
         director_product_ids: Array.isArray(settings.director_product_ids)
           ? settings.director_product_ids.filter(Boolean)
           : [],
@@ -409,8 +410,9 @@ export const AdminStoreSettings: React.FC = () => {
       registered_office_address: 'United Kingdom',
       companies_house_url: 'https://find-and-update.company-information.service.gov.uk/company/13894195',
       warehouse_location: 'United Kingdom',
-      support_email: 'azrayanltd@gmail.com',
+      support_email: 'info@dvds-zone.co.uk',
       support_phone: '00447400320038',
+      google_review_url: '',
       updated_at: new Date().toISOString(),
     });
   };
@@ -665,7 +667,7 @@ export const AdminStoreSettings: React.FC = () => {
                   type="email"
                   value={settings.support_email || ''}
                   onChange={(e) => handleChange('support_email', e.target.value)}
-                  placeholder="azrayanltd@gmail.com"
+                  placeholder="info@dvds-zone.co.uk"
                   helperText="Primary email where order receipts, enquiries, and notifications are sent."
                   required
                 />
@@ -676,6 +678,34 @@ export const AdminStoreSettings: React.FC = () => {
                   onChange={(e) => handleChange('support_phone', e.target.value)}
                   placeholder="00447400320038"
                   helperText="UK helpline number displayed on contact and support documentation."
+                />
+              </div>
+            </div>
+
+            {/* Google Reviews & Customer Feedback */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+              <div className="border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                    <Star className="w-4 h-4" />
+                  </span>
+                  <h2 className="font-display font-bold text-base text-dark">
+                    Google Customer Reviews Call-to-Action
+                  </h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Connect your verified Google Business Profile review link. Displayed on the homepage banner and global footer.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5">
+                <Input
+                  label="Google Review URL"
+                  type="url"
+                  value={settings.google_review_url || ''}
+                  onChange={(e) => handleChange('google_review_url', e.target.value)}
+                  placeholder="https://g.page/r/YOUR_PLACE_ID/review or https://search.google.com/local/writereview?placeid=..."
+                  helperText="Get your link from Google Maps → Search Business → 'Get more reviews' → Copy link. If empty, the banner safely falls back to VITE_GOOGLE_REVIEW_URL or shows a coming-soon state."
                 />
               </div>
             </div>
@@ -2482,7 +2512,7 @@ export const AdminStoreSettings: React.FC = () => {
                     Store Owner Alert Recipient
                   </span>
                   <div className="text-sm font-bold text-brand-blue font-mono truncate">
-                    azrayanltd@gmail.com
+                    info@dvds-zone.co.uk
                   </div>
                   <span className="text-[11px] text-gray-400 mt-1 block">
                     Target for orders, receipts &amp; reports (ADMIN_EMAIL)
@@ -2547,14 +2577,14 @@ export const AdminStoreSettings: React.FC = () => {
                   {
                     title: 'Admin New Order Alert',
                     trigger: 'Any order placed or payment succeeds',
-                    recipient: 'azrayanltd@gmail.com',
+                    recipient: 'info@dvds-zone.co.uk',
                     badge: 'Instant Alert',
                     desc: 'Immediate notification with customer name, items purchased, totals, and backoffice link.',
                   },
                   {
                     title: 'Admin Payment Proof Uploaded',
                     trigger: 'Customer uploads transfer receipt image',
-                    recipient: 'azrayanltd@gmail.com',
+                    recipient: 'info@dvds-zone.co.uk',
                     badge: 'Instant Alert',
                     desc: 'Alerts store owner to review payment proof file and approve order in admin dashboard.',
                   },
@@ -2568,7 +2598,7 @@ export const AdminStoreSettings: React.FC = () => {
                   {
                     title: 'Weekly & Monthly Business Reports',
                     trigger: 'Vercel Cron schedule (cron-reports.js)',
-                    recipient: 'azrayanltd@gmail.com',
+                    recipient: 'info@dvds-zone.co.uk',
                     badge: 'Scheduled Cron',
                     desc: 'Comprehensive executive performance report with gross revenue, expenses, and top sellers.',
                   },
@@ -2617,7 +2647,7 @@ export const AdminStoreSettings: React.FC = () => {
                       type="email"
                       value={testEmailAddress}
                       onChange={(e) => setTestEmailAddress(e.target.value)}
-                      placeholder="azrayanltd@gmail.com"
+                      placeholder="info@dvds-zone.co.uk"
                       className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:outline-hidden bg-white text-dark"
                     />
                     <button

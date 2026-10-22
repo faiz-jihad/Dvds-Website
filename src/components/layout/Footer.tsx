@@ -15,6 +15,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { publicApi } from '../../lib/publicApi';
 import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
+import { GoogleReviewsBanner } from '../landing/GoogleReviewsBanner';
 
 export const Footer: React.FC = () => {
   const [guidesOpen, setGuidesOpen] = useState(false);
@@ -37,7 +38,7 @@ export const Footer: React.FC = () => {
     settings.companies_house_url ||
     'https://find-and-update.company-information.service.gov.uk/company/13894195';
   const businessLocation = settings.warehouse_location || 'United Kingdom';
-  const supportEmail = (!settings.support_email || settings.support_email.includes('azrayan.co.uk') || settings.support_email.includes('concierge')) ? 'azrayanltd@gmail.com' : settings.support_email;
+  const supportEmail = (!settings.support_email || settings.support_email.includes('azrayan.co.uk') || settings.support_email.includes('concierge')) ? 'info@dvds-zone.co.uk' : settings.support_email;
 
   // Close guides dropdown on click outside
   useEffect(() => {
@@ -62,7 +63,7 @@ export const Footer: React.FC = () => {
             <Link to="/" className="inline-block mb-4 group">
               <img
                 src="/brand/logo-dark-theme.png"
-                alt="DVD ZONE"
+                alt={storeName}
                 className="h-12 sm:h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
               />
             </Link>
@@ -220,6 +221,14 @@ export const Footer: React.FC = () => {
               </a>
             </div>
           </div>
+        </div>
+
+        {/* Google Reviews Trust Strip */}
+        <div className="pb-8">
+          <GoogleReviewsBanner
+            variant="compact"
+            reviewUrl={settings.google_review_url}
+          />
         </div>
 
         {/* Bottom Bar */}

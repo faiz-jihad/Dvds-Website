@@ -15,7 +15,7 @@ export const AzAppPurposeSection: React.FC<AzAppPurposeSectionProps> = ({ settin
 
   const companyName = settings?.registered_company_name || 'AZRAYAN LTD';
   const companyNumber = settings?.company_number || '13894195';
-  const supportEmail = settings?.support_email || 'azrayanltd@gmail.com';
+  const supportEmail = settings?.support_email || 'info@dvds-zone.co.uk';
   const companiesHouseUrl = settings?.companies_house_url || 'https://find-and-update.company-information.service.gov.uk/company/13894195';
 
   return (

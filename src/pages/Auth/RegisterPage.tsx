@@ -104,7 +104,7 @@ export const RegisterPage: React.FC = () => {
         } catch {
           // Non-critical — address can be added later in account settings
         }
-        addToast('Account created successfully! Welcome to DVD ZONE.', 'success');
+        addToast('Account created successfully! Welcome to DVDs Zone.', 'success');
         navigate(from, { replace: true });
       } else {
         setError(res.message || 'Registration could not be completed.');
@@ -213,7 +213,7 @@ export const RegisterPage: React.FC = () => {
               <div>
                 <p className="font-bold text-blue-950 dark:text-blue-100 text-sm">Create an account to complete checkout</p>
                 <p className="text-blue-800/80 dark:text-blue-300 mt-1 leading-relaxed">
-                  Join DVD ZONE in seconds to finalise your order with free UK delivery and order protection.
+                  Join DVDs Zone in seconds to finalise your order with free UK delivery and order protection.
                 </p>
               </div>
             </div>

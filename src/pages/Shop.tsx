@@ -77,7 +77,7 @@ export const Shop: React.FC = () => {
   const isNewReleases = filterType === 'new';
   const isBestSellers = filterType === 'bestseller';
 
-  let pageEyebrow = 'DVD ZONE Catalogue';
+  let pageEyebrow = `${storeSettings?.store_name || 'DVDs Zone'} Catalogue`;
   let pageTitle = 'Explore Our Complete Store';
   let pageDescription = 'Browse all products, physical media, collectibles, and special editions with 100% free delivery across the UK.';
 
@@ -354,9 +354,9 @@ export const Shop: React.FC = () => {
             <div className="mb-4 flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-brand-blue" />
-                <span className="font-display text-sm font-bold text-dark">Catalogue filters</span>
+                <span className="font-display text-sm font-bold text-dark dark:text-white">Catalogue filters</span>
               </div>
-              <button type="button" onClick={() => setShowMobileFilters(false)} className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-gray-500 hover:bg-white cursor-pointer" aria-label="Close filters">
+              <button type="button" onClick={() => setShowMobileFilters(false)} className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 dark:hover:text-white cursor-pointer" aria-label="Close filters">
                 <X className="h-5 w-5" />
               </button>
             </div>

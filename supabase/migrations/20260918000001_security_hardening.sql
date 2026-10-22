@@ -23,8 +23,8 @@ AS $$
         AND role IN ('admin', 'staff')
     )
     OR
-    -- Direct admin email check
-    (COALESCE(auth.jwt() ->> 'email', '') IN ('azrayanltd@gmail.com', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk'))
+    -- Direct admin email check (must match MASTER_ADMIN_EMAILS in JavaScript API layer)
+    (COALESCE(auth.jwt() ->> 'email', '') IN ('azrayanltd@gmail.com', 'admin@dvds-zone.co.uk', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk', 'faizalba74@gmail.com'))
     OR
     -- Only server-set app_metadata (never client-controlled user_metadata)
     (COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') IN ('admin', 'staff')),

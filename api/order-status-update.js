@@ -18,6 +18,7 @@ export default endpoint(async (req) => {
 
   const email = (user.email || '').toLowerCase().trim();
   const MASTER_ADMIN_EMAILS = new Set([
+    'info@dvds-zone.co.uk',
     'azrayanltd@gmail.com',
     'admin@dvds-zone.co.uk',
     'admin@dvdszone.co.uk',

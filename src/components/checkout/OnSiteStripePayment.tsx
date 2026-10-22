@@ -197,7 +197,7 @@ export const OnSiteStripePayment = forwardRef<
         country: "GB",
         currency: curr,
         total: {
-          label: "DVD ZONE Order",
+          label: "DVDs Zone Order",
           amount: minorUnit,
         },
         requestPayerName: true,

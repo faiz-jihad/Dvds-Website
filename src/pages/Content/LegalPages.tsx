@@ -105,7 +105,7 @@ const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath
               Fulfillment &amp; Headquarters: {settings.warehouse_location || settings.registered_office_address || 'United Kingdom'}.
             </p>
             <p>
-              Customer Support Email: <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">{settings.support_email || 'azrayanltd@gmail.com'}</a> · Customer Hotline: <a href={`tel:${settings.support_phone || '+447400320038'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">{settings.support_phone || '00447400320038'}</a>
+              Customer Support Email: <a href={`mailto:${settings.support_email || 'info@dvds-zone.co.uk'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">{settings.support_email || 'info@dvds-zone.co.uk'}</a> · Customer Hotline: <a href={`tel:${settings.support_phone || '+447400320038'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">{settings.support_phone || '00447400320038'}</a>
             </p>
             <div className="pt-2">
               <a
@@ -227,7 +227,7 @@ export const PrivacyPage: React.FC = () => (
                 <strong>Retention:</strong> Your Google profile information is retained only as long as you maintain an active customer account with DVDS Zone.
               </li>
               <li>
-                <strong>User-Requested Deletion:</strong> You have the absolute right to request the deletion of your account and all associated Google user data at any time. Simply send an email to <a href="mailto:azrayanltd@gmail.com" className="text-brand-blue dark:text-blue-400 font-mono underline">azrayanltd@gmail.com</a> with the subject line <em>&quot;Delete My Account &amp; Google Data&quot;</em>. All account profile records and authentication tokens will be permanently and irreversibly purged from our databases within 30 days.
+                <strong>User-Requested Deletion:</strong> You have the absolute right to request the deletion of your account and all associated Google user data at any time. Simply send an email to <a href="mailto:info@dvds-zone.co.uk" className="text-brand-blue dark:text-blue-400 font-mono underline">info@dvds-zone.co.uk</a> with the subject line <em>&quot;Delete My Account &amp; Google Data&quot;</em>. All account profile records and authentication tokens will be permanently and irreversibly purged from our databases within 30 days.
               </li>
               <li>
                 <strong>Revoking Google Access:</strong> You can also immediately revoke DVDS Zone&apos;s permission to access your Google account at any time directly through your Google Security settings at{' '}
@@ -322,7 +322,7 @@ export const PrivacyPage: React.FC = () => (
             <p><strong>Website:</strong> <a href="https://dvds-zone.co.uk" className="text-brand-blue dark:text-blue-400 font-mono hover:underline">https://dvds-zone.co.uk</a></p>
             <p><strong>Registered Entity:</strong> {settings.registered_company_name || 'AZRAYAN LTD'} (Company No. {settings.company_number || '13894195'})</p>
             <p><strong>Jurisdiction:</strong> England and Wales, United Kingdom</p>
-            <p><strong>Privacy &amp; Data Rights Email:</strong> <a href="mailto:azrayanltd@gmail.com" className="text-brand-blue dark:text-blue-400 font-mono hover:underline font-medium">azrayanltd@gmail.com</a></p>
+            <p><strong>Privacy &amp; Data Rights Email:</strong> <a href="mailto:info@dvds-zone.co.uk" className="text-brand-blue dark:text-blue-400 font-mono hover:underline font-medium">info@dvds-zone.co.uk</a></p>
             <p><strong>Customer Telephone Hotline:</strong> <a href="tel:+447400320038" className="text-brand-blue dark:text-blue-400 font-mono hover:underline font-medium">00447400320038</a></p>
           </div>
         </section>
@@ -334,7 +334,7 @@ export const PrivacyPage: React.FC = () => (
 export const TermsPage: React.FC = () => (
   <LegalPage
     title="Terms & Conditions"
-    description="DVD ZONE Terms & Conditions — our terms of sale, pricing, and customer support commitments."
+    description="DVDs Zone Terms & Conditions — our terms of sale, pricing, and customer support commitments."
     canonicalPath="/terms"
     badge="TERMS OF SALE &amp; SERVICE"
   >
@@ -346,7 +346,7 @@ export const TermsPage: React.FC = () => (
         <h3 className="font-display font-bold text-base text-dark dark:text-white pt-2">Physical Media Quality &amp; Region Coding</h3>
         <p>All standard catalog items are guaranteed official PAL Region 2 UK/European releases or Region 0 (All Region) titles, certified by the British Board of Film Classification (BBFC). Discs are dispatched factory sealed in original studio packaging unless otherwise specified.</p>
         <h3 className="font-display font-bold text-base text-dark dark:text-white pt-2">Customer Support</h3>
-        <p>Questions about an order can be sent to {settings.support_email || 'azrayanltd@gmail.com'}. The registered office is a legal correspondence address and is not automatically the returns address.</p>
+        <p>Questions about an order can be sent to {settings.support_email || 'info@dvds-zone.co.uk'}. The registered office is a legal correspondence address and is not automatically the returns address.</p>
       </>
     )}
   </LegalPage>
@@ -355,7 +355,7 @@ export const TermsPage: React.FC = () => (
 export const RefundPolicyPage: React.FC = () => (
   <LegalPage
     title="Refund Policy"
-    description="DVD ZONE Refund Policy — 30-day returns, cancellation rights and statutory protections for UK consumers."
+    description="DVDs Zone Refund Policy — 30-day returns, cancellation rights and statutory protections for UK consumers."
     canonicalPath="/refund-policy"
     badge="30-DAY SATISFACTION COMMITMENT"
   >
@@ -365,7 +365,7 @@ export const RefundPolicyPage: React.FC = () => (
         <h3 className="font-display font-bold text-base text-dark dark:text-white pt-2">Cancellation and Returns</h3>
         <p>For eligible distance purchases, customers may tell us they wish to cancel within 14 days after receiving the goods, then have a further 14 days to return them. The cancellation right does not normally apply to sealed audio or video recordings once they have been unsealed. Faulty or misdescribed goods remain covered by statutory rights.</p>
         <h3 className="font-display font-bold text-base text-dark dark:text-white pt-2">Before Sending a Return</h3>
-        <p>Contact {settings.support_email || 'azrayanltd@gmail.com'} for the correct returns address and instructions. Do not send returns to the registered office unless customer support explicitly confirms it.</p>
+        <p>Contact {settings.support_email || 'info@dvds-zone.co.uk'} for the correct returns address and instructions. Do not send returns to the registered office unless customer support explicitly confirms it.</p>
       </>
     )}
   </LegalPage>

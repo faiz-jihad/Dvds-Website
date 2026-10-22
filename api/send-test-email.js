@@ -15,6 +15,7 @@ export default endpoint(async (req) => {
   // 1. Authenticate administrative user
   const user = await requestUser(db, req);
   const MASTER_ADMIN_EMAILS = new Set([
+    'info@dvds-zone.co.uk',
     'azrayanltd@gmail.com',
     'admin@dvds-zone.co.uk',
     'admin@dvdszone.co.uk',
@@ -36,7 +37,7 @@ export default endpoint(async (req) => {
   }
 
   const activeProvider = getActiveEmailProvider();
-  const targetEmail = req.body?.to || activeProvider.adminEmail || 'azrayanltd@gmail.com';
+  const targetEmail = req.body?.to || activeProvider.adminEmail || 'info@dvds-zone.co.uk';
   const timestamp = formatUkDateTime(Date.now());
 
   const subject = `[Test Email] DVDs Zone Email System Verification (${activeProvider.name})`;

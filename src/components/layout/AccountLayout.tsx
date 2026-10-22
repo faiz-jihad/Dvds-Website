@@ -16,12 +16,12 @@ export const AccountLayout: React.FC = () => {
     customer?.role === 'staff' ||
     adminUser?.role === 'admin' ||
     adminUser?.role === 'staff' ||
-    (customer?.email && (customer.email.toLowerCase() === 'admin@dvds-zone.co.uk' || customer.email.toLowerCase() === 'admin@dvdszone.co.uk' || customer.email.toLowerCase() === 'admin@azrayan.co.uk' || customer.email.toLowerCase() === 'azrayanltd@gmail.com'))
+    (customer?.email && (['info@dvds-zone.co.uk', 'admin@dvds-zone.co.uk', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk', 'azrayanltd@gmail.com'].includes(customer.email.toLowerCase())))
   );
   const roleLabel = (
     customer?.role ||
     adminUser?.role ||
-    (customer?.email?.toLowerCase() === 'admin@dvds-zone.co.uk' || customer?.email?.toLowerCase() === 'admin@dvdszone.co.uk' || customer?.email?.toLowerCase() === 'admin@azrayan.co.uk' || customer?.email?.toLowerCase() === 'azrayanltd@gmail.com' ? 'admin' : '')
+    (['info@dvds-zone.co.uk', 'admin@dvds-zone.co.uk', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk', 'azrayanltd@gmail.com'].includes(customer?.email?.toLowerCase() || '') ? 'admin' : '')
   ).toUpperCase();
 
   const links = [

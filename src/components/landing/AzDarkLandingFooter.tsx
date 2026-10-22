@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { publicApi } from '../../lib/publicApi';
 import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
+import { GoogleReviewsBanner } from './GoogleReviewsBanner';
 import { cn } from '../../lib/formatters';
 
 export const AzDarkLandingFooter: React.FC = () => {
@@ -24,7 +25,7 @@ export const AzDarkLandingFooter: React.FC = () => {
       ? settings.registered_company_name
       : 'AZRAYAN LTD';
   const warehouseLocation = settings.warehouse_location || 'United Kingdom';
-  const supportEmail = (!settings.support_email || settings.support_email.includes('azrayan.co.uk') || settings.support_email.includes('concierge')) ? 'azrayanltd@gmail.com' : settings.support_email;
+  const supportEmail = (!settings.support_email || settings.support_email.includes('azrayan.co.uk') || settings.support_email.includes('concierge') || settings.support_email.includes('gmail.com')) ? 'info@dvds-zone.co.uk' : settings.support_email;
   const supportPhone = settings.support_phone || '00447400320038';
   const cutoffTime = settings.dispatch_cutoff_time || '2:00 PM';
 
@@ -194,6 +195,14 @@ export const AzDarkLandingFooter: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Google Reviews Trust Strip */}
+        <div className="py-2">
+          <GoogleReviewsBanner
+            variant="compact"
+            reviewUrl={settings.google_review_url}
+          />
         </div>
 
         {/* Bottom Strip */}

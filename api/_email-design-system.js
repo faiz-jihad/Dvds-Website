@@ -17,7 +17,7 @@ export const BRAND = {
   tagline: 'Official Physical Media Archive & UK Store',
   operatedBy: 'AZRAYAN LTD',
   companyNumber: '13894195',
-  supportEmail: 'azrayanltd@gmail.com',
+  supportEmail: 'info@dvds-zone.co.uk',
   supportPhone: '+44 7400 320038',
   fromEmail: 'DVDs Zone <info@dvds-zone.co.uk>',
   siteUrl: process.env.SITE_URL || 'https://dvds-zone.co.uk',

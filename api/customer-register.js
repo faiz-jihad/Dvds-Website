@@ -21,13 +21,9 @@ export default endpoint(async (req) => {
   const cleanPhone = phone && typeof phone === 'string' ? phone.trim() : null;
   const cleanAddress = address && typeof address === 'string' ? address.trim() : null;
 
-  // 1. Check if user already exists in auth.users
-  const { data: listData, error: listError } = await db.auth.admin.listUsers();
-  if (listError) {
-    console.error('[customer-register] listUsers error:', listError);
-  }
-
-  const existingUser = (listData?.users || []).find((u) => u.email?.toLowerCase() === cleanEmail);
+  // 1. Check if user already exists in auth.users (targeted lookup — no full list load)
+  const { data: existingUserData } = await db.auth.admin.getUserByEmail(cleanEmail).catch(() => ({ data: { user: null } }));
+  const existingUser = existingUserData?.user || null;
 
   let userId = null;
 

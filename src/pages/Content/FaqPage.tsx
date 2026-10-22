@@ -40,7 +40,7 @@ export const FaqPage: React.FC = () => {
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
   const storeName = settings.store_name || 'DVDs Zone';
   const cutoffTime = settings.dispatch_cutoff_time || '2:00 PM';
-  const supportEmail = settings.support_email || 'azrayanltd@gmail.com';
+  const supportEmail = settings.support_email || 'info@dvds-zone.co.uk';
   const supportPhone = settings.support_phone || '00447400320038';
 
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -180,7 +180,7 @@ export const FaqPage: React.FC = () => {
         title={`Frequently Asked Questions — DVD Regions, Delivery & Orders | ${storeName}`}
         description={`Find immediate answers about UK PAL DVD compatibility, 100% Free UK delivery via Royal Mail, same-day dispatch before ${cutoffTime}, and 30-day returns at ${storeName}.`}
         canonicalPath="/faq"
-        keywords="DVD FAQ, Region 2 UK DVD player compatibility, PAL DVD playback, free Royal Mail postage UK, DVD ZONE answers"
+        keywords="DVD FAQ, Region 2 UK DVD player compatibility, PAL DVD playback, free Royal Mail postage UK, DVDs Zone answers"
         siteName={storeName}
         jsonLd={{
           '@context': 'https://schema.org',

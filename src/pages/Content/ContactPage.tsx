@@ -118,7 +118,7 @@ export const ContactPage: React.FC = () => {
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
   const storeName = settings.store_name || 'DVDs Zone';
-  const contactEmail = settings.support_email || 'azrayanltd@gmail.com';
+  const contactEmail = settings.support_email || 'info@dvds-zone.co.uk';
   const contactPhone = settings.support_phone || '00447400320038';
 
   return (

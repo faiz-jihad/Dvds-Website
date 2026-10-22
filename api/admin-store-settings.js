@@ -2,6 +2,7 @@ import { dbClient, endpoint, requestUser, CheckoutError } from './_checkout.js';
 import { createClient } from '@supabase/supabase-js';
 
 const MASTER_ADMIN_EMAILS = new Set([
+  'info@dvds-zone.co.uk',
   'azrayanltd@gmail.com',
   'admin@dvds-zone.co.uk',
   'admin@dvdszone.co.uk',
@@ -142,7 +143,7 @@ export default endpoint(async (req) => {
   if (dbColumns.has('support_email')) {
     const rawEmail = (sanitized.support_email || '').trim();
     sanitized.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge'))
-      ? 'azrayanltd@gmail.com'
+      ? 'info@dvds-zone.co.uk'
       : rawEmail;
   }
   if (dbColumns.has('support_phone')) {

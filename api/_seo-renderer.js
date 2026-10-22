@@ -245,7 +245,7 @@ function generatePrivacyHtml(baseUrl, settings) {
   const storeName = settings?.store_name || 'DVDS Zone';
   const companyName = settings?.registered_company_name || 'AZRAYAN LTD';
   const companyNumber = settings?.company_number || '13894195';
-  const supportEmail = settings?.support_email || 'azrayanltd@gmail.com';
+  const supportEmail = settings?.support_email || 'info@dvds-zone.co.uk';
   const supportPhone = settings?.support_phone || '00447400320038';
 
   return `
@@ -333,7 +333,7 @@ function generateHomeHtml(baseUrl, settings) {
   const storeName = settings?.store_name || 'DVDs Zone';
   const companyName = settings?.registered_company_name || 'AZRAYAN LTD';
   const companyNumber = settings?.company_number || '13894195';
-  const supportEmail = settings?.support_email || 'azrayanltd@gmail.com';
+  const supportEmail = settings?.support_email || 'info@dvds-zone.co.uk';
   const supportPhone = settings?.support_phone || '00447400320038';
 
   return `
@@ -562,10 +562,8 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
       modifiedHtml = modifiedHtml.replaceAll('https://dvds-zone.co.uk', baseUrl);
       modifiedHtml = modifiedHtml.replaceAll('https://dvdszone.co.uk', baseUrl);
     }
-    const emailReplacement = settings?.support_email || settings?.contact_email;
-    if (emailReplacement) {
-      modifiedHtml = modifiedHtml.replaceAll('azrayanltd@gmail.com', escapeHtml(emailReplacement));
-    }
+    const emailReplacement = settings?.support_email || settings?.contact_email || 'info@dvds-zone.co.uk';
+    modifiedHtml = modifiedHtml.replaceAll('azrayanltd@gmail.com', escapeHtml(emailReplacement));
     const phoneReplacement = settings?.support_phone || settings?.contact_phone;
     if (phoneReplacement) {
       modifiedHtml = modifiedHtml.replaceAll('+447400320038', escapeHtml(phoneReplacement));

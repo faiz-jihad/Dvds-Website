@@ -37,7 +37,7 @@ export const SearchOverlay: React.FC = () => {
 
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('az_rayan_recent_searches') || '[]');
+      return JSON.parse(localStorage.getItem('dvds_zone_recent_searches') || localStorage.getItem('az_rayan_recent_searches') || '[]');
     } catch {
       return [];
     }
@@ -111,7 +111,7 @@ export const SearchOverlay: React.FC = () => {
     ].slice(0, 6);
     setRecentSearches(updated);
     try {
-      localStorage.setItem('az_rayan_recent_searches', JSON.stringify(updated));
+      localStorage.setItem('dvds_zone_recent_searches', JSON.stringify(updated));
     } catch {}
   };
 
@@ -120,13 +120,14 @@ export const SearchOverlay: React.FC = () => {
     const updated = recentSearches.filter((s) => s !== termToRemove);
     setRecentSearches(updated);
     try {
-      localStorage.setItem('az_rayan_recent_searches', JSON.stringify(updated));
+      localStorage.setItem('dvds_zone_recent_searches', JSON.stringify(updated));
     } catch {}
   };
 
   const clearAllRecent = () => {
     setRecentSearches([]);
     try {
+      localStorage.removeItem('dvds_zone_recent_searches');
       localStorage.removeItem('az_rayan_recent_searches');
     } catch {}
   };

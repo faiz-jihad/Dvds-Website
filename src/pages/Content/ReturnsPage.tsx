@@ -31,7 +31,7 @@ export const ReturnsPage: React.FC = () => {
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
   const storeName = settings.store_name || 'DVDs Zone';
-  const supportEmail = settings.support_email || 'azrayanltd@gmail.com';
+  const supportEmail = settings.support_email || 'info@dvds-zone.co.uk';
   const supportPhone = settings.support_phone || '00447400320038';
 
   const [openFaq, setOpenFaq] = useState<number | null>(0);

@@ -554,7 +554,7 @@ export const adminApi = {
       settings.registered_company_name = 'DVDs Zone';
     }
     const rawEmail = data.support_email?.trim() || '';
-    settings.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge')) ? 'azrayanltd@gmail.com' : rawEmail;
+    settings.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge')) ? 'info@dvds-zone.co.uk' : rawEmail;
     settings.support_phone = data.support_phone?.trim() || '00447400320038';
     return settings;
   },
@@ -583,7 +583,7 @@ export const adminApi = {
       values.registered_company_name = 'DVDs Zone';
     }
     const saveEmail = values.support_email?.trim() || '';
-    values.support_email = (!saveEmail || saveEmail.includes('azrayan.co.uk') || saveEmail.includes('concierge')) ? 'azrayanltd@gmail.com' : saveEmail;
+    values.support_email = (!saveEmail || saveEmail.includes('azrayan.co.uk') || saveEmail.includes('concierge')) ? 'info@dvds-zone.co.uk' : saveEmail;
     values.support_phone = values.support_phone?.trim() || '00447400320038';
 
     // Encode hero trailers and youtube options into hero_bg_image fallback so it is 100% saved in Postgres

@@ -50,7 +50,7 @@ export const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order, class
               DVDs Zone • Online DVD & Entertainment Specialist • United Kingdom
             </p>
             <p className="text-xs text-gray-500">
-              azrayanltd@gmail.com • www.dvds-zone.co.uk
+              info@dvds-zone.co.uk • www.dvds-zone.co.uk
             </p>
           </div>
 
@@ -258,7 +258,7 @@ export const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order, class
             </p>
             <p className="text-[11px] text-gray-500">
               For support or returns, email{' '}
-              <span className="font-medium text-gray-700">azrayanltd@gmail.com</span> with order ref{' '}
+              <span className="font-medium text-gray-700">info@dvds-zone.co.uk</span> with order ref{' '}
               <span className="font-mono font-bold text-gray-800">{order.order_number}</span>.
             </p>
           </div>

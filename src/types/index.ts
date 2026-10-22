@@ -340,6 +340,8 @@ export interface StoreSettings {
   support_phone: string;
   contact_email?: string;
   contact_phone?: string;
+  // External Reviews
+  google_review_url?: string;
   // Company Bank Account (for manual bank transfer flow)
   bank_name?: string;
   bank_account_name?: string;

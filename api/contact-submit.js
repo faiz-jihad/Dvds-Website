@@ -9,7 +9,11 @@ export default endpoint(async (req) => {
     throw new CheckoutError('Please provide your name.', 400);
   }
 
-  if (!email || typeof email !== 'string' || !email.includes('@')) {
+  if (!email || typeof email !== 'string') {
+    throw new CheckoutError('Please provide a valid email address.', 400);
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim().toLowerCase())) {
     throw new CheckoutError('Please provide a valid email address.', 400);
   }
 

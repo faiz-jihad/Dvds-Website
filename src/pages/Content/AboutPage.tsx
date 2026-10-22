@@ -226,8 +226,8 @@ export const AboutPage: React.FC = () => {
                 <span>Customer Support</span>
               </div>
               <p className="pl-6">
-                <a href={`mailto:${settings.support_email || 'azrayanltd@gmail.com'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">
-                  {settings.support_email || 'azrayanltd@gmail.com'}
+                <a href={`mailto:${settings.support_email || 'info@dvds-zone.co.uk'}`} className="text-brand-blue dark:text-blue-400 hover:underline font-mono">
+                  {settings.support_email || 'info@dvds-zone.co.uk'}
                 </a>
               </p>
               <p className="text-[11px] text-gray-400 pl-6">Mon–Sat · Replies within 3 business hours</p>
