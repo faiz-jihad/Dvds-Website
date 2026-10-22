@@ -146,7 +146,8 @@ export const publicApi = {
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
-      if (error || !data) return [];
+      if (error) throw new Error('Promotions could not be loaded. Please retry.');
+      if (!data) return [];
       return data
         .filter((p: any) => {
           if (p.starts_at && new Date(p.starts_at).getTime() > Date.now()) return false;
@@ -158,7 +159,8 @@ export const publicApi = {
           value: Number(row.value),
           minimum_order: Number(row.minimum_order),
         }));
-    } catch {
+    } catch (err: any) {
+      if (err.message?.includes('could not be loaded')) throw err;
       return [];
     }
   },
@@ -313,7 +315,7 @@ export const publicApi = {
       } else {
         const isRelationError = joined.error?.message?.includes('relationship') || joined.error?.code === 'PGRST200';
         if (joined.error && !isRelationError) {
-          console.warn('[publicApi] getMyOrders joined error:', joined.error);
+          throw new Error('Orders could not be loaded. Please retry.');
         }
         // Fallback query if nested relation fails
         const fallback = await sb
@@ -321,9 +323,11 @@ export const publicApi = {
           .select('*, items:order_items(*)')
           .eq('user_id', authUser.id)
           .order('created_at', { ascending: false });
+        if (fallback.error) throw new Error('Orders could not be loaded. Please retry.');
         rawOrders = fallback.data || [];
       }
-    } catch {
+    } catch (err: any) {
+      if (err.message?.includes('could not be loaded')) throw err;
       rawOrders = [];
     }
 
@@ -832,6 +836,17 @@ export const publicApi = {
   },
 
   async submitContactMessage(input: { name: string; email: string; order_reference?: string | null; message: string }): Promise<void> {
+    try {
+      const response = await fetch('/api/contact-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      if (response.ok) return;
+    } catch {
+      // Fallback to direct client insert if endpoint unavailable
+    }
+
     const { error } = await requireClient().from('contact_messages').insert({
       name: input.name.trim(),
       email: input.email.trim().toLowerCase(),

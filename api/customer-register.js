@@ -104,6 +104,18 @@ export default endpoint(async (req) => {
     }
   }
 
+  // 4. Send welcome email to customer (asynchronous, non-blocking)
+  try {
+    const { sendCustomerWelcomeEmail } = await import('./_email.js');
+    await sendCustomerWelcomeEmail(db, {
+      id: userId,
+      email: cleanEmail,
+      full_name: cleanName,
+    });
+  } catch (err) {
+    console.error('[customer-register] Welcome email dispatch note:', err.message);
+  }
+
   return {
     success: true,
     userId,

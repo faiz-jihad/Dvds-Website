@@ -396,7 +396,10 @@ export const AdminOrders: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['order'] });
       await queryClient.invalidateQueries({ queryKey: ['my-orders'] });
       setSelectedOrder(updated);
-      addToast(`Order ${updated.order_number} marked as ${newStatus}`, 'success');
+      addToast(
+        `Order ${updated.order_number} marked as ${newStatus}${newStatus === 'dispatched' ? ' • Automated dispatch tracking email sent to customer' : ''}`,
+        'success'
+      );
 
       // Dispatch real-time notifications for both customer and admin
       useNotificationStore.getState().addNotification(

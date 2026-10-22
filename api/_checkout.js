@@ -533,15 +533,20 @@ export async function verifyStripe(db, order, sessionId) {
       );
       try {
         const { data: freshOrder } = await db.from('orders').select('*, items:order_items(*)').eq('id', order.id).maybeSingle();
-        if (freshOrder) {
-          const { sendCustomerPaymentReceipt } = await import('./_email.js');
-          await sendCustomerPaymentReceipt(db, freshOrder, {
-            paymentReference: paymentIntent.id,
-            paidAt: new Date().toISOString(),
-          });
-        }
+        const orderToNotify = freshOrder || order;
+        const { sendCustomerPaymentReceipt, sendAdminPaymentVerifiedAlert } = await import('./_email.js');
+        await sendCustomerPaymentReceipt(db, orderToNotify, {
+          paymentReference: paymentIntent.id,
+          paidAt: new Date().toISOString(),
+        });
+        await sendAdminPaymentVerifiedAlert(db, orderToNotify, {
+          paymentReference: paymentIntent.id,
+          amount: numericAmount,
+          currency: orderToNotify.currency,
+          provider: 'stripe',
+        });
       } catch (receiptErr) {
-        console.warn('[verifyStripe] Customer receipt dispatch note:', receiptErr.message);
+        console.warn('[verifyStripe] Email dispatch note:', receiptErr.message);
       }
     }
     return {
@@ -582,15 +587,20 @@ export async function verifyStripe(db, order, sessionId) {
     );
     try {
       const { data: freshOrder } = await db.from('orders').select('*, items:order_items(*)').eq('id', order.id).maybeSingle();
-      if (freshOrder) {
-        const { sendCustomerPaymentReceipt } = await import('./_email.js');
-        await sendCustomerPaymentReceipt(db, freshOrder, {
-          paymentReference,
-          paidAt: new Date().toISOString(),
-        });
-      }
+      const orderToNotify = freshOrder || order;
+      const { sendCustomerPaymentReceipt, sendAdminPaymentVerifiedAlert } = await import('./_email.js');
+      await sendCustomerPaymentReceipt(db, orderToNotify, {
+        paymentReference,
+        paidAt: new Date().toISOString(),
+      });
+      await sendAdminPaymentVerifiedAlert(db, orderToNotify, {
+        paymentReference,
+        amount: numericAmount,
+        currency: orderToNotify.currency,
+        provider: 'stripe',
+      });
     } catch (receiptErr) {
-      console.warn('[verifyStripe] Customer receipt dispatch note:', receiptErr.message);
+      console.warn('[verifyStripe] Email dispatch note:', receiptErr.message);
     }
   }
   if (session.status === 'expired' && order.payment_status !== 'paid') {

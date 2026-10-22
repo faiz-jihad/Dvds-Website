@@ -95,13 +95,20 @@ export default endpoint(async (req) => {
 
     try {
       const freshOrder = await loadOrder(db, order.id);
-      const { sendCustomerPaymentReceipt } = await import('./_email.js');
-      await sendCustomerPaymentReceipt(db, freshOrder || order, {
+      const { sendCustomerPaymentReceipt, sendAdminPaymentVerifiedAlert } = await import('./_email.js');
+      const orderToNotify = freshOrder || order;
+      await sendCustomerPaymentReceipt(db, orderToNotify, {
         paymentReference: resource.id,
         paidAt: new Date().toISOString(),
       });
+      await sendAdminPaymentVerifiedAlert(db, orderToNotify, {
+        paymentReference: resource.id,
+        amount: amountToRecord,
+        currency: resource.amount.currency_code,
+        provider: 'paypal',
+      });
     } catch (receiptErr) {
-      console.warn('[paypal-webhook] Customer receipt dispatch note:', receiptErr.message);
+      console.warn('[paypal-webhook] Email dispatch note:', receiptErr.message);
     }
   } else if (event.event_type === 'PAYMENT.CAPTURE.REFUNDED') {
     const captureId =
@@ -128,6 +135,23 @@ export default endpoint(async (req) => {
         p_cumulative: false,
       })
     );
+
+    try {
+      const { sendCustomerOrderRefunded, sendAdminRefundAlert } = await import('./_email.js');
+      await sendCustomerOrderRefunded(db, order, {
+        refundAmount: amountToRecord,
+        currency: order.currency,
+        refundReference: resource.id,
+      });
+      await sendAdminRefundAlert(db, order, {
+        refundAmount: amountToRecord,
+        currency: order.currency,
+        refundReference: resource.id,
+        provider: 'paypal',
+      });
+    } catch (refundErr) {
+      console.warn('[paypal-webhook] Refund email dispatch note:', refundErr.message);
+    }
   }
 
   // Record idempotency marker

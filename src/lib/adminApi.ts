@@ -345,6 +345,34 @@ export const adminApi = {
 
   async updateOrderStatus(orderId: string, status: OrderStatus, fulfilmentStatus: FulfilmentStatus,
     details?: { carrier?: string; trackingNumber?: string; note?: string }): Promise<Order> {
+    const session = typeof client()?.auth?.getSession === 'function' ? (await client().auth.getSession())?.data?.session : null;
+    if (session?.access_token) {
+      try {
+        const response = await fetch('/api/order-status-update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            orderId,
+            status,
+            fulfilmentStatus,
+            carrier: details?.carrier?.trim() || null,
+            trackingNumber: details?.trackingNumber?.trim() || null,
+            note: details?.note?.trim() || null,
+            sendNotification: true,
+          }),
+        });
+        if (response.ok) {
+          const resData = await response.json();
+          if (resData?.order) return normalizeOrder(resData.order);
+        }
+      } catch {
+        // Fallback to direct RPC if API endpoint unavailable
+      }
+    }
+
     const { error } = await client().rpc('transition_order_status', {
       p_order_id: orderId, p_status: status, p_fulfilment_status: fulfilmentStatus,
       p_carrier: details?.carrier?.trim() || null, p_tracking_number: details?.trackingNumber?.trim() || null,
@@ -398,7 +426,7 @@ export const adminApi = {
   async deleteOrder(orderId: string): Promise<void> {
     // 1. Try secure API endpoint /api/admin-delete-order
     try {
-      const session = (await client().auth.getSession()).data?.session;
+      const session = typeof client()?.auth?.getSession === 'function' ? (await client().auth.getSession())?.data?.session : null;
       const token = session?.access_token;
       const res = await fetch('/api/admin-delete-order', {
         method: 'POST',
@@ -993,5 +1021,38 @@ export const adminApi = {
     }
   },
 
+  async getEmailLogs(limit = 30): Promise<any[]> {
+    try {
+      const { data, error } = await client()
+        .from('email_logs')
+        .select('*')
+        .order('sent_at', { ascending: false })
+        .limit(limit);
+      if (error) {
+        console.warn('[adminApi] Could not load email logs:', error.message);
+        return [];
+      }
+      return data || [];
+    } catch {
+      return [];
+    }
+  },
+
+  async sendTestEmail(toEmail?: string): Promise<{ success: boolean; provider: any; result?: any; error?: string }> {
+    const session = (await client().auth.getSession())?.data?.session;
+    const response = await fetch('/api/send-test-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
+      body: JSON.stringify({ to: toEmail }),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || `HTTP ${response.status}: Failed to send test email.`);
+    }
+    return response.json();
+  },
 };
 

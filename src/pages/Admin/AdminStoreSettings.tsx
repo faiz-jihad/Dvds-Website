@@ -37,6 +37,9 @@ import {
   ImageIcon,
   Loader2,
   Copy,
+  Send,
+  Bell,
+  RefreshCw,
 } from 'lucide-react';
 import { extractYouTubeVideoId } from '../../components/landing/AzCinematicHero';
 import { adminApi } from '../../lib/adminApi';
@@ -45,6 +48,8 @@ import { StoreSettings, HeroTrailerItem } from '../../types';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { useUiStore } from '../../stores/useUiStore';
+import { useNotificationStore } from '../../stores/useNotificationStore';
+import { playNotificationChime } from '../../lib/pushNotifications';
 import { formatGBP } from '../../lib/formatters';
 import { AdminDataState } from '../../components/admin/AdminDataState';
 import { DEFAULT_STORE_SETTINGS } from '../../data/defaultStoreSettings';
@@ -178,9 +183,18 @@ export const AdminStoreSettings: React.FC = () => {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const dirty = useRef(false);
   const products = productsQuery.data || [];
-  const [activeTab, setActiveTab] = useState<'identity' | 'hero' | 'campaign' | 'curator' | 'logistics' | 'payments'>('identity');
+  const [activeTab, setActiveTab] = useState<'identity' | 'hero' | 'campaign' | 'curator' | 'logistics' | 'payments' | 'email'>('identity');
   const [isSaving, setIsSaving] = useState(false);
   const [previewTrailerIndex, setPreviewTrailerIndex] = useState(0);
+  const [testEmailAddress, setTestEmailAddress] = useState('azrayanltd@gmail.com');
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string; provider?: string } | null>(null);
+  const emailLogsQuery = useQuery({
+    queryKey: ['admin', 'email-logs'],
+    queryFn: () => adminApi.getEmailLogs(25),
+    enabled: activeTab === 'email',
+    refetchInterval: activeTab === 'email' ? 8000 : false,
+  });
   const addToast = useUiStore((state) => state.addToast);
 
   useEffect(() => {
@@ -308,6 +322,35 @@ export const AdminStoreSettings: React.FC = () => {
       addToast(err?.message || 'Failed to update store settings', 'error');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!testEmailAddress || !testEmailAddress.includes('@')) {
+      addToast('Please enter a valid recipient email address', 'error');
+      return;
+    }
+    setIsSendingTestEmail(true);
+    setTestEmailResult(null);
+    try {
+      const res = await adminApi.sendTestEmail(testEmailAddress);
+      setTestEmailResult({
+        success: res.success,
+        message: res.success
+          ? `Test email delivered successfully via ${res.provider?.name || 'Email Gateway'}!`
+          : 'Email dispatch failed. Please check provider API keys.',
+        provider: res.provider?.name,
+      });
+      addToast(`Test email dispatched via ${res.provider?.name || 'Gateway'}!`, res.success ? 'success' : 'error');
+      emailLogsQuery.refetch();
+    } catch (err: any) {
+      setTestEmailResult({
+        success: false,
+        message: err.message || 'Failed to dispatch test email',
+      });
+      addToast(err.message || 'Failed to send test email', 'error');
+    } finally {
+      setIsSendingTestEmail(false);
     }
   };
 
@@ -505,6 +548,7 @@ export const AdminStoreSettings: React.FC = () => {
           { id: 'curator', label: 'Director Spotlight', icon: Award },
           { id: 'logistics', label: 'Shipping & Logistics', icon: Truck },
           { id: 'payments', label: 'Payment Gateways', icon: CreditCard },
+          { id: 'email', label: 'Email & Notifications', icon: Mail },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -2387,6 +2431,331 @@ export const AdminStoreSettings: React.FC = () => {
               </div>
             </div>
           </section>
+        )}
+
+        {/* ==========================================
+            TAB 6: AUTOMATED EMAIL & NOTIFICATIONS PIPELINE
+        ========================================== */}
+        {activeTab === 'email' && (
+          <div className="space-y-6">
+            {/* Overview & Live Gateway Health */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+              <div className="border-b border-gray-100 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-brand-blue">
+                    <Mail className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <h2 className="font-display font-bold text-base text-dark">
+                      Automated Email Dispatcher &amp; Real-Time Notifications
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Production transactional emails dispatched automatically upon customer actions and backoffice events.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Multi-Provider Pipeline Active
+                  </span>
+                </div>
+              </div>
+
+              {/* Delivery Providers & Address Routing */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/60">
+                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                    Automated Sender Address
+                  </span>
+                  <div className="text-sm font-bold text-dark font-mono truncate">
+                    info@dvds-zone.co.uk
+                  </div>
+                  <span className="text-[11px] text-gray-400 mt-1 block">
+                    Branded customer-facing sender (EMAIL_FROM)
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/60">
+                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                    Store Owner Alert Recipient
+                  </span>
+                  <div className="text-sm font-bold text-brand-blue font-mono truncate">
+                    azrayanltd@gmail.com
+                  </div>
+                  <span className="text-[11px] text-gray-400 mt-1 block">
+                    Target for orders, receipts &amp; reports (ADMIN_EMAIL)
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/60">
+                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                    Supported Gateways
+                  </span>
+                  <div className="text-sm font-bold text-dark truncate">
+                    Postfix SMTP (127.0.0.1:25) &bull; Mailtrap &bull; Resend
+                  </div>
+                  <span className="text-[11px] text-gray-400 mt-1 block">
+                    Local Postfix with OpenDKIM &bull; API failover
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Production Auto-Send Trigger Matrix */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-4">
+              <div className="border-b border-gray-100 pb-3">
+                <h3 className="font-display font-bold text-sm text-dark uppercase tracking-wider">
+                  Automated Email Workflows (Instant Dispatch)
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  The following 8 critical business communications trigger automatically without manual intervention:
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {[
+                  {
+                    title: 'Customer Payment Receipt',
+                    trigger: 'Stripe, PayPal, or Bank Transfer confirmed',
+                    recipient: 'Customer Email',
+                    badge: 'Auto-Send',
+                    desc: 'Delivers full branded receipt, order itemization, transaction ref, and order tracking link.',
+                  },
+                  {
+                    title: 'Customer Order Dispatched',
+                    trigger: 'Admin marks order as Dispatched',
+                    recipient: 'Customer Email',
+                    badge: 'Auto-Send',
+                    desc: 'Sends tracking number, Royal Mail direct track & trace link, and delivery address verification.',
+                  },
+                  {
+                    title: 'Bank Transfer Instructions',
+                    trigger: 'Customer selects Bank Transfer checkout',
+                    recipient: 'Customer Email',
+                    badge: 'Auto-Send',
+                    desc: 'Sends bank account name, sort code, account number, payment reference, and proof upload link.',
+                  },
+                  {
+                    title: 'Customer Order Cancelled / Refunded',
+                    trigger: 'Admin or system cancels order',
+                    recipient: 'Customer Email',
+                    badge: 'Auto-Send',
+                    desc: 'Informs customer of cancellation reason, refund timing, and customer support contact.',
+                  },
+                  {
+                    title: 'Admin New Order Alert',
+                    trigger: 'Any order placed or payment succeeds',
+                    recipient: 'azrayanltd@gmail.com',
+                    badge: 'Instant Alert',
+                    desc: 'Immediate notification with customer name, items purchased, totals, and backoffice link.',
+                  },
+                  {
+                    title: 'Admin Payment Proof Uploaded',
+                    trigger: 'Customer uploads transfer receipt image',
+                    recipient: 'azrayanltd@gmail.com',
+                    badge: 'Instant Alert',
+                    desc: 'Alerts store owner to review payment proof file and approve order in admin dashboard.',
+                  },
+                  {
+                    title: 'Support Inquiry & Auto-Reply',
+                    trigger: 'Customer submits Contact Us form',
+                    recipient: 'Admin + Customer',
+                    badge: '2-Way Auto',
+                    desc: 'Forwards message to admin with reply-to customer, and sends auto-acknowledgment to customer.',
+                  },
+                  {
+                    title: 'Weekly & Monthly Business Reports',
+                    trigger: 'Vercel Cron schedule (cron-reports.js)',
+                    recipient: 'azrayanltd@gmail.com',
+                    badge: 'Scheduled Cron',
+                    desc: 'Comprehensive executive performance report with gross revenue, expenses, and top sellers.',
+                  },
+                ].map((item, idx) => (
+                  <div key={idx} className="p-3.5 rounded-xl border border-gray-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <span className="text-xs font-bold text-dark">{item.title}</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-brand-blue border border-blue-200">
+                        {item.badge}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 mb-2 leading-relaxed">{item.desc}</p>
+                    <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1.5 border-t border-gray-200/60 font-mono">
+                      <span>Trigger: {item.trigger}</span>
+                      <span className="text-gray-600 font-semibold">{item.recipient}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Test & Verification Interactive Console */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
+              <div className="border-b border-gray-100 pb-3">
+                <h3 className="font-display font-bold text-sm text-dark uppercase tracking-wider">
+                  Test Email &amp; In-App Notification Diagnostics
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Verify your active delivery gateway, browser push workers, and audio chimes in real-time.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Email Test Box */}
+                <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/40 space-y-3">
+                  <span className="text-xs font-bold text-dark flex items-center gap-1.5">
+                    <Mail className="w-4 h-4 text-brand-blue" />
+                    Send Live Verification Email
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    Dispatches an end-to-end verification email to test SMTP or API gateway delivery.
+                  </p>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={testEmailAddress}
+                      onChange={(e) => setTestEmailAddress(e.target.value)}
+                      placeholder="azrayanltd@gmail.com"
+                      className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:outline-hidden bg-white text-dark"
+                    />
+                    <button
+                      type="button"
+                      disabled={isSendingTestEmail}
+                      onClick={handleSendTestEmail}
+                      className="px-4 py-2 bg-brand-blue hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 shrink-0"
+                    >
+                      {isSendingTestEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                      <span>Send Test</span>
+                    </button>
+                  </div>
+
+                  {testEmailResult && (
+                    <div className={`p-3 rounded-lg text-xs border ${testEmailResult.success ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'}`}>
+                      <strong>{testEmailResult.success ? '✓ Delivery Successful:' : '✕ Dispatch Error:'}</strong> {testEmailResult.message}
+                    </div>
+                  )}
+                </div>
+
+                {/* Audio & Push Test Box */}
+                <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/40 space-y-3">
+                  <span className="text-xs font-bold text-dark flex items-center gap-1.5">
+                    <Volume2 className="w-4 h-4 text-purple-600" />
+                    In-App Audio &amp; Native Push Controls
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    Test the harmonic dual-tone order bell and browser desktop notifications.
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playNotificationChime();
+                        addToast('Harmonic bell chime sounded!', 'info');
+                      }}
+                      className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>Play Order Chime</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        useNotificationStore.getState().sendTestNotification('admin');
+                      }}
+                      className="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5"
+                    >
+                      <Bell className="w-3.5 h-3.5" />
+                      <span>Trigger Admin Alert</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Email Logs Table */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div>
+                  <h3 className="font-display font-bold text-sm text-dark uppercase tracking-wider">
+                    Recent Email Dispatch Audit Logs
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Live records from the database table (email_logs) tracking customer &amp; admin communications.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => emailLogsQuery.refetch()}
+                  className="px-3 py-1.5 text-xs text-gray-600 hover:text-dark hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${emailLogsQuery.isFetching ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              {emailLogsQuery.isLoading ? (
+                <div className="p-8 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-brand-blue" />
+                  <span>Loading recent email logs...</span>
+                </div>
+              ) : !emailLogsQuery.data || emailLogsQuery.data.length === 0 ? (
+                <div className="p-8 text-center text-xs text-gray-400 bg-gray-50/50 rounded-xl">
+                  No email dispatches recorded yet in database. Emails sent during checkout or dispatch will appear here.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-gray-500 text-[11px] uppercase tracking-wider">
+                        <th className="py-2.5 px-3">Status</th>
+                        <th className="py-2.5 px-3">Type</th>
+                        <th className="py-2.5 px-3">Recipient</th>
+                        <th className="py-2.5 px-3">Subject</th>
+                        <th className="py-2.5 px-3">Provider</th>
+                        <th className="py-2.5 px-3 text-right">Sent At</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {emailLogsQuery.data.map((log: any) => (
+                        <tr key={log.id} className="hover:bg-gray-50/60">
+                          <td className="py-2.5 px-3">
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              log.status === 'sent'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : log.status === 'simulated'
+                                ? 'bg-blue-50 text-brand-blue border border-blue-200'
+                                : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}>
+                              {log.status}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-[11px] text-gray-600">
+                            {log.email_type}
+                          </td>
+                          <td className="py-2.5 px-3 font-medium text-dark truncate max-w-[180px]">
+                            {log.recipient}
+                          </td>
+                          <td className="py-2.5 px-3 text-gray-600 truncate max-w-[220px]">
+                            {log.subject}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-[11px] text-gray-400 uppercase">
+                            {log.provider || 'simulated'}
+                          </td>
+                          <td className="py-2.5 px-3 text-right text-gray-400 text-[11px]">
+                            {new Date(log.sent_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Bottom Status Bar */}

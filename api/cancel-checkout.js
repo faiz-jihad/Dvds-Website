@@ -18,5 +18,15 @@ export default endpoint(async (req) => {
   check(await db.rpc('expire_checkout_order', { p_order_id: order.id, p_provider_order_id: order.checkout_session_id || null }));
   order = await loadOrder(db, order.id);
   if (order.status !== 'cancelled') throw new CheckoutError('Payment has already been received. Refresh the order before continuing.', 409);
+
+  try {
+    const { sendCustomerOrderCancelled } = await import('./_email.js');
+    await sendCustomerOrderCancelled(db, order, {
+      reason: 'Order cancelled by customer during checkout.',
+    });
+  } catch (err) {
+    console.warn('[cancel-checkout] Cancellation email dispatch note:', err.message);
+  }
+
   return { cancelled: true };
 }, 'POST', { max: 20, windowMs: 60000 });

@@ -44,14 +44,19 @@ export async function capturePayPal(db, order, paypalId) {
   await recordPayment(db, order, paypalId, capture.id, Number(capture.amount.value), capture.amount.currency_code);
   try {
     const { data: freshOrder } = await db.from('orders').select('*, items:order_items(*)').eq('id', order.id).maybeSingle();
-    if (freshOrder) {
-      const { sendCustomerPaymentReceipt } = await import('./_email.js');
-      await sendCustomerPaymentReceipt(db, freshOrder, {
-        paymentReference: capture.id,
-        paidAt: new Date().toISOString(),
-      });
-    }
+    const orderToNotify = freshOrder || order;
+    const { sendCustomerPaymentReceipt, sendAdminPaymentVerifiedAlert } = await import('./_email.js');
+    await sendCustomerPaymentReceipt(db, orderToNotify, {
+      paymentReference: capture.id,
+      paidAt: new Date().toISOString(),
+    });
+    await sendAdminPaymentVerifiedAlert(db, orderToNotify, {
+      paymentReference: capture.id,
+      amount: Number(capture.amount.value),
+      currency: capture.amount.currency_code,
+      provider: 'paypal',
+    });
   } catch (receiptErr) {
-    console.warn('[capturePayPal] Customer receipt dispatch note:', receiptErr.message);
+    console.warn('[capturePayPal] Email dispatch note:', receiptErr.message);
   }
 }

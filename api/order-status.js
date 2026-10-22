@@ -65,16 +65,26 @@ export default endpoint(async (req) => {
     }
   }
 
-  // Ensure customer payment receipt has been dispatched once order is confirmed paid
-  if (order.payment_status === 'paid' && !order.receipt_sent_at) {
+  // Ensure customer payment receipt and admin verified payment alert have been dispatched once order is confirmed paid
+  if (order.payment_status === 'paid') {
     try {
-      const { sendCustomerPaymentReceipt } = await import('./_email.js');
-      await sendCustomerPaymentReceipt(db, order, {
-        paymentReference: order.payment_reference || 'Confirmed',
-        paidAt: order.paid_at || new Date().toISOString(),
-      });
+      const { sendCustomerPaymentReceipt, sendAdminPaymentVerifiedAlert } = await import('./_email.js');
+      if (!order.receipt_sent_at) {
+        await sendCustomerPaymentReceipt(db, order, {
+          paymentReference: order.payment_reference || 'Confirmed',
+          paidAt: order.paid_at || new Date().toISOString(),
+        });
+      }
+      if (!order.admin_notified_at) {
+        await sendAdminPaymentVerifiedAlert(db, order, {
+          paymentReference: order.payment_reference || 'Confirmed',
+          amount: order.total_amount,
+          currency: order.currency,
+          provider: order.payment_provider,
+        });
+      }
     } catch (err) {
-      console.warn('[order-status] Customer receipt check note:', err.message);
+      console.warn('[order-status] Email dispatch check note:', err.message);
     }
   }
 

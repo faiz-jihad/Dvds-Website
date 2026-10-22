@@ -406,11 +406,27 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
   // Production Reset Password Email Request
   const resetPassword = useCallback(
     async (email: string): Promise<{ success: boolean; message?: string }> => {
+      const cleanEmail = email.trim().toLowerCase();
+
+      // Primary: Use centralized backend endpoint with Postfix SMTP delivery and user-enumeration protection
+      try {
+        const res = await fetch('/api/customer-forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          return { success: true, message: data.message };
+        }
+      } catch {
+        // Fall back to direct Supabase client if backend endpoint is unreachable
+      }
+
       if (!isSupabaseConfigured || !supabase) {
         return { success: false, message: 'Authentication database is not configured.' };
       }
       try {
-        const cleanEmail = email.trim().toLowerCase();
         const redirectTo = `${window.location.origin}/reset-password`;
         const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
           redirectTo,
@@ -439,6 +455,23 @@ export const CustomerAuthProvider: React.FC<React.PropsWithChildren> = ({ childr
         if (error) {
           return { success: false, message: error.message };
         }
+
+        // Asynchronously notify customer of password change
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            await fetch('/api/customer-password-reset-confirm', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+              },
+            });
+          }
+        } catch {
+          // Non-blocking notification
+        }
+
         return { success: true };
       } catch (err: any) {
         return { success: false, message: err?.message || 'Failed to update password.' };

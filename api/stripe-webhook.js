@@ -1,6 +1,13 @@
 import { check, CheckoutError, dbClient, endpoint, loadOrder, recordPayment, stripeClient } from './_checkout.js';
 import { minorAmount } from '../shared/commerce.js';
-import { sendCustomerPaymentReceipt } from './_email.js';
+import {
+  sendCustomerPaymentReceipt,
+  sendAdminNewOrderNotification,
+  sendAdminPaymentVerifiedAlert,
+  sendAdminPaymentFailedAlert,
+  sendCustomerOrderRefunded,
+  sendAdminRefundAlert,
+} from './_email.js';
 
 export const config = {
   api: {
@@ -191,6 +198,18 @@ export default async function stripeWebhookHandler(req, res) {
           } catch (receiptErr) {
             console.error('[stripe-webhook] Customer receipt dispatch note:', receiptErr.message);
           }
+
+          // Automatically send admin verified payment alert
+          try {
+            await sendAdminPaymentVerifiedAlert(db, order, {
+              paymentReference,
+              amount: numericAmount,
+              currency: order.currency,
+              provider: 'stripe',
+            });
+          } catch (adminErr) {
+            console.error('[stripe-webhook] Admin payment verified alert note:', adminErr.message);
+          }
         } else {
           console.log(
             `[stripe-webhook] Session ${session.id} payment_status is '${session.payment_status}' (not paid). Order remains pending.`
@@ -225,6 +244,20 @@ export default async function stripeWebhookHandler(req, res) {
             })
             .maybeSingle()
             .catch(() => {});
+
+          // Send admin payment failure alert
+          try {
+            const failedOrder = await loadOrder(db, orderId).catch(() => null);
+            if (failedOrder) {
+              await sendAdminPaymentFailedAlert(db, failedOrder, {
+                errorReason: 'checkout.session.async_payment_failed',
+                provider: 'stripe',
+                paymentReference: session.id,
+              });
+            }
+          } catch (failAlertErr) {
+            console.warn('[stripe-webhook] Admin payment failure alert note:', failAlertErr.message);
+          }
         }
         break;
       }
@@ -304,6 +337,25 @@ export default async function stripeWebhookHandler(req, res) {
             })
             .maybeSingle()
             .catch(() => {});
+
+          // Automatically dispatch confirmed refund notifications
+          try {
+            await sendCustomerOrderRefunded(db, order, {
+              refundAmount,
+              currency: order.currency,
+              refundReference: charge.id,
+              reason: charge.failure_message || 'Refund issued via Stripe.',
+            });
+            await sendAdminRefundAlert(db, order, {
+              refundAmount,
+              currency: order.currency,
+              refundReference: charge.id,
+              provider: 'stripe',
+              reason: charge.failure_message || 'Refund issued via Stripe.',
+            });
+          } catch (refundErr) {
+            console.error('[stripe-webhook] Refund email dispatch note:', refundErr.message);
+          }
         }
         break;
       }
@@ -394,6 +446,18 @@ export default async function stripeWebhookHandler(req, res) {
         } catch (receiptErr) {
           console.error('[stripe-webhook] Customer receipt dispatch note:', receiptErr.message);
         }
+
+        // Automatically send admin verified payment alert
+        try {
+          await sendAdminPaymentVerifiedAlert(db, order, {
+            paymentReference,
+            amount: numericAmount,
+            currency: order.currency,
+            provider: 'stripe',
+          });
+        } catch (adminErr) {
+          console.error('[stripe-webhook] Admin payment verified alert note:', adminErr.message);
+        }
         break;
       }
 
@@ -402,6 +466,29 @@ export default async function stripeWebhookHandler(req, res) {
         console.warn(
           `[stripe-webhook] Payment intent ${paymentIntent.id} payment failed: ${paymentIntent.last_payment_error?.code || 'unknown_code'}`
         );
+        try {
+          let failedOrderId = paymentIntent.metadata?.order_id;
+          if (!failedOrderId && paymentIntent.id) {
+            const { data: matchedOrder } = await db
+              .from('orders')
+              .select('id')
+              .or(`checkout_session_id.eq.${paymentIntent.id},payment_reference.eq.${paymentIntent.id}`)
+              .maybeSingle();
+            if (matchedOrder) failedOrderId = matchedOrder.id;
+          }
+          if (failedOrderId) {
+            const failedOrder = await loadOrder(db, failedOrderId).catch(() => null);
+            if (failedOrder) {
+              await sendAdminPaymentFailedAlert(db, failedOrder, {
+                errorReason: paymentIntent.last_payment_error?.message || paymentIntent.last_payment_error?.code || 'Card declined',
+                provider: 'stripe',
+                paymentReference: paymentIntent.id,
+              });
+            }
+          }
+        } catch (piFailErr) {
+          console.warn('[stripe-webhook] Payment failure alert note:', piFailErr.message);
+        }
         break;
       }
 

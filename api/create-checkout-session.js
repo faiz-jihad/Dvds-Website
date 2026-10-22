@@ -84,5 +84,12 @@ export default endpoint(async (req) => {
       .single()
   );
 
+  try {
+    const { sendCustomerOrderConfirmation } = await import('./_email.js');
+    await sendCustomerOrderConfirmation(db, order);
+  } catch (confErr) {
+    console.warn('[create-checkout-session] Order confirmation note:', confErr.message);
+  }
+
   return { url: session.url, orderId: order.id, orderNumber: order.order_number };
 }, 'POST', { max: 15, windowMs: 60000 });

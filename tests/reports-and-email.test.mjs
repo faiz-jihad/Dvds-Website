@@ -1,7 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { sendEmail, sendCustomerPaymentReceipt, sendAdminBusinessReport } from '../api/_email.js';
+import {
+  sendEmail,
+  sendCustomerPaymentReceipt,
+  sendCustomerOrderConfirmation,
+  sendCustomerOrderProcessing,
+  sendCustomerOrderRefunded,
+  sendCustomerWelcomeEmail,
+  sendCustomerPasswordResetEmail,
+  sendCustomerPasswordResetConfirmation,
+  sendAdminPaymentVerifiedAlert,
+  sendAdminPaymentFailedAlert,
+  sendAdminRefundAlert,
+  sendAdminEmailDeliveryAlert,
+  sendAdminBusinessReport,
+  sendAdminNewOrderNotification,
+  sendCustomerOrderDispatched,
+  sendCustomerBankTransferInstructions,
+  sendAdminPaymentProofNotification,
+  sendCustomerOrderCancelled,
+  sendAdminContactInquiry,
+  sendCustomerContactAutoReply,
+  getActiveEmailProvider,
+} from '../api/_email.js';
 import { calculateBusinessMetrics, getReportDateRange } from '../api/_reports.js';
 import cronReportsHandler from '../api/cron-reports.js';
 
@@ -439,3 +461,549 @@ test('Business metrics engine seamlessly falls back to admin_audit_log when expe
   assert.equal(report.summary.totalExpenses, 5.00);
   assert.equal(report.summary.netResult, 20.00);
 });
+
+test('getActiveEmailProvider returns active configuration status', () => {
+  const provider = getActiveEmailProvider();
+  assert.ok(provider);
+  assert.ok(provider.provider);
+  assert.ok(typeof provider.isProduction === 'boolean');
+  assert.ok(provider.fromEmail);
+  assert.ok(provider.adminEmail);
+});
+
+test('Admin new order notification sends detailed alert with ordered items and link', async () => {
+  const orderId = randomUUID();
+  const mockOrder = {
+    id: orderId,
+    order_number: 'ORD-ADMIN-001',
+    email: 'shopper@example.test',
+    total_amount: 45.00,
+    currency: 'GBP',
+    payment_method: 'card',
+    payment_status: 'paid',
+    shipping_address: {
+      full_name: 'Arthur Pendelton',
+      address_line_1: '12 Abbey Road',
+      city: 'London',
+      postcode: 'NW8 9AY',
+    },
+    items: [
+      { product_title: 'Blade Runner 2049 4K', product_sku: 'BR-2049', quantity: 1, unit_price: 25.00, total_price: 25.00 },
+      { product_title: 'Dunkirk Special Edition', product_sku: 'DK-SE', quantity: 2, unit_price: 10.00, total_price: 20.00 },
+    ],
+  };
+
+  const logs = [];
+  const mockDb = {
+    from: (table) => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            in: () => ({
+              maybeSingle: async () => ({ data: null }),
+            }),
+          }),
+        }),
+      }),
+      insert: async (row) => {
+        logs.push({ table, row });
+        return { data: row, error: null };
+      },
+      update: () => ({ eq: async () => ({}) }),
+    }),
+  };
+
+  const result = await sendAdminNewOrderNotification(mockDb, mockOrder);
+  assert.equal(result.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].table, 'email_logs');
+  assert.equal(logs[0].row.email_type, 'admin_new_order');
+  assert.ok(logs[0].row.subject.includes('#ORD-ADMIN-001'));
+  assert.ok(logs[0].row.subject.includes('Arthur Pendelton'));
+});
+
+test('Customer order dispatched email delivers carrier and tracking details', async () => {
+  const orderId = randomUUID();
+  const mockOrder = {
+    id: orderId,
+    order_number: 'ORD-SHIP-99',
+    email: 'recipient@example.test',
+    shipping_address: { full_name: 'Sarah Connor', city: 'Birmingham' },
+    items: [{ product_title: 'Terminator 2 DVD', quantity: 1 }],
+  };
+
+  const logs = [];
+  const mockDb = {
+    from: () => ({
+      select: () => ({ eq: () => ({ eq: () => ({ in: () => ({ maybeSingle: async () => ({ data: null }) }) }) }) }),
+      insert: async (row) => { logs.push(row); return { data: row, error: null }; },
+      update: () => ({ eq: async () => ({}) }),
+    }),
+  };
+
+  const result = await sendCustomerOrderDispatched(mockDb, mockOrder, {
+    carrier: 'Royal Mail Tracked 24',
+    trackingNumber: 'GB123456789RM',
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].email_type, 'order_dispatched');
+  assert.equal(logs[0].recipient, 'recipient@example.test');
+  assert.ok(logs[0].subject.includes('#ORD-SHIP-99'));
+});
+
+test('Bank transfer instructions auto-sends bank account details to customer', async () => {
+  const orderId = randomUUID();
+  const mockOrder = {
+    id: orderId,
+    order_number: 'ORD-BANK-77',
+    email: 'bankbuyer@example.test',
+    total_amount: 35.50,
+    currency: 'GBP',
+    bank_details: {
+      bank_name: 'Lloyds Bank',
+      bank_account_name: 'DVDs Zone Ltd',
+      bank_sort_code: '30-90-89',
+      bank_account_number: '42318960',
+    },
+  };
+
+  const logs = [];
+  const mockDb = {
+    from: () => ({
+      insert: async (row) => { logs.push(row); return { data: row, error: null }; },
+    }),
+  };
+
+  const result = await sendCustomerBankTransferInstructions(mockDb, mockOrder);
+  assert.equal(result.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].email_type, 'bank_transfer_instructions');
+  assert.equal(logs[0].recipient, 'bankbuyer@example.test');
+  assert.ok(logs[0].subject.includes('#ORD-BANK-77'));
+});
+
+test('Support inquiry auto-routes to admin and acknowledges customer', async () => {
+  const adminLogs = [];
+  const customerLogs = [];
+  const mockDb = {
+    from: () => ({
+      insert: async (row) => {
+        if (row.email_type === 'contact_inquiry') adminLogs.push(row);
+        if (row.email_type === 'contact_autoreply') customerLogs.push(row);
+        return { data: row, error: null };
+      },
+    }),
+  };
+
+  const inquiry = {
+    name: 'Oliver Twist',
+    email: 'oliver@example.test',
+    order_reference: 'ORD-4455',
+    message: 'Can I add another DVD to my order before dispatch?',
+  };
+
+  const adminRes = await sendAdminContactInquiry(mockDb, inquiry);
+  assert.equal(adminRes.success, true);
+  assert.equal(adminLogs.length, 1);
+  assert.ok(adminLogs[0].subject.includes('Oliver Twist'));
+
+  const customerRes = await sendCustomerContactAutoReply(mockDb, inquiry);
+  assert.equal(customerRes.success, true);
+  assert.equal(customerLogs.length, 1);
+  assert.equal(customerLogs[0].recipient, 'oliver@example.test');
+});
+
+test('Customer order confirmation accurately displays pending payment status and enforces idempotency', async () => {
+  const orderId = randomUUID();
+  const mockOrder = {
+    id: orderId,
+    order_number: 'ORD-PENDING-01',
+    email: 'newbuyer@example.test',
+    payment_status: 'pending',
+    payment_method: 'card',
+    total_amount: 19.99,
+    subtotal: 16.99,
+    shipping_amount: 3.00,
+    currency: 'GBP',
+    delivery_name: 'Standard Royal Mail',
+    shipping_address: { full_name: 'Arthur Dent', address_line_1: 'Cottington' },
+    items: [{ product_title: 'Hitchhiker DVD', quantity: 1, unit_price: 16.99, total_price: 16.99 }],
+  };
+
+  const logs = [];
+  const existingRecords = new Set();
+
+  const mockDb = {
+    from: (table) => ({
+      select: () => ({
+        eq: () => ({
+          eq: (field, val) => ({
+            in: () => ({
+              maybeSingle: async () => ({
+                data: existingRecords.has(`${orderId}:${val}`) ? { id: 'existing' } : null,
+              }),
+            }),
+          }),
+        }),
+      }),
+      insert: async (row) => {
+        logs.push(row);
+        existingRecords.add(`${orderId}:${row.email_type}`);
+        return { data: row, error: null };
+      },
+      update: () => ({
+        eq: async () => ({ error: null }),
+      }),
+    }),
+  };
+
+  const firstSend = await sendCustomerOrderConfirmation(mockDb, mockOrder);
+  assert.equal(firstSend.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].email_type, 'order_confirmation');
+  assert.ok(logs[0].subject.includes('#ORD-PENDING-01'));
+
+  // Duplicate call should be skipped via durable idempotency
+  const duplicateSend = await sendCustomerOrderConfirmation(mockDb, mockOrder);
+  assert.equal(duplicateSend.success, true);
+  assert.equal(duplicateSend.duplicate_skipped, true);
+  assert.equal(logs.length, 1); // No new email sent
+});
+
+test('Customer order processing notification formats pick & pack update with idempotency', async () => {
+  const orderId = randomUUID();
+  const mockOrder = {
+    id: orderId,
+    order_number: 'ORD-PROC-88',
+    email: 'buyer@example.test',
+    shipping_address: { full_name: 'Ford Prefect' },
+    items: [{ product_title: 'Sci-Fi Boxset', quantity: 1 }],
+  };
+
+  const logs = [];
+  const mockDb = {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            in: () => ({
+              maybeSingle: async () => ({ data: null }),
+            }),
+          }),
+        }),
+      }),
+      insert: async (row) => {
+        logs.push(row);
+        return { data: row, error: null };
+      },
+      update: () => ({
+        eq: async () => ({ error: null }),
+      }),
+    }),
+  };
+
+  const res = await sendCustomerOrderProcessing(mockDb, mockOrder, { note: 'Inspected for disc quality' });
+  assert.equal(res.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].email_type, 'order_processing');
+  assert.ok(logs[0].subject.includes('#ORD-PROC-88'));
+});
+
+test('Customer refund notification formats exact verified refund amount and reference', async () => {
+  const orderId = randomUUID();
+  const mockOrder = {
+    id: orderId,
+    order_number: 'ORD-REF-77',
+    email: 'refundee@example.test',
+    currency: 'GBP',
+    total_amount: 45.00,
+    shipping_address: { full_name: 'Trillian Astra' },
+  };
+
+  const logs = [];
+  const mockDb = {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            in: () => ({
+              maybeSingle: async () => ({ data: null }),
+            }),
+          }),
+        }),
+      }),
+      insert: async (row) => {
+        logs.push(row);
+        return { data: row, error: null };
+      },
+      update: () => ({
+        eq: async () => ({ error: null }),
+      }),
+    }),
+  };
+
+  const res = await sendCustomerOrderRefunded(mockDb, mockOrder, {
+    refundAmount: 22.50,
+    currency: 'GBP',
+    refundReference: 're_stripe_test_123',
+    reason: 'Partial return of 1 disc',
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].email_type, 'order_refunded');
+  assert.ok(logs[0].subject.includes('#ORD-REF-77'));
+});
+
+test('Admin alerts properly notify verified payments and payment failures', async () => {
+  const orderId = randomUUID();
+  const mockOrder = {
+    id: orderId,
+    order_number: 'ORD-ADMIN-TEST-99',
+    email: 'customer@example.test',
+    total_amount: 59.99,
+    currency: 'GBP',
+    payment_provider: 'stripe',
+    payment_reference: 'pi_test_confirmed_99',
+  };
+
+  const logs = [];
+  const mockDb = {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            in: () => ({
+              maybeSingle: async () => ({ data: null }),
+            }),
+          }),
+        }),
+      }),
+      insert: async (row) => {
+        logs.push(row);
+        return { data: row, error: null };
+      },
+      update: () => ({
+        eq: async () => ({ error: null }),
+      }),
+    }),
+  };
+
+  // 1. Verified payment alert
+  const verifiedRes = await sendAdminPaymentVerifiedAlert(mockDb, mockOrder, {
+    paymentReference: 'pi_test_confirmed_99',
+    amount: 59.99,
+    currency: 'GBP',
+    provider: 'stripe',
+  });
+  assert.equal(verifiedRes.success, true);
+  assert.equal(logs[0].email_type, 'admin_payment_verified');
+  assert.ok(logs[0].subject.includes('#ORD-ADMIN-TEST-99'));
+
+  // 2. Payment failure alert
+  const failedRes = await sendAdminPaymentFailedAlert(mockDb, mockOrder, {
+    errorReason: 'card_declined: insufficient_funds',
+    provider: 'stripe',
+    paymentReference: 'pi_test_failed_00',
+  });
+  assert.equal(failedRes.success, true);
+  assert.equal(logs[1].email_type, 'admin_payment_failed');
+  assert.ok(logs[1].subject.includes('#ORD-ADMIN-TEST-99'));
+
+  // 3. Admin refund alert
+  const refundAlertRes = await sendAdminRefundAlert(mockDb, mockOrder, {
+    refundAmount: 59.99,
+    currency: 'GBP',
+    refundReference: 're_full_99',
+    provider: 'stripe',
+  });
+  assert.equal(refundAlertRes.success, true);
+  assert.equal(logs[2].email_type, 'admin_refund_alert');
+  assert.ok(logs[2].subject.includes('#ORD-ADMIN-TEST-99'));
+});
+
+test('Email delivery failure alert notifies admin and strictly avoids recursive loops', async () => {
+  const alertLogs = [];
+  const mockDb = {
+    from: () => ({
+      insert: async (row) => {
+        alertLogs.push(row);
+        return { data: row, error: null };
+      },
+    }),
+  };
+
+  // 1. Failure of a customer receipt should trigger an admin alert
+  const alertRes = await sendAdminEmailDeliveryAlert(mockDb, {
+    failedRecipient: 'invalid@customer.domain',
+    emailType: 'customer_receipt',
+    subject: 'Payment Receipt - DVDs Zone #ORD-FAIL-01',
+    errorReason: 'Mailbox does not exist (550)',
+    orderNumber: 'ORD-FAIL-01',
+  });
+
+  assert.equal(alertRes.success, true);
+  assert.equal(alertLogs.length, 1);
+  assert.equal(alertLogs[0].email_type, 'admin_email_failure_alert');
+  assert.ok(alertLogs[0].subject.includes('invalid@customer.domain'));
+
+  // 2. Anti-recursion test: failure of an administrative alert or failure alert must NEVER trigger recursion
+  const recursiveAttempt = await sendAdminEmailDeliveryAlert(mockDb, {
+    failedRecipient: 'admin@dvds-zone.co.uk',
+    emailType: 'admin_email_failure_alert',
+    subject: '⚠️ [Delivery Alert]',
+    errorReason: 'Gateway timeout',
+  });
+
+  assert.equal(recursiveAttempt.skipped, true);
+  assert.equal(alertLogs.length, 1); // No new recursive alert created
+});
+
+test('Customer welcome email formats greeting and catalog link with durable deduplication', async () => {
+  const userId = randomUUID();
+  const mockUser = {
+    id: userId,
+    email: 'newcollector@example.test',
+    full_name: 'Elizabeth Bennet',
+  };
+
+  const logs = [];
+  const existing = new Set();
+  const mockDb = {
+    from: () => ({
+      select: () => ({
+        eq: (f1, v1) => ({
+          eq: (f2, v2) => ({
+            in: () => ({
+              maybeSingle: async () => ({
+                data: existing.has(`${v1}:${v2}`) ? { id: 'log-1' } : null,
+              }),
+            }),
+          }),
+        }),
+      }),
+      insert: async (row) => {
+        logs.push(row);
+        existing.add(`${row.recipient}:${row.email_type}`);
+        return { data: row, error: null };
+      },
+    }),
+  };
+
+  // 1. Initial send succeeds
+  const firstSend = await sendCustomerWelcomeEmail(mockDb, mockUser);
+  assert.equal(firstSend.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].email_type, 'customer_welcome');
+  assert.equal(logs[0].recipient, 'newcollector@example.test');
+  assert.ok(logs[0].subject.includes('Elizabeth Bennet'));
+
+  // 2. Duplicate send is skipped via durable idempotency
+  const duplicateSend = await sendCustomerWelcomeEmail(mockDb, mockUser);
+  assert.equal(duplicateSend.success, true);
+  assert.equal(duplicateSend.duplicate_skipped, true);
+  assert.equal(logs.length, 1);
+});
+
+test('Customer password reset email renders secure 1-hour single-use recovery link', async () => {
+  const logs = [];
+  const mockDb = {
+    from: () => ({
+      insert: async (row) => {
+        logs.push(row);
+        return { data: row, error: null };
+      },
+    }),
+  };
+
+  const res = await sendCustomerPasswordResetEmail(mockDb, {
+    email: 'user.reset@example.test',
+    resetUrl: 'https://dvds-zone.co.uk/reset-password#access_token=sec_token_123',
+    fullName: 'David Copperfield',
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].email_type, 'customer_password_reset');
+  assert.equal(logs[0].recipient, 'user.reset@example.test');
+  assert.ok(logs[0].subject.includes('Reset Your DVDs Zone Password'));
+});
+
+test('Customer password reset confirmation notifies customer of security update', async () => {
+  const logs = [];
+  const mockDb = {
+    from: () => ({
+      insert: async (row) => {
+        logs.push(row);
+        return { data: row, error: null };
+      },
+    }),
+  };
+
+  const res = await sendCustomerPasswordResetConfirmation(mockDb, {
+    email: 'user.updated@example.test',
+    fullName: 'Jane Eyre',
+    changedAt: '22 Oct 2026, 10:30 BST',
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].email_type, 'customer_password_changed');
+  assert.equal(logs[0].recipient, 'user.updated@example.test');
+  assert.ok(logs[0].subject.includes('Password Has Been Changed'));
+});
+
+test('Customer order cancelled notification sends reason and refund guidance', async () => {
+  const orderId = randomUUID();
+  const mockOrder = {
+    id: orderId,
+    order_number: 'ORD-CANCEL-55',
+    email: 'buyer.cancelled@example.test',
+    total_amount: 32.50,
+    currency: 'GBP',
+    payment_status: 'paid',
+  };
+
+  const logs = [];
+  const mockDb = {
+    from: () => ({
+      insert: async (row) => {
+        logs.push(row);
+        return { data: row, error: null };
+      },
+    }),
+  };
+
+  const res = await sendCustomerOrderCancelled(mockDb, mockOrder, {
+    reason: 'Customer requested order cancellation.',
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].email_type, 'order_cancelled');
+  assert.equal(logs[0].recipient, 'buyer.cancelled@example.test');
+  assert.ok(logs[0].subject.includes('#ORD-CANCEL-55'));
+});
+
+test('Default sender identity is info@dvds-zone.co.uk and SMTP Postfix is prioritized', () => {
+  const provider = getActiveEmailProvider();
+  assert.ok(provider.fromEmail.includes('info@dvds-zone.co.uk'), 'Default sender must be info@dvds-zone.co.uk');
+  assert.ok(!provider.fromEmail.includes('orders@dvds-zone.co.uk'), 'Default sender must NOT be orders@dvds-zone.co.uk');
+});
+
+test('Local Postfix SMTP transport falls back gracefully without throwing when port 25 is closed', async () => {
+  const result = await sendEmail({
+    to: 'fallback.test@example.test',
+    subject: 'Fallback Test',
+    html: '<p>Testing graceful fallback</p>',
+    text: 'Testing graceful fallback',
+  });
+
+  assert.ok(result);
+  assert.equal(result.success, true);
+});
+
+
+

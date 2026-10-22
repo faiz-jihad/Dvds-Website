@@ -78,5 +78,13 @@ export default endpoint(async (req) => {
     throw new CheckoutError('Could not save payment proof to order.', 500);
   }
 
+  // Automatically notify admin that payment proof was uploaded
+  try {
+    const { sendAdminPaymentProofNotification } = await import('./_email.js');
+    await sendAdminPaymentProofNotification(db, order, { fileName: cleanFileName });
+  } catch (notifErr) {
+    console.warn('[upload-proof] Admin notification note:', notifErr.message);
+  }
+
   return { success: true, uploadedAt: updatedBankDetails.payment_proof_uploaded_at };
 }, 'POST', { max: 10, windowMs: 60000 });

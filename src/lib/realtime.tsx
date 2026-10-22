@@ -134,19 +134,48 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
             message: `Order #${orderNum}${totalText} placed by customer.`,
             link: '/admin/orders',
           });
-        } else if (eventType === 'UPDATE' && newRecord?.status) {
+        } else if (eventType === 'UPDATE') {
+          const orderNum = newRecord?.order_number || 'order';
+
+          // Admin duty: Payment confirmed alert
+          if (newRecord?.payment_status === 'paid') {
+            const totalText = newRecord?.total_amount ? ` (£${Number(newRecord.total_amount).toFixed(2)})` : '';
+            useNotificationStore.getState().addNotification({
+              target: 'admin',
+              type: 'order',
+              title: 'Payment Confirmed',
+              message: `Order #${orderNum}${totalText} is confirmed PAID via ${(newRecord.payment_method || 'Online').toUpperCase()}.`,
+              link: '/admin/orders',
+            });
+          }
+
+          // Admin duty: Payment proof uploaded
+          if (newRecord?.bank_details?.payment_proof_uploaded_at) {
+            useNotificationStore.getState().addNotification({
+              target: 'admin',
+              type: 'order',
+              title: 'Payment Proof Uploaded',
+              message: `Customer uploaded transfer proof for Order #${orderNum}. Ready for verification.`,
+              link: '/admin/orders',
+            });
+          }
+
           // Customer duty: Order status update notification (ONLY for the customer who owns this order)
-          if (isCustomerOrder(newRecord)) {
-            const orderNum = newRecord?.order_number || '';
+          if (isCustomerOrder(newRecord) && newRecord?.status) {
+            const carrierText = newRecord.carrier ? ` via ${newRecord.carrier}` : '';
+            const trackText = newRecord.tracking_number ? ` • Tracking: ${newRecord.tracking_number}` : '';
             const statusText = newRecord.status === 'dispatched'
-              ? 'has been dispatched with tracking'
+              ? `has been dispatched${carrierText}${trackText}`
               : newRecord.status === 'delivered'
               ? 'has been successfully delivered to your address'
+              : newRecord.status === 'cancelled'
+              ? 'has been cancelled'
               : `status is now ${newRecord.status.toUpperCase()}`;
+
             useNotificationStore.getState().addNotification({
               target: 'customer',
               type: 'order',
-              title: 'Order Status Updated',
+              title: newRecord.status === 'dispatched' ? 'Package Dispatched!' : 'Order Status Updated',
               message: `Your order #${orderNum} ${statusText}.`,
               link: newRecord.id ? `/order-success/${newRecord.id}` : '/account/orders',
             });
