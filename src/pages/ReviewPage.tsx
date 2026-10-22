@@ -8,14 +8,12 @@ import {
   Disc,
   ArrowLeft,
   Send,
-  ExternalLink,
   Lock,
   ShoppingBag,
 } from 'lucide-react';
 import { publicApi } from '../lib/publicApi';
 import { useThemeStore } from '../stores/useThemeStore';
 import { cn } from '../lib/formatters';
-import { GoogleGLogo } from '../components/landing/GoogleReviews';
 
 const RATING_DESCRIPTIONS: Record<number, string> = {
   1: 'Poor — Disappointed with the product or service',
@@ -60,23 +58,9 @@ export const ReviewPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Google review link for optional post-submission step
-  const [googleReviewUrl, setGoogleReviewUrl] = useState<string | null>(null);
-
-  // Fetch eligibility and store settings on mount
+  // Fetch eligibility on mount
   useEffect(() => {
     let isMounted = true;
-
-    // Fetch store settings to get optional Google review URL
-    publicApi
-      .getStoreSettings()
-      .then((settings) => {
-        if (!isMounted) return;
-        if (settings?.google_review_url) {
-          setGoogleReviewUrl(settings.google_review_url);
-        }
-      })
-      .catch(() => {});
 
     // Check eligibility
     publicApi
@@ -443,32 +427,6 @@ export const ReviewPage: React.FC = () => {
                 Your review has been submitted and is currently in moderation. Once approved by our team, it will appear on the DVD title page and our verified customer testimonials.
               </p>
             </div>
-
-            {/* Optional Google Review Step */}
-            {googleReviewUrl && (
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-white/5 dark:to-white/5 border border-blue-100 dark:border-white/10 text-left space-y-3">
-                <div className="flex items-center gap-2">
-                  <GoogleGLogo size={18} />
-                  <span className="font-bold text-xs uppercase tracking-wider text-dark dark:text-white">
-                    Share on Google (Optional)
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Enjoyed ordering from DVDs Zone? If you have a minute, we would greatly appreciate a quick review on our Google Business Profile to support our small UK warehouse.
-                </p>
-                <div>
-                  <a
-                    href={googleReviewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#141A26] hover:bg-gray-50 dark:hover:bg-white/10 text-brand-blue border border-blue-200 dark:border-white/20 shadow-2xs transition-all"
-                  >
-                    <span>Write Google Review</span>
-                    <ExternalLink size={13} />
-                  </a>
-                </div>
-              </div>
-            )}
 
             {/* Navigation buttons */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">

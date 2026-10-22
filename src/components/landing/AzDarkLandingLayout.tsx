@@ -9,8 +9,6 @@ import { AzMovieShelfRow } from './AzMovieShelfRow';
 import { AzDvdMovieCard } from './AzDvdMovieCard';
 import { AzCuratedCollectionBanner } from './AzCuratedCollectionBanner';
 import { AzDirectorSpotlightBanner } from './AzDirectorSpotlightBanner';
-import { GoogleReviewsBanner } from './GoogleReviewsBanner';
-import { GoogleReviews } from './GoogleReviews';
 import { CustomerReviewsCarousel } from './CustomerReviewsCarousel';
 import { cn } from '../../lib/formatters';
 
@@ -279,11 +277,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
         {/* ── Verified Website Customer Reviews Carousel (Genuine verified purchases) ── */}
         <div className="pt-4 sm:pt-6">
           <CustomerReviewsCarousel />
-        </div>
-
-        {/* ── Google Customer Reviews (ReviewsWidget.app Integration) ── */}
-        <div className="pt-4 sm:pt-6">
-          <GoogleReviews reviewUrl={settings?.google_review_url} />
         </div>
 
       </main>
