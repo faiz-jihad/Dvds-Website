@@ -4,7 +4,7 @@ import { Order } from "../../types";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
 import { PrintableReceipt } from "./PrintableReceipt";
-import { Printer, Download, CheckCircle2 } from "lucide-react";
+import { Printer, CheckCircle2 } from "lucide-react";
 
 interface OrderReceiptModalProps {
   isOpen: boolean;
@@ -17,7 +17,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
   onClose,
   order,
 }) => {
-  if (!order || order.status === "cancelled") return null;
+  if (!order) return null;
 
   const handlePrint = () => {
     // Small timeout ensures focus/paint state is idle before invoking native dialog
@@ -57,6 +57,9 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 hidden sm:inline">
+                (Choose &quot;Save as PDF&quot; in print dialog to download)
+              </span>
               <Button
                 type="button"
                 variant="primary"
@@ -65,7 +68,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
                 className="gap-1.5 shadow-sm cursor-pointer bg-brand-blue hover:bg-brand-blue-hover text-white font-bold"
               >
                 <Printer className="w-4 h-4" />
-                <span>Print Receipt</span>
+                <span>Print / Save PDF</span>
               </Button>
               <Button
                 type="button"

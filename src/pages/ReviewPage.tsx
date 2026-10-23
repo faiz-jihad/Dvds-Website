@@ -218,7 +218,7 @@ export const ReviewPage: React.FC = () => {
         {pageState === 'eligible' && (
           <div className="bg-white dark:bg-[#0F1523] border border-gray-200 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden">
             {/* Header Banner */}
-            <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-[#0A0F1D] text-white p-6 sm:p-8">
+            <div className="bg-brand-blue text-white p-6 sm:p-8">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold uppercase tracking-wider mb-3">
                 <ShieldCheck size={14} />
                 <span>Verified UK Customer Review</span>

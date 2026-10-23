@@ -55,25 +55,36 @@ export const OrderSuccessPage: React.FC = () => {
   const isDark = theme === "dark";
   const params = useParams<{ orderId: string; id: string }>();
   const [search] = useSearchParams();
-  const orderId = params.orderId || params.id || search.get("order_id") || search.get("id") || "";
+  const rawOrderId =
+    params.orderId ||
+    params.id ||
+    search.get("order_id") ||
+    search.get("orderId") ||
+    search.get("id") ||
+    "";
+
+  // Recover order ID from current checkout attempt or latest session receipt if accessing /order-success without URL params
+  const orderId =
+    rawOrderId ||
+    (() => {
+      try {
+        const attempt = currentCheckoutAttempt();
+        if (attempt?.orderId) return attempt.orderId;
+        const receipts = JSON.parse(
+          sessionStorage.getItem("az_checkout_receipts_v2") || "{}",
+        );
+        const keys = Object.keys(receipts);
+        return keys.length > 0 ? keys[keys.length - 1] : "";
+      } catch {
+        return "";
+      }
+    })();
+
   const [message, setMessage] = useState("");
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  // Payment proof upload state (Max 2MB)
-  const [proof, setProof] = useState<PaymentProofData | null>(() => {
-    try {
-      const saved = localStorage.getItem(`order_proof_${orderId}`);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [proofFile, setProofFile] = useState<File | null>(null);
-  const [proofPreview, setProofPreview] = useState<string | null>(null);
-  const [proofError, setProofError] = useState<string>("");
-  const [uploadingProof, setUploadingProof] = useState<boolean>(false);
-  const [proofSuccess, setProofSuccess] = useState<boolean>(false);
   const stripeSessionId =
     search.get("session_id") ||
     search.get("payment_intent") ||
@@ -93,7 +104,7 @@ export const OrderSuccessPage: React.FC = () => {
         stripeSessionId,
         paypalToken,
       ),
-    enabled: Boolean(orderId || stripeSessionId),
+    enabled: Boolean(orderId || stripeSessionId || paypalToken),
     retry: 3,
     refetchInterval: (state) => {
       const order = state.state.data;
@@ -105,6 +116,42 @@ export const OrderSuccessPage: React.FC = () => {
     },
   });
   const order = query.data;
+  const effectiveOrderId = order?.id || orderId;
+
+  // Payment proof upload state (Max 2MB)
+  const [proof, setProof] = useState<PaymentProofData | null>(() => {
+    try {
+      const key = effectiveOrderId ? `order_proof_${effectiveOrderId}` : "";
+      const saved = key ? localStorage.getItem(key) : null;
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (!proof && (order?.id || order?.order_number)) {
+      try {
+        const saved =
+          (order?.id ? localStorage.getItem(`order_proof_${order.id}`) : null) ||
+          (order?.order_number
+            ? localStorage.getItem(`order_proof_${order.order_number}`)
+            : null);
+        if (saved) {
+          setProof(JSON.parse(saved));
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [order?.id, order?.order_number, proof]);
+
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
+  const [proofError, setProofError] = useState<string>("");
+  const [uploadingProof, setUploadingProof] = useState<boolean>(false);
+  const [proofSuccess, setProofSuccess] = useState<boolean>(false);
+
   const bankPending = Boolean(
     order &&
     order.payment_method === "bank_transfer" &&
@@ -145,10 +192,21 @@ export const OrderSuccessPage: React.FC = () => {
 
   useEffect(() => {
     if (!order || paid || closed || !bankPending) return;
-    const interval = setInterval(() => {
+    const updateTime = () => {
       const expiryTime = new Date(order.created_at).getTime() + ORDER_EXPIRY_MINUTES * 60 * 1000;
       const remaining = Math.max(0, Math.floor((expiryTime - Date.now()) / 1000));
       setTimeLeft(remaining);
+      return remaining;
+    };
+    const initial = updateTime();
+    if (initial <= 0) {
+      checkoutApi.cancel(order.id).catch(() => {}).finally(() => {
+        query.refetch();
+      });
+      return;
+    }
+    const interval = setInterval(() => {
+      const remaining = updateTime();
       if (remaining <= 0) {
         clearInterval(interval);
         checkoutApi.cancel(order.id).catch(() => {}).finally(() => {
@@ -296,6 +354,11 @@ export const OrderSuccessPage: React.FC = () => {
 
   const handleUploadProof = () => {
     if (!proofFile) return;
+    const targetOrderId = order?.id || orderId;
+    if (!targetOrderId) {
+      setProofError("Order identifier is missing. Please refresh the page.");
+      return;
+    }
     setUploadingProof(true);
     setProofError("");
 
@@ -312,7 +375,7 @@ export const OrderSuccessPage: React.FC = () => {
         setProof(newProof);
         try {
           localStorage.setItem(
-            `order_proof_${orderId}`,
+            `order_proof_${targetOrderId}`,
             JSON.stringify(newProof),
           );
           if (order?.order_number) {
@@ -324,7 +387,7 @@ export const OrderSuccessPage: React.FC = () => {
         } catch {
           // ignore localStorage error
         }
-        checkoutApi.uploadPaymentProof(orderId, newProof).catch((err) => {
+        checkoutApi.uploadPaymentProof(targetOrderId, newProof).catch((err) => {
           console.warn("[checkout] Server proof sync error:", err);
         });
         setProofSuccess(true);
@@ -341,10 +404,17 @@ export const OrderSuccessPage: React.FC = () => {
     }
   };
 
-  const copy = async (value: string) => {
+  const copy = async (value: string, label?: string) => {
     try {
       await navigator.clipboard.writeText(value);
-      setMessage("Copied to clipboard.");
+      if (label) setCopiedField(label);
+      setMessage(`Copied ${label ? `"${label}"` : "details"} to clipboard.`);
+      setTimeout(() => {
+        setCopiedField(null);
+      }, 2500);
+      setTimeout(() => {
+        setMessage((prev) => (prev.includes("Copied") ? "" : prev));
+      }, 3500);
     } catch {
       setMessage(
         "Could not copy automatically. Please select and copy the details.",
@@ -352,10 +422,12 @@ export const OrderSuccessPage: React.FC = () => {
     }
   };
   const cancel = async () => {
+    const targetOrderId = order?.id || orderId;
+    if (!targetOrderId) return;
     setCancelling(true);
     setMessage("");
     try {
-      await checkoutApi.cancel(orderId);
+      await checkoutApi.cancel(targetOrderId);
       await query.refetch();
     } catch (cause) {
       setMessage(
@@ -367,21 +439,54 @@ export const OrderSuccessPage: React.FC = () => {
       setCancelling(false);
     }
   };
-  if (query.isPending || (!order && query.error))
+
+  if (query.isLoading || (query.isFetching && !order && !query.error))
     return (
       <StoreDataState
-        loading={query.isPending}
+        loading={true}
+        error={null}
+        retry={() => query.refetch()}
+      />
+    );
+
+  if (query.error && !order)
+    return (
+      <StoreDataState
+        loading={false}
         error={query.error}
         retry={() => query.refetch()}
       />
     );
+
   if (!order)
     return (
-      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#07090E] p-12 text-center text-dark dark:text-white">
-        Order not found.{" "}
-        <Link to="/" className="underline text-brand-blue">
-          Return to shop
-        </Link>
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white flex flex-col justify-center items-center px-4 py-16">
+        <div className="max-w-md w-full bg-white dark:bg-[#0E131F] rounded-2xl border border-gray-200 dark:border-white/10 p-8 text-center shadow-xs">
+          <div className="inline-flex p-3 rounded-full bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 mb-4">
+            <AlertCircle size={32} />
+          </div>
+          <h1 className="font-display font-bold text-xl sm:text-2xl text-dark dark:text-white">
+            Order Not Found
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 mb-6 leading-relaxed">
+            We couldn't find an order with the provided reference. If you recently placed an order, please check your confirmation email or view your account orders.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/shop"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-brand-blue hover:bg-brand-blue-hover text-white transition-colors shadow-xs"
+            >
+              <span>Return to Shop</span>
+              <ArrowRight size={14} />
+            </Link>
+            <Link
+              to="/account/orders"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 transition-colors"
+            >
+              <span>View My Orders</span>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   const needsReview =
@@ -494,7 +599,7 @@ export const OrderSuccessPage: React.FC = () => {
                   className="relative flex items-center justify-center"
                 >
                   <div className="absolute inset-0 rounded-full bg-emerald-500/25 dark:bg-emerald-400/20 blur-xl animate-pulse" />
-                  <span className="relative inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 text-white shadow-xl shadow-emerald-500/25 border-4 border-white dark:border-[#141A26]">
+                  <span className="relative inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 border-4 border-white dark:border-[#141A26]">
                     <motion.svg
                       className="w-10 h-10 sm:w-12 sm:h-12 stroke-white"
                       fill="none"
@@ -555,16 +660,24 @@ export const OrderSuccessPage: React.FC = () => {
             </p>
           )}
           {message && (
-            <p
+            <div
               role="status"
-              className="rounded-xl p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 text-blue-900 dark:text-blue-200 text-sm mb-5"
+              className="flex items-center justify-between rounded-xl p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 text-blue-900 dark:text-blue-200 text-sm mb-5 shadow-2xs"
             >
-              {message}
-            </p>
+              <span>{message}</span>
+              <button
+                type="button"
+                onClick={() => setMessage("")}
+                className="p-1 hover:text-blue-950 dark:hover:text-white rounded transition-colors cursor-pointer ml-3 shrink-0"
+                aria-label="Dismiss message"
+              >
+                <X size={15} />
+              </button>
+            </div>
           )}
 
           {order.payment_status === "pending" && !bankPending && !closed && (
-            <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-amber-300 dark:border-amber-700/50 bg-gradient-to-r from-amber-50/90 via-orange-50/70 to-amber-50/80 dark:from-[#1A150B] dark:via-[#1F190D] dark:to-[#17120A] flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left shadow-xs">
+          <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-amber-300 dark:border-amber-700/50 bg-amber-50 dark:bg-[#1A150B] flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left shadow-xs">
               <div className="flex items-center gap-3.5">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                   <Clock size={20} />
@@ -702,12 +815,25 @@ export const OrderSuccessPage: React.FC = () => {
                           {value || "--"}
                           {value && (
                             <button
-                              onClick={() => copy(value)}
-                              className="p-1 text-gray-400 hover:text-brand-blue rounded hover:bg-white dark:hover:bg-white/10 transition-colors cursor-pointer"
+                              type="button"
+                              onClick={() => copy(value, label)}
+                              className={cn(
+                                "p-1 rounded transition-colors cursor-pointer inline-flex items-center gap-1",
+                                copiedField === label
+                                  ? "text-emerald-600 dark:text-emerald-400 font-bold text-xs"
+                                  : "text-gray-400 hover:text-brand-blue hover:bg-white dark:hover:bg-white/10"
+                              )}
                               aria-label={`Copy ${label.toLowerCase()}`}
-                              title="Copy"
+                              title={copiedField === label ? "Copied!" : "Copy"}
                             >
-                              <Copy size={14} />
+                              {copiedField === label ? (
+                                <>
+                                  <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
+                                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400">Copied</span>
+                                </>
+                              ) : (
+                                <Copy size={14} />
+                              )}
                             </button>
                           )}
                         </dd>
@@ -1046,30 +1172,28 @@ export const OrderSuccessPage: React.FC = () => {
           )}
 
           <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-3.5 mt-8">
-            {!closed && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Instantly invoke browser print dialog
-                    setTimeout(() => window.print(), 50);
-                  }}
-                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-blue/20 active:scale-95 transition-all cursor-pointer"
-                >
-                  <Printer size={16} />
-                  <span>Print Receipt</span>
-                </button>
+            <button
+              type="button"
+              onClick={() => {
+                // Instantly invoke browser print dialog
+                setTimeout(() => window.print(), 50);
+              }}
+              className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-blue/20 active:scale-95 transition-all cursor-pointer"
+              title="Print or Save as PDF"
+            >
+              <Printer size={16} />
+              <span>Print / Save PDF</span>
+            </button>
 
-                <button
-                  type="button"
-                  onClick={() => setReceiptOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-white dark:bg-[#0E131F] hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-200 hover:text-dark dark:hover:text-white text-xs sm:text-sm font-semibold shadow-2xs active:scale-95 transition-all cursor-pointer"
-                >
-                  <FileText size={15} className="text-gray-400" />
-                  <span>Preview Receipt</span>
-                </button>
-              </>
-            )}
+            <button
+              type="button"
+              onClick={() => setReceiptOpen(true)}
+              className="inline-flex items-center justify-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-white dark:bg-[#0E131F] hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-200 hover:text-dark dark:hover:text-white text-xs sm:text-sm font-semibold shadow-2xs active:scale-95 transition-all cursor-pointer"
+              title="View full receipt details on screen"
+            >
+              <FileText size={15} className="text-gray-400" />
+              <span>View Full Receipt</span>
+            </button>
 
             <button
               type="button"
@@ -1111,6 +1235,13 @@ export const OrderSuccessPage: React.FC = () => {
             )}
 
             <Link
+              to="/account/orders"
+              className="inline-flex items-center justify-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-white dark:bg-[#0E131F] hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-200 hover:text-dark dark:hover:text-white text-xs sm:text-sm font-semibold shadow-2xs active:scale-95 transition-all cursor-pointer"
+            >
+              <span>View Order History</span>
+            </Link>
+
+            <Link
               to={closed ? "/cart" : "/shop"}
               className="inline-flex items-center justify-center gap-2 h-11 px-5 sm:px-6 rounded-xl bg-brand-blue hover:bg-brand-blue-hover text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-blue/20 active:scale-95 transition-all cursor-pointer group"
             >
@@ -1120,6 +1251,17 @@ export const OrderSuccessPage: React.FC = () => {
                 className="transition-transform group-hover:translate-x-0.5"
               />
             </Link>
+          </div>
+          <div className="mt-8 pt-6 border-t border-gray-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400 text-center sm:text-left">
+            <p>
+              Need assistance with order <span className="font-mono font-semibold text-gray-700 dark:text-gray-200">#{order.order_number}</span>?{" "}
+              <Link to="/contact" className="text-brand-blue hover:underline font-medium">
+                Contact Customer Support
+              </Link>
+            </p>
+            <p>
+              Dispatch guaranteed via Royal Mail UK Tracked service.
+            </p>
           </div>
           {!closed && (
             <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-5">

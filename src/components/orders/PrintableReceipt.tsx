@@ -1,6 +1,7 @@
 import React from 'react';
 import { Order } from '../../types';
-import { formatGBP, formatDateUK, formatDateTimeUK } from '../../lib/formatters';
+import { formatDateUK, formatDateTimeUK } from '../../lib/formatters';
+import { formatMoney } from '../../shared/commerce.js';
 
 interface PrintableReceiptProps {
   order: Order;
@@ -28,6 +29,7 @@ export const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order, class
     order.id;
 
   const paymentStatusLabel = (order.payment_status || 'pending').replace(/_/g, ' ').toUpperCase();
+  const currency = order.currency || 'GBP';
 
   return (
     <article
@@ -199,10 +201,10 @@ export const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order, class
                       {item.quantity}
                     </td>
                     <td className="py-3 px-3 text-right text-gray-700 font-mono">
-                      {formatGBP(item.unit_price)}
+                      {formatMoney(item.unit_price, currency)}
                     </td>
                     <td className="py-3 px-3 text-right font-bold text-gray-950 font-mono">
-                      {formatGBP(item.total_price)}
+                      {formatMoney(item.total_price, currency)}
                     </td>
                   </tr>
                 ))
@@ -217,32 +219,32 @@ export const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order, class
         <div className="w-full sm:w-72 space-y-2 text-xs sm:text-sm">
           <div className="flex justify-between py-1 text-gray-700">
             <span>Subtotal</span>
-            <span className="font-mono">{formatGBP(order.subtotal)}</span>
+            <span className="font-mono">{formatMoney(order.subtotal, currency)}</span>
           </div>
 
           <div className="flex justify-between py-1 text-gray-700">
             <span>Shipping & Delivery</span>
             <span className="font-mono">
-              {order.shipping_amount === 0 ? 'FREE' : formatGBP(order.shipping_amount)}
+              {order.shipping_amount === 0 ? 'FREE' : formatMoney(order.shipping_amount, currency)}
             </span>
           </div>
 
           {Number(order.discount_amount) > 0 && (
             <div className="flex justify-between py-1 text-emerald-700 font-medium">
               <span>Promotional Discount</span>
-              <span className="font-mono">-{formatGBP(order.discount_amount)}</span>
+              <span className="font-mono">-{formatMoney(order.discount_amount, currency)}</span>
             </div>
           )}
 
           <div className="border-t-2 border-gray-900 pt-2 flex justify-between text-base font-black text-gray-950">
             <span>TOTAL PAID</span>
-            <span className="font-mono text-lg">{formatGBP(order.total_amount)}</span>
+            <span className="font-mono text-lg">{formatMoney(order.total_amount, currency)}</span>
           </div>
 
           {Number(order.refunded_amount) > 0 && (
             <div className="flex justify-between py-1 text-red-600 font-semibold border-t border-dashed border-red-200">
               <span>Total Refunded</span>
-              <span className="font-mono">-{formatGBP(order.refunded_amount)}</span>
+              <span className="font-mono">-{formatMoney(order.refunded_amount, currency)}</span>
             </div>
           )}
         </div>

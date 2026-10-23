@@ -39,7 +39,7 @@ export const AboutPage: React.FC = () => {
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-10 sm:py-16 transition-colors duration-200 relative overflow-hidden">
       {/* Ambient background glow matching homepage design */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(23,105,224,0.15),transparent)] pointer-events-none" />
+
 
       <Seo
         title={`About ${storeName} — UK Physical Media Vault & Official DVD Retailer`}
@@ -72,7 +72,7 @@ export const AboutPage: React.FC = () => {
 
           <h1 className="font-display font-black text-3xl sm:text-5xl md:text-6xl text-dark dark:text-white tracking-tight leading-[1.1]">
             Dedicated to the Art &amp; Permanence of{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-cyan-400">
+            <span className="text-brand-blue dark:text-blue-400">
               Physical Cinema
             </span>
           </h1>
@@ -187,7 +187,7 @@ export const AboutPage: React.FC = () => {
         </div>
 
         {/* ── 4. Verified Legal Operator & Contact Card ── */}
-        <div className="rounded-2xl border border-blue-200/80 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/50 to-indigo-50/20 dark:from-[#0E131F] dark:to-[#141A26] p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="rounded-2xl border border-blue-200/80 dark:border-blue-900/40 bg-blue-50/50 dark:bg-[#0E131F] p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-blue-100 dark:border-white/10">
             <div>
               <span className="text-xs font-mono uppercase tracking-widest text-brand-blue dark:text-blue-400 font-semibold">
