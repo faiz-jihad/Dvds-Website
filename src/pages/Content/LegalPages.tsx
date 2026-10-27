@@ -25,7 +25,7 @@ const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath
   });
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
-  const storeName = settings.store_name || 'DVDs Zone';
+  const storeName = settings.store_name || 'DVD Zone';
   const companyName = settings.registered_company_name || 'AZRAYAN LTD';
   const companyNumber = settings.company_number || '13894195';
 
@@ -44,7 +44,7 @@ const LegalPage: React.FC<LegalPageProps> = ({ title, description, canonicalPath
         title={`${title} — ${storeName} UK Legal & Compliance`}
         description={description || `${storeName} official legal documentation: ${title}.`}
         canonicalPath={canonicalPath}
-        keywords="DVDs Zone legal, terms and conditions, privacy policy, UK consumer rights, distance selling regulations"
+        keywords="DVD Zone legal, terms and conditions, privacy policy, UK consumer rights, distance selling regulations"
         siteName={storeName}
       />
 
@@ -334,7 +334,7 @@ export const PrivacyPage: React.FC = () => (
 export const TermsPage: React.FC = () => (
   <LegalPage
     title="Terms & Conditions"
-    description="DVDs Zone Terms & Conditions — our terms of sale, pricing, and customer support commitments."
+    description="DVD Zone Terms & Conditions — our terms of sale, pricing, and customer support commitments."
     canonicalPath="/terms"
     badge="TERMS OF SALE &amp; SERVICE"
   >

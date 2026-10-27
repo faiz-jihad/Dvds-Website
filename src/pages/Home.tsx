@@ -79,30 +79,31 @@ export const Home: React.FC = () => {
       <Seo
         title={
           settings.seo_site_title ||
-          `DVD Zone — ${settings.store_name || "DVDs Zone"} UK | Buy Quality DVDs & TV Box Sets Online | Free UK Delivery`
+          "DVD Zone — DVD Zone UK | Buy Quality DVDs & TV Box Sets Online | Free UK Delivery"
         }
         description={
           settings.seo_site_description ||
-          "DVD Zone (DVDs Zone UK) is your specialist online store for physical media DVDs, TV series box sets, and cinema classics. Free UK standard delivery on all orders. Same-day dispatch. Fast 2 working days delivery via Royal Mail."
+          "DVD Zone (DVD Zone UK) — Your specialist online store for DVDs, TV series box sets, and cinema classics. Free UK standard delivery on all orders. Same-day dispatch via Royal Mail. Shop DVD Zone at dvds-zone.co.uk."
         }
-        keywords="DVD Zone, DVDs Zone, DVD Zone UK, DVDs Zone UK, dvdzone, dvdszone, dvd-zone, dvds-zone, dvd zone store, dvd zone online, buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs"
+        keywords="DVD Zone, DVD Zone UK, DVDs Zone, DVDs Zone UK, dvdzone, dvdszone, dvd-zone, dvds-zone, dvd zone store, dvd zone online, buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs"
         canonicalPath="/"
         image={
           settings.seo_social_image_url ||
           "/catalog/the-mandalorian-seasons-1-3.jpeg"
         }
-        siteName={settings.store_name || "DVDs Zone"}
+        siteName={settings.store_name || "DVD Zone"}
         jsonLd={[
           {
             "@context": "https://schema.org",
             "@type": "WebSite",
-            name: settings.store_name || "DVDs Zone",
+            name: settings.store_name || "DVD Zone",
             alternateName: [
-              "DVD Zone",
+              "DVD Zone UK",
+              "DVDs Zone",
               "DVDZone",
               "DVDsZone",
-              "DVD Zone UK",
               "DVDs Zone UK",
+              "DVD-Zone",
               "DVDs-Zone",
             ],
             url: toAbsoluteUrl("/"),
@@ -118,13 +119,14 @@ export const Home: React.FC = () => {
           {
             "@context": "https://schema.org",
             "@type": "OnlineStore",
-            name: settings.store_name || "DVDs Zone",
+            name: settings.store_name || "DVD Zone",
             alternateName: [
-              "DVD Zone",
+              "DVD Zone UK",
+              "DVDs Zone",
               "DVDZone",
               "DVDsZone",
-              "DVD Zone UK",
               "DVDs Zone UK",
+              "DVD-Zone",
               "DVDs-Zone",
             ],
             url: toAbsoluteUrl("/"),
@@ -136,7 +138,7 @@ export const Home: React.FC = () => {
           {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
-            name: `${settings.store_name || "DVDs Zone"} — Quality DVDs & Entertainment Catalogue`,
+            name: `${settings.store_name || "DVD Zone"} — Quality DVDs & Entertainment Catalogue`,
             description:
               settings.seo_site_description ||
               "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",

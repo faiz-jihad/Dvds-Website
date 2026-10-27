@@ -531,8 +531,8 @@ export const OrderSuccessPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white transition-colors duration-200">
       <Seo
-        title={order?.order_number ? `Order #${order.order_number} Confirmed — DVDs Zone UK` : "Order Confirmed — DVDs Zone UK"}
-        description="Official order confirmation, Royal Mail dispatch status and receipt details. DVDs Zone UK."
+        title={order?.order_number ? `Order #${order.order_number} Confirmed — DVD Zone UK` : "Order Confirmed — DVD Zone UK"}
+        description="Official order confirmation, Royal Mail dispatch status and receipt details. DVD Zone UK."
         canonicalPath={orderId ? `/order-success/${orderId}` : "/order-success"}
         noIndex
       />
@@ -542,7 +542,7 @@ export const OrderSuccessPage: React.FC = () => {
           <Link
             to="/"
             className="flex items-center gap-2 group"
-            aria-label="DVDs Zone Home"
+            aria-label="DVD Zone Home"
           >
             <img
               src={
@@ -550,7 +550,7 @@ export const OrderSuccessPage: React.FC = () => {
                   ? "/brand/logo-dark-theme.png"
                   : "/brand/logo-transparent.png"
               }
-              alt="DVDs Zone"
+              alt="DVD Zone"
               className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
             />
           </Link>

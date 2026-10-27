@@ -143,11 +143,11 @@ export const ResetPasswordPage: React.FC = () => {
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white transition-colors duration-200">
       <Seo
-        title="Set New Password — DVDs Zone UK"
-        description="Choose a new secure password for your DVDs Zone account."
+        title="Set New Password — DVD Zone UK"
+        description="Choose a new secure password for your DVD Zone account."
         canonicalPath="/reset-password"
         noIndex={true}
-        siteName="DVDs Zone"
+        siteName="DVD Zone"
       />
       <div className="max-w-md w-full">
         {/* Header link & theme toggle */}

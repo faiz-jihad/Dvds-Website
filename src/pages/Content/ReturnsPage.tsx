@@ -30,7 +30,7 @@ export const ReturnsPage: React.FC = () => {
   });
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
-  const storeName = settings.store_name || 'DVDs Zone';
+  const storeName = settings.store_name || 'DVD Zone';
   const supportEmail = settings.support_email || 'info@dvds-zone.co.uk';
   const supportPhone = settings.support_phone || '00447400320038';
 
@@ -55,7 +55,7 @@ export const ReturnsPage: React.FC = () => {
     },
     {
       q: 'Who pays for return shipping?',
-      a: 'If the return is due to an error on our part, transit damage, or a defective disc, DVDs Zone covers all return postage costs. For elective change-of-mind returns on unopened, sealed items, the buyer is responsible for standard return shipping.',
+      a: 'If the return is due to an error on our part, transit damage, or a defective disc, DVD Zone covers all return postage costs. For elective change-of-mind returns on unopened, sealed items, the buyer is responsible for standard return shipping.',
     },
   ];
 
@@ -66,9 +66,9 @@ export const ReturnsPage: React.FC = () => {
 
       <Seo
         title={`30-Day Hassle-Free Returns & Replacements Policy — ${storeName} UK`}
-        description="DVDs Zone 30-Day Returns Policy. Faulty disc? Damaged in transit? Enjoy fast UK replacements or full refunds within 3 working days. UK statutory consumer rights protected."
+        description="DVD Zone 30-Day Returns Policy. Faulty disc? Damaged in transit? Enjoy fast UK replacements or full refunds within 3 working days. UK statutory consumer rights protected."
         canonicalPath="/returns"
-        keywords="DVD returns policy UK, 30 day returns DVDs Zone, faulty DVD replacement, money back guarantee, UK consumer rights DVDs"
+        keywords="DVD returns policy UK, 30 day returns DVD Zone, faulty DVD replacement, money back guarantee, UK consumer rights DVDs"
         siteName={storeName}
         jsonLd={{
           '@context': 'https://schema.org',

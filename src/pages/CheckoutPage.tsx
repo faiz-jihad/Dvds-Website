@@ -744,7 +744,7 @@ export const CheckoutPage: React.FC = () => {
   return (
     <div className="bg-gray-50/70 dark:bg-[#07090E] min-h-screen text-dark dark:text-white transition-colors">
       <Seo
-        title="Secure Checkout — DVDs Zone UK"
+        title="Secure Checkout — DVD Zone UK"
         description="Complete your order securely with SSL 256-bit encryption. Fast and reliable delivery across the United Kingdom."
         canonicalPath="/checkout"
         noIndex
@@ -752,10 +752,10 @@ export const CheckoutPage: React.FC = () => {
       {/* Dedicated Clean Checkout Header Bar with Logo & Theme Switcher */}
       <header className="border-b border-gray-200 dark:border-white/10 bg-white/95 dark:bg-[#07090E]/95 backdrop-blur-md sticky top-0 z-30 transition-colors shadow-2xs">
         <div className="max-w-6xl mx-auto px-3 sm:px-6 h-14 sm:h-[72px] flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2 group py-1 shrink-0" title="DVDs Zone - Return to shop">
+          <Link to="/" className="flex items-center gap-2 group py-1 shrink-0" title="DVD Zone - Return to shop">
             <img
               src={isDark ? "/brand/logo-dark-theme.png" : "/brand/logo-transparent.png"}
-              alt="DVDs Zone"
+              alt="DVD Zone"
               className="h-7 sm:h-10 w-auto max-w-[120px] sm:max-w-[170px] object-contain transition-transform group-hover:scale-[1.02]"
             />
           </Link>

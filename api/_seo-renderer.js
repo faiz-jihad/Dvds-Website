@@ -215,12 +215,19 @@ export async function generateDynamicSitemap(baseUrl) {
 
 export function generateDynamicRobots(baseUrl) {
   return [
-    '# DVDs Zone – Dynamic Robots Configuration',
+    '# DVD Zone – Dynamic Robots Configuration',
     'User-agent: *',
     'Allow: /',
     'Allow: /catalog/',
     'Allow: /product/',
     'Allow: /shop',
+    'Allow: /about',
+    'Allow: /contact',
+    'Allow: /delivery',
+    'Allow: /returns',
+    'Allow: /faq',
+    'Allow: /terms',
+    'Allow: /privacy',
     'Disallow: /admin/',
     'Disallow: /admin',
     'Disallow: /account/',
@@ -229,6 +236,12 @@ export function generateDynamicRobots(baseUrl) {
     'Disallow: /cart',
     'Disallow: /order-success/',
     'Disallow: /api/',
+    '',
+    'User-agent: Googlebot',
+    'Allow: /',
+    'Allow: /shop',
+    'Allow: /product/',
+    'Allow: /catalog/',
     '',
     'User-agent: Googlebot-Image',
     'Allow: /catalog/',
@@ -330,7 +343,7 @@ function generatePrivacyHtml(baseUrl, settings) {
 }
 
 function generateHomeHtml(baseUrl, settings) {
-  const storeName = settings?.store_name || 'DVDs Zone';
+  const storeName = settings?.store_name || 'DVD Zone';
   const companyName = settings?.registered_company_name || 'AZRAYAN LTD';
   const companyNumber = settings?.company_number || '13894195';
   const supportEmail = settings?.support_email || 'info@dvds-zone.co.uk';
@@ -357,9 +370,9 @@ function generateHomeHtml(baseUrl, settings) {
       <!-- Hero & Application Purpose Statement -->
       <section style="background:#0b0f19;color:#ffffff;padding:40px;border-radius:12px;margin-bottom:40px;border:1px solid rgba(255,255,255,0.1);">
         <span style="display:inline-block;background:rgba(37,99,235,0.2);color:#60a5fa;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:15px;letter-spacing:1px;text-transform:uppercase;">Official Store &amp; Application Identity</span>
-        <h1 style="font-size:32px;font-weight:800;margin:0 0 15px 0;line-height:1.2;">About ${escapeHtml(storeName)} &amp; Application Purpose</h1>
+        <h1 style="font-size:32px;font-weight:800;margin:0 0 15px 0;line-height:1.2;">DVD Zone — Buy DVDs &amp; TV Box Sets Online | Official UK Store</h1>
         <p style="font-size:16px;color:#cbd5e1;max-width:850px;margin:0 0 20px 0;line-height:1.7;">
-          <strong>${escapeHtml(storeName)}</strong> is an online physical media e-commerce store and entertainment catalogue operated by <strong>${escapeHtml(companyName)}</strong> (Company Registered in England and Wales No. ${escapeHtml(companyNumber)}, active since 2021). We supply authentic UK DVD box sets, Blu-ray discs, and television series with 100% Free UK standard delivery via Royal Mail.
+          <strong>${escapeHtml(storeName)}</strong> (DVD Zone UK) is an online physical media e-commerce store and entertainment catalogue operated by <strong>${escapeHtml(companyName)}</strong> (Company Registered in England and Wales No. ${escapeHtml(companyNumber)}, active since 2021). We supply authentic UK DVD box sets, Blu-ray discs, and television series with 100% Free UK standard delivery via Royal Mail.
         </p>
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
           <a href="${baseUrl}/shop" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none;">Browse Store Catalogue</a>
@@ -416,7 +429,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
     const urlObj = new URL(reqUrl, 'http://localhost');
     const pathname = urlObj.pathname;
     const settings = await getStoreSettings();
-    const storeName = settings?.store_name || 'DVDs Zone';
+    const storeName = settings?.store_name || 'DVD Zone';
     const googleVerification = process.env.GOOGLE_SITE_VERIFICATION || settings?.google_site_verification;
 
     let modifiedHtml = rawHtml;

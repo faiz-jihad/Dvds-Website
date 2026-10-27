@@ -55,7 +55,7 @@ export const CartPage: React.FC = () => {
     return (
       <div className="py-20 bg-[#F8FAFC] dark:bg-[#07090E] min-h-[60vh] flex items-center justify-center transition-colors">
         <Seo
-          title="Shopping Basket — DVDs Zone UK"
+          title="Shopping Basket — DVD Zone UK"
           description="Your basket is currently empty. Explore our curated catalogue of DVD releases and TV box sets."
           canonicalPath="/cart"
           noIndex
@@ -74,7 +74,7 @@ export const CartPage: React.FC = () => {
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
       <Seo
-        title="Shopping Basket — DVDs Zone UK"
+        title="Shopping Basket — DVD Zone UK"
         description="Review your selected physical DVD media and box sets. Free UK delivery on all orders."
         canonicalPath="/cart"
         noIndex

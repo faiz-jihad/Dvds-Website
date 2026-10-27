@@ -1,9 +1,16 @@
-# DVDs Zone – robots.txt
+# DVD Zone – robots.txt
 User-agent: *
 Allow: /
 Allow: /catalog/
 Allow: /product/
 Allow: /shop
+Allow: /about
+Allow: /contact
+Allow: /delivery
+Allow: /returns
+Allow: /faq
+Allow: /terms
+Allow: /privacy
 Disallow: /admin/
 Disallow: /admin
 Disallow: /account/
@@ -13,9 +20,16 @@ Disallow: /cart
 Disallow: /order-success/
 Disallow: /api/
 
+User-agent: Googlebot
+Allow: /
+Allow: /shop
+Allow: /product/
+Allow: /catalog/
+
 User-agent: Googlebot-Image
 Allow: /catalog/
 Allow: /product/
 Allow: /
 
 Sitemap: https://dvds-zone.co.uk/sitemap.xml
+Host: https://dvds-zone.co.uk

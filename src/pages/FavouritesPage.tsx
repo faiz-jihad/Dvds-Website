@@ -26,7 +26,7 @@ export const FavouritesPage: React.FC = () => {
       {/* Ambient top glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(23,105,224,0.15),transparent)] pointer-events-none" />
 
-      <Seo title="My Wishlist — DVDs Zone UK" description="Your saved DVD collection and physical media wishlist." noIndex siteName="DVDs Zone" />
+      <Seo title="My Wishlist — DVD Zone UK" description="Your saved DVD collection and physical media wishlist." noIndex siteName="DVD Zone" />
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
         <div className="pb-6 border-b border-gray-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
