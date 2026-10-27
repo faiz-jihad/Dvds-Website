@@ -370,7 +370,7 @@ function generateHomeHtml(baseUrl, settings) {
       <!-- Hero & Application Purpose Statement -->
       <section style="background:#0b0f19;color:#ffffff;padding:40px;border-radius:12px;margin-bottom:40px;border:1px solid rgba(255,255,255,0.1);">
         <span style="display:inline-block;background:rgba(37,99,235,0.2);color:#60a5fa;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:15px;letter-spacing:1px;text-transform:uppercase;">Official Store &amp; Application Identity</span>
-        <h1 style="font-size:32px;font-weight:800;margin:0 0 15px 0;line-height:1.2;">DVD Zone — Buy DVDs &amp; TV Box Sets Online | Official UK Store</h1>
+        <h1 style="font-size:32px;font-weight:800;margin:0 0 15px 0;line-height:1.2;">DVD Zone — Official UK DVD Store</h1>
         <p style="font-size:16px;color:#cbd5e1;max-width:850px;margin:0 0 20px 0;line-height:1.7;">
           <strong>${escapeHtml(storeName)}</strong> (DVD Zone UK) is an online physical media e-commerce store and entertainment catalogue operated by <strong>${escapeHtml(companyName)}</strong> (Company Registered in England and Wales No. ${escapeHtml(companyNumber)}, active since 2021). We supply authentic UK DVD box sets, Blu-ray discs, and television series with 100% Free UK standard delivery via Royal Mail.
         </p>

@@ -79,11 +79,11 @@ export const Home: React.FC = () => {
       <Seo
         title={
           settings.seo_site_title ||
-          "DVD Zone — DVD Zone UK | Buy Quality DVDs & TV Box Sets Online | Free UK Delivery"
+          "DVD Zone — Official UK Store | Buy DVDs & TV Box Sets Online"
         }
         description={
           settings.seo_site_description ||
-          "DVD Zone (DVD Zone UK) — Your specialist online store for DVDs, TV series box sets, and cinema classics. Free UK standard delivery on all orders. Same-day dispatch via Royal Mail. Shop DVD Zone at dvds-zone.co.uk."
+          "DVD Zone (dvds-zone.co.uk) is the United Kingdom's official online store for genuine DVDs, TV series box sets, and cinema classics. Free Royal Mail UK delivery with same-day dispatch."
         }
         keywords="DVD Zone, DVD Zone UK, DVDs Zone, DVDs Zone UK, dvdzone, dvdszone, dvd-zone, dvds-zone, dvd zone store, dvd zone online, buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs"
         canonicalPath="/"
@@ -93,6 +93,27 @@ export const Home: React.FC = () => {
         }
         siteName={settings.store_name || "DVD Zone"}
         jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Brand",
+            name: settings.store_name || "DVD Zone",
+            alternateName: [
+              "DVD Zone UK",
+              "DVDs Zone",
+              "DVDZone",
+              "DVDsZone",
+              "DVDs Zone UK",
+              "DVD-Zone",
+              "DVDs-Zone",
+              "dvds-zone.co.uk",
+            ],
+            url: toAbsoluteUrl("/"),
+            logo: toAbsoluteUrl("/brand/logo.png"),
+            sameAs: [
+              "https://g.page/r/CcbYihBj8jECEBM",
+              "https://g.page/r/CcbYihBj8jECEBM/review",
+            ],
+          },
           {
             "@context": "https://schema.org",
             "@type": "WebSite",
@@ -105,6 +126,7 @@ export const Home: React.FC = () => {
               "DVDs Zone UK",
               "DVD-Zone",
               "DVDs-Zone",
+              "dvds-zone.co.uk",
             ],
             url: toAbsoluteUrl("/"),
             potentialAction: {
@@ -120,6 +142,10 @@ export const Home: React.FC = () => {
             "@context": "https://schema.org",
             "@type": "OnlineStore",
             name: settings.store_name || "DVD Zone",
+            brand: {
+              "@type": "Brand",
+              name: settings.store_name || "DVD Zone",
+            },
             alternateName: [
               "DVD Zone UK",
               "DVDs Zone",

@@ -5,13 +5,13 @@ export const MAX_PRODUCT_PRICE = 150;
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   id: 's1000000-0000-0000-0000-000000000001',
   seo_site_url: 'https://dvds-zone.co.uk',
-  seo_site_title: 'DVD Zone — Quality DVDs, TV Box Sets & Entertainment | UK Store',
+  seo_site_title: 'DVD Zone — Official UK Store | Buy DVDs & TV Box Sets Online',
   seo_site_description:
-    'Quality DVDs, TV box sets, and entertainment. Free UK standard delivery. Same-day dispatch. Delivery within 2 working days via Royal Mail.',
+    'DVD Zone (dvds-zone.co.uk) is the United Kingdom\'s official online store for genuine DVDs, TV series box sets, and cinema classics. Free Royal Mail UK delivery with same-day dispatch.',
   seo_social_image_url:
     'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&auto=format&fit=crop&q=80',
   seo_organization_description:
-    'Independent physical media retailer operated by DVD Zone, based in United Kingdom.',
+    'Official UK physical media retailer operated by DVD Zone, based in United Kingdom.',
   hero_badge_text: 'FREE UK DELIVERY — SAME-DAY DISPATCH',
   hero_headline_line1: 'Quality DVDs &',
   hero_headline_highlight: 'Entertainment.',
