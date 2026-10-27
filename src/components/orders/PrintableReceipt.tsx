@@ -1,7 +1,7 @@
 import React from 'react';
 import { Order } from '../../types';
 import { formatDateUK, formatDateTimeUK } from '../../lib/formatters';
-import { formatMoney } from '../../shared/commerce.js';
+import { formatMoney } from '../../../shared/commerce.js';
 
 interface PrintableReceiptProps {
   order: Order;
@@ -244,7 +244,7 @@ export const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order, class
           {Number(order.refunded_amount) > 0 && (
             <div className="flex justify-between py-1 text-red-600 font-semibold border-t border-dashed border-red-200">
               <span>Total Refunded</span>
-              <span className="font-mono">-{formatMoney(order.refunded_amount, currency)}</span>
+              <span className="font-mono">-{formatMoney(order.refunded_amount || 0, currency)}</span>
             </div>
           )}
         </div>
