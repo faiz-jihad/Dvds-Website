@@ -64,21 +64,21 @@
     <priority>0.50</priority>
   </url>
 
-  <!-- Category Hubs -->
+  <!-- Category Hubs (Clean Persistent Canonical Routes) -->
   <url>
-    <loc>https://dvds-zone.co.uk/shop?category=tv-box-sets</loc>
+    <loc>https://dvds-zone.co.uk/shop/category/tv-box-sets</loc>
     <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://dvds-zone.co.uk/shop?category=film</loc>
+    <loc>https://dvds-zone.co.uk/shop/category/film</loc>
     <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://dvds-zone.co.uk/shop?category=documentary-music</loc>
+    <loc>https://dvds-zone.co.uk/shop/category/documentary-music</loc>
     <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>

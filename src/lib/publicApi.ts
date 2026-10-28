@@ -253,6 +253,12 @@ export const publicApi = {
     if (!result.store_name || result.store_name === 'DVD Zone' || result.store_name === 'DVDS Zone') {
       result.store_name = 'DVDs Zone';
     }
+    if (!result.seo_site_title || !/dvds?\s*zone/i.test(result.seo_site_title)) {
+      result.seo_site_title = DEFAULT_STORE_SETTINGS.seo_site_title;
+    }
+    if (!result.seo_site_description || !/dvds?\s*zone/i.test(result.seo_site_description)) {
+      result.seo_site_description = DEFAULT_STORE_SETTINGS.seo_site_description;
+    }
     if (!result.registered_company_name || result.registered_company_name === 'DVD Zone') {
       result.registered_company_name = 'AZRAYAN LTD';
     }

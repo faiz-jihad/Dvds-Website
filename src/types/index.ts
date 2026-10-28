@@ -14,6 +14,7 @@ export interface Category {
   name: string;
   slug: string;
   description: string | null;
+  introCopy?: string | null;
   image_url: string | null;
   is_active: boolean;
   sort_order: number;
@@ -23,6 +24,8 @@ export interface Genre {
   id: string;
   name: string;
   slug: string;
+  description?: string;
+  introCopy?: string;
 }
 
 export interface Product {

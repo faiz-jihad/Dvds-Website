@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -133,6 +133,7 @@ if (fs.existsSync(distPath)) {
   app.use(express.static(distPath, {
     maxAge: '1d',
     index: false,
+    redirect: false,
     setHeaders: (res, filePath) => {
       // Immutable caching for Vite hashed assets
       if (filePath.includes(`${path.sep}assets${path.sep}`)) {
@@ -212,9 +213,14 @@ app.use(async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`\n======================================================`);
-  console.log(` DVDs Zone Production Server running on port ${PORT}`);
-  console.log(` Base site URL: ${process.env.SITE_URL || `http://localhost:${PORT}`}`);
-  console.log(`======================================================\n`);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  app.listen(PORT, () => {
+    console.log(`\n======================================================`);
+    console.log(` DVDs Zone Production Server running on port ${PORT}`);
+    console.log(` Base site URL: ${process.env.SITE_URL || `http://localhost:${PORT}`}`);
+    console.log(`======================================================\n`);
+  });
+}
+
+export { app };
+export default app;

@@ -34,7 +34,7 @@ const GENRE_NAV_ITEMS = [
   { name: "Action & Military", slug: "action" },
   { name: "Science Fiction", slug: "science-fiction" },
   { name: "Drama & Crime", slug: "drama" },
-  { name: "TV Series Box Sets", href: "/shop?category=tv-box-sets" },
+  { name: "TV Series Box Sets", href: "/shop/category/tv-box-sets" },
   { name: "Documentary & Music", slug: "documentary" },
   { name: "Classic & Cult Cinema", slug: "historical" },
   { name: "Western & Frontier", slug: "western" },
@@ -328,14 +328,14 @@ export const MobileNavDrawer: React.FC = () => {
                     >
                       {GENRE_NAV_ITEMS.map((item) => {
                         const isActive = item.slug
-                          ? location.pathname === "/shop" &&
-                            location.search.includes(`genre=${item.slug}`)
-                          : location.pathname === "/shop" &&
-                            location.search.includes("category=tv-box-sets");
+                          ? location.pathname === `/shop/genre/${item.slug}` ||
+                            (location.pathname === "/shop" && location.search.includes(`genre=${item.slug}`))
+                          : location.pathname === "/shop/category/tv-box-sets" ||
+                            (location.pathname === "/shop" && location.search.includes("category=tv-box-sets"));
                         return (
                           <Link
                             key={item.name}
-                            to={item.href || `/shop?genre=${item.slug}`}
+                            to={item.href || `/shop/genre/${item.slug}`}
                             onClick={closeMobileNav}
                             className={cn(
                               "flex items-center justify-between min-h-11 py-2 px-3 text-xs rounded-lg transition-colors",
@@ -366,7 +366,7 @@ export const MobileNavDrawer: React.FC = () => {
                     Special Anthologies
                   </span>
                   <Link
-                    to="/shop?category=tv-box-sets"
+                    to="/shop/category/tv-box-sets"
                     onClick={closeMobileNav}
                     className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                   >
@@ -374,7 +374,7 @@ export const MobileNavDrawer: React.FC = () => {
                     <ArrowRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
                   </Link>
                   <Link
-                    to="/shop?search=Star+Wars"
+                    to="/shop/genre/science-fiction"
                     onClick={closeMobileNav}
                     className="flex items-center justify-between py-2 px-3 text-xs text-gray-600 dark:text-gray-300 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                   >

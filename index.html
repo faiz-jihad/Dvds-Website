@@ -39,12 +39,30 @@
     <link rel="alternate" hreflang="x-default" href="https://dvds-zone.co.uk/" />
     <script>
       try {
-        var p = window.location.pathname || '/';
-        var cur = 'https://dvds-zone.co.uk' + (p === '/' ? '/' : p.replace(/\/$/, ''));
-        var cl = document.querySelector('link[rel="canonical"]'); if (cl) cl.href = cur;
-        var ag = document.querySelector('link[rel="alternate"][hreflang="en-GB"]'); if (ag) ag.href = cur;
-        var ax = document.querySelector('link[rel="alternate"][hreflang="x-default"]'); if (ax) ax.href = cur;
-        var ou = document.querySelector('meta[property="og:url"]'); if (ou) ou.setAttribute('content', cur);
+        var cl = document.querySelector('link[rel="canonical"]');
+        if (!cl || cl.getAttribute('data-ssr') !== 'true') {
+          var p = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+          var sp = new URLSearchParams(window.location.search || '');
+          var validGenres = ['action','science-fiction','drama','war','documentary','music','western','crime','comedy','historical','adventure'];
+          var validCats = ['tv-box-sets','film','documentary-music'];
+          var targetPath = p;
+          if (p === '/shop' || p.indexOf('/shop/') === 0) {
+            var gSlug = p.indexOf('/shop/genre/') === 0 ? p.slice(12) : (sp.get('genre') || '');
+            var cSlug = p.indexOf('/shop/category/') === 0 ? p.slice(15) : (sp.get('category') || '');
+            if (gSlug && validGenres.indexOf(gSlug) !== -1) {
+              targetPath = '/shop/genre/' + gSlug;
+            } else if (cSlug && validCats.indexOf(cSlug) !== -1) {
+              targetPath = '/shop/category/' + cSlug;
+            } else {
+              targetPath = '/shop';
+            }
+          }
+          var cur = 'https://dvds-zone.co.uk' + (targetPath === '/' ? '/' : targetPath);
+          if (cl) cl.href = cur;
+          var ag = document.querySelector('link[rel="alternate"][hreflang="en-GB"]'); if (ag) ag.href = cur;
+          var ax = document.querySelector('link[rel="alternate"][hreflang="x-default"]'); if (ax) ax.href = cur;
+          var ou = document.querySelector('meta[property="og:url"]'); if (ou) ou.setAttribute('content', cur);
+        }
       } catch (e) {}
     </script>
 
@@ -367,9 +385,9 @@
           </div>
           <nav style="display:flex;flex-wrap:wrap;gap:12px;font-size:13px;font-weight:600;">
             <a href="/shop" style="color:#2563eb;text-decoration:none;">Browse All DVDs</a>
-            <a href="/shop?category=tv-box-sets" style="color:#475569;text-decoration:none;">TV Box Sets</a>
-            <a href="/shop?category=film" style="color:#475569;text-decoration:none;">Films</a>
-            <a href="/shop?category=documentary-music" style="color:#475569;text-decoration:none;">Documentary &amp; Music</a>
+            <a href="/shop/category/tv-box-sets" style="color:#475569;text-decoration:none;">TV Box Sets</a>
+            <a href="/shop/category/film" style="color:#475569;text-decoration:none;">Films</a>
+            <a href="/shop/category/documentary-music" style="color:#475569;text-decoration:none;">Documentary &amp; Music</a>
             <a href="/delivery" style="color:#475569;text-decoration:none;">Delivery &amp; Returns</a>
             <a href="/about" style="color:#475569;text-decoration:none;">About DVDs Zone</a>
           </nav>
@@ -388,6 +406,24 @@
             <span>&#10003; Same-Day Dispatch</span>
             <span>&#10003; 30-Day Money Back Guarantee</span>
           </div>
+        </section>
+
+        <!-- Crawlable Genre & Category Landing Pages -->
+        <section style="margin-bottom:32px;">
+          <h2 style="font-size:20px;font-weight:800;color:#0f172a;margin-bottom:12px;">Shop DVDs &amp; Box Sets by Genre</h2>
+          <nav aria-label="DVD Genres" style="display:flex;flex-wrap:wrap;gap:10px;font-size:13px;font-weight:600;">
+            <a href="/shop/genre/drama" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Drama &amp; Crime DVDs</a>
+            <a href="/shop/genre/science-fiction" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Science Fiction DVDs</a>
+            <a href="/shop/genre/crime" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Crime &amp; Thriller DVDs</a>
+            <a href="/shop/genre/documentary" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Documentary DVDs</a>
+            <a href="/shop/genre/music" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Music &amp; Concerts DVDs</a>
+            <a href="/shop/genre/war" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">War &amp; Military DVDs</a>
+            <a href="/shop/genre/action" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Action &amp; Military DVDs</a>
+            <a href="/shop/genre/western" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Western &amp; Frontier DVDs</a>
+            <a href="/shop/genre/comedy" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Comedy &amp; Classics DVDs</a>
+            <a href="/shop/genre/historical" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Historical &amp; Faith DVDs</a>
+            <a href="/shop/genre/adventure" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Adventure DVDs</a>
+          </nav>
         </section>
 
         <!-- Featured Products Preview for Crawlers -->

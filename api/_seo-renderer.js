@@ -65,38 +65,183 @@ async function getStoreSettings() {
   return null;
 }
 const FALLBACK_PRODUCTS = [
-  { slug: 'star-wars-the-book-of-boba-fett-season-1', title: 'Star Wars: The Book of Boba Fett - The Complete First Season', format: 'Box Set', price: 14.99, cover_image_url: '/catalog/the-book-of-boba-fett-season-1.jpeg', description: 'Legendary bounty hunter Boba Fett and mercenary Fennec Shand navigate the galaxy underworld. Complete seven-episode first season.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'adventure', 'science-fiction'] },
-  { slug: 'star-wars-the-mandalorian-seasons-1-3', title: 'Star Wars: The Mandalorian - Seasons 1-3 Box Set', format: 'Box Set', price: 24.99, cover_image_url: '/catalog/the-mandalorian-seasons-1-3.jpeg', description: 'Din Djarin crosses the lawless reaches of the galaxy with his foundling Grogu. Complete collector box set containing all 24 episodes.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['action', 'adventure', 'science-fiction'] },
-  { slug: 'star-wars-the-mandalorian-seasons-1-2', title: 'Star Wars: The Mandalorian - Seasons 1 & 2', format: 'Box Set', price: 19.99, cover_image_url: '/catalog/the-mandalorian-seasons-1-2.jpeg', description: 'The first 16 chapters of Din Djarin and Grogu journey across the post-Empire outer rim in custom packaging.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 5, genres: ['action', 'adventure', 'science-fiction'] },
-  { slug: 'star-wars-the-mandalorian-season-3', title: 'Star Wars: The Mandalorian - Season 3', format: 'Box Set', price: 14.99, cover_image_url: '/catalog/the-mandalorian-season-3.jpeg', description: 'The journeys of the Mandalorian through the Star Wars galaxy continue as Din Djarin reunites with Grogu.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'adventure', 'science-fiction'] },
-  { slug: 'the-chosen-seasons-1-3', title: 'The Chosen: Complete Seasons 1-3 Collector Edition', format: 'Box Set', price: 21.99, cover_image_url: '/catalog/the-chosen-seasons-1-3.jpeg', description: 'The ground-breaking historical drama series chronicling the life of Jesus through the eyes of those who met him.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['drama', 'faith', 'historical'] },
-  { slug: 'greyhound-2020', title: 'Greyhound (2020)', format: 'DVD', price: 9.99, cover_image_url: '/catalog/greyhound.jpeg', description: 'Early in World War II, an inexperienced U.S. Navy captain must lead an Allied convoy being stalked by Nazi U-boat wolfpacks.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 6, genres: ['action', 'drama', 'war'] },
-  { slug: 'the-beatles-get-back', title: 'The Beatles: Get Back - 3-Disc Collector Edition', format: 'Box Set', price: 22.99, cover_image_url: '/catalog/the-beatles-get-back.jpeg', description: 'Peter Jackson documentary event chronicling the warmth, camaraderie and creative genius of The Beatles.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['documentary', 'music'] },
-  { slug: 'friends-the-reunion', title: 'Friends: The Reunion - Special Collector Edition', format: 'DVD', price: 8.99, cover_image_url: '/catalog/friends-the-reunion.jpeg', description: 'Jennifer Aniston, Courteney Cox, Lisa Kudrow, Matt LeBlanc, Matthew Perry, and David Schwimmer return to Stage 24.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 5, genres: ['comedy', 'documentary'] },
-  { slug: 'seal-team-season-5', title: 'SEAL Team - Season Five', format: 'Box Set', price: 15.99, cover_image_url: '/catalog/seal-team-season-5.jpeg', description: 'The elite Bravo Team embarks on clandestine high-stakes global operations across the globe.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'drama', 'war'] },
-  { slug: 'dutton-ranch-season-1', title: 'Dutton Ranch: Origins - Season One', format: 'Box Set', price: 16.99, cover_image_url: '/catalog/dutton-ranch-season-1.jpeg', description: 'The brutal generation of Duttons wrestling untamed Montana land against unforgiving wilderness and rivals.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['drama', 'western'] },
-  { slug: 'marshals-season-1', title: 'Marshals - Season One', format: 'Box Set', price: 14.99, cover_image_url: '/catalog/marshals-season-1.jpeg', description: 'Federal deputy marshals pursue the nation most wanted fugitives across jurisdictional borders.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'crime', 'drama', 'western'] },
+  { slug: 'star-wars-the-book-of-boba-fett-season-1', title: 'Star Wars: The Book of Boba Fett - The Complete First Season', format: 'Box Set', price: 14.99, compare_at_price: 24.99, is_new_release: true, is_best_seller: true, is_featured: true, category_slug: 'tv-box-sets', cover_image_url: '/catalog/the-book-of-boba-fett-season-1.jpeg', description: 'Legendary bounty hunter Boba Fett and mercenary Fennec Shand navigate the galaxy underworld. Complete seven-episode first season.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'adventure', 'science-fiction'] },
+  { slug: 'star-wars-the-mandalorian-seasons-1-3', title: 'Star Wars: The Mandalorian - Seasons 1-3 Box Set', format: 'Box Set', price: 24.99, compare_at_price: 39.99, is_new_release: true, is_best_seller: true, is_featured: true, category_slug: 'tv-box-sets', cover_image_url: '/catalog/the-mandalorian-seasons-1-3.jpeg', description: 'Din Djarin crosses the lawless reaches of the galaxy with his foundling Grogu. Complete collector box set containing all 24 episodes.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['action', 'adventure', 'science-fiction'] },
+  { slug: 'star-wars-the-mandalorian-seasons-1-2', title: 'Star Wars: The Mandalorian - Seasons 1 & 2', format: 'Box Set', price: 19.99, compare_at_price: 29.99, is_new_release: false, is_best_seller: true, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: '/catalog/the-mandalorian-seasons-1-2.jpeg', description: 'The first 16 chapters of Din Djarin and Grogu journey across the post-Empire outer rim in custom packaging.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 5, genres: ['action', 'adventure', 'science-fiction'] },
+  { slug: 'star-wars-the-mandalorian-season-3', title: 'Star Wars: The Mandalorian - Season 3', format: 'Box Set', price: 14.99, compare_at_price: 22.99, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: '/catalog/the-mandalorian-season-3.jpeg', description: 'The journeys of the Mandalorian through the Star Wars galaxy continue as Din Djarin reunites with Grogu.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'adventure', 'science-fiction'] },
+  { slug: 'the-chosen-seasons-1-3', title: 'The Chosen: Complete Seasons 1-3 Collector Edition', format: 'Box Set', price: 21.99, compare_at_price: 34.99, is_new_release: false, is_best_seller: true, is_featured: true, category_slug: 'tv-box-sets', cover_image_url: '/catalog/the-chosen-seasons-1-3.jpeg', description: 'The ground-breaking historical drama series chronicling the life of Jesus through the eyes of those who met him.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['drama', 'faith', 'historical'] },
+  { slug: 'greyhound-2020', title: 'Greyhound (2020)', format: 'DVD', price: 9.99, compare_at_price: 14.99, is_new_release: false, is_best_seller: true, is_featured: true, category_slug: 'film', cover_image_url: '/catalog/greyhound.jpeg', description: 'Early in World War II, an inexperienced U.S. Navy captain must lead an Allied convoy being stalked by Nazi U-boat wolfpacks.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 6, genres: ['action', 'drama', 'war'] },
+  { slug: 'the-beatles-get-back', title: 'The Beatles: Get Back - 3-Disc Collector Edition', format: 'Box Set', price: 22.99, compare_at_price: 32.99, is_new_release: false, is_best_seller: true, is_featured: true, category_slug: 'documentary-music', cover_image_url: '/catalog/the-beatles-get-back.jpeg', description: 'Peter Jackson documentary event chronicling the warmth, camaraderie and creative genius of The Beatles.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['documentary', 'music'] },
+  { slug: 'friends-the-reunion', title: 'Friends: The Reunion - Special Collector Edition', format: 'DVD', price: 8.99, compare_at_price: 14.99, is_new_release: false, is_best_seller: false, is_featured: false, category_slug: 'documentary-music', cover_image_url: '/catalog/friends-the-reunion.jpeg', description: 'Jennifer Aniston, Courteney Cox, Lisa Kudrow, Matt LeBlanc, Matthew Perry, and David Schwimmer return to Stage 24.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 5, genres: ['comedy', 'documentary'] },
+  { slug: 'seal-team-season-5', title: 'SEAL Team - Season Five', format: 'Box Set', price: 15.99, compare_at_price: 24.99, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: '/catalog/seal-team-season-5.jpeg', description: 'The elite Bravo Team embarks on clandestine high-stakes global operations across the globe.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'drama', 'war'] },
+  { slug: 'dutton-ranch-season-1', title: 'Dutton Ranch: Origins - Season One', format: 'Box Set', price: 16.99, compare_at_price: 26.99, is_new_release: true, is_best_seller: true, is_featured: true, category_slug: 'tv-box-sets', cover_image_url: '/catalog/dutton-ranch-season-1.jpeg', description: 'The brutal generation of Duttons wrestling untamed Montana land against unforgiving wilderness and rivals.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['drama', 'western'] },
+  { slug: 'marshals-season-1', title: 'Marshals - Season One', format: 'Box Set', price: 14.99, compare_at_price: 22.99, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: '/catalog/marshals-season-1.jpeg', description: 'Federal deputy marshals pursue the nation most wanted fugitives across jurisdictional borders.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'crime', 'drama', 'western'] },
 ];
 
 const FALLBACK_CATEGORIES = [
-  { slug: 'tv-box-sets', name: 'TV Box Sets' },
-  { slug: 'film', name: 'Film & Cinema' },
-  { slug: 'documentary-music', name: 'Documentary & Music' },
+  {
+    slug: 'tv-box-sets',
+    name: 'TV Box Sets',
+    description: 'Shop complete television series, multi-season anthology box sets, and collector editions on Region 2 UK DVD with free tracked Royal Mail delivery.',
+    introCopy: 'Explore our curated archive of complete television series and multi-disc collector box sets. From epic sci-fi sagas like Star Wars: The Mandalorian to frontier dramas and tactical military series, every box set is supplied in genuine UK-compatible packaging with same-day Royal Mail dispatch.',
+  },
+  {
+    slug: 'film',
+    name: 'Film & Cinema',
+    description: 'Buy theatrical feature films, wartime cinema, and modern blockbusters on physical DVD at DVDs Zone UK with 100% free UK delivery.',
+    introCopy: 'Browse our theatrical cinema catalogue featuring acclaimed feature films, World War II naval thrillers, and contemporary screen classics. Every DVD release is inspected for collector quality and dispatched from our UK warehouse with free Royal Mail delivery.',
+  },
+  {
+    slug: 'documentary-music',
+    name: 'Documentary & Music',
+    description: 'Discover music documentaries, historic studio sessions, and television reunion specials on physical DVD with free UK shipping at DVDs Zone.',
+    introCopy: 'Own definitive music documentaries, studio archive recordings, and landmark television specials on physical media. Featuring multi-disc collector editions such as Peter Jackson’s The Beatles: Get Back and Friends: The Reunion.',
+  },
 ];
 
 const DEFAULT_GENRES = [
-  { id: 'g-action', name: 'Action & Military', slug: 'action' },
-  { id: 'g-scifi', name: 'Science Fiction', slug: 'science-fiction' },
-  { id: 'g-drama', name: 'Drama & Crime', slug: 'drama' },
-  { id: 'g-war', name: 'War & Military', slug: 'war' },
-  { id: 'g-documentary', name: 'Documentary', slug: 'documentary' },
-  { id: 'g-music', name: 'Music & Concerts', slug: 'music' },
-  { id: 'g-western', name: 'Western & Frontier', slug: 'western' },
-  { id: 'g-crime', name: 'Crime & Thriller', slug: 'crime' },
-  { id: 'g-comedy', name: 'Comedy & Classics', slug: 'comedy' },
-  { id: 'g-historical', name: 'Historical & Faith', slug: 'historical' },
-  { id: 'g-adventure', name: 'Adventure', slug: 'adventure' },
+  {
+    id: 'g-action',
+    name: 'Action & Military',
+    slug: 'action',
+    description: 'Shop Action & Military DVDs and TV box sets at DVDs Zone UK. Browse tactical series, sci-fi adventures, and wartime thrillers with free UK delivery.',
+    introCopy: 'From elite covert military operations in SEAL Team and World War II Atlantic convoys in Greyhound to outer-rim bounty hunting in The Mandalorian, our Action & Military DVD collection delivers high-stakes physical cinema and complete multi-disc television seasons.',
+  },
+  {
+    id: 'g-scifi',
+    name: 'Science Fiction',
+    slug: 'science-fiction',
+    description: 'Buy Science Fiction DVDs and Star Wars TV box sets at DVDs Zone UK. Complete collector seasons on physical disc with 100% free UK delivery.',
+    introCopy: 'Journey across the galaxy with our Science Fiction DVD and TV box set archive. Featuring complete collector editions of Star Wars: The Mandalorian (Seasons 1–3) and The Book of Boba Fett, mastered for home theatre viewing without streaming compression.',
+  },
+  {
+    id: 'g-drama',
+    name: 'Drama & Crime',
+    slug: 'drama',
+    description: 'Explore Drama & Crime DVDs and complete TV series box sets at DVDs Zone UK. Critically acclaimed character dramas with free Royal Mail UK delivery.',
+    introCopy: 'Discover compelling storytelling in our Drama & Crime DVD collection. Spanning frontier family sagas like Dutton Ranch, historical multi-season epics like The Chosen, tense fugitive pursuits in Marshals, and naval wartime drama in Greyhound.',
+  },
+  {
+    id: 'g-war',
+    name: 'War & Military',
+    slug: 'war',
+    description: 'Shop War & Military DVDs and tactical television box sets at DVDs Zone UK. Authentic naval history and modern special-ops releases with free UK delivery.',
+    introCopy: 'Experience gripping military history and modern special-operations drama on physical DVD. Our War & Military shelf includes WWII Battle of the Atlantic thriller Greyhound (2020) and complete season box sets of SEAL Team.',
+  },
+  {
+    id: 'g-documentary',
+    name: 'Documentary',
+    slug: 'documentary',
+    description: 'Buy Documentary DVDs and collector box sets at DVDs Zone UK. Behind-the-scenes music history and television specials with free UK shipping.',
+    introCopy: 'Explore real-world stories, studio history, and iconic cast reunions in our Documentary DVD collection. Includes the 3-disc collector edition of Peter Jackson’s The Beatles: Get Back and Friends: The Reunion.',
+  },
+  {
+    id: 'g-music',
+    name: 'Music & Concerts',
+    slug: 'music',
+    description: 'Shop Music & Concerts DVDs and multi-disc collector editions at DVDs Zone UK. Iconic studio sessions and live performances with free UK delivery.',
+    introCopy: 'Relive legendary recording sessions and rooftop concert history on physical disc. Our Music & Concerts collection highlights The Beatles: Get Back 3-Disc Collector Edition with uncompressed studio audio and hours of restored footage.',
+  },
+  {
+    id: 'g-western',
+    name: 'Western & Frontier',
+    slug: 'western',
+    description: 'Explore Western & Frontier DVDs and neo-western TV box sets at DVDs Zone UK. Montana ranch sagas and lawman dramas with free UK delivery.',
+    introCopy: 'Saddle up for rugged frontier storytelling and modern neo-western television box sets. Featuring Dutton Ranch: Origins and federal fugitive drama Marshals Season One on Region 2 UK DVD.',
+  },
+  {
+    id: 'g-crime',
+    name: 'Crime & Thriller',
+    slug: 'crime',
+    description: 'Buy Crime & Thriller DVDs and law-enforcement TV box sets at DVDs Zone UK. High-tension fugitive investigations with 100% free UK delivery.',
+    introCopy: 'Follow high-stakes fugitive manhunts and cross-border investigations in our Crime & Thriller DVD collection, anchored by complete season box sets of Marshals.',
+  },
+  {
+    id: 'g-comedy',
+    name: 'Comedy & Classics',
+    slug: 'comedy',
+    description: 'Shop Comedy & Classics DVDs and collector reunion specials at DVDs Zone UK. Beloved television icons on physical DVD with free UK delivery.',
+    introCopy: 'Bring home timeless television laughs and cast retrospectives in our Comedy & Classics DVD section, including the Friends: The Reunion Special Collector Edition.',
+  },
+  {
+    id: 'g-historical',
+    name: 'Historical & Faith',
+    slug: 'historical',
+    description: 'Buy Historical & Faith DVDs and multi-season collector box sets at DVDs Zone UK. Acclaimed period drama series with free UK Royal Mail delivery.',
+    introCopy: 'Immerse yourself in richly detailed period storytelling with our Historical & Faith DVD collection, featuring The Chosen: Complete Seasons 1–3 Collector Edition.',
+  },
+  {
+    id: 'g-adventure',
+    name: 'Adventure',
+    slug: 'adventure',
+    description: 'Shop Adventure DVDs and action-packed TV series box sets at DVDs Zone UK. Epic galactic quests and collector sets with free UK delivery.',
+    introCopy: 'Embark on epic journeys across lawless frontiers and distant star systems with our Adventure DVD box sets, including the complete seasons of Star Wars: The Mandalorian and The Book of Boba Fett.',
+  },
 ];
+
+let catalogueCache = null;
+let catalogueCacheTime = 0;
+const CATALOGUE_CACHE_TTL = 5 * 60 * 1000;
+
+async function getCatalogueData() {
+  const now = Date.now();
+  if (catalogueCache && (now - catalogueCacheTime < CATALOGUE_CACHE_TTL)) {
+    return catalogueCache;
+  }
+
+  const db = getSupabasePublicClient();
+  let products = [];
+  let categories = [];
+
+  if (db) {
+    try {
+      const [prodRes, catRes] = await Promise.all([
+        db
+          .from('products')
+          .select('*, category:categories(id, name, slug), product_genres(genre:genres(id, name, slug))')
+          .eq('status', 'active'),
+        db.from('categories').select('*').eq('is_active', true),
+      ]);
+
+      if (prodRes.data && prodRes.data.length > 0) {
+        products = prodRes.data.map((p) => {
+          const dbGenres = Array.isArray(p.product_genres)
+            ? p.product_genres.map((pg) => pg?.genre?.slug).filter(Boolean)
+            : Array.isArray(p.genres)
+            ? p.genres.map((g) => (typeof g === 'string' ? g : g?.slug)).filter(Boolean)
+            : [];
+          const fallbackMatch = FALLBACK_PRODUCTS.find((fp) => fp.slug === p.slug);
+          return {
+            ...p,
+            category_slug: p.category?.slug || fallbackMatch?.category_slug || null,
+            genres: dbGenres.length > 0 ? dbGenres : (fallbackMatch?.genres || []),
+          };
+        });
+      }
+
+      if (catRes.data && catRes.data.length > 0) {
+        categories = catRes.data.map((c) => {
+          const fallbackCat = FALLBACK_CATEGORIES.find((fc) => fc.slug === c.slug);
+          return {
+            ...fallbackCat,
+            ...c,
+            description: c.description || fallbackCat?.description || `Browse complete ${c.name} DVDs and box sets at DVDs Zone UK.`,
+            introCopy: fallbackCat?.introCopy || c.description || `Explore genuine UK physical media releases in our ${c.name} collection.`,
+          };
+        });
+      }
+    } catch (err) {
+      console.error('[SEO] Catalogue database query error:', err.message);
+    }
+  }
+
+  if (products.length === 0) products = FALLBACK_PRODUCTS;
+  if (categories.length === 0) categories = FALLBACK_CATEGORIES;
+
+  catalogueCache = { products, categories, genres: DEFAULT_GENRES };
+  catalogueCacheTime = now;
+  return catalogueCache;
+}
 
 async function getProductBySlug(slug) {
   const now = Date.now();
@@ -138,26 +283,7 @@ export async function generateDynamicSitemap(baseUrl) {
     return sitemapCache;
   }
 
-  const db = getSupabasePublicClient();
-  let products = [];
-  let categories = [];
-
-  if (db) {
-    try {
-      const [prodRes, catRes] = await Promise.all([
-        db.from('products').select('slug, title, cover_image_url, updated_at').eq('status', 'active'),
-        db.from('categories').select('slug, is_active').eq('is_active', true),
-      ]);
-      if (prodRes.data && prodRes.data.length > 0) products = prodRes.data;
-      if (catRes.data && catRes.data.length > 0) categories = catRes.data;
-    } catch (err) {
-      console.error('[SEO] Sitemap database query error:', err.message);
-    }
-  }
-
-  if (products.length === 0) products = FALLBACK_PRODUCTS;
-  if (categories.length === 0) categories = FALLBACK_CATEGORIES;
-
+  const { products, categories, genres } = await getCatalogueData();
   const currentDate = new Date().toISOString().split('T')[0];
 
   const standardPages = [
@@ -187,20 +313,24 @@ export async function generateDynamicSitemap(baseUrl) {
     xml += `  </url>\n`;
   }
 
-  // Category Hubs
+  // Category Hubs (Clean canonical paths only — no parameterized URLs, non-empty only)
   for (const cat of categories) {
     if (!cat.slug) continue;
+    const hasProducts = products.some((p) => (p.category?.slug || p.category_slug) === cat.slug);
+    if (!hasProducts) continue;
     xml += `  <url>\n`;
-    xml += `    <loc>${escapeXml(`${baseUrl}/shop?category=${encodeURIComponent(cat.slug)}`)}</loc>\n`;
+    xml += `    <loc>${escapeXml(`${baseUrl}/shop/category/${encodeURIComponent(cat.slug)}`)}</loc>\n`;
     xml += `    <changefreq>weekly</changefreq>\n`;
     xml += `    <priority>0.85</priority>\n`;
     xml += `    <lastmod>${currentDate}</lastmod>\n`;
     xml += `  </url>\n`;
   }
 
-  // Dedicated Genre Landing Pages (Valuable persistent search targets)
-  for (const genre of DEFAULT_GENRES) {
+  // Dedicated Genre Landing Pages (Valuable persistent search targets, non-empty only)
+  for (const genre of genres) {
     if (!genre.slug) continue;
+    const hasProducts = products.some((p) => Array.isArray(p.genres) && p.genres.includes(genre.slug));
+    if (!hasProducts) continue;
     xml += `  <url>\n`;
     xml += `    <loc>${escapeXml(`${baseUrl}/shop/genre/${encodeURIComponent(genre.slug)}`)}</loc>\n`;
     xml += `    <changefreq>weekly</changefreq>\n`;
@@ -423,13 +553,16 @@ function generateHomeHtml(baseUrl, settings) {
     <main style="max-width:1200px;margin:0 auto;padding:40px 20px;font-family:system-ui,-apple-system,sans-serif;color:#1e293b;line-height:1.6;">
       <!-- Hero & Application Purpose Statement -->
       <section style="background:#0b0f19;color:#ffffff;padding:40px;border-radius:12px;margin-bottom:40px;border:1px solid rgba(255,255,255,0.1);">
-        <span style="display:inline-block;background:rgba(37,99,235,0.2);color:#60a5fa;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:15px;letter-spacing:1px;text-transform:uppercase;">UK Physical Media &amp; TV Box Sets Store</span>
+        <span style="display:inline-block;background:rgba(37,99,235,0.2);color:#60a5fa;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:15px;letter-spacing:1px;text-transform:uppercase;">UK Physical Media &amp; TV Box Sets Store &bull; DVD Zone / DVDs Zone</span>
         <h1 style="font-size:32px;font-weight:800;margin:0 0 15px 0;line-height:1.2;">DVDs Zone — DVD Movies &amp; TV Box Sets UK</h1>
         <p style="font-size:16px;color:#cbd5e1;max-width:850px;margin:0 0 20px 0;line-height:1.7;">
-          <strong>${escapeHtml(storeName)}</strong> (AZ Rayan DVDs / DVDs Zone, also known as DVD Zone UK) is an online retailer selling physical DVDs and TV box sets operated by <strong>${escapeHtml(companyName)}</strong> (Company Registered in England and Wales No. ${escapeHtml(companyNumber)}, active since 2021). We supply authentic UK DVD box sets, Blu-ray discs, and television series with 100% Free UK standard delivery via Royal Mail.
+          <strong>${escapeHtml(storeName)}</strong> (official UK store for <strong>DVD Zone</strong>, <strong>DVDs Zone</strong>, <strong>dvdzone</strong>, <strong>DVD Zone UK</strong>, <strong>DVDs Zone UK</strong>, and <strong>AZ Rayan DVDs</strong> at <a href="${baseUrl}" style="color:#60a5fa;">dvds-zone.co.uk</a>) is an online retailer selling physical DVDs and TV box sets operated by <strong>${escapeHtml(companyName)}</strong> (Company Registered in England and Wales No. ${escapeHtml(companyNumber)}, active since 2021). We supply authentic UK DVD box sets, Blu-ray discs, and television series with 100% Free UK standard delivery via Royal Mail.
         </p>
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
           <a href="${baseUrl}/shop" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none;">Browse Store Catalogue</a>
+          <a href="${baseUrl}/shop/category/tv-box-sets" style="display:inline-block;background:rgba(255,255,255,0.1);color:#ffffff;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none;">TV Box Sets</a>
+          <a href="${baseUrl}/shop/category/film" style="display:inline-block;background:rgba(255,255,255,0.1);color:#ffffff;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none;">Films</a>
+          <a href="${baseUrl}/shop/category/documentary-music" style="display:inline-block;background:rgba(255,255,255,0.1);color:#ffffff;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none;">Documentary &amp; Music</a>
           <a href="${baseUrl}/privacy" style="display:inline-block;background:rgba(255,255,255,0.1);color:#ffffff;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none;">View Privacy Policy</a>
         </div>
       </section>
@@ -456,9 +589,9 @@ function generateHomeHtml(baseUrl, settings) {
 
       <!-- Featured Catalogue Preview -->
       <section style="margin-bottom:40px;">
-        <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:20px;">Featured Physical Media Releases</h2>
+        <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:20px;">Featured Physical Media Releases at DVDs Zone (DVD Zone UK)</h2>
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:20px;">
-          ${FALLBACK_PRODUCTS.slice(0, 4).map(p => `
+          ${FALLBACK_PRODUCTS.map(p => `
             <article style="border:1px solid #e2e8f0;border-radius:8px;padding:15px;background:#ffffff;">
               <h3 style="font-size:15px;font-weight:700;margin:0 0 8px 0;"><a href="${baseUrl}/product/${p.slug}" style="color:#0f172a;text-decoration:none;">${escapeHtml(p.title)}</a></h3>
               <p style="font-size:13px;color:#64748b;margin:0 0 10px 0;">${escapeHtml(p.format)} &bull; ${escapeHtml(p.region_code)}</p>
@@ -468,14 +601,99 @@ function generateHomeHtml(baseUrl, settings) {
         </div>
       </section>
 
+      ${renderCatalogueTaxonomyLinks(baseUrl, FALLBACK_CATEGORIES, DEFAULT_GENRES)}
+
       <!-- Corporate Footer Details -->
-      <footer style="border-top:1px solid #e2e8f0;padding-top:25px;font-size:13px;color:#64748b;">
-        <p><strong>Operating Brand:</strong> ${escapeHtml(storeName)} (AZ Rayan DVDs / DVDs Zone) &bull; <strong>Operating Company:</strong> ${escapeHtml(companyName)} &bull; Registered in England and Wales No. ${escapeHtml(companyNumber)} &bull; Active since 2021</p>
+      <footer style="border-top:1px solid #e2e8f0;padding-top:25px;margin-top:28px;font-size:13px;color:#64748b;">
+        <p><strong>Operating Brand:</strong> ${escapeHtml(storeName)} (DVD Zone / DVDs Zone / AZ Rayan DVDs) &bull; <strong>Operating Company:</strong> ${escapeHtml(companyName)} &bull; Registered in England and Wales No. ${escapeHtml(companyNumber)} &bull; Active since 2021</p>
         <p>Official Website: <a href="${baseUrl}" style="color:#2563eb;">${baseUrl}</a> &bull; Support: <a href="mailto:${escapeHtml(supportEmail)}" style="color:#2563eb;">${escapeHtml(supportEmail)}</a> &bull; Phone: <a href="tel:${escapeHtml(supportPhone)}" style="color:#2563eb;">${escapeHtml(supportPhone)}</a></p>
         <p><a href="${baseUrl}/privacy" style="color:#2563eb;margin-right:15px;">Privacy Policy</a> <a href="${baseUrl}/terms" style="color:#2563eb;margin-right:15px;">Terms &amp; Conditions</a> <a href="${baseUrl}/about" style="color:#2563eb;">About Us</a></p>
       </footer>
     </main>
   `;
+}
+
+function replaceRootHtml(html, newRootHtml) {
+  const fullBodyRootRegex = /<div id="root">[\s\S]*<\/div>(?=\s*(?:<script\b|<\/body>))/i;
+  if (fullBodyRootRegex.test(html)) {
+    return html.replace(fullBodyRootRegex, newRootHtml);
+  }
+  return html.replace(/<div id="root">[\s\S]*?<\/div>/i, newRootHtml);
+}
+
+function applyMetaAndCanonical(html, { title, description, canonicalUrl, imageUrl, noIndex = false }) {
+  let out = html;
+  if (title) {
+    out = out.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+    out = out.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
+    out = out.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(title)}" />`);
+  }
+  if (description) {
+    out = out.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+    out = out.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
+    out = out.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(description)}" />`);
+  }
+  if (noIndex) {
+    out = out.replace(/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="noindex, nofollow" />`);
+    out = out.replace(/<meta\s+name="googlebot"\s+content="[^"]*"\s*\/?>/i, `<meta name="googlebot" content="noindex, nofollow" />`);
+    out = out.replace(/<link\s+rel="alternate"\s+hreflang="[^"]*"\s+href="[^"]*"\s*\/?>\s*/gi, '');
+  }
+  if (canonicalUrl) {
+    out = out.replace(
+      /<link\s+rel="canonical"\s+href="[^"]*"(?:\s+data-ssr="[^"]*")?\s*\/?>/i,
+      `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" data-ssr="true" />`
+    );
+    out = out.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+    if (!noIndex) {
+      out = out.replace(
+        /<link\s+rel="alternate"\s+hreflang="en-GB"\s+href="[^"]*"\s*\/?>/i,
+        `<link rel="alternate" hreflang="en-GB" href="${escapeHtml(canonicalUrl)}" />`
+      );
+      out = out.replace(
+        /<link\s+rel="alternate"\s+hreflang="x-default"\s+href="[^"]*"\s*\/?>/i,
+        `<link rel="alternate" hreflang="x-default" href="${escapeHtml(canonicalUrl)}" />`
+      );
+    }
+  }
+  if (imageUrl) {
+    out = out.replace(/<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:image" content="${escapeHtml(imageUrl)}" />`);
+    out = out.replace(/<meta\s+name="twitter:image"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:image" content="${escapeHtml(imageUrl)}" />`);
+  }
+  return out;
+}
+
+function normalizeFormatValue(fmt) {
+  return String(fmt || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function renderCatalogueTaxonomyLinks(baseUrl, categories, genres) {
+  const catLinks = categories
+    .map(
+      (c) =>
+        `<a href="${baseUrl}/shop/category/${encodeURIComponent(c.slug)}" style="padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">${escapeHtml(c.name)}</a>`
+    )
+    .join('\n                  ');
+  const genreLinks = genres
+    .map(
+      (g) =>
+        `<a href="${baseUrl}/shop/genre/${encodeURIComponent(g.slug)}" style="padding:5px 10px;border:1px solid #e2e8f0;border-radius:6px;color:#334155;text-decoration:none;background:#ffffff;">${escapeHtml(g.name)}</a>`
+    )
+    .join('\n                  ');
+  return `
+                <section style="margin-top:32px;padding-top:24px;border-top:1px solid #e2e8f0;">
+                  <h2 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 10px 0;">Browse Categories</h2>
+                  <nav aria-label="Categories" style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px;font-weight:600;margin-bottom:20px;">
+                  ${catLinks}
+                  </nav>
+                  <h2 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 10px 0;">Browse Genres</h2>
+                  <nav aria-label="Genres" style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px;font-weight:600;">
+                  ${genreLinks}
+                  </nav>
+                </section>`;
 }
 
 export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zone.co.uk') {
@@ -557,28 +775,14 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
           </div>
         `.trim();
 
-        // Replace Title
-        modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-        // Replace Meta Description
-        modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-        // Replace Canonical
-        modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-        // Replace OpenGraph
-        modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
-        modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
-        modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
-        modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:image" content="${escapeHtml(imageUrl)}" />`);
-        // Replace Twitter
-        modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(title)}" />`);
-        modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(description)}" />`);
-        modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:image"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:image" content="${escapeHtml(imageUrl)}" />`);
+        modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl, imageUrl });
 
         // Inject Product Schema JSON-LD before </head>
         const schemaScript = `\n    <script type="application/ld+json" id="server-product-schema">\n    ${JSON.stringify(productSchema)}\n    </script>\n`;
         modifiedHtml = modifiedHtml.replace('</head>', `${schemaScript}</head>`);
 
         // Inject Crawler fallback in root
-        modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, crawlerFallback);
+        modifiedHtml = replaceRootHtml(modifiedHtml, crawlerFallback);
 
         return new SeoResponse(modifiedHtml, 200);
       } else {
@@ -586,12 +790,8 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
         const title = `Product Not Found | ${storeName}`;
         const description = `The requested DVD release or TV box set could not be found in our catalogue. Browse our complete collection at ${storeName}.`;
         const canonicalUrl = `${baseUrl}/shop`;
-        modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-        modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-        modifiedHtml = modifiedHtml.replace(/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="noindex, nofollow" />`);
-        modifiedHtml = modifiedHtml.replace(/<meta\s+name="googlebot"\s+content="[^"]*"\s*\/?>/i, `<meta name="googlebot" content="noindex, nofollow" />`);
-        modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-        modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `
+        modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl, noIndex: true });
+        modifiedHtml = replaceRootHtml(modifiedHtml, `
           <div id="root">
             <main style="max-width:800px;margin:50px auto;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif;">
               <h1 style="font-size:28px;font-weight:800;color:#0f172a;margin-bottom:12px;">Product Not Found</h1>
@@ -604,8 +804,9 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
       }
     }
 
-    // 2. SHOP CATALOGUE, CATEGORY & DEDICATED GENRE ROUTES: /shop, /shop/genre/:genre, /shop/:category
+    // 2. SHOP CATALOGUE, CATEGORY & DEDICATED GENRE ROUTES: /shop, /shop/genre/:genre, /shop/category/:category
     if (pathname === '/shop' || pathname.startsWith('/shop/')) {
+      const { products: catalogueProducts, categories: catalogueCategories, genres: catalogueGenres } = await getCatalogueData();
       const isGenrePath = pathname.startsWith('/shop/genre/');
       const hasGenreQuery = urlObj.searchParams.has('genre');
 
@@ -617,19 +818,15 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
           genreSlug = urlObj.searchParams.get('genre') || '';
         }
 
-        const genre = genreSlug ? DEFAULT_GENRES.find((g) => g.slug === genreSlug || g.id === genreSlug) : null;
+        const genre = genreSlug ? catalogueGenres.find((g) => g.slug === genreSlug || g.id === genreSlug) : null;
 
         if (isGenrePath && !genre) {
           // Genuine 404 for nonexistent/invalid genre route (e.g. /shop/genre/non-existent-genre)
           const title = `Genre Not Found | ${storeName}`;
           const description = `The requested genre collection could not be found. Browse our complete DVD catalogue at ${storeName}.`;
           const canonicalUrl = `${baseUrl}/shop`;
-          modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-          modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-          modifiedHtml = modifiedHtml.replace(/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="noindex, nofollow" />`);
-          modifiedHtml = modifiedHtml.replace(/<meta\s+name="googlebot"\s+content="[^"]*"\s*\/?>/i, `<meta name="googlebot" content="noindex, nofollow" />`);
-          modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-          modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `
+          modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl, noIndex: true });
+          modifiedHtml = replaceRootHtml(modifiedHtml, `
             <div id="root">
               <main style="max-width:800px;margin:50px auto;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif;">
                 <h1 style="font-size:28px;font-weight:800;color:#0f172a;margin-bottom:12px;">Genre Not Found</h1>
@@ -643,21 +840,29 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
 
         if (genre) {
           const title = `${genre.name} DVDs & TV Box Sets | ${storeName} UK`;
-          const description = `Explore our collection of ${genre.name} DVDs and TV box sets at ${storeName}. Discover genuine physical media releases with 100% free UK delivery.`;
+          const description = genre.description || `Explore our collection of ${genre.name} DVDs and TV box sets at ${storeName}. Discover genuine physical media releases with 100% free UK delivery.`;
+          const introCopy = genre.introCopy || description;
           // Clean persistent canonical URL for both /shop/genre/:slug and parameterized /shop?genre=:slug
           const canonicalUrl = `${baseUrl}/shop/genre/${encodeURIComponent(genre.slug)}`;
 
-          modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-          modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-          modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-          modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
-          modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
-          modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
-          modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(title)}" />`);
-          modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(description)}" />`);
+          modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
 
-          // Matching products for this genre
-          const matchingProducts = FALLBACK_PRODUCTS.filter(p => Array.isArray(p.genres) && p.genres.includes(genre.slug));
+          // Matching database/fallback products for this genre (plus any secondary functional filters)
+          const filterParam = urlObj.searchParams.get('filter') || 'all';
+          const formatParam = urlObj.searchParams.get('format') || 'all';
+          const maxPriceQuery = urlObj.searchParams.get('max_price') || urlObj.searchParams.get('maxPrice');
+          const maxPriceVal = maxPriceQuery !== null && maxPriceQuery !== '' ? Number(maxPriceQuery) : null;
+          const matchingProducts = catalogueProducts.filter((p) => {
+            const matchesGenre = Array.isArray(p.genres) && p.genres.some((g) => (typeof g === 'string' ? g === genre.slug : g?.slug === genre.slug));
+            if (!matchesGenre) return false;
+            if (formatParam !== 'all' && normalizeFormatValue(p.format) !== normalizeFormatValue(formatParam)) return false;
+            if (filterParam === 'new' && !p.is_new_release) return false;
+            if (filterParam === 'bestseller' && !p.is_best_seller) return false;
+            if (filterParam === 'trending' && !p.is_best_seller && !p.is_featured) return false;
+            if (filterParam === 'sale' && (!p.compare_at_price || Number(p.compare_at_price) <= Number(p.price))) return false;
+            if (maxPriceVal !== null && !Number.isNaN(maxPriceVal) && Number(p.price) > maxPriceVal) return false;
+            return true;
+          });
 
           // Schema.org CollectionPage + BreadcrumbList
           const genreSchema = [
@@ -697,8 +902,8 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
           const productsHtml = matchingProducts.map(p => `
             <article style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#ffffff;">
               <h3 style="font-size:15px;font-weight:700;margin:0 0 6px 0;"><a href="${baseUrl}/product/${p.slug}" style="color:#0f172a;text-decoration:none;">${escapeHtml(p.title)}</a></h3>
-              <p style="font-size:13px;color:#64748b;margin:0 0 10px 0;">${escapeHtml(p.format)} &bull; ${escapeHtml(p.region_code)}</p>
-              <p style="font-size:16px;font-weight:800;color:#2563eb;margin:0;">&pound;${p.price.toFixed(2)} <span style="font-size:12px;color:#16a34a;font-weight:600;">Free UK Delivery</span></p>
+              <p style="font-size:13px;color:#64748b;margin:0 0 10px 0;">${escapeHtml(p.format || 'DVD')} &bull; ${escapeHtml(p.region_code || 'Region 2 (UK/Europe)')}</p>
+              <p style="font-size:16px;font-weight:800;color:#2563eb;margin:0;">&pound;${Number(p.price).toFixed(2)} <span style="font-size:12px;color:#16a34a;font-weight:600;">Free UK Delivery</span></p>
             </article>
           `).join('');
 
@@ -713,7 +918,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
                 <header style="margin-bottom:24px;">
                   <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:#2563eb;text-transform:uppercase;">Genre Collection</span>
                   <h1 style="font-size:30px;font-weight:900;color:#0f172a;margin:6px 0 10px 0;">${escapeHtml(genre.name)} DVDs &amp; TV Box Sets UK</h1>
-                  <p style="font-size:15px;color:#475569;max-width:800px;line-height:1.6;">${escapeHtml(description)}</p>
+                  <p style="font-size:15px;color:#475569;max-width:850px;line-height:1.6;">${escapeHtml(introCopy)}</p>
                 </header>
                 <section>
                   <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin-bottom:16px;">Available Releases (${matchingProducts.length})</h2>
@@ -721,50 +926,186 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
                     ${productsHtml}
                   </div>
                 </section>
+                ${renderCatalogueTaxonomyLinks(baseUrl, catalogueCategories, catalogueGenres)}
               </main>
             </div>
           `.trim();
 
-          modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, genreCrawlerHtml);
+          modifiedHtml = replaceRootHtml(modifiedHtml, genreCrawlerHtml);
           return new SeoResponse(modifiedHtml, 200);
         }
       }
 
-      // Check for category
+      // Check for category route (/shop/category/:slug or /shop?category=:slug)
+      const isCategoryPath = pathname.startsWith('/shop/category/');
       let categorySlug = urlObj.searchParams.get('category');
-      if (!categorySlug && pathname.startsWith('/shop/category/')) {
+      if (!categorySlug && isCategoryPath) {
         categorySlug = pathname.replace(/^\/shop\/category\//, '').replace(/\/$/, '');
       } else if (!categorySlug && pathname.startsWith('/shop/') && !pathname.startsWith('/shop/genre/')) {
         categorySlug = pathname.replace(/^\/shop\//, '').replace(/\/$/, '');
       }
 
-      const category = categorySlug
-        ? (FALLBACK_CATEGORIES.find((c) => c.slug === categorySlug) || {
-            name: categorySlug.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-            slug: categorySlug,
-          })
-        : null;
+      const category = categorySlug ? catalogueCategories.find((c) => c.slug === categorySlug) : null;
 
-      let title, description, canonicalUrl;
-      if (category) {
-        title = `${category.name} DVDs & TV Box Sets | ${storeName} UK`;
-        description = `Browse our collection of ${category.name} DVDs and TV box sets at ${storeName}. Free UK delivery with same-day dispatch via Royal Mail.`;
-        canonicalUrl = `${baseUrl}/shop?category=${encodeURIComponent(category.slug)}`;
-      } else {
-        // General shop catalogue (and all functional query parameter URLs: ?max_price=..., ?filter=..., ?format=..., ?sort=...)
-        title = `DVD Movies & TV Box Sets UK Catalogue | ${storeName}`;
-        description = `Shop DVDs and TV box sets at ${storeName}. Explore our collection of physical entertainment releases with UK delivery options.`;
-        canonicalUrl = `${baseUrl}/shop`;
+      if ((isCategoryPath || (pathname.startsWith('/shop/') && !pathname.startsWith('/shop/genre/'))) && !category) {
+        const title = `Category Not Found | ${storeName}`;
+        const description = `The requested DVD category could not be found. Browse our complete physical media catalogue at ${storeName}.`;
+        const canonicalUrl = `${baseUrl}/shop`;
+        modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl, noIndex: true });
+        modifiedHtml = replaceRootHtml(modifiedHtml, `
+          <div id="root">
+            <main style="max-width:800px;margin:50px auto;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif;">
+              <h1 style="font-size:28px;font-weight:800;color:#0f172a;margin-bottom:12px;">Category Not Found</h1>
+              <p style="color:#64748b;margin-bottom:24px;">The DVD category you are looking for is unavailable.</p>
+              <a href="${baseUrl}/shop" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 24px;border-radius:8px;font-weight:600;text-decoration:none;">Browse Full DVD Catalogue</a>
+            </main>
+          </div>
+        `.trim());
+        return new SeoResponse(modifiedHtml, 404);
       }
 
-      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(title)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(description)}" />`);
+      if (category) {
+        const title = `${category.name} DVDs & TV Box Sets | ${storeName} UK`;
+        const description = category.description || `Browse our collection of ${category.name} DVDs and TV box sets at ${storeName}. Free UK delivery with same-day dispatch via Royal Mail.`;
+        const introCopy = category.introCopy || description;
+        const canonicalUrl = `${baseUrl}/shop/category/${encodeURIComponent(category.slug)}`;
+
+        modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
+
+        const matchingProducts = catalogueProducts.filter(
+          (p) => (p.category?.slug || p.category_slug) === category.slug
+        );
+
+        const categorySchema = [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: `${category.name} DVDs & TV Box Sets`,
+            description: description,
+            url: canonicalUrl,
+            mainEntity: {
+              '@type': 'ItemList',
+              numberOfItems: matchingProducts.length,
+              itemListElement: matchingProducts.map((p, idx) => ({
+                '@type': 'ListItem',
+                position: idx + 1,
+                name: p.title,
+                url: `${baseUrl}/product/${p.slug}`,
+                image: `${baseUrl}${p.cover_image_url.startsWith('/') ? '' : '/'}${p.cover_image_url}`,
+              })),
+            },
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${baseUrl}/` },
+              { '@type': 'ListItem', position: 2, name: 'Catalogue', item: `${baseUrl}/shop` },
+              { '@type': 'ListItem', position: 3, name: category.name, item: canonicalUrl },
+            ],
+          },
+        ];
+
+        const schemaScript = `\n    <script type="application/ld+json" id="server-category-schema">\n    ${JSON.stringify(categorySchema)}\n    </script>\n`;
+        modifiedHtml = modifiedHtml.replace('</head>', `${schemaScript}</head>`);
+
+        const productsHtml = matchingProducts.map(p => `
+          <article style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#ffffff;">
+            <h3 style="font-size:15px;font-weight:700;margin:0 0 6px 0;"><a href="${baseUrl}/product/${p.slug}" style="color:#0f172a;text-decoration:none;">${escapeHtml(p.title)}</a></h3>
+            <p style="font-size:13px;color:#64748b;margin:0 0 10px 0;">${escapeHtml(p.format || 'DVD')} &bull; ${escapeHtml(p.region_code || 'Region 2 (UK/Europe)')}</p>
+            <p style="font-size:16px;font-weight:800;color:#2563eb;margin:0;">&pound;${Number(p.price).toFixed(2)} <span style="font-size:12px;color:#16a34a;font-weight:600;">Free UK Delivery</span></p>
+          </article>
+        `).join('');
+
+        const categoryCrawlerHtml = `
+          <div id="root">
+            <main style="max-width:1100px;margin:30px auto;padding:0 20px;font-family:system-ui,-apple-system,sans-serif;">
+              <nav aria-label="Breadcrumb" style="font-size:13px;color:#64748b;margin-bottom:16px;">
+                <a href="${baseUrl}/" style="color:#2563eb;text-decoration:none;">Home</a> &gt;
+                <a href="${baseUrl}/shop" style="color:#2563eb;text-decoration:none;">Catalogue</a> &gt;
+                <span>${escapeHtml(category.name)}</span>
+              </nav>
+              <header style="margin-bottom:24px;">
+                <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:#2563eb;text-transform:uppercase;">Category Collection</span>
+                <h1 style="font-size:30px;font-weight:900;color:#0f172a;margin:6px 0 10px 0;">${escapeHtml(category.name)} DVDs &amp; TV Box Sets UK</h1>
+                <p style="font-size:15px;color:#475569;max-width:850px;line-height:1.6;">${escapeHtml(introCopy)}</p>
+              </header>
+              <section>
+                <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin-bottom:16px;">Available Releases (${matchingProducts.length})</h2>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:16px;">
+                  ${productsHtml}
+                </div>
+              </section>
+              ${renderCatalogueTaxonomyLinks(baseUrl, catalogueCategories, catalogueGenres)}
+            </main>
+          </div>
+        `.trim();
+
+        modifiedHtml = replaceRootHtml(modifiedHtml, categoryCrawlerHtml);
+        return new SeoResponse(modifiedHtml, 200);
+      }
+
+      // General shop catalogue (and all functional query parameter URLs: ?max_price=..., ?filter=..., ?format=..., ?sort=...)
+      const title = `DVD Movies & TV Box Sets UK Catalogue | ${storeName}`;
+      const description = `Shop DVDs and TV box sets at ${storeName}. Explore our collection of physical entertainment releases with UK delivery options.`;
+      const canonicalUrl = `${baseUrl}/shop`;
+
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
+
+      // Apply functional filters to SSR product list so rendered HTML reflects the active filter while canonicalizing to /shop
+      const filterParam = urlObj.searchParams.get('filter') || 'all';
+      const formatParam = urlObj.searchParams.get('format') || 'all';
+      const maxPriceQuery = urlObj.searchParams.get('max_price') || urlObj.searchParams.get('maxPrice');
+      const maxPriceVal = maxPriceQuery !== null && maxPriceQuery !== '' ? Number(maxPriceQuery) : null;
+      const searchQuery = (urlObj.searchParams.get('search') || urlObj.searchParams.get('q') || '').trim().toLowerCase();
+
+      const matchingShopProducts = catalogueProducts.filter((p) => {
+        if (formatParam !== 'all' && normalizeFormatValue(p.format) !== normalizeFormatValue(formatParam)) {
+          return false;
+        }
+        if (filterParam === 'new' && !p.is_new_release) return false;
+        if (filterParam === 'bestseller' && !p.is_best_seller) return false;
+        if (filterParam === 'trending' && !p.is_best_seller && !p.is_featured) return false;
+        if (filterParam === 'sale' && (!p.compare_at_price || Number(p.compare_at_price) <= Number(p.price))) return false;
+        if (maxPriceVal !== null && !Number.isNaN(maxPriceVal) && Number(p.price) > maxPriceVal) return false;
+        if (searchQuery && !String(p.title || '').toLowerCase().includes(searchQuery) && !String(p.description || '').toLowerCase().includes(searchQuery)) {
+          return false;
+        }
+        return true;
+      });
+
+      const shopProductsHtml = matchingShopProducts.map(p => `
+        <article style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#ffffff;">
+          <h3 style="font-size:15px;font-weight:700;margin:0 0 6px 0;"><a href="${baseUrl}/product/${p.slug}" style="color:#0f172a;text-decoration:none;">${escapeHtml(p.title)}</a></h3>
+          <p style="font-size:13px;color:#64748b;margin:0 0 10px 0;">${escapeHtml(p.format || 'DVD')} &bull; ${escapeHtml(p.region_code || 'Region 2 (UK/Europe)')}</p>
+          <p style="font-size:16px;font-weight:800;color:#2563eb;margin:0;">&pound;${Number(p.price).toFixed(2)} <span style="font-size:12px;color:#16a34a;font-weight:600;">Free UK Delivery</span></p>
+        </article>
+      `).join('');
+
+      const shopCrawlerHtml = `
+        <div id="root">
+          <main style="max-width:1100px;margin:30px auto;padding:0 20px;font-family:system-ui,-apple-system,sans-serif;">
+            <nav aria-label="Breadcrumb" style="font-size:13px;color:#64748b;margin-bottom:16px;">
+              <a href="${baseUrl}/" style="color:#2563eb;text-decoration:none;">Home</a> &gt;
+              <span>Catalogue</span>
+            </nav>
+            <header style="margin-bottom:24px;">
+              <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:#2563eb;text-transform:uppercase;">${escapeHtml(storeName)} Catalogue</span>
+              <h1 style="font-size:30px;font-weight:900;color:#0f172a;margin:6px 0 10px 0;">DVD Movies &amp; TV Box Sets UK Catalogue</h1>
+              <p style="font-size:15px;color:#475569;max-width:850px;line-height:1.6;">Browse our complete UK catalogue of genuine Region 2 DVDs, multi-season television box sets, and collector editions with 100% free tracked Royal Mail delivery.</p>
+            </header>
+            <section>
+              <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin-bottom:16px;">Available Releases (${matchingShopProducts.length})</h2>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:16px;">
+                ${shopProductsHtml}
+              </div>
+            </section>
+            ${renderCatalogueTaxonomyLinks(baseUrl, catalogueCategories, catalogueGenres)}
+          </main>
+        </div>
+      `.trim();
+
+      modifiedHtml = replaceRootHtml(modifiedHtml, shopCrawlerHtml);
       return new SeoResponse(modifiedHtml, 200);
     }
 
@@ -773,12 +1114,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
       const title = `About ${storeName} — UK Physical Media Store | AZ Rayan DVDs`;
       const description = `Learn about ${storeName} (operated by ${companyName}, Company No. ${companyNumber}, UK). Specialising in genuine DVDs, TV box sets, and physical entertainment with free UK delivery.`;
       const canonicalUrl = `${baseUrl}/about`;
-      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
       return new SeoResponse(modifiedHtml, 200);
     }
 
@@ -786,12 +1122,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
       const title = `Contact ${storeName} — UK Customer Support & Order Assistance`;
       const description = `Contact ${storeName} customer support. Email: ${supportEmail}. Phone: ${supportPhone}. Fast assistance for orders, dispatch, and returns.`;
       const canonicalUrl = `${baseUrl}/contact`;
-      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
       return new SeoResponse(modifiedHtml, 200);
     }
 
@@ -799,12 +1130,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
       const title = `Delivery Information — 100% Free UK Delivery | ${storeName}`;
       const description = `All orders qualify for 100% free standard UK delivery via Royal Mail. Dispatched same day before 2:00 PM GMT, delivered within 2 working days.`;
       const canonicalUrl = `${baseUrl}/delivery`;
-      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
       return new SeoResponse(modifiedHtml, 200);
     }
 
@@ -812,12 +1138,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
       const title = `30-Day Returns Policy & Money Back Guarantee | ${storeName}`;
       const description = `${storeName} 30-Day Returns Policy. Faulty disc or damaged in transit? Enjoy fast UK replacements or full refunds within 3 working days.`;
       const canonicalUrl = `${baseUrl}/returns`;
-      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
       return new SeoResponse(modifiedHtml, 200);
     }
 
@@ -825,12 +1146,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
       const title = `Frequently Asked Questions — DVDs, Delivery & Orders | ${storeName}`;
       const description = `Answers to common questions about Region 2 UK DVD formats, free Royal Mail delivery times, secure payments, and returns at ${storeName}.`;
       const canonicalUrl = `${baseUrl}/faq`;
-      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
       return new SeoResponse(modifiedHtml, 200);
     }
 
@@ -838,9 +1154,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
       const title = `Terms & Conditions — ${storeName} UK`;
       const description = `Terms and conditions for purchasing physical media DVDs and box sets from ${storeName} (${companyName}).`;
       const canonicalUrl = `${baseUrl}/terms`;
-      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
       return new SeoResponse(modifiedHtml, 200);
     }
 
@@ -848,9 +1162,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
       const title = `Refund Policy — ${storeName} UK`;
       const description = `Statutory 30-day refund and return policy for physical media orders at ${storeName}.`;
       const canonicalUrl = `${baseUrl}/refund-policy`;
-      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
       return new SeoResponse(modifiedHtml, 200);
     }
 
@@ -859,11 +1171,8 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
       const description = `Comprehensive Privacy Policy for ${storeName} operated by ${companyName}. Detailed disclosures for Google OAuth 2.0 user data, limited use compliance, and UK GDPR statutory rights.`;
       const canonicalUrl = `${baseUrl}/privacy`;
 
-      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `<div id="root">${generatePrivacyHtml(baseUrl, settings)}</div>`);
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, { title, description, canonicalUrl });
+      modifiedHtml = replaceRootHtml(modifiedHtml, `<div id="root">${generatePrivacyHtml(baseUrl, settings)}</div>`);
       return new SeoResponse(modifiedHtml, 200);
     }
 
@@ -883,33 +1192,34 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
       pathname.startsWith('/reset-password');
 
     if (isPrivate) {
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="noindex, nofollow" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="googlebot"\s+content="[^"]*"\s*\/?>/i, `<meta name="googlebot" content="noindex, nofollow" />`);
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, { noIndex: true });
       return new SeoResponse(modifiedHtml, 200);
     }
 
     // 5. HOMEPAGE ROUTE: / (Application Purpose & Public Storefront)
     if (pathname === '/' || pathname === '') {
-      const homeTitle = settings?.seo_site_title || 'DVDs Zone | DVD Movies & TV Box Sets UK';
-      const homeDescription = settings?.seo_site_description || 'Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options.';
+      const homeTitle =
+        settings?.seo_site_title && /dvds?\s*zone/i.test(settings.seo_site_title)
+          ? settings.seo_site_title
+          : 'DVDs Zone | DVD Movies & TV Box Sets UK';
+      const homeDescription =
+        settings?.seo_site_description && /dvds?\s*zone/i.test(settings.seo_site_description)
+          ? settings.seo_site_description
+          : 'Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options.';
 
-      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(homeTitle)}</title>`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(homeDescription)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(baseUrl)}/" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(homeTitle)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(homeDescription)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(baseUrl)}/" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(homeTitle)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(homeDescription)}" />`);
-      modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `<div id="root">${generateHomeHtml(baseUrl, settings)}</div>`);
+      modifiedHtml = applyMetaAndCanonical(modifiedHtml, {
+        title: homeTitle,
+        description: homeDescription,
+        canonicalUrl: `${baseUrl}/`,
+      });
+      modifiedHtml = replaceRootHtml(modifiedHtml, `<div id="root">${generateHomeHtml(baseUrl, settings)}</div>`);
       return new SeoResponse(modifiedHtml, 200);
     }
 
     // 6. OTHER PUBLIC ROUTES: normalize canonical URL dynamically
     const cleanPath = pathname === '/' ? '/' : pathname.replace(/\/$/, '');
     const canonicalUrl = `${baseUrl}${cleanPath}`;
-    modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
-    modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+    modifiedHtml = applyMetaAndCanonical(modifiedHtml, { canonicalUrl });
 
     // Global dynamic replacements to ensure no hardcoded legacy contacts persist
     if (baseUrl && baseUrl !== 'https://dvds-zone.co.uk') {

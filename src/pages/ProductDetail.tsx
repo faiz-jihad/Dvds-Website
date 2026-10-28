@@ -193,7 +193,7 @@ export const ProductDetail: React.FC = () => {
                       '@type': 'ListItem',
                       position: 3,
                       name: product.category.name,
-                      item: toAbsoluteUrl(`/shop?category=${product.category.slug}`),
+                      item: toAbsoluteUrl(`/shop/category/${product.category.slug}`),
                     },
                     {
                       '@type': 'ListItem',
@@ -223,7 +223,7 @@ export const ProductDetail: React.FC = () => {
           {product.category?.name && (
             <>
               <span>/</span>
-              <Link to={`/shop?category=${product.category.slug}`} className="hover:text-dark dark:hover:text-white transition-colors">
+              <Link to={`/shop/category/${product.category.slug}`} className="hover:text-dark dark:hover:text-white transition-colors">
                 {product.category.name}
               </Link>
             </>
@@ -496,6 +496,20 @@ export const ProductDetail: React.FC = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-normal whitespace-pre-line">
                   {product.description}
                 </p>
+                {product.genres && product.genres.length > 0 && (
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Genres:</span>
+                    {product.genres.map((g) => (
+                      <Link
+                        key={g.id || g.slug}
+                        to={`/shop/genre/${g.slug}`}
+                        className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-white/10 text-dark dark:text-gray-200 hover:bg-brand-blue hover:text-white transition-colors"
+                      >
+                        {g.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Technical & Product Specs */}

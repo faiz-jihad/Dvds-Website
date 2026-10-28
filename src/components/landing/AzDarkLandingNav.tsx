@@ -33,10 +33,9 @@ import { cn } from '../../lib/formatters';
 
 const DEFAULT_CATEGORY_OPTIONS = [
   { label: 'All Categories', slug: 'all', href: '/shop', icon: Film, desc: 'Full physical catalogue' },
-  { label: 'Film', slug: 'film', href: '/shop?category=film', icon: Film, desc: 'Blockbusters & cinema releases' },
-  { label: 'TV Box Sets', slug: 'tv-box-sets', href: '/shop?category=tv-box-sets', icon: Tv, desc: 'Complete television seasons' },
-  { label: 'Documentary & Music', slug: 'documentary-music', href: '/shop?category=documentary-music', icon: Disc, desc: 'Music & historical archives' },
-  { label: 'Game', slug: 'game', href: '/shop?category=game', icon: Gamepad2, desc: 'Interactive & disc games' },
+  { label: 'Film', slug: 'film', href: '/shop/category/film', icon: Film, desc: 'Blockbusters & cinema releases' },
+  { label: 'TV Box Sets', slug: 'tv-box-sets', href: '/shop/category/tv-box-sets', icon: Tv, desc: 'Complete television seasons' },
+  { label: 'Documentary & Music', slug: 'documentary-music', href: '/shop/category/documentary-music', icon: Disc, desc: 'Music & historical archives' },
 ];
 
 export const AzDarkLandingNav: React.FC = () => {
@@ -71,7 +70,7 @@ export const AzDarkLandingNav: React.FC = () => {
     const apiItems = categoriesQuery.data.map((c) => ({
       label: c.name,
       slug: c.slug,
-      href: `/shop?category=${c.slug}`,
+      href: `/shop/category/${c.slug}`,
       icon: getIcon(c.slug),
       desc: c.description || `Browse complete ${c.name} releases`,
     }));
@@ -104,7 +103,11 @@ export const AzDarkLandingNav: React.FC = () => {
 
   // Sync selected category label with URL
   useEffect(() => {
-    if (location.pathname === '/shop') {
+    if (location.pathname.startsWith('/shop/category/')) {
+      const catSlug = location.pathname.replace(/^\/shop\/category\//, '').replace(/\/$/, '');
+      const found = categoryOptions.find((c) => c.slug === catSlug);
+      setSelectedCategory(found ? found.label : 'All Categories');
+    } else if (location.pathname === '/shop') {
       const searchParams = new URLSearchParams(location.search);
       const catParam = searchParams.get('category');
       if (catParam) {

@@ -728,14 +728,14 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
           </div>
 
           {/* Large Movie Title */}
-          <h1
+          <h2
             className={cn(
               'text-xl sm:text-4xl lg:text-6xl font-black leading-tight sm:leading-[1.12] tracking-tight mb-2 sm:mb-3 line-clamp-2 transition-colors duration-200',
               isDark ? 'text-white drop-shadow-md' : 'text-gray-900 drop-shadow-xs'
             )}
           >
             {current.title}
-          </h1>
+          </h2>
 
           {/* Movie Metadata Strip */}
           <div

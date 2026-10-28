@@ -248,7 +248,7 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 badge="GENRE ARCHIVE"
                 title={`${genre.name} Cinema`}
                 products={gProducts}
-                viewAllHref={`/shop?genre=${genre.slug}`}
+                viewAllHref={`/shop/genre/${genre.slug}`}
               />
             ))}
 
@@ -278,6 +278,111 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
         <div className="pt-4 sm:pt-6">
           <CustomerReviewsCarousel />
         </div>
+
+        {/* ── Official Brand Identity & Crawlable Taxonomy Directory (DVDs Zone / DVD Zone UK) ── */}
+        <section
+          aria-label="About DVDs Zone and Storefront Directory"
+          className={cn(
+            'rounded-2xl border p-6 sm:p-8 transition-colors',
+            isDark
+              ? 'bg-white/[0.02] border-white/10 text-gray-300'
+              : 'bg-gray-50 border-gray-200 text-gray-700'
+          )}
+        >
+          <div className="max-w-4xl space-y-3">
+            <span className="text-[11px] font-mono uppercase tracking-widest text-brand-blue font-bold">
+              Official UK Physical Media Storefront &bull; DVD Zone / DVDs Zone
+            </span>
+            <h1
+              className={cn(
+                'text-xl sm:text-2xl font-extrabold tracking-tight',
+                isDark ? 'text-white' : 'text-gray-900'
+              )}
+            >
+              DVDs Zone — DVD Movies &amp; TV Box Sets UK (Official DVD Zone Store)
+            </h1>
+            <p className="text-xs sm:text-sm leading-relaxed">
+              Welcome to <strong>DVDs Zone</strong> (also known as <strong>DVD Zone</strong>, <strong>dvdzone</strong>,{' '}
+              <strong>DVD Zone UK</strong>, <strong>DVDs Zone UK</strong>, and <strong>AZ Rayan DVDs</strong> at{' '}
+              <Link to="/" className="text-brand-blue hover:underline font-semibold">
+                dvds-zone.co.uk
+              </Link>
+              ) — a UK online retailer of genuine Region 2 DVDs, complete television series box sets, and collector editions
+              operated by <strong>{settings?.registered_company_name || 'AZRAYAN LTD'}</strong> (Company No.{' '}
+              {settings?.company_number || '13894195'}). Every order includes <strong>100% Free UK Delivery</strong> via Royal
+              Mail with same-day dispatch.
+            </p>
+          </div>
+
+          <div className="mt-6 pt-5 border-t border-gray-200/60 dark:border-white/10 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h2
+                className={cn(
+                  'text-xs font-bold uppercase tracking-wider mb-2.5',
+                  isDark ? 'text-gray-200' : 'text-gray-900'
+                )}
+              >
+                Browse by Category
+              </h2>
+              <nav aria-label="Storefront Categories" className="flex flex-wrap gap-2">
+                <Link
+                  to="/shop"
+                  className={cn(
+                    'text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors',
+                    isDark
+                      ? 'bg-white/5 border-white/10 text-gray-200 hover:border-brand-blue hover:text-white'
+                      : 'bg-white border-gray-200 text-gray-800 hover:border-brand-blue hover:text-brand-blue'
+                  )}
+                >
+                  All DVDs &amp; Box Sets
+                </Link>
+                {categories.map((cat) => (
+                  <Link
+                    key={cat.slug}
+                    to={`/shop/category/${cat.slug}`}
+                    className={cn(
+                      'text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors',
+                      isDark
+                        ? 'bg-white/5 border-white/10 text-gray-200 hover:border-brand-blue hover:text-white'
+                        : 'bg-white border-gray-200 text-gray-800 hover:border-brand-blue hover:text-brand-blue'
+                    )}
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            {genres.length > 0 && (
+              <div>
+                <h2
+                  className={cn(
+                    'text-xs font-bold uppercase tracking-wider mb-2.5',
+                    isDark ? 'text-gray-200' : 'text-gray-900'
+                  )}
+                >
+                  Browse by Genre
+                </h2>
+                <nav aria-label="Storefront Genres" className="flex flex-wrap gap-2">
+                  {genres.map((g) => (
+                    <Link
+                      key={g.slug}
+                      to={`/shop/genre/${g.slug}`}
+                      className={cn(
+                        'text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors',
+                        isDark
+                          ? 'bg-white/5 border-white/10 text-gray-300 hover:border-brand-blue hover:text-white'
+                          : 'bg-white border-gray-200 text-gray-700 hover:border-brand-blue hover:text-brand-blue'
+                      )}
+                    >
+                      {g.name} DVDs
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            )}
+          </div>
+        </section>
 
       </main>
     </div>

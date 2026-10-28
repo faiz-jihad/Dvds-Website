@@ -257,7 +257,7 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
                     title={`${genre.name} Cinema`}
                     subtitle={`Explore physical releases in ${genre.name}`}
                     products={gProducts}
-                    viewAllHref={`/shop?filter=genre:${genre.slug}`}
+                    viewAllHref={`/shop/genre/${genre.slug}`}
                   />
                 ))}
 
@@ -269,7 +269,7 @@ export const SeriviaHomeLayout: React.FC<SeriviaHomeLayoutProps> = ({
                     title={category.name}
                     subtitle={category.description || `Browse the ${category.name} archive`}
                     products={cProducts}
-                    viewAllHref={`/shop?filter=cat:${category.slug}`}
+                    viewAllHref={`/shop/category/${category.slug}`}
                   />
                 ))}
 

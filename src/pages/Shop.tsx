@@ -6,9 +6,27 @@ import { ProductCard } from '../components/product/ProductCard';
 import { Button } from '../components/common/Button';
 import { publicApi } from '../lib/publicApi';
 import { formatGBP } from '../lib/formatters';
-import { StoreDataState } from '../components/common/StoreDataState';
 import { Seo, toAbsoluteUrl } from '../components/common/Seo';
 import { ExclusiveCampaignBanner } from '../components/shop/ExclusiveCampaignBanner';
+import { DEFAULT_GENRES } from '../data/defaultGenres';
+import { DEFAULT_CATEGORIES } from '../data/defaultCategories';
+import { DEFAULT_PRODUCTS } from '../data/defaultProducts';
+
+const normalizeFormatSlug = (fmt: string) =>
+  String(fmt || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+const matchesFormatFilter = (productFormat: string, filterFormat: string) => {
+  if (!filterFormat || filterFormat === 'all') return true;
+  const pNorm = normalizeFormatSlug(productFormat);
+  const fNorm = normalizeFormatSlug(filterFormat);
+  if (pNorm === fNorm) return true;
+  if (fNorm === '4k' && pNorm.startsWith('4k')) return true;
+  return false;
+};
 
 export const Shop: React.FC = () => {
   const { category: pathCategory, genre: pathGenre } = useParams<{ category?: string; genre?: string }>();
@@ -21,7 +39,8 @@ export const Shop: React.FC = () => {
   const selectedGenre = pathGenre || searchParams.get('genre') || 'all';
   const selectedFormat = searchParams.get('format') || 'all';
   const selectedRating = searchParams.get('rating') || 'all';
-  const filterType = searchParams.get('filter') || 'all'; // new, bestseller, sale
+  const filterType = searchParams.get('filter') || 'all'; // new, bestseller, trending, sale
+  const searchQuery = (searchParams.get('search') || searchParams.get('q') || '').trim();
   const sort = searchParams.get('sort') || 'featured';
   const maxPriceParam = searchParams.get('maxPrice') || searchParams.get('max_price');
   const [maxPrice, setMaxPrice] = useState<number | null>(maxPriceParam ? Number(maxPriceParam) : null);
@@ -30,9 +49,37 @@ export const Shop: React.FC = () => {
   const categoriesQuery = useQuery({ queryKey: ['store', 'categories'], queryFn: () => publicApi.getCategories() });
   const genresQuery = useQuery({ queryKey: ['store', 'genres'], queryFn: () => publicApi.getGenres() });
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: () => publicApi.getStoreSettings() });
-  const categories = categoriesQuery.data || [];
-  const genres = genresQuery.data || [];
-  const allProducts = productsQuery.data || [];
+
+  const categories = useMemo(() => {
+    const raw = categoriesQuery.data && categoriesQuery.data.length > 0 ? categoriesQuery.data : DEFAULT_CATEGORIES;
+    return raw.map((c) => {
+      const def = DEFAULT_CATEGORIES.find((dc) => dc.slug === c.slug);
+      return {
+        ...def,
+        ...c,
+        description: c.description || def?.description || null,
+        introCopy: c.introCopy || def?.introCopy || c.description || null,
+      };
+    });
+  }, [categoriesQuery.data]);
+
+  const genres = useMemo(() => {
+    const raw = genresQuery.data && genresQuery.data.length > 0 ? genresQuery.data : DEFAULT_GENRES;
+    return raw.map((g) => {
+      const def = DEFAULT_GENRES.find((dg) => dg.slug === g.slug);
+      return {
+        ...def,
+        ...g,
+        description: g.description || def?.description,
+        introCopy: g.introCopy || def?.introCopy,
+      };
+    });
+  }, [genresQuery.data]);
+
+  const allProducts = useMemo(() => {
+    return productsQuery.data && productsQuery.data.length > 0 ? productsQuery.data : DEFAULT_PRODUCTS;
+  }, [productsQuery.data]);
+
   const storeSettings = settingsQuery.data;
 
   // Formats from dynamic admin storeSettings custom_formats + existing products
@@ -53,8 +100,17 @@ export const Shop: React.FC = () => {
   }, [allProducts, storeSettings?.deal_product_id]);
 
   useEffect(() => {
-    if (maxPrice === null && catalogueMaxPrice > 0) setMaxPrice(catalogueMaxPrice);
-  }, [catalogueMaxPrice, maxPrice]);
+    if (maxPriceParam !== null && maxPriceParam !== '') {
+      const parsed = Number(maxPriceParam);
+      if (!Number.isNaN(parsed)) {
+        setMaxPrice(parsed);
+        return;
+      }
+    }
+    if (catalogueMaxPrice > 0) {
+      setMaxPrice(catalogueMaxPrice);
+    }
+  }, [maxPriceParam, catalogueMaxPrice]);
 
   // Sync param updates
   const updateFilter = (key: string, value: string) => {
@@ -70,7 +126,7 @@ export const Shop: React.FC = () => {
       if (value === 'all') {
         navigate('/shop');
       } else {
-        navigate(`/shop?category=${encodeURIComponent(value)}`);
+        navigate(`/shop/category/${encodeURIComponent(value)}`);
       }
       return;
     }
@@ -91,33 +147,49 @@ export const Shop: React.FC = () => {
   // Active Filter Details for Clear Heading
   const activeGenre = genres.find((g) => g.slug === selectedGenre || g.id === selectedGenre);
   const activeCategory = categories.find((c) => c.slug === selectedCategory || c.id === selectedCategory);
+  const isInvalidGenreRoute = Boolean(pathGenre && !activeGenre);
+  const isInvalidCategoryRoute = Boolean(pathCategory && !activeCategory);
+  const isInvalidRoute = isInvalidGenreRoute || isInvalidCategoryRoute;
+
   const isSpecialOffers = filterType === 'sale';
   const isNewReleases = filterType === 'new';
   const isBestSellers = filterType === 'bestseller';
+  const isTrending = filterType === 'trending';
 
   let pageEyebrow = `${storeSettings?.store_name || 'DVDs Zone'} Catalogue`;
   let pageTitle = 'Explore Our Complete Store';
   let pageDescription = 'Browse all products, physical media, collectibles, and special editions with 100% free delivery across the UK.';
+  let pageIntroCopy: string | null = null;
 
-  if (isSpecialOffers) {
+  if (isInvalidGenreRoute) {
+    pageEyebrow = '404 Not Found';
+    pageTitle = 'Genre Not Found';
+    pageDescription = 'The DVD genre collection you are looking for is unavailable.';
+  } else if (isInvalidCategoryRoute) {
+    pageEyebrow = '404 Not Found';
+    pageTitle = 'Category Not Found';
+    pageDescription = 'The DVD category you are looking for is unavailable.';
+  } else if (isSpecialOffers) {
     pageEyebrow = 'Special Promotions & Clearance';
     pageTitle = 'Special Offers & Price Drops';
     pageDescription = 'Browse physical media price drops, box sets, and rare allocations with 100% free Royal Mail UK delivery.';
   } else if (activeGenre) {
     pageEyebrow = 'Genre Collection';
     pageTitle = `${activeGenre.name} DVDs & TV Box Sets`;
-    pageDescription = `Explore our curated collection of ${activeGenre.name} physical DVDs and TV box sets with 100% free UK delivery.`;
+    pageDescription = activeGenre.description || `Explore our curated collection of ${activeGenre.name} physical DVDs and TV box sets with 100% free UK delivery.`;
+    pageIntroCopy = activeGenre.introCopy || null;
   } else if (activeCategory) {
-    pageEyebrow = 'Category';
-    pageTitle = activeCategory.name;
+    pageEyebrow = 'Category Collection';
+    pageTitle = `${activeCategory.name} DVDs & TV Box Sets`;
     pageDescription = activeCategory.description || `Browse complete ${activeCategory.name} products and editions.`;
+    pageIntroCopy = activeCategory.introCopy || null;
   } else if (isNewReleases) {
     pageEyebrow = 'Fresh Arrivals';
     pageTitle = 'New Arrivals & Releases';
     pageDescription = 'Discover the newest additions to our catalogue with 100% free UK delivery.';
-  } else if (isBestSellers) {
+  } else if (isBestSellers || isTrending) {
     pageEyebrow = 'Customer Favorites';
-    pageTitle = 'Best Selling Products';
+    pageTitle = isTrending ? 'Trending Now & Best Sellers' : 'Best Selling Products';
     pageDescription = 'Our most popular products, merchandise, and top picks across the UK.';
   }
 
@@ -140,6 +212,9 @@ export const Shop: React.FC = () => {
 
   // Filter & Sort Logic
   const filteredProducts = useMemo(() => {
+    if (isInvalidRoute) return [];
+    const normalizedSearch = searchQuery.toLowerCase();
+
     return allProducts
       .filter((product) => {
         // Status check
@@ -163,8 +238,8 @@ export const Shop: React.FC = () => {
           if (!hasGenre) return false;
         }
 
-        // Format filter
-        if (selectedFormat !== 'all' && product.format !== selectedFormat) {
+        // Format filter (normalized so 'box-set' matches 'Box Set')
+        if (selectedFormat !== 'all' && !matchesFormatFilter(product.format, selectedFormat)) {
           return false;
         }
 
@@ -176,7 +251,17 @@ export const Shop: React.FC = () => {
         // Preset filter badge
         if (filterType === 'new' && !product.is_new_release) return false;
         if (filterType === 'bestseller' && !product.is_best_seller) return false;
+        if (filterType === 'trending' && !product.is_best_seller && !product.is_featured) return false;
         if (filterType === 'sale' && (!product.compare_at_price || product.compare_at_price <= product.price)) return false;
+
+        // Search query filter
+        if (
+          normalizedSearch &&
+          !product.title.toLowerCase().includes(normalizedSearch) &&
+          !(product.description || '').toLowerCase().includes(normalizedSearch)
+        ) {
+          return false;
+        }
 
         // Price filter
         if (maxPrice !== null && product.price > maxPrice) return false;
@@ -185,90 +270,93 @@ export const Shop: React.FC = () => {
       })
       .sort((a, b) => {
         if (sort === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        if (sort === 'price-low') return a.price - b.price;
-        if (sort === 'price-high') return b.price - a.price;
+        if (sort === 'price-low' || sort === 'price-asc') return a.price - b.price;
+        if (sort === 'price-high' || sort === 'price-desc') return b.price - a.price;
         if (sort === 'year') return b.release_year - a.release_year;
         return 0; // featured default
       });
-  }, [allProducts, selectedCategory, selectedGenre, selectedFormat, selectedRating, filterType, maxPrice, sort, categories]);
-
-  if (productsQuery.isLoading || categoriesQuery.isLoading || genresQuery.isLoading || productsQuery.error || categoriesQuery.error || genresQuery.error) {
-    return <StoreDataState loading={productsQuery.isLoading || categoriesQuery.isLoading || genresQuery.isLoading} error={productsQuery.error || categoriesQuery.error || genresQuery.error} retry={() => { productsQuery.refetch(); categoriesQuery.refetch(); genresQuery.refetch(); }} />;
-  }
+  }, [allProducts, isInvalidRoute, searchQuery, selectedCategory, selectedGenre, selectedFormat, selectedRating, filterType, maxPrice, sort, categories]);
 
   let canonicalPath = '/shop';
-  if (selectedGenre !== 'all' && activeGenre) {
-    canonicalPath = `/shop/genre/${encodeURIComponent(activeGenre.slug)}`;
-  } else if (selectedCategory !== 'all' && activeCategory) {
-    canonicalPath = `/shop?category=${encodeURIComponent(activeCategory.slug)}`;
+  if (!isInvalidRoute) {
+    if (selectedGenre !== 'all' && activeGenre) {
+      canonicalPath = `/shop/genre/${encodeURIComponent(activeGenre.slug)}`;
+    } else if (selectedCategory !== 'all' && activeCategory) {
+      canonicalPath = `/shop/category/${encodeURIComponent(activeCategory.slug)}`;
+    }
   }
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
       <Seo
-        title={`${pageTitle} — ${storeSettings?.store_name || 'DVDs Zone'} | Buy Physical Media`}
-        description={`${pageDescription} All orders 100% free standard delivery across United Kingdom. Same-day dispatch, delivered to your door within 2 working days via Royal Mail.`}
+        title={`${pageTitle} | ${storeSettings?.store_name || 'DVDs Zone'} UK`}
+        description={pageDescription}
         keywords={`${pageTitle}, buy DVDs online UK, physical media catalogue, TV box sets UK, cheap DVDs UK, classic movies on DVD, ${storeSettings?.store_name || 'DVDs Zone'}`}
         canonicalPath={canonicalPath}
+        noIndex={isInvalidRoute}
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
         siteName={storeSettings?.store_name || 'DVDs Zone'}
-        jsonLd={[
-          {
-            '@context': 'https://schema.org',
-            '@type': 'CollectionPage',
-            name: pageTitle,
-            description: pageDescription,
-            url: toAbsoluteUrl(canonicalPath),
-            mainEntity: {
-              '@type': 'ItemList',
-              numberOfItems: filteredProducts.length,
-              itemListElement: filteredProducts.slice(0, 20).map((prod, idx) => ({
-                '@type': 'ListItem',
-                position: idx + 1,
-                name: prod.title,
-                url: toAbsoluteUrl(`/product/${prod.slug}`),
-                image: toAbsoluteUrl(prod.cover_image_url),
-              })),
-            },
-          },
-          {
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              {
-                '@type': 'ListItem',
-                position: 1,
-                name: 'Home',
-                item: toAbsoluteUrl('/'),
-              },
-              {
-                '@type': 'ListItem',
-                position: 2,
-                name: 'Catalogue',
-                item: toAbsoluteUrl('/shop'),
-              },
-              ...(selectedGenre !== 'all' && activeGenre
-                ? [
+        jsonLd={
+          isInvalidRoute
+            ? undefined
+            : [
+                {
+                  '@context': 'https://schema.org',
+                  '@type': 'CollectionPage',
+                  name: pageTitle,
+                  description: pageDescription,
+                  url: toAbsoluteUrl(canonicalPath),
+                  mainEntity: {
+                    '@type': 'ItemList',
+                    numberOfItems: filteredProducts.length,
+                    itemListElement: filteredProducts.slice(0, 20).map((prod, idx) => ({
+                      '@type': 'ListItem',
+                      position: idx + 1,
+                      name: prod.title,
+                      url: toAbsoluteUrl(`/product/${prod.slug}`),
+                      image: toAbsoluteUrl(prod.cover_image_url),
+                    })),
+                  },
+                },
+                {
+                  '@context': 'https://schema.org',
+                  '@type': 'BreadcrumbList',
+                  itemListElement: [
                     {
                       '@type': 'ListItem',
-                      position: 3,
-                      name: `${activeGenre.name} DVDs`,
-                      item: toAbsoluteUrl(canonicalPath),
+                      position: 1,
+                      name: 'Home',
+                      item: toAbsoluteUrl('/'),
                     },
-                  ]
-                : selectedCategory !== 'all' && activeCategory
-                ? [
                     {
                       '@type': 'ListItem',
-                      position: 3,
-                      name: pageTitle,
-                      item: toAbsoluteUrl(canonicalPath),
+                      position: 2,
+                      name: 'Catalogue',
+                      item: toAbsoluteUrl('/shop'),
                     },
-                  ]
-                : []),
-            ],
-          },
-        ]}
+                    ...(selectedGenre !== 'all' && activeGenre
+                      ? [
+                          {
+                            '@type': 'ListItem',
+                            position: 3,
+                            name: `${activeGenre.name} DVDs`,
+                            item: toAbsoluteUrl(canonicalPath),
+                          },
+                        ]
+                      : selectedCategory !== 'all' && activeCategory
+                      ? [
+                          {
+                            '@type': 'ListItem',
+                            position: 3,
+                            name: activeCategory.name,
+                            item: toAbsoluteUrl(canonicalPath),
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+              ]
+        }
       />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Editorial Page Header */}
@@ -280,8 +368,8 @@ export const Shop: React.FC = () => {
             <h1 className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-dark dark:text-white tracking-tight mt-1">
               {pageTitle}
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-lg">
-              {pageDescription} ({filteredProducts.length} editions found)
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">
+              {pageIntroCopy || pageDescription} ({filteredProducts.length} editions found)
             </p>
           </div>
 
@@ -442,7 +530,7 @@ export const Shop: React.FC = () => {
               <div>
                 <span className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-600">Media format</span>
                 <div className="flex flex-wrap gap-2">
-                  {['all', ...availableFormats].map((format) => <button type="button" key={format} onClick={() => updateFilter('format', format)} className={`min-h-11 rounded-md border px-3 text-xs font-semibold cursor-pointer ${selectedFormat === format ? 'border-brand-blue bg-brand-blue text-white' : 'border-gray-200 bg-white text-dark'}`}>{format === 'all' ? 'All formats' : format}</button>)}
+                  {['all', ...availableFormats].map((format) => <button type="button" key={format} onClick={() => updateFilter('format', format)} className={`min-h-11 rounded-md border px-3 text-xs font-semibold cursor-pointer ${matchesFormatFilter(format, selectedFormat) && (selectedFormat !== 'all' || format === 'all') ? 'border-brand-blue bg-brand-blue text-white' : 'border-gray-200 bg-white text-dark'}`}>{format === 'all' ? 'All formats' : format}</button>)}
                 </div>
               </div>
 
@@ -603,7 +691,7 @@ export const Shop: React.FC = () => {
                 {categories.map((c) => (
                   <Link
                     key={c.id}
-                    to={selectedCategory === c.slug ? '/shop' : `/shop?category=${c.slug}`}
+                    to={selectedCategory === c.slug ? '/shop' : `/shop/category/${c.slug}`}
                     className={`block w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
                       selectedCategory === c.slug ? 'font-bold text-dark dark:text-white bg-gray-100 dark:bg-white/10' : 'text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
                     }`}
@@ -625,7 +713,7 @@ export const Shop: React.FC = () => {
                     key={fmt}
                     onClick={() => updateFilter('format', fmt)}
                     className={`text-xs px-2.5 py-1.5 rounded-sm border font-medium transition-colors cursor-pointer ${
-                      selectedFormat === fmt
+                      matchesFormatFilter(fmt, selectedFormat) && (selectedFormat !== 'all' || fmt === 'all')
                         ? 'bg-dark dark:bg-brand-blue text-white border-dark dark:border-brand-blue font-bold'
                         : 'bg-white dark:bg-[#0E131F] text-dark dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-dark dark:hover:border-white/30'
                     }`}

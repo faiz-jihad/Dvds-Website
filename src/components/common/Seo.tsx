@@ -33,7 +33,12 @@ const upsertLink = (rel: string, href?: string, extraAttrs?: Record<string, stri
   if (extraAttrs?.hreflang) {
     selector = `link[rel="${rel}"][hreflang="${extraAttrs.hreflang}"]`;
   }
-  const existing = document.head.querySelector<HTMLLinkElement>(selector);
+  const matches = Array.from(document.head.querySelectorAll<HTMLLinkElement>(selector));
+  const existing = matches[0];
+  // Remove any accidental duplicate link declarations
+  if (matches.length > 1) {
+    matches.slice(1).forEach((el) => el.remove());
+  }
   if (!href) {
     existing?.remove();
     return;
@@ -90,13 +95,16 @@ export const Seo: React.FC<SeoProps> = ({
     upsertMeta('name', 'twitter:description', description);
     upsertMeta('name', 'twitter:image', socialImage);
 
-    // Canonical link
-    upsertLink('canonical', canonicalUrl);
+    // Canonical link (single authoritative declaration)
+    upsertLink('canonical', canonicalUrl, { 'data-ssr': 'true' });
 
     // Hreflang alternates for UK & Global English
     if (canonicalUrl && !noIndex) {
       upsertLink('alternate', canonicalUrl, { hreflang: 'en-GB' });
       upsertLink('alternate', canonicalUrl, { hreflang: 'x-default' });
+    } else if (noIndex) {
+      upsertLink('alternate', undefined, { hreflang: 'en-GB' });
+      upsertLink('alternate', undefined, { hreflang: 'x-default' });
     }
 
     // Dynamic Schema.org JSON-LD

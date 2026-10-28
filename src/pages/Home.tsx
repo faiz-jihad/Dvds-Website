@@ -6,6 +6,7 @@ import { AzDarkLandingLayout } from "../components/landing/AzDarkLandingLayout";
 import { Category } from "../types";
 import { DEFAULT_STORE_SETTINGS } from "../data/defaultStoreSettings";
 import { DEFAULT_PRODUCTS } from "../data/defaultProducts";
+import { DEFAULT_GENRES } from "../data/defaultGenres";
 
 const FALLBACK_CATEGORIES: Category[] = [
   {
@@ -71,21 +72,26 @@ export const Home: React.FC = () => {
     categoriesQuery.data && categoriesQuery.data.length > 0
       ? categoriesQuery.data
       : FALLBACK_CATEGORIES;
-  const genres = genresQuery.data || [];
+  const genres =
+    genresQuery.data && genresQuery.data.length > 0
+      ? genresQuery.data
+      : DEFAULT_GENRES;
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
 
   return (
     <>
       <Seo
         title={
-          settings.seo_site_title ||
-          "DVDs Zone | DVD Movies & TV Box Sets UK"
+          settings.seo_site_title && /dvds?\s*zone/i.test(settings.seo_site_title)
+            ? settings.seo_site_title
+            : "DVDs Zone | DVD Movies & TV Box Sets UK"
         }
         description={
-          settings.seo_site_description ||
-          "Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options."
+          settings.seo_site_description && /dvds?\s*zone/i.test(settings.seo_site_description)
+            ? settings.seo_site_description
+            : "Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options."
         }
-        keywords="dvdzone, dvd zone, dvds zone, DVDs Zone, AZ Rayan DVDs, DVDs Zone UK, dvds-zone.co.uk, buy DVDs UK, TV box sets UK, physical media store UK, Royal Mail free delivery DVDs"
+        keywords="dvdzone, dvd zone, dvds zone, DVDs Zone, DVD Zone, AZ Rayan DVDs, DVDs Zone UK, DVD Zone UK, dvds-zone.co.uk, buy DVDs UK, TV box sets UK, physical media store UK, Royal Mail free delivery DVDs"
         canonicalPath="/"
         image={
           settings.seo_social_image_url ||
@@ -98,6 +104,9 @@ export const Home: React.FC = () => {
             "@type": "Brand",
             name: settings.store_name || "DVDs Zone",
             alternateName: [
+              "dvdzone",
+              "dvd zone",
+              "dvds zone",
               "DVD Zone",
               "DVDZone",
               "DVDsZone",
@@ -118,6 +127,9 @@ export const Home: React.FC = () => {
             "@type": "WebSite",
             name: settings.store_name || "DVDs Zone",
             alternateName: [
+              "dvdzone",
+              "dvd zone",
+              "dvds zone",
               "DVD Zone",
               "DVDZone",
               "DVDsZone",
@@ -145,6 +157,9 @@ export const Home: React.FC = () => {
               name: settings.store_name || "DVDs Zone",
             },
             alternateName: [
+              "dvdzone",
+              "dvd zone",
+              "dvds zone",
               "DVD Zone",
               "DVDZone",
               "DVDsZone",
