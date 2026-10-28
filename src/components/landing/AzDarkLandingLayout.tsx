@@ -271,6 +271,34 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 viewAllHref={`/shop?max_price=${budgetThreshold}`}
               />
             )}
+
+            {/* Complete Store Catalogue Grid: Guarantees 100% of active products are displayed & crawlable */}
+            {active.length > 0 && (
+              <section className="space-y-5 pt-4">
+                <div className={cn('flex items-end justify-between pb-4 border-b', isDark ? 'border-white/10' : 'border-gray-200')}>
+                  <div>
+                    <span className="inline-block text-[10px] font-black uppercase tracking-wider text-brand-blue mb-1">
+                      COMPLETE ARCHIVE
+                    </span>
+                    <h2 className={cn('text-xl sm:text-2xl font-black tracking-tight', isDark ? 'text-white' : 'text-gray-900')}>
+                      All Available DVDs &amp; TV Box Sets ({active.length})
+                    </h2>
+                  </div>
+                  <Link
+                    to="/shop"
+                    className="flex items-center gap-1.5 text-xs font-bold text-brand-blue hover:text-brand-blue-hover transition-colors group px-2.5 py-1 rounded-lg hover:bg-brand-blue/10"
+                  >
+                    <span>Open Full Shop</span>
+                    <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5 sm:gap-5">
+                  {active.map((p) => (
+                    <AzDvdMovieCard key={p.id} product={p} />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
 

@@ -76,6 +76,20 @@ export const DEFAULT_GENRES: Genre[] = [
     name: 'Adventure',
     slug: 'adventure',
     description: 'Shop Adventure DVDs and action-packed TV series box sets at DVDs Zone UK. Epic galactic quests and collector sets with free UK delivery.',
-    introCopy: 'Embark on epic journeys across lawless frontiers and distant star systems with our Adventure DVD box sets, including the complete seasons of Star Wars: The Mandalorian and The Book of Boba Fett.',
+    introCopy: 'Embark on epic journeys across lawless frontiers and distant star systems with our Adventure DVD box sets, including the complete seasons of Star Wars: The Mandalorian, Stranger Things, and The Book of Boba Fett.',
+  },
+  {
+    id: 'g-romance',
+    name: 'Romance',
+    slug: 'romance',
+    description: 'Shop Romance & Drama DVDs and complete television series box sets at DVDs Zone UK with 100% free tracked Royal Mail UK delivery.',
+    introCopy: 'Explore character-driven television sagas and romantic drama storylines on physical DVD, including Yellowstone, Legacies, NCIS, and Marshals.',
+  },
+  {
+    id: 'g-faith',
+    name: 'Faith & Inspirational',
+    slug: 'faith',
+    description: 'Buy Faith & Inspirational DVDs and historical series box sets at DVDs Zone UK. Genuine Region 2 UK discs with free Royal Mail delivery.',
+    introCopy: 'Discover acclaimed inspirational and historical television series on physical DVD, highlighted by The Chosen: Complete Seasons 1–3 Collector Edition.',
   },
 ];

@@ -43,7 +43,7 @@
         if (!cl || cl.getAttribute('data-ssr') !== 'true') {
           var p = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
           var sp = new URLSearchParams(window.location.search || '');
-          var validGenres = ['action','science-fiction','drama','war','documentary','music','western','crime','comedy','historical','adventure'];
+          var validGenres = ['action','science-fiction','drama','war','documentary','music','western','crime','comedy','historical','adventure','romance','faith'];
           var validCats = ['tv-box-sets','film','documentary-music'];
           var targetPath = p;
           if (p === '/shop' || p.indexOf('/shop/') === 0) {
@@ -204,17 +204,17 @@
           {
             "@type": "OfferCatalog",
             "name": "TV Box Sets",
-            "url": "https://dvds-zone.co.uk/shop?category=tv-box-sets"
+            "url": "https://dvds-zone.co.uk/shop/category/tv-box-sets"
           },
           {
             "@type": "OfferCatalog",
             "name": "Film & Cinema DVDs",
-            "url": "https://dvds-zone.co.uk/shop?category=film"
+            "url": "https://dvds-zone.co.uk/shop/category/film"
           },
           {
             "@type": "OfferCatalog",
             "name": "Documentary & Music DVDs",
-            "url": "https://dvds-zone.co.uk/shop?category=documentary-music"
+            "url": "https://dvds-zone.co.uk/shop/category/documentary-music"
           }
         ]
       }
@@ -243,7 +243,7 @@
           "@type": "ListItem",
           "position": 3,
           "name": "TV Box Sets",
-          "item": "https://dvds-zone.co.uk/shop?category=tv-box-sets"
+          "item": "https://dvds-zone.co.uk/shop/category/tv-box-sets"
         }
       ]
     }
@@ -423,10 +423,12 @@
             <a href="/shop/genre/comedy" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Comedy &amp; Classics DVDs</a>
             <a href="/shop/genre/historical" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Historical &amp; Faith DVDs</a>
             <a href="/shop/genre/adventure" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Adventure DVDs</a>
+            <a href="/shop/genre/romance" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Romance DVDs</a>
+            <a href="/shop/genre/faith" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;text-decoration:none;background:#f8fafc;">Faith &amp; Inspirational DVDs</a>
           </nav>
         </section>
 
-        <!-- Featured Products Preview for Crawlers -->
+        <!-- Complete Active Products Catalogue for Crawlers -->
         <section style="margin-bottom:32px;">
           <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:16px;">Popular DVD Box Sets &amp; Cinema Releases</h2>
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:16px;">
@@ -451,6 +453,35 @@
               <p style="font-size:16px;font-weight:800;color:#2563eb;margin:0;">&pound;22.99 <span style="font-size:12px;color:#16a34a;font-weight:600;">Free UK Delivery</span></p>
             </article>
           </div>
+          <nav aria-label="All Active DVD Releases" style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;font-size:12px;">
+            <a href="/product/ozerk-season-14" style="color:#2563eb;text-decoration:none;">OZERK Season 1-4 DVD</a> &bull;
+            <a href="/product/marshals" style="color:#2563eb;text-decoration:none;">MARSHALS DVD</a> &bull;
+            <a href="/product/ncis-19" style="color:#2563eb;text-decoration:none;">NCIS 19 DVD</a> &bull;
+            <a href="/product/stranger-things-14-season-" style="color:#2563eb;text-decoration:none;">Stranger Things 1-4 Season DVD</a> &bull;
+            <a href="/product/stranger-things-season-14-dvd-set" style="color:#2563eb;text-decoration:none;">Stranger Things Season 1-4 DVD Set</a> &bull;
+            <a href="/product/yellowstone-14-season-" style="color:#2563eb;text-decoration:none;">Yellowstone 1-4 Season DVD</a> &bull;
+            <a href="/product/yellowstone-season3" style="color:#2563eb;text-decoration:none;">Yellowstone Season 3 DVD</a> &bull;
+            <a href="/product/mandalorain-season-13" style="color:#2563eb;text-decoration:none;">Mandalorian Season 1-3 DVD</a> &bull;
+            <a href="/product/mandalorian-12" style="color:#2563eb;text-decoration:none;">Mandalorian 1-2 DVD</a> &bull;
+            <a href="/product/mandalorian-3" style="color:#2563eb;text-decoration:none;">Mandalorian 3 DVD</a> &bull;
+            <a href="/product/legacies-the-fourth-and-final-season" style="color:#2563eb;text-decoration:none;">Legacies Season 4 DVD</a> &bull;
+            <a href="/product/the-boys-season3-" style="color:#2563eb;text-decoration:none;">The Boys Season 3 DVD</a> &bull;
+            <a href="/product/greyhound-" style="color:#2563eb;text-decoration:none;">Greyhound DVD</a> &bull;
+            <a href="/product/greyhound" style="color:#2563eb;text-decoration:none;">Greyhound (UK DVD)</a> &bull;
+            <a href="/product/greyhound-2020" style="color:#2563eb;text-decoration:none;">Greyhound (2020) DVD</a> &bull;
+            <a href="/product/seal-team-season-five" style="color:#2563eb;text-decoration:none;">SEAL Team Season Five DVD</a> &bull;
+            <a href="/product/seal-team-season-5" style="color:#2563eb;text-decoration:none;">SEAL Team Season 5 Box Set</a> &bull;
+            <a href="/product/the-book-of-boba-fett-the-first-complete-season" style="color:#2563eb;text-decoration:none;">The Book of Boba Fett Season 1 DVD</a> &bull;
+            <a href="/product/dutton-ranch-season1" style="color:#2563eb;text-decoration:none;">Dutton Ranch Season 1 DVD</a> &bull;
+            <a href="/product/dutton-ranch-season-1" style="color:#2563eb;text-decoration:none;">Dutton Ranch - Season 1 DVD</a> &bull;
+            <a href="/product/marshals-season-1" style="color:#2563eb;text-decoration:none;">Marshals - Season 1 Box Set</a> &bull;
+            <a href="/product/the-beateles-get-back" style="color:#2563eb;text-decoration:none;">The Beatles Get Back DVD</a> &bull;
+            <a href="/product/the-chosen-seasons-13" style="color:#2563eb;text-decoration:none;">The Chosen - Seasons 1-3 Box Set</a> &bull;
+            <a href="/product/friends-the-reunion" style="color:#2563eb;text-decoration:none;">Friends: The Reunion DVD</a> &bull;
+            <a href="/product/star-wars-the-mandalorian-seasons-13" style="color:#2563eb;text-decoration:none;">Star Wars: The Mandalorian - Seasons 1-3</a> &bull;
+            <a href="/product/star-wars-the-mandalorian-seasons-1-2" style="color:#2563eb;text-decoration:none;">Star Wars: The Mandalorian - Seasons 1-2</a> &bull;
+            <a href="/product/star-wars-the-mandalorian-season-3" style="color:#2563eb;text-decoration:none;">Star Wars: The Mandalorian - Season 3</a>
+          </nav>
         </section>
 
         <!-- Customer Reviews Integration Anchor (ReviewsWidget) -->

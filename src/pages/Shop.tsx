@@ -107,10 +107,8 @@ export const Shop: React.FC = () => {
         return;
       }
     }
-    if (catalogueMaxPrice > 0) {
-      setMaxPrice(catalogueMaxPrice);
-    }
-  }, [maxPriceParam, catalogueMaxPrice]);
+    setMaxPrice(null);
+  }, [maxPriceParam]);
 
   // Sync param updates
   const updateFilter = (key: string, value: string) => {
@@ -309,7 +307,7 @@ export const Shop: React.FC = () => {
                   mainEntity: {
                     '@type': 'ItemList',
                     numberOfItems: filteredProducts.length,
-                    itemListElement: filteredProducts.slice(0, 20).map((prod, idx) => ({
+                    itemListElement: filteredProducts.map((prod, idx) => ({
                       '@type': 'ListItem',
                       position: idx + 1,
                       name: prod.title,

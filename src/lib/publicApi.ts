@@ -60,13 +60,18 @@ function normalizeProduct(row: any): Product {
 
   const cleanImages = Array.from(new Set(rawImages.filter(Boolean))).slice(0, 6);
 
+  const linkedGenres = Array.isArray(row.product_genres)
+    ? row.product_genres.map((link: any) => link.genre).filter(Boolean)
+    : [];
+  const fallbackGenres = Array.isArray(row.genres) ? row.genres.filter(Boolean) : [];
+
   return {
     ...row,
     price: Number(row.price),
     compare_at_price: row.compare_at_price == null ? null : Number(row.compare_at_price),
     average_rating: row.average_rating != null ? Number(row.average_rating) : null,
     review_count: row.review_count != null ? Number(row.review_count) : 0,
-    genres: (row.product_genres || []).map((link: any) => link.genre).filter(Boolean),
+    genres: linkedGenres.length > 0 ? linkedGenres : fallbackGenres,
     images: cleanImages.length > 0 ? cleanImages : (row.cover_image_url ? [row.cover_image_url] : []),
   } as Product;
 }
@@ -78,7 +83,14 @@ export const publicApi = {
     const { data, error } = await sb.from('products')
       .select('*, category:categories(*), product_genres(genre:genres(*))')
       .eq('status', 'active').order('created_at', { ascending: false });
-    if (error) throw new Error('The live catalogue could not be loaded. Please retry.');
+    if (error) {
+      const fallbackRes = await sb.from('products')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      if (fallbackRes.error) throw new Error('The live catalogue could not be loaded. Please retry.');
+      return (fallbackRes.data || []).map(normalizeProduct);
+    }
     return (data || []).map(normalizeProduct);
   },
 

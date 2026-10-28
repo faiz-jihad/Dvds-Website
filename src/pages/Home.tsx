@@ -184,7 +184,8 @@ export const Home: React.FC = () => {
             url: toAbsoluteUrl("/"),
             mainEntity: {
               "@type": "ItemList",
-              itemListElement: products.slice(0, 12).map((prod, idx) => ({
+              numberOfItems: products.length,
+              itemListElement: products.map((prod, idx) => ({
                 "@type": "ListItem",
                 position: idx + 1,
                 name: prod.title,

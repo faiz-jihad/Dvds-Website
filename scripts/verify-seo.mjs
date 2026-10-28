@@ -249,14 +249,15 @@ await runCheck('17. api/_seo-renderer.js canonicalizes functional filter queries
   assert.ok(boxSetRes.html.includes('Available Releases (9)'), '/shop?format=box-set must render the 9 Box Set releases');
 });
 
-// 18. Check static & dynamic sitemap contain all dedicated genre/category landing pages and NO parameterized query filter URLs
-await runCheck('18. public/sitemap.xml & generateDynamicSitemap contain all 11 genre landing URLs and zero parameterized filter queries', async () => {
+// 18. Check static & dynamic sitemap contain all dedicated genre/category landing pages, all 26 Supabase products, and NO parameterized query filter URLs
+await runCheck('18. public/sitemap.xml & generateDynamicSitemap contain all 13 genre landing URLs, all 26 active products, and zero parameterized filter queries', async () => {
   const sitemapXml = readFileSync(resolve(rootDir, 'public/sitemap.xml'), 'utf8');
   const dynamicXml = await generateDynamicSitemap('https://dvds-zone.co.uk');
   
   const expectedGenres = [
     'action', 'science-fiction', 'drama', 'war', 'documentary',
-    'music', 'western', 'crime', 'comedy', 'historical', 'adventure'
+    'music', 'western', 'crime', 'comedy', 'historical', 'adventure',
+    'romance', 'faith'
   ];
 
   for (const genre of expectedGenres) {
@@ -267,6 +268,29 @@ await runCheck('18. public/sitemap.xml & generateDynamicSitemap contain all 11 g
     assert.ok(
       dynamicXml.includes(`<loc>https://dvds-zone.co.uk/shop/genre/${genre}</loc>`),
       `dynamic sitemap must include /shop/genre/${genre}`
+    );
+  }
+
+  const expectedProductSlugs = [
+    'ozerk-season-14', 'marshals', 'ncis-19', 'stranger-things-14-season-',
+    'yellowstone-14-season-', 'mandalorain-season-13', 'mandalorian-12',
+    'legacies-the-fourth-and-final-season', 'the-boys-season3-', 'yellowstone-season3',
+    'mandalorian-3', 'greyhound-', 'seal-team-season-five',
+    'the-book-of-boba-fett-the-first-complete-season', 'stranger-things-season-14-dvd-set',
+    'dutton-ranch-season1', 'the-beateles-get-back', 'dutton-ranch-season-1',
+    'marshals-season-1', 'the-chosen-seasons-13', 'friends-the-reunion',
+    'greyhound', 'star-wars-the-mandalorian-seasons-13', 'seal-team-season-5',
+    'star-wars-the-mandalorian-season-3', 'star-wars-the-book-of-boba-fett-season-1'
+  ];
+
+  for (const slug of expectedProductSlugs) {
+    assert.ok(
+      sitemapXml.includes(`<loc>https://dvds-zone.co.uk/product/${slug}</loc>`),
+      `sitemap.xml must include /product/${slug}`
+    );
+    assert.ok(
+      dynamicXml.includes(`<loc>https://dvds-zone.co.uk/product/${slug}</loc>`),
+      `dynamic sitemap must include /product/${slug}`
     );
   }
 

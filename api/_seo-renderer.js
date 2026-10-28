@@ -74,8 +74,28 @@ const FALLBACK_PRODUCTS = [
   { slug: 'the-beatles-get-back', title: 'The Beatles: Get Back - 3-Disc Collector Edition', format: 'Box Set', price: 22.99, compare_at_price: 32.99, is_new_release: false, is_best_seller: true, is_featured: true, category_slug: 'documentary-music', cover_image_url: '/catalog/the-beatles-get-back.jpeg', description: 'Peter Jackson documentary event chronicling the warmth, camaraderie and creative genius of The Beatles.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['documentary', 'music'] },
   { slug: 'friends-the-reunion', title: 'Friends: The Reunion - Special Collector Edition', format: 'DVD', price: 8.99, compare_at_price: 14.99, is_new_release: false, is_best_seller: false, is_featured: false, category_slug: 'documentary-music', cover_image_url: '/catalog/friends-the-reunion.jpeg', description: 'Jennifer Aniston, Courteney Cox, Lisa Kudrow, Matt LeBlanc, Matthew Perry, and David Schwimmer return to Stage 24.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 5, genres: ['comedy', 'documentary'] },
   { slug: 'seal-team-season-5', title: 'SEAL Team - Season Five', format: 'Box Set', price: 15.99, compare_at_price: 24.99, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: '/catalog/seal-team-season-5.jpeg', description: 'The elite Bravo Team embarks on clandestine high-stakes global operations across the globe.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'drama', 'war'] },
-  { slug: 'dutton-ranch-season-1', title: 'Dutton Ranch: Origins - Season One', format: 'Box Set', price: 16.99, compare_at_price: 26.99, is_new_release: true, is_best_seller: true, is_featured: true, category_slug: 'tv-box-sets', cover_image_url: '/catalog/dutton-ranch-season-1.jpeg', description: 'The brutal generation of Duttons wrestling untamed Montana land against unforgiving wilderness and rivals.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['drama', 'western'] },
+  { slug: 'dutton-ranch-season-1', title: 'Dutton Ranch: Origins - Season One', format: 'Box Set', price: 16.99, compare_at_price: 26.99, is_new_release: true, is_best_seller: true, is_featured: true, category_slug: 'tv-box-sets', cover_image_url: '/catalog/dutton-ranch-season-1.jpeg', description: 'The brutal generation of Duttons wrestling untamed Montana land against unforgiving wilderness and rivals.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['drama', 'western', 'crime'] },
   { slug: 'marshals-season-1', title: 'Marshals - Season One', format: 'Box Set', price: 14.99, compare_at_price: 22.99, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: '/catalog/marshals-season-1.jpeg', description: 'Federal deputy marshals pursue the nation most wanted fugitives across jurisdictional borders.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'crime', 'drama', 'western'] },
+  { slug: 'ozerk-season-14', title: 'OZERK season 1-4', format: 'DVD', price: 32.99, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/770a4ee9-3b86-4f8e-9c0d-e28ca549fa4d.jpg', description: 'OZERK Seasons 1-4 complete television series on physical UK DVD with free Royal Mail delivery.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['adventure', 'crime', 'documentary', 'drama'] },
+  { slug: 'marshals', title: 'MARSHALS', format: 'DVD', price: 1.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/26ec5c97-27a9-4c74-b194-3a19a707277e.jpg', description: 'Marshals complete television series on physical UK DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'crime', 'drama', 'romance'] },
+  { slug: 'ncis-19', title: 'NCIS 19', format: 'DVD', price: 15.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'film', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/f0b3e4d3-b7aa-4125-88cf-30a294aaf459.png', description: 'NCIS Season 19 complete multi-disc DVD release.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'crime', 'drama', 'romance'] },
+  { slug: 'stranger-things-14-season-', title: 'STRANGER THINGS 1-4 season', format: 'DVD', price: 32.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/6bd4957e-b7d8-493a-8b08-3d85cb8ea19b.jpg', description: 'Stranger Things Seasons 1-4 multi-season DVD set.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'adventure', 'crime', 'science-fiction'] },
+  { slug: 'yellowstone-14-season-', title: 'YELLOWSTONE 1-4 SEASON', format: 'DVD', price: 32.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/47886b1b-2ed0-414b-9cd0-bbc26c7215da.jpg', description: 'Yellowstone Seasons 1-4 complete frontier drama DVD collection.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'adventure', 'crime', 'romance'] },
+  { slug: 'mandalorain-season-13', title: 'MANDALORAIN Season 1-3', format: 'DVD', price: 26.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/69d73299-f9fd-4b05-9ba8-49732418f788.jpg', description: 'The Mandalorian Seasons 1-3 complete DVD edition.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'adventure', 'science-fiction'] },
+  { slug: 'mandalorian-12', title: 'MANDALORIAN 1-2', format: 'DVD', price: 18.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/0e8289c3-e961-4efe-bdf3-06856ad16e1a.jpg', description: 'The Mandalorian Seasons 1-2 complete DVD edition.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'science-fiction', 'adventure'] },
+  { slug: 'legacies-the-fourth-and-final-season', title: 'LEGACIES The fourth and final season', format: 'DVD', price: 18.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'film', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/f9cbd186-cb9e-45d2-88ff-0dbaf9ac362e.jpg', description: 'Legacies: The Fourth and Final Season on physical UK DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'adventure', 'crime', 'romance'] },
+  { slug: 'the-boys-season3-', title: 'THE BOYS season3', format: 'DVD', price: 18.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/73802169-9533-41dd-a67a-88cf8ec19a3c.jpg', description: 'The Boys Season 3 complete television release on physical DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'crime'] },
+  { slug: 'yellowstone-season3', title: 'YELLOWSTONE Season3', format: 'DVD', price: 17.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/d94c5043-fb40-4765-b337-fd499f974751.jpg', description: 'Yellowstone Season 3 complete frontier television series on physical DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'adventure', 'crime', 'historical'] },
+  { slug: 'mandalorian-3', title: 'MANDALORIAN 3', format: 'DVD', price: 17.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'film', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/49a13b39-778f-4db5-86d6-7ec884fb2d2d.jpg', description: 'The Mandalorian Season 3 physical UK DVD edition.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'adventure', 'science-fiction', 'historical'] },
+  { slug: 'greyhound-', title: 'Greyhound', format: 'DVD', price: 19.99, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'film', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/33edc436-f636-4dc9-8881-8848c80b6c24.jpg', description: 'Greyhound WWII naval drama feature film on physical DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['adventure'] },
+  { slug: 'seal-team-season-five', title: 'SEAL TEAM season five', format: 'DVD', price: 16.99, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'film', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/6211e3d8-f96f-4155-9ddb-fd5120f6d890.jpg', description: 'SEAL Team Season Five physical DVD release.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action'] },
+  { slug: 'the-book-of-boba-fett-the-first-complete-season', title: 'THE BOOK OF BOBA FETT The First complete season', format: 'DVD', price: 17.99, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/6fd81dec-53aa-4b4b-ad45-06e74a9b7ef8.jpg', description: 'The Book of Boba Fett: The First Complete Season on physical DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['action', 'adventure', 'science-fiction'] },
+  { slug: 'stranger-things-season-14-dvd-set', title: 'STRANGER THINGS Season 1-4 DVD set', format: 'DVD', price: 32.99, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/56adc884-be84-4fd5-b389-74bc04ed430d.jpg', description: 'Stranger Things Seasons 1-4 complete DVD collector set.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['adventure'] },
+  { slug: 'dutton-ranch-season1', title: 'DUTTON RANCH Season1', format: 'DVD', price: 17.99, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'tv-box-sets', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/b4ef65e2-6b96-4162-91b8-53b8f3724e17.jpg', description: 'Dutton Ranch Season 1 frontier drama on physical DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['crime'] },
+  { slug: 'the-beateles-get-back', title: 'THE BEATELES GET BACK', format: 'DVD', price: 18.00, compare_at_price: null, is_new_release: true, is_best_seller: false, is_featured: false, category_slug: 'film', cover_image_url: 'https://arkeqzfzkeyxdnuykawj.supabase.co/storage/v1/object/public/products/0d68cc51-ed66-4955-ab9f-baffd1502f0b.jpg', description: 'The Beatles: Get Back music documentary on physical DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['music'] },
+  { slug: 'the-chosen-seasons-13', title: 'The Chosen - Seasons 1-3', format: 'DVD', price: 32.00, compare_at_price: null, is_new_release: false, is_best_seller: true, is_featured: true, category_slug: 'tv-box-sets', cover_image_url: '/catalog/the-chosen-seasons-1-3.jpeg', description: 'The Chosen: Seasons 1-3 historical drama collection on physical UK DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['historical', 'faith', 'drama'] },
+  { slug: 'greyhound', title: 'Greyhound', format: 'DVD', price: 15.99, compare_at_price: null, is_new_release: false, is_best_seller: true, is_featured: true, category_slug: 'film', cover_image_url: '/catalog/greyhound.jpeg', description: 'Greyhound WWII Battle of the Atlantic naval drama on physical UK DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['war', 'drama', 'action'] },
+  { slug: 'star-wars-the-mandalorian-seasons-13', title: 'Star Wars: The Mandalorian - Seasons 1-3', format: 'DVD', price: 24.99, compare_at_price: null, is_new_release: true, is_best_seller: true, is_featured: true, category_slug: 'tv-box-sets', cover_image_url: '/catalog/the-mandalorian-seasons-1-3.jpeg', description: 'Star Wars: The Mandalorian Seasons 1-3 complete television series on physical UK DVD.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 10, genres: ['science-fiction', 'adventure', 'action'] },
 ];
 
 const FALLBACK_CATEGORIES = [
@@ -175,7 +195,21 @@ const DEFAULT_GENRES = [
     name: 'Adventure',
     slug: 'adventure',
     description: 'Shop Adventure DVDs and action-packed TV series box sets at DVDs Zone UK. Epic galactic quests and collector sets with free UK delivery.',
-    introCopy: 'Embark on epic journeys across lawless frontiers and distant star systems with our Adventure DVD box sets, including the complete seasons of Star Wars: The Mandalorian and The Book of Boba Fett.',
+    introCopy: 'Embark on epic journeys across lawless frontiers and distant star systems with our Adventure DVD box sets, including the complete seasons of Star Wars: The Mandalorian, Stranger Things, and The Book of Boba Fett.',
+  },
+  {
+    id: 'g-romance',
+    name: 'Romance',
+    slug: 'romance',
+    description: 'Shop Romance & Drama DVDs and complete television series box sets at DVDs Zone UK with 100% free tracked Royal Mail UK delivery.',
+    introCopy: 'Explore character-driven television sagas and romantic drama storylines on physical DVD, including Yellowstone, Legacies, NCIS, and Marshals.',
+  },
+  {
+    id: 'g-faith',
+    name: 'Faith & Inspirational',
+    slug: 'faith',
+    description: 'Buy Faith & Inspirational DVDs and historical series box sets at DVDs Zone UK. Genuine Region 2 UK discs with free Royal Mail delivery.',
+    introCopy: 'Discover acclaimed inspirational and historical television series on physical DVD, highlighted by The Chosen: Complete Seasons 1–3 Collector Edition.',
   },
 ];
 
@@ -217,6 +251,12 @@ async function getCatalogueData() {
             genres: dbGenres.length > 0 ? dbGenres : (fallbackMatch?.genres || []),
           };
         });
+        const existingSlugs = new Set(products.map((p) => p.slug));
+        for (const fp of FALLBACK_PRODUCTS) {
+          if (!existingSlugs.has(fp.slug)) {
+            products.push(fp);
+          }
+        }
       }
 
       if (catRes.data && catRes.data.length > 0) {
@@ -526,12 +566,13 @@ function generatePrivacyHtml(baseUrl, settings) {
   `;
 }
 
-function generateHomeHtml(baseUrl, settings) {
+function generateHomeHtml(baseUrl, settings, products = FALLBACK_PRODUCTS, categories = FALLBACK_CATEGORIES, genres = DEFAULT_GENRES) {
   const storeName = settings?.store_name || 'DVDs Zone';
   const companyName = settings?.registered_company_name || 'AZRAYAN LTD';
   const companyNumber = settings?.company_number || '13894195';
   const supportEmail = settings?.support_email || 'info@dvds-zone.co.uk';
   const supportPhone = settings?.support_phone || '00447400320038';
+  const activeProducts = Array.isArray(products) && products.length > 0 ? products : FALLBACK_PRODUCTS;
 
   return `
     <header style="background:#07090e;color:#ffffff;padding:20px;border-bottom:1px solid rgba(255,255,255,0.1);font-family:system-ui,-apple-system,sans-serif;">
@@ -591,17 +632,17 @@ function generateHomeHtml(baseUrl, settings) {
       <section style="margin-bottom:40px;">
         <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:20px;">Featured Physical Media Releases at DVDs Zone (DVD Zone UK)</h2>
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:20px;">
-          ${FALLBACK_PRODUCTS.map(p => `
+          ${activeProducts.map(p => `
             <article style="border:1px solid #e2e8f0;border-radius:8px;padding:15px;background:#ffffff;">
               <h3 style="font-size:15px;font-weight:700;margin:0 0 8px 0;"><a href="${baseUrl}/product/${p.slug}" style="color:#0f172a;text-decoration:none;">${escapeHtml(p.title)}</a></h3>
-              <p style="font-size:13px;color:#64748b;margin:0 0 10px 0;">${escapeHtml(p.format)} &bull; ${escapeHtml(p.region_code)}</p>
+              <p style="font-size:13px;color:#64748b;margin:0 0 10px 0;">${escapeHtml(p.format || 'DVD')} &bull; ${escapeHtml(p.region_code || 'Region 2 (UK/Europe)')}</p>
               <p style="font-size:16px;font-weight:800;color:#2563eb;margin:0;">&pound;${Number(p.price).toFixed(2)} <span style="font-size:12px;color:#16a34a;font-weight:500;">Free UK Delivery</span></p>
             </article>
           `).join('')}
         </div>
       </section>
 
-      ${renderCatalogueTaxonomyLinks(baseUrl, FALLBACK_CATEGORIES, DEFAULT_GENRES)}
+      ${renderCatalogueTaxonomyLinks(baseUrl, categories, genres)}
 
       <!-- Corporate Footer Details -->
       <footer style="border-top:1px solid #e2e8f0;padding-top:25px;margin-top:28px;font-size:13px;color:#64748b;">
@@ -1198,6 +1239,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
 
     // 5. HOMEPAGE ROUTE: / (Application Purpose & Public Storefront)
     if (pathname === '/' || pathname === '') {
+      const { products: catalogueProducts, categories: catalogueCategories, genres: catalogueGenres } = await getCatalogueData();
       const homeTitle =
         settings?.seo_site_title && /dvds?\s*zone/i.test(settings.seo_site_title)
           ? settings.seo_site_title
@@ -1212,7 +1254,10 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
         description: homeDescription,
         canonicalUrl: `${baseUrl}/`,
       });
-      modifiedHtml = replaceRootHtml(modifiedHtml, `<div id="root">${generateHomeHtml(baseUrl, settings)}</div>`);
+      modifiedHtml = replaceRootHtml(
+        modifiedHtml,
+        `<div id="root">${generateHomeHtml(baseUrl, settings, catalogueProducts, catalogueCategories, catalogueGenres)}</div>`
+      );
       return new SeoResponse(modifiedHtml, 200);
     }
 
