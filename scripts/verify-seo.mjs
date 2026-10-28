@@ -391,6 +391,30 @@ await runCheck('19. server.js serves HTTP 200/301/404, Content-Type, canonicals,
     assert.ok(resp.body.includes('<meta name="robots" content="index, follow'), `HTTP GET ${check.path} must be indexable`);
   }
 
+  // Test all 26 active product routes over HTTP pipeline for 200 OK, self-referencing canonical, visible H1, and Product JSON-LD
+  const allProductSlugs = [
+    'ozerk-season-14', 'marshals', 'ncis-19', 'stranger-things-14-season-',
+    'yellowstone-14-season-', 'mandalorain-season-13', 'mandalorian-12',
+    'legacies-the-fourth-and-final-season', 'the-boys-season3-', 'yellowstone-season3',
+    'mandalorian-3', 'greyhound-', 'seal-team-season-five',
+    'the-book-of-boba-fett-the-first-complete-season', 'stranger-things-season-14-dvd-set',
+    'dutton-ranch-season1', 'the-beateles-get-back', 'dutton-ranch-season-1',
+    'marshals-season-1', 'the-chosen-seasons-13', 'friends-the-reunion',
+    'greyhound', 'star-wars-the-mandalorian-seasons-13', 'seal-team-season-5',
+    'star-wars-the-mandalorian-season-3', 'star-wars-the-book-of-boba-fett-season-1'
+  ];
+  for (const slug of allProductSlugs) {
+    const pResp = await requestApp(`/product/${slug}`);
+    assert.equal(pResp.status, 200, `HTTP GET /product/${slug} must return 200`);
+    assert.ok(
+      pResp.body.includes(`<link rel="canonical" href="https://dvds-zone.co.uk/product/${slug}" data-ssr="true" />`),
+      `/product/${slug} must have self-referencing canonical`
+    );
+    assert.equal((pResp.body.match(/<h1\b/gi) || []).length, 1, `/product/${slug} must have exactly 1 H1 tag`);
+    assert.ok(!pResp.body.includes('style="display:none;" data-ssr-crawler="true"'), `/product/${slug} crawler content must be visible, not display:none`);
+    assert.ok(pResp.body.includes('"@type":"Product"'), `/product/${slug} must include Product JSON-LD schema`);
+  }
+
   // Test 404 routes over HTTP pipeline
   for (const notFoundPath of ['/product/non-existent-dvd-999', '/shop/genre/non-existent-genre', '/shop/category/non-existent-category']) {
     const resp404 = await requestApp(notFoundPath);

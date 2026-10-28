@@ -804,13 +804,18 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
 
         const crawlerFallback = `
           <div id="root">
-            <main style="display:none;" data-ssr-crawler="true">
-              <article>
-                <h1>${escapeHtml(product.title)}</h1>
-                <p>${escapeHtml(product.description || '')}</p>
-                <p>Format: ${escapeHtml(product.format || 'DVD')} | Region: ${escapeHtml(product.region_code || 'Region 2 (UK/Europe)')}</p>
-                <p>Price: £${Number(product.price).toFixed(2)} — Free UK Standard Delivery</p>
-                <p>Availability: ${(product.stock_quantity ?? 1) > 0 ? 'In Stock' : 'Out of Stock'}</p>
+            <main style="max-width:1100px;margin:30px auto;padding:0 20px;font-family:system-ui,-apple-system,sans-serif;" data-ssr-crawler="true">
+              <nav aria-label="Breadcrumb" style="font-size:13px;color:#64748b;margin-bottom:16px;">
+                <a href="${baseUrl}/" style="color:#2563eb;text-decoration:none;">Home</a> &gt;
+                <a href="${baseUrl}/shop" style="color:#2563eb;text-decoration:none;">Catalogue</a> &gt;
+                <span>${escapeHtml(product.title)}</span>
+              </nav>
+              <article style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;">
+                <h1 style="font-size:28px;font-weight:900;color:#0f172a;margin:0 0 12px 0;">${escapeHtml(product.title)}</h1>
+                <p style="font-size:15px;color:#475569;line-height:1.6;margin:0 0 16px 0;">${escapeHtml(product.description || `${product.title} on physical UK DVD at ${storeName}.`)}</p>
+                <p style="font-size:14px;color:#334155;margin:0 0 8px 0;"><strong>Format:</strong> ${escapeHtml(product.format || 'DVD')} &bull; <strong>Region:</strong> ${escapeHtml(product.region_code || 'Region 2 (UK/Europe)')}</p>
+                <p style="font-size:18px;font-weight:800;color:#2563eb;margin:0 0 8px 0;">&pound;${Number(product.price).toFixed(2)} &mdash; <span style="color:#16a34a;font-size:14px;">100% Free UK Standard Delivery via Royal Mail</span></p>
+                <p style="font-size:13px;color:#16a34a;font-weight:600;margin:0;">Availability: ${(product.stock_quantity ?? 1) > 0 ? 'In Stock (Same-Day UK Dispatch)' : 'Out of Stock'}</p>
               </article>
             </main>
           </div>
@@ -921,7 +926,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
                   position: idx + 1,
                   name: p.title,
                   url: `${baseUrl}/product/${p.slug}`,
-                  image: `${baseUrl}${p.cover_image_url.startsWith('/') ? '' : '/'}${p.cover_image_url}`,
+                  image: p.cover_image_url?.startsWith('http') ? p.cover_image_url : `${baseUrl}${p.cover_image_url?.startsWith('/') ? '' : '/'}${p.cover_image_url || ''}`,
                 })),
               },
             },
@@ -1032,7 +1037,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
                 position: idx + 1,
                 name: p.title,
                 url: `${baseUrl}/product/${p.slug}`,
-                image: `${baseUrl}${p.cover_image_url.startsWith('/') ? '' : '/'}${p.cover_image_url}`,
+                image: p.cover_image_url?.startsWith('http') ? p.cover_image_url : `${baseUrl}${p.cover_image_url?.startsWith('/') ? '' : '/'}${p.cover_image_url || ''}`,
               })),
             },
           },

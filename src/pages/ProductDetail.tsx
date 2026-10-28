@@ -29,17 +29,24 @@ import { useFavouritesStore } from '../stores/useFavouritesStore';
 import { useLastSeenStore } from '../stores/useLastSeenStore';
 import { useUiStore } from '../stores/useUiStore';
 import { Seo, toAbsoluteUrl } from '../components/common/Seo';
+import { DEFAULT_PRODUCTS } from '../data/defaultProducts';
+import { DEFAULT_STORE_SETTINGS } from '../data/defaultStoreSettings';
 
 export const ProductDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const recordView = useLastSeenStore((state) => state.recordView);
 
+  const fallbackProduct = useMemo(
+    () => (slug ? DEFAULT_PRODUCTS.find((p) => p.slug === slug) : undefined),
+    [slug]
+  );
+
   const productQuery = useQuery({ queryKey: ['store', 'product', slug], queryFn: () => publicApi.getProductBySlug(slug || ''), enabled: Boolean(slug) });
   const productsQuery = useQuery({ queryKey: ['store', 'products'], queryFn: () => publicApi.getProducts() });
   const settingsQuery = useQuery({ queryKey: ['store', 'settings'], queryFn: () => publicApi.getStoreSettings() });
-  const product = productQuery.data;
-  const storeSettings = settingsQuery.data;
+  const product = productQuery.data || fallbackProduct;
+  const storeSettings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -72,15 +79,21 @@ export const ProductDetail: React.FC = () => {
   const addToast = useUiStore((state) => state.addToast);
   const { isFavourite, toggleFavourite } = useFavouritesStore();
 
-  if (productQuery.isLoading || productsQuery.isLoading || settingsQuery.isLoading || productQuery.error || productsQuery.error || settingsQuery.error) {
-    return <StoreDataState loading={productQuery.isLoading || productsQuery.isLoading || settingsQuery.isLoading} error={productQuery.error || productsQuery.error || settingsQuery.error} retry={() => { productQuery.refetch(); productsQuery.refetch(); settingsQuery.refetch(); }} />;
+  if (!product && (productQuery.isLoading || productQuery.error)) {
+    return <StoreDataState loading={productQuery.isLoading} error={productQuery.error} retry={() => { productQuery.refetch(); productsQuery.refetch(); settingsQuery.refetch(); }} />;
   }
 
   if (!product) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+        <Seo
+          title="Product Not Found | DVDs Zone"
+          description="The requested DVD release or TV box set could not be found in our catalogue."
+          canonicalPath="/shop"
+          noIndex={true}
+        />
         <Package className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
-        <h2 className="font-display font-bold text-2xl text-dark dark:text-white mb-2">Product Not Found</h2>
+        <h1 className="font-display font-bold text-2xl text-dark dark:text-white mb-2">Product Not Found</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 max-w-sm">
           The requested item might be unavailable, out of stock, or the link has changed.
         </p>
