@@ -79,32 +79,31 @@ export const Home: React.FC = () => {
       <Seo
         title={
           settings.seo_site_title ||
-          "DVD Zone — Official UK Store | Buy DVDs & TV Box Sets Online"
+          "DVDs Zone | DVD Movies & TV Box Sets UK"
         }
         description={
           settings.seo_site_description ||
-          "DVD Zone (dvds-zone.co.uk) is the United Kingdom's official online store for genuine DVDs, TV series box sets, and cinema classics. Free Royal Mail UK delivery with same-day dispatch."
+          "Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options."
         }
-        keywords="DVD Zone, DVD Zone UK, DVDs Zone, DVDs Zone UK, dvdzone, dvdszone, dvd-zone, dvds-zone, dvd zone store, dvd zone online, buy DVDs UK, DVD box sets UK, television series box sets, classic films DVD, Star Wars Mandalorian DVD, physical media store UK, Royal Mail free delivery DVDs"
+        keywords="dvdzone, dvd zone, dvds zone, DVDs Zone, AZ Rayan DVDs, DVDs Zone UK, dvds-zone.co.uk, buy DVDs UK, TV box sets UK, physical media store UK, Royal Mail free delivery DVDs"
         canonicalPath="/"
         image={
           settings.seo_social_image_url ||
           "/catalog/the-mandalorian-seasons-1-3.jpeg"
         }
-        siteName={settings.store_name || "DVD Zone"}
+        siteName={settings.store_name || "DVDs Zone"}
         jsonLd={[
           {
             "@context": "https://schema.org",
             "@type": "Brand",
-            name: settings.store_name || "DVD Zone",
+            name: settings.store_name || "DVDs Zone",
             alternateName: [
-              "DVD Zone UK",
-              "DVDs Zone",
+              "DVD Zone",
               "DVDZone",
               "DVDsZone",
+              "AZ Rayan DVDs",
               "DVDs Zone UK",
-              "DVD-Zone",
-              "DVDs-Zone",
+              "DVD Zone UK",
               "dvds-zone.co.uk",
             ],
             url: toAbsoluteUrl("/"),
@@ -117,15 +116,14 @@ export const Home: React.FC = () => {
           {
             "@context": "https://schema.org",
             "@type": "WebSite",
-            name: settings.store_name || "DVD Zone",
+            name: settings.store_name || "DVDs Zone",
             alternateName: [
-              "DVD Zone UK",
-              "DVDs Zone",
+              "DVD Zone",
               "DVDZone",
               "DVDsZone",
+              "AZ Rayan DVDs",
               "DVDs Zone UK",
-              "DVD-Zone",
-              "DVDs-Zone",
+              "DVD Zone UK",
               "dvds-zone.co.uk",
             ],
             url: toAbsoluteUrl("/"),
@@ -141,19 +139,19 @@ export const Home: React.FC = () => {
           {
             "@context": "https://schema.org",
             "@type": "OnlineStore",
-            name: settings.store_name || "DVD Zone",
+            name: settings.store_name || "DVDs Zone",
             brand: {
               "@type": "Brand",
-              name: settings.store_name || "DVD Zone",
+              name: settings.store_name || "DVDs Zone",
             },
             alternateName: [
-              "DVD Zone UK",
-              "DVDs Zone",
+              "DVD Zone",
               "DVDZone",
               "DVDsZone",
+              "AZ Rayan DVDs",
               "DVDs Zone UK",
-              "DVD-Zone",
-              "DVDs-Zone",
+              "DVD Zone UK",
+              "dvds-zone.co.uk",
             ],
             url: toAbsoluteUrl("/"),
             sameAs: [
@@ -164,7 +162,7 @@ export const Home: React.FC = () => {
           {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
-            name: `${settings.store_name || "DVD Zone"} — Quality DVDs & Entertainment Catalogue`,
+            name: `${settings.store_name || "DVDs Zone"} — Quality DVDs & Entertainment Catalogue`,
             description:
               settings.seo_site_description ||
               "Definitive physical DVD box sets and restored cinema releases available for UK and worldwide delivery.",

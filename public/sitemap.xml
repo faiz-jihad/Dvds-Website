@@ -5,61 +5,61 @@
   <!-- Core Storefront Pages -->
   <url>
     <loc>https://dvds-zone.co.uk/</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/shop</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/about</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/contact</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/delivery</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/returns</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/faq</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/terms</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.50</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/privacy</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.50</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/refund-policy</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.50</priority>
   </url>
@@ -67,19 +67,19 @@
   <!-- Category Hubs -->
   <url>
     <loc>https://dvds-zone.co.uk/shop?category=tv-box-sets</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/shop?category=film</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/shop?category=documentary-music</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -87,7 +87,7 @@
   <!-- Product Catalogue with Image Metadata -->
   <url>
     <loc>https://dvds-zone.co.uk/product/star-wars-the-mandalorian-seasons-1-3</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>
@@ -97,7 +97,7 @@
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/product/star-wars-the-mandalorian-seasons-1-2</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>
@@ -107,7 +107,7 @@
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/product/star-wars-the-mandalorian-season-3</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>
@@ -117,7 +117,7 @@
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/product/star-wars-the-book-of-boba-fett-season-1</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>
@@ -127,7 +127,7 @@
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/product/the-chosen-seasons-1-3</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>
@@ -137,7 +137,7 @@
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/product/greyhound-2020</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>
@@ -147,7 +147,7 @@
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/product/the-beatles-get-back</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>
@@ -157,7 +157,7 @@
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/product/friends-the-reunion</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>
@@ -167,7 +167,7 @@
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/product/seal-team-season-5</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>
@@ -177,7 +177,7 @@
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/product/dutton-ranch-season-1</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>
@@ -187,7 +187,7 @@
   </url>
   <url>
     <loc>https://dvds-zone.co.uk/product/marshals-season-1</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <image:image>

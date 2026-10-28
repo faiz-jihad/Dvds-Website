@@ -5,13 +5,13 @@ export const MAX_PRODUCT_PRICE = 150;
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   id: 's1000000-0000-0000-0000-000000000001',
   seo_site_url: 'https://dvds-zone.co.uk',
-  seo_site_title: 'DVD Zone — Official UK Store | Buy DVDs & TV Box Sets Online',
+  seo_site_title: 'DVDs Zone | DVD Movies & TV Box Sets UK',
   seo_site_description:
-    'DVD Zone (dvds-zone.co.uk) is the United Kingdom\'s official online store for genuine DVDs, TV series box sets, and cinema classics. Free Royal Mail UK delivery with same-day dispatch.',
+    'Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options.',
   seo_social_image_url:
     'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&auto=format&fit=crop&q=80',
   seo_organization_description:
-    'Official UK physical media retailer operated by DVD Zone, based in United Kingdom.',
+    'UK online retailer selling physical DVDs and TV box sets, operated by AZRAYAN LTD.',
   hero_badge_text: 'FREE UK DELIVERY — SAME-DAY DISPATCH',
   hero_headline_line1: 'Quality DVDs &',
   hero_headline_highlight: 'Entertainment.',
@@ -69,7 +69,7 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   vip_promo_code: 'ZONE10',
   vip_promo_discount: 10.0,
   vip_min_spend: 20.0,
-  store_name: 'DVD Zone',
+  store_name: 'DVDs Zone',
   registered_company_name: 'AZRAYAN LTD',
   company_number: '13894195',
   registered_office_address: 'United Kingdom',

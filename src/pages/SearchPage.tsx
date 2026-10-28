@@ -92,12 +92,12 @@ export const SearchPage: React.FC = () => {
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
       <Seo
-        title={queryParam ? `Search results for "${queryParam}" — DVD Zone UK` : 'Search Film & TV Catalogue — DVD Zone UK'}
-        description={queryParam ? `Buy physical DVDs matching "${queryParam}" — 100% free UK delivery, same-day dispatch via Royal Mail. DVD Zone.` : 'Search the DVD Zone catalogue for TV box sets, cinema classics, and physical media collector pressings.'}
-        keywords="search DVDs, find box sets UK, physical media film archive, buy movie DVDs online, DVD Zone"
-        canonicalPath={queryParam ? `/search?q=${encodeURIComponent(queryParam)}` : '/search'}
-        noIndex={!queryParam}
-        siteName="DVD Zone"
+        title={queryParam ? `Search results for "${queryParam}" — DVDs Zone UK` : 'Search Film & TV Catalogue — DVDs Zone UK'}
+        description={queryParam ? `Buy physical DVDs matching "${queryParam}" — 100% free UK delivery, same-day dispatch via Royal Mail. DVDs Zone.` : 'Search the DVDs Zone catalogue for TV box sets, cinema classics, and physical media collector pressings.'}
+        keywords="search DVDs, find box sets UK, physical media film archive, buy movie DVDs online, DVDs Zone"
+        canonicalPath="/search"
+        noIndex={true}
+        siteName="DVDs Zone"
       />
       <div className="max-w-container mx-auto px-4 sm:px-6 md:px-12">
         {/* Breadcrumb & Navigation */}

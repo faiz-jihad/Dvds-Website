@@ -15,6 +15,36 @@ const PORT = process.env.PORT || 3000;
 // Trust reverse proxy (Nginx / Cloudflare / Apache)
 app.set('trust proxy', 1);
 
+// Canonical Host (non-www) & Trailing Slash Redirection (SEO consistency)
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return next();
+  }
+
+  const host = (req.headers.host || '').trim();
+  const isWww = /^www\./i.test(host);
+
+  const urlParts = (req.originalUrl || req.url).split('?');
+  const pathname = urlParts[0];
+  const search = urlParts[1] ? `?${urlParts[1]}` : '';
+  const hasTrailingSlash = pathname.length > 1 && pathname.endsWith('/');
+
+  // Skip API routes and assets
+  if (pathname.startsWith('/api/') || pathname.startsWith('/assets/')) {
+    return next();
+  }
+
+  if (isWww || hasTrailingSlash) {
+    const targetHost = isWww ? host.replace(/^www\./i, '') : host;
+    const targetPath = hasTrailingSlash ? pathname.replace(/\/+$/, '') : pathname;
+    const protocol = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+    const targetUrl = `${protocol}://${targetHost}${targetPath}${search}`;
+    return res.redirect(301, targetUrl);
+  }
+
+  next();
+});
+
 // Stripe webhook requires raw Buffer for cryptographic signature verification
 app.post(['/api/stripe-webhook', '/api/stripe/webhook'], express.raw({ type: '*/*', limit: '2mb' }), async (req, res) => {
   try {
@@ -157,8 +187,11 @@ app.use(async (req, res) => {
 
       const { injectSeoTags, getBaseUrl } = await import('./api/_seo-renderer.js');
       const baseUrl = getBaseUrl(req);
-      const renderedHtml = await injectSeoTags(cachedIndexHtml, req.originalUrl || req.url, baseUrl);
+      const seoResult = await injectSeoTags(cachedIndexHtml, req.originalUrl || req.url, baseUrl);
+      const status = (seoResult && seoResult.status) || 200;
+      const renderedHtml = seoResult && typeof seoResult.html === 'string' ? seoResult.html : String(seoResult);
 
+      res.status(status);
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.send(renderedHtml);
     } catch (err) {

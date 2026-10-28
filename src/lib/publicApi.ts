@@ -250,11 +250,11 @@ export const publicApi = {
     if (!result.warehouse_location || result.warehouse_location.includes('Ryland') || result.warehouse_location.includes('Apartment') || result.warehouse_location.includes('London') || result.warehouse_location.includes('Birmingham') || result.warehouse_location.includes('West Midlands')) {
       result.warehouse_location = 'United Kingdom';
     }
-    if (!result.store_name || result.store_name.includes('AZ Rayan') || result.store_name === 'DVDs Zone' || result.store_name === 'DVDS Zone') {
-      result.store_name = 'DVD Zone';
+    if (!result.store_name || result.store_name === 'DVD Zone' || result.store_name === 'DVDS Zone') {
+      result.store_name = 'DVDs Zone';
     }
-    if (!result.registered_company_name || result.registered_company_name.includes('AZ Rayan') || result.registered_company_name === 'DVDs Zone') {
-      result.registered_company_name = 'DVD Zone';
+    if (!result.registered_company_name || result.registered_company_name === 'DVD Zone') {
+      result.registered_company_name = 'AZRAYAN LTD';
     }
     const rawEmail = data.support_email?.trim() || '';
     result.support_email = (!rawEmail || rawEmail.includes('azrayan.co.uk') || rawEmail.includes('concierge')) ? 'info@dvds-zone.co.uk' : rawEmail;

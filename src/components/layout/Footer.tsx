@@ -28,9 +28,9 @@ export const Footer: React.FC = () => {
   });
 
   const settings = settingsQuery.data || DEFAULT_STORE_SETTINGS;
-  const storeName = (settings.store_name === 'DVDs Zone' || settings.store_name === 'DVDS Zone' || !settings.store_name) ? 'DVD Zone' : settings.store_name;
+  const storeName = (settings.store_name === 'DVD Zone' || settings.store_name === 'DVDS Zone' || !settings.store_name) ? 'DVDs Zone' : settings.store_name;
   const registeredCompanyName =
-    settings.registered_company_name && settings.registered_company_name !== 'DVD Zone' && settings.registered_company_name !== 'DVDs Zone'
+    settings.registered_company_name && settings.registered_company_name !== 'DVD Zone'
       ? settings.registered_company_name
       : 'AZRAYAN LTD';
   const companyNumber = settings.company_number || '13894195';

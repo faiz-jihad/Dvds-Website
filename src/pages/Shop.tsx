@@ -77,7 +77,7 @@ export const Shop: React.FC = () => {
   const isNewReleases = filterType === 'new';
   const isBestSellers = filterType === 'bestseller';
 
-  let pageEyebrow = `${storeSettings?.store_name || 'DVD Zone'} Catalogue`;
+  let pageEyebrow = `${storeSettings?.store_name || 'DVDs Zone'} Catalogue`;
   let pageTitle = 'Explore Our Complete Store';
   let pageDescription = 'Browse all products, physical media, collectibles, and special editions with 100% free delivery across the UK.';
 
@@ -183,19 +183,19 @@ export const Shop: React.FC = () => {
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
       <Seo
-        title={`${pageTitle} — ${storeSettings?.store_name || 'DVD Zone UK'} | Buy Physical Media`}
+        title={`${pageTitle} — ${storeSettings?.store_name || 'DVDs Zone'} | Buy Physical Media`}
         description={`${pageDescription} All orders 100% free standard delivery across United Kingdom. Same-day dispatch, delivered to your door within 2 working days via Royal Mail.`}
-        keywords={`${pageTitle}, buy DVDs online UK, physical media catalogue, TV box sets UK, cheap DVDs UK, classic movies on DVD, ${storeSettings?.store_name || 'DVD Zone'}`}
+        keywords={`${pageTitle}, buy DVDs online UK, physical media catalogue, TV box sets UK, cheap DVDs UK, classic movies on DVD, ${storeSettings?.store_name || 'DVDs Zone'}`}
         canonicalPath={categoryParam ? `/shop?category=${encodeURIComponent(categoryParam)}` : '/shop'}
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
-        siteName={storeSettings?.store_name || 'DVD Zone'}
+        siteName={storeSettings?.store_name || 'DVDs Zone'}
         jsonLd={[
           {
             '@context': 'https://schema.org',
             '@type': 'CollectionPage',
             name: pageTitle,
             description: pageDescription,
-            url: toAbsoluteUrl('/shop'),
+            url: toAbsoluteUrl(categoryParam ? `/shop?category=${encodeURIComponent(categoryParam)}` : '/shop'),
             mainEntity: {
               '@type': 'ItemList',
               numberOfItems: filteredProducts.length,

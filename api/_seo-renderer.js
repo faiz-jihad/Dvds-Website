@@ -215,10 +215,12 @@ export async function generateDynamicSitemap(baseUrl) {
 
 export function generateDynamicRobots(baseUrl) {
   return [
-    '# DVD Zone – Dynamic Robots Configuration',
+    '# DVDs Zone – Robots Configuration',
     'User-agent: *',
     'Allow: /',
     'Allow: /catalog/',
+    'Allow: /brand/',
+    'Allow: /assets/',
     'Allow: /product/',
     'Allow: /shop',
     'Allow: /about',
@@ -228,23 +230,40 @@ export function generateDynamicRobots(baseUrl) {
     'Allow: /faq',
     'Allow: /terms',
     'Allow: /privacy',
+    'Allow: /refund-policy',
     'Disallow: /admin/',
     'Disallow: /admin',
     'Disallow: /account/',
     'Disallow: /account',
+    'Disallow: /checkout/',
     'Disallow: /checkout',
+    'Disallow: /cart/',
     'Disallow: /cart',
     'Disallow: /order-success/',
+    'Disallow: /order-success',
+    'Disallow: /order-confirmation/',
+    'Disallow: /order-confirmation',
+    'Disallow: /favourites',
+    'Disallow: /search',
+    'Disallow: /login',
+    'Disallow: /register',
+    'Disallow: /forgot-password',
+    'Disallow: /reset-password',
     'Disallow: /api/',
+    'Disallow: /api',
     '',
     'User-agent: Googlebot',
     'Allow: /',
+    'Allow: /catalog/',
+    'Allow: /brand/',
+    'Allow: /assets/',
     'Allow: /shop',
     'Allow: /product/',
-    'Allow: /catalog/',
     '',
     'User-agent: Googlebot-Image',
     'Allow: /catalog/',
+    'Allow: /brand/',
+    'Allow: /assets/',
     'Allow: /product/',
     'Allow: /',
     '',
@@ -254,8 +273,18 @@ export function generateDynamicRobots(baseUrl) {
   ].join('\n');
 }
 
+export class SeoResponse {
+  constructor(html, status = 200) {
+    this.html = html;
+    this.status = status;
+  }
+  toString() {
+    return this.html;
+  }
+}
+
 function generatePrivacyHtml(baseUrl, settings) {
-  const storeName = settings?.store_name || 'DVDS Zone';
+  const storeName = settings?.store_name || 'DVDs Zone';
   const companyName = settings?.registered_company_name || 'AZRAYAN LTD';
   const companyNumber = settings?.company_number || '13894195';
   const supportEmail = settings?.support_email || 'info@dvds-zone.co.uk';
@@ -343,7 +372,7 @@ function generatePrivacyHtml(baseUrl, settings) {
 }
 
 function generateHomeHtml(baseUrl, settings) {
-  const storeName = settings?.store_name || 'DVD Zone';
+  const storeName = settings?.store_name || 'DVDs Zone';
   const companyName = settings?.registered_company_name || 'AZRAYAN LTD';
   const companyNumber = settings?.company_number || '13894195';
   const supportEmail = settings?.support_email || 'info@dvds-zone.co.uk';
@@ -369,10 +398,10 @@ function generateHomeHtml(baseUrl, settings) {
     <main style="max-width:1200px;margin:0 auto;padding:40px 20px;font-family:system-ui,-apple-system,sans-serif;color:#1e293b;line-height:1.6;">
       <!-- Hero & Application Purpose Statement -->
       <section style="background:#0b0f19;color:#ffffff;padding:40px;border-radius:12px;margin-bottom:40px;border:1px solid rgba(255,255,255,0.1);">
-        <span style="display:inline-block;background:rgba(37,99,235,0.2);color:#60a5fa;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:15px;letter-spacing:1px;text-transform:uppercase;">Official Store &amp; Application Identity</span>
-        <h1 style="font-size:32px;font-weight:800;margin:0 0 15px 0;line-height:1.2;">DVD Zone — Official UK DVD Store</h1>
+        <span style="display:inline-block;background:rgba(37,99,235,0.2);color:#60a5fa;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:15px;letter-spacing:1px;text-transform:uppercase;">UK Physical Media &amp; TV Box Sets Store</span>
+        <h1 style="font-size:32px;font-weight:800;margin:0 0 15px 0;line-height:1.2;">DVDs Zone — DVD Movies &amp; TV Box Sets UK</h1>
         <p style="font-size:16px;color:#cbd5e1;max-width:850px;margin:0 0 20px 0;line-height:1.7;">
-          <strong>${escapeHtml(storeName)}</strong> (DVD Zone UK) is an online physical media e-commerce store and entertainment catalogue operated by <strong>${escapeHtml(companyName)}</strong> (Company Registered in England and Wales No. ${escapeHtml(companyNumber)}, active since 2021). We supply authentic UK DVD box sets, Blu-ray discs, and television series with 100% Free UK standard delivery via Royal Mail.
+          <strong>${escapeHtml(storeName)}</strong> (AZ Rayan DVDs / DVDs Zone, also known as DVD Zone UK) is an online retailer selling physical DVDs and TV box sets operated by <strong>${escapeHtml(companyName)}</strong> (Company Registered in England and Wales No. ${escapeHtml(companyNumber)}, active since 2021). We supply authentic UK DVD box sets, Blu-ray discs, and television series with 100% Free UK standard delivery via Royal Mail.
         </p>
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
           <a href="${baseUrl}/shop" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none;">Browse Store Catalogue</a>
@@ -416,7 +445,7 @@ function generateHomeHtml(baseUrl, settings) {
 
       <!-- Corporate Footer Details -->
       <footer style="border-top:1px solid #e2e8f0;padding-top:25px;font-size:13px;color:#64748b;">
-        <p><strong>Operating Company:</strong> ${escapeHtml(companyName)} &bull; Registered in England and Wales No. ${escapeHtml(companyNumber)} &bull; Active since 2021</p>
+        <p><strong>Operating Brand:</strong> ${escapeHtml(storeName)} (AZ Rayan DVDs / DVDs Zone) &bull; <strong>Operating Company:</strong> ${escapeHtml(companyName)} &bull; Registered in England and Wales No. ${escapeHtml(companyNumber)} &bull; Active since 2021</p>
         <p>Official Website: <a href="${baseUrl}" style="color:#2563eb;">${baseUrl}</a> &bull; Support: <a href="mailto:${escapeHtml(supportEmail)}" style="color:#2563eb;">${escapeHtml(supportEmail)}</a> &bull; Phone: <a href="tel:${escapeHtml(supportPhone)}" style="color:#2563eb;">${escapeHtml(supportPhone)}</a></p>
         <p><a href="${baseUrl}/privacy" style="color:#2563eb;margin-right:15px;">Privacy Policy</a> <a href="${baseUrl}/terms" style="color:#2563eb;margin-right:15px;">Terms &amp; Conditions</a> <a href="${baseUrl}/about" style="color:#2563eb;">About Us</a></p>
       </footer>
@@ -429,7 +458,11 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
     const urlObj = new URL(reqUrl, 'http://localhost');
     const pathname = urlObj.pathname;
     const settings = await getStoreSettings();
-    const storeName = settings?.store_name || 'DVD Zone';
+    const storeName = settings?.store_name || 'DVDs Zone';
+    const companyName = settings?.registered_company_name || 'AZRAYAN LTD';
+    const companyNumber = settings?.company_number || '13894195';
+    const supportEmail = settings?.support_email || settings?.contact_email || 'info@dvds-zone.co.uk';
+    const supportPhone = settings?.support_phone || settings?.contact_phone || '00447400320038';
     const googleVerification = process.env.GOOGLE_SITE_VERIFICATION || settings?.google_site_verification;
 
     let modifiedHtml = rawHtml;
@@ -522,27 +555,155 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
         // Inject Crawler fallback in root
         modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, crawlerFallback);
 
-        return modifiedHtml;
+        return new SeoResponse(modifiedHtml, 200);
+      } else {
+        // Genuine 404 for missing / nonexistent product
+        const title = `Product Not Found | ${storeName}`;
+        const description = `The requested DVD release or TV box set could not be found in our catalogue. Browse our complete collection at ${storeName}.`;
+        const canonicalUrl = `${baseUrl}/shop`;
+        modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+        modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+        modifiedHtml = modifiedHtml.replace(/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="noindex, nofollow" />`);
+        modifiedHtml = modifiedHtml.replace(/<meta\s+name="googlebot"\s+content="[^"]*"\s*\/?>/i, `<meta name="googlebot" content="noindex, nofollow" />`);
+        modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+        modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `
+          <div id="root">
+            <main style="max-width:800px;margin:50px auto;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif;">
+              <h1 style="font-size:28px;font-weight:800;color:#0f172a;margin-bottom:12px;">Product Not Found</h1>
+              <p style="color:#64748b;margin-bottom:24px;">The DVD release or TV box set you are looking for is unavailable or has moved.</p>
+              <a href="${baseUrl}/shop" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 24px;border-radius:8px;font-weight:600;text-decoration:none;">Browse Full DVD Catalogue</a>
+            </main>
+          </div>
+        `.trim());
+        return new SeoResponse(modifiedHtml, 404);
       }
     }
 
-    // 2. SHOP CATALOGUE ROUTE: /shop
-    if (pathname === '/shop') {
-      const title = `Buy DVDs, TV Box Sets & Cinema Releases Online | ${storeName} Catalogue`;
-      const description = `Browse official DVDs, TV box sets, and cinema releases at ${storeName}. Free UK delivery on all orders with same-day dispatch via Royal Mail.`;
-      const canonicalUrl = `${baseUrl}/shop`;
+    // 2. SHOP CATALOGUE & CATEGORY ROUTES: /shop and /shop/:category
+    if (pathname === '/shop' || pathname.startsWith('/shop/')) {
+      let categorySlug = urlObj.searchParams.get('category');
+      if (!categorySlug && pathname.startsWith('/shop/')) {
+        categorySlug = pathname.replace(/^\/shop\//, '').replace(/\/$/, '');
+      }
+
+      const category = categorySlug
+        ? (FALLBACK_CATEGORIES.find((c) => c.slug === categorySlug) || {
+            name: categorySlug.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+            slug: categorySlug,
+          })
+        : null;
+
+      let title, description, canonicalUrl;
+      if (category) {
+        title = `${category.name} DVDs & TV Box Sets | ${storeName} UK`;
+        description = `Browse our collection of ${category.name} DVDs and TV box sets at ${storeName}. Free UK delivery with same-day dispatch via Royal Mail.`;
+        canonicalUrl = `${baseUrl}/shop?category=${encodeURIComponent(category.slug)}`;
+      } else {
+        title = `DVD Movies & TV Box Sets UK Catalogue | ${storeName}`;
+        description = `Shop DVDs and TV box sets at ${storeName}. Explore our collection of physical entertainment releases with UK delivery options.`;
+        canonicalUrl = `${baseUrl}/shop`;
+      }
 
       modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
       modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
       modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
       modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
-      return modifiedHtml;
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(title)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(description)}" />`);
+      return new SeoResponse(modifiedHtml, 200);
     }
 
-    // 3. PRIVACY POLICY ROUTE: /privacy (Google OAuth & UK GDPR Verification)
+    // 3. INFORMATION & CONTENT ROUTES
+    if (pathname === '/about') {
+      const title = `About ${storeName} — UK Physical Media Store | AZ Rayan DVDs`;
+      const description = `Learn about ${storeName} (operated by ${companyName}, Company No. ${companyNumber}, UK). Specialising in genuine DVDs, TV box sets, and physical entertainment with free UK delivery.`;
+      const canonicalUrl = `${baseUrl}/about`;
+      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+      return new SeoResponse(modifiedHtml, 200);
+    }
+
+    if (pathname === '/contact') {
+      const title = `Contact ${storeName} — UK Customer Support & Order Assistance`;
+      const description = `Contact ${storeName} customer support. Email: ${supportEmail}. Phone: ${supportPhone}. Fast assistance for orders, dispatch, and returns.`;
+      const canonicalUrl = `${baseUrl}/contact`;
+      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+      return new SeoResponse(modifiedHtml, 200);
+    }
+
+    if (pathname === '/delivery') {
+      const title = `Delivery Information — 100% Free UK Delivery | ${storeName}`;
+      const description = `All orders qualify for 100% free standard UK delivery via Royal Mail. Dispatched same day before 2:00 PM GMT, delivered within 2 working days.`;
+      const canonicalUrl = `${baseUrl}/delivery`;
+      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+      return new SeoResponse(modifiedHtml, 200);
+    }
+
+    if (pathname === '/returns') {
+      const title = `30-Day Returns Policy & Money Back Guarantee | ${storeName}`;
+      const description = `${storeName} 30-Day Returns Policy. Faulty disc or damaged in transit? Enjoy fast UK replacements or full refunds within 3 working days.`;
+      const canonicalUrl = `${baseUrl}/returns`;
+      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+      return new SeoResponse(modifiedHtml, 200);
+    }
+
+    if (pathname === '/faq') {
+      const title = `Frequently Asked Questions — DVDs, Delivery & Orders | ${storeName}`;
+      const description = `Answers to common questions about Region 2 UK DVD formats, free Royal Mail delivery times, secure payments, and returns at ${storeName}.`;
+      const canonicalUrl = `${baseUrl}/faq`;
+      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+      return new SeoResponse(modifiedHtml, 200);
+    }
+
+    if (pathname === '/terms') {
+      const title = `Terms & Conditions — ${storeName} UK`;
+      const description = `Terms and conditions for purchasing physical media DVDs and box sets from ${storeName} (${companyName}).`;
+      const canonicalUrl = `${baseUrl}/terms`;
+      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      return new SeoResponse(modifiedHtml, 200);
+    }
+
+    if (pathname === '/refund-policy') {
+      const title = `Refund Policy — ${storeName} UK`;
+      const description = `Statutory 30-day refund and return policy for physical media orders at ${storeName}.`;
+      const canonicalUrl = `${baseUrl}/refund-policy`;
+      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      return new SeoResponse(modifiedHtml, 200);
+    }
+
     if (pathname === '/privacy') {
-      const title = `Privacy Policy & Google OAuth Disclosures — ${storeName} & AZRAYAN LTD`;
-      const description = `Comprehensive Privacy Policy for ${storeName} operated by AZRAYAN LTD. Detailed disclosures for Google OAuth 2.0 user data, limited use compliance, and UK GDPR statutory rights.`;
+      const title = `Privacy Policy & Google User Data Disclosures — ${storeName} & ${companyName}`;
+      const description = `Comprehensive Privacy Policy for ${storeName} operated by ${companyName}. Detailed disclosures for Google OAuth 2.0 user data, limited use compliance, and UK GDPR statutory rights.`;
       const canonicalUrl = `${baseUrl}/privacy`;
 
       modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
@@ -550,27 +711,54 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
       modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
       modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
       modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `<div id="root">${generatePrivacyHtml(baseUrl, settings)}</div>`);
+      return new SeoResponse(modifiedHtml, 200);
     }
 
-    // 4. HOMEPAGE ROUTE: / (Application Purpose & Public Storefront)
+    // 4. PRIVATE & SENSITIVE ROUTES: Block crawlers with noindex
+    const isPrivate =
+      pathname.startsWith('/admin') ||
+      pathname.startsWith('/account') ||
+      pathname.startsWith('/cart') ||
+      pathname.startsWith('/checkout') ||
+      pathname.startsWith('/order-success') ||
+      pathname.startsWith('/order-confirmation') ||
+      pathname.startsWith('/search') ||
+      pathname.startsWith('/favourites') ||
+      pathname.startsWith('/login') ||
+      pathname.startsWith('/register') ||
+      pathname.startsWith('/forgot-password') ||
+      pathname.startsWith('/reset-password');
+
+    if (isPrivate) {
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="noindex, nofollow" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="googlebot"\s+content="[^"]*"\s*\/?>/i, `<meta name="googlebot" content="noindex, nofollow" />`);
+      return new SeoResponse(modifiedHtml, 200);
+    }
+
+    // 5. HOMEPAGE ROUTE: / (Application Purpose & Public Storefront)
     if (pathname === '/' || pathname === '') {
-      if (settings?.seo_site_title) {
-        modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(settings.seo_site_title)}</title>`);
-      }
-      if (settings?.seo_site_description) {
-        modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(settings.seo_site_description)}" />`);
-      }
+      const homeTitle = settings?.seo_site_title || 'DVDs Zone | DVD Movies & TV Box Sets UK';
+      const homeDescription = settings?.seo_site_description || 'Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options.';
+
+      modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(homeTitle)}</title>`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(homeDescription)}" />`);
       modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(baseUrl)}/" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(homeTitle)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(homeDescription)}" />`);
       modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(baseUrl)}/" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(homeTitle)}" />`);
+      modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(homeDescription)}" />`);
       modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `<div id="root">${generateHomeHtml(baseUrl, settings)}</div>`);
+      return new SeoResponse(modifiedHtml, 200);
     }
 
-    // 4. OTHER PAGES: adjust canonical URL dynamically
-    const canonicalUrl = `${baseUrl}${pathname}`;
+    // 6. OTHER PUBLIC ROUTES: normalize canonical URL dynamically
+    const cleanPath = pathname === '/' ? '/' : pathname.replace(/\/$/, '');
+    const canonicalUrl = `${baseUrl}${cleanPath}`;
     modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
     modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
 
-    // Global dynamic replacements to ensure no hardcoded domain or legacy contacts persist
+    // Global dynamic replacements to ensure no hardcoded legacy contacts persist
     if (baseUrl && baseUrl !== 'https://dvds-zone.co.uk') {
       modifiedHtml = modifiedHtml.replaceAll('https://dvds-zone.co.uk', baseUrl);
       modifiedHtml = modifiedHtml.replaceAll('https://dvdszone.co.uk', baseUrl);
@@ -585,9 +773,9 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
       modifiedHtml = modifiedHtml.replaceAll('DVDs Zone Ltd', escapeHtml(settings.store_name));
     }
 
-    return modifiedHtml;
+    return new SeoResponse(modifiedHtml, 200);
   } catch (err) {
     console.error('[SEO] Error injecting SEO tags:', err);
-    return rawHtml;
+    return new SeoResponse(rawHtml, 200);
   }
 }

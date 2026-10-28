@@ -125,7 +125,7 @@ export const ProductDetail: React.FC = () => {
     );
   };
 
-  const storeName = storeSettings?.store_name || 'DVD Zone';
+  const storeName = storeSettings?.store_name || 'DVDs Zone';
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-8 sm:py-12 transition-colors">
