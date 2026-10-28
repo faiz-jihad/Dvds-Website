@@ -2,13 +2,15 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { injectSeoTags } from '../api/_seo-renderer.js';
+
 const rootDir = resolve(process.cwd());
 let passCount = 0;
 let failCount = 0;
 
-function runCheck(name, fn) {
+async function runCheck(name, fn) {
   try {
-    fn();
+    await fn();
     console.log(`[PASS] ${name}`);
     passCount++;
   } catch (err) {
@@ -132,10 +134,115 @@ runCheck('11. publicApi.ts preserves DVDs Zone and AZRAYAN LTD without forcing l
 });
 
 // 12. Check SearchPage.tsx
-runCheck('12. SearchPage.tsx has permanent noIndex={true} and DVDs Zone branding', () => {
+await runCheck('12. SearchPage.tsx has permanent noIndex={true} and DVDs Zone branding', () => {
   const searchCode = readFileSync(resolve(rootDir, 'src/pages/SearchPage.tsx'), 'utf8');
   assert.ok(searchCode.includes('noIndex={true}'), 'SearchPage must permanently have noIndex={true}');
   assert.ok(searchCode.includes('siteName="DVDs Zone"'), 'SearchPage must use DVDs Zone');
+});
+
+// 13. Check routes.tsx for dedicated genre and category routes
+await runCheck('13. routes.tsx includes shop/genre/:genre and shop/category/:category routes', () => {
+  const routesCode = readFileSync(resolve(rootDir, 'src/app/routes.tsx'), 'utf8');
+  assert.ok(routesCode.includes("path: 'shop/genre/:genre'"), "routes.tsx must define 'shop/genre/:genre'");
+  assert.ok(routesCode.includes("path: 'shop/category/:category'"), "routes.tsx must define 'shop/category/:category'");
+});
+
+// 14. Check Shop.tsx for crawlable genre links and self-referencing canonical logic
+await runCheck('14. Shop.tsx uses crawlable Link tags and dynamic canonical for genres', () => {
+  const shopCode = readFileSync(resolve(rootDir, 'src/pages/Shop.tsx'), 'utf8');
+  assert.ok(shopCode.includes('/shop/genre/${g.slug}'), 'Shop.tsx must render crawlable Link to /shop/genre/:slug');
+  assert.ok(shopCode.includes('/shop?category=${c.slug}'), 'Shop.tsx must render crawlable Link for categories');
+  assert.ok(shopCode.includes('/shop/genre/${encodeURIComponent(activeGenre.slug)}'), 'Shop.tsx must compute /shop/genre/:slug canonical');
+  assert.ok(shopCode.includes("canonicalPath = '/shop'"), 'Shop.tsx must default canonical to /shop for functional filters');
+});
+
+// 15. Check api/_seo-renderer.js for dedicated genre SSR & canonicals
+await runCheck('15. api/_seo-renderer.js injects self-referencing canonicals for dedicated genre landing pages', async () => {
+  const sampleHtml = '<!DOCTYPE html><html><head><title>Original</title><link rel="canonical" href="https://dvds-zone.co.uk/"><div id="root"></div></head><body></body></html>';
+  
+  // Drama
+  const dramaRes = await injectSeoTags(sampleHtml, '/shop/genre/drama');
+  assert.equal(dramaRes.status, 200, 'Drama route must return HTTP 200');
+  assert.ok(dramaRes.html.includes('href="https://dvds-zone.co.uk/shop/genre/drama"'), 'Drama canonical must be https://dvds-zone.co.uk/shop/genre/drama');
+  assert.ok(dramaRes.html.includes('Drama &amp; Crime DVDs &amp; TV Box Sets | DVDs Zone UK'), 'Drama title must be descriptive');
+  assert.ok(dramaRes.html.includes('Genre Collection'), 'Drama fallback HTML must render genre header');
+
+  // Science-fiction
+  const scifiRes = await injectSeoTags(sampleHtml, '/shop/genre/science-fiction');
+  assert.equal(scifiRes.status, 200);
+  assert.ok(scifiRes.html.includes('href="https://dvds-zone.co.uk/shop/genre/science-fiction"'));
+
+  // Non-existent genre must return 404
+  const invalidRes = await injectSeoTags(sampleHtml, '/shop/genre/non-existent-genre-12345');
+  assert.equal(invalidRes.status, 404, 'Invalid genre route must return HTTP 404');
+  assert.ok(invalidRes.html.includes('Genre Not Found'), 'Invalid genre must indicate 404 content');
+});
+
+// 16. Check api/_seo-renderer.js redirects/canonicalizes parameterized genre URLs directly to dedicated landing pages
+await runCheck('16. api/_seo-renderer.js canonicalizes /shop?genre=... to dedicated /shop/genre/... canonical', async () => {
+  const sampleHtml = '<!DOCTYPE html><html><head><title>Original</title><link rel="canonical" href="https://dvds-zone.co.uk/"><div id="root"></div></head><body></body></html>';
+  
+  // /shop?genre=drama
+  const paramRes = await injectSeoTags(sampleHtml, '/shop?genre=drama');
+  assert.equal(paramRes.status, 200);
+  assert.ok(
+    paramRes.html.includes('href="https://dvds-zone.co.uk/shop/genre/drama"'),
+    '/shop?genre=drama must canonicalize to clean persistent /shop/genre/drama'
+  );
+
+  // /shop?genre=crime&max_price=50
+  const multiParamRes = await injectSeoTags(sampleHtml, '/shop?genre=crime&max_price=50');
+  assert.equal(multiParamRes.status, 200);
+  assert.ok(
+    multiParamRes.html.includes('href="https://dvds-zone.co.uk/shop/genre/crime"'),
+    '/shop?genre=crime&max_price=50 must canonicalize to /shop/genre/crime'
+  );
+});
+
+// 17. Check api/_seo-renderer.js canonicalizes functional filters to /shop parent
+await runCheck('17. api/_seo-renderer.js canonicalizes functional filter queries (?filter=new, ?max_price=50, ?format=box-set) cleanly to /shop', async () => {
+  const sampleHtml = '<!DOCTYPE html><html><head><title>Original</title><link rel="canonical" href="https://dvds-zone.co.uk/"><div id="root"></div></head><body></body></html>';
+  
+  const testUrls = [
+    '/shop',
+    '/shop?filter=new',
+    '/shop?filter=sale',
+    '/shop?format=box-set',
+    '/shop?max_price=50',
+    '/shop?sort=price-asc',
+  ];
+
+  for (const url of testUrls) {
+    const res = await injectSeoTags(sampleHtml, url);
+    assert.equal(res.status, 200, `${url} must return 200`);
+    assert.ok(
+      res.html.includes('href="https://dvds-zone.co.uk/shop"'),
+      `${url} canonical must point to https://dvds-zone.co.uk/shop`
+    );
+  }
+});
+
+// 18. Check sitemap contains all dedicated genre landing pages and NO parameterized query filter URLs
+await runCheck('18. public/sitemap.xml contains all 11 genre landing URLs and zero parameterized filter queries', () => {
+  const sitemapXml = readFileSync(resolve(rootDir, 'public/sitemap.xml'), 'utf8');
+  
+  const expectedGenres = [
+    'action', 'science-fiction', 'drama', 'war', 'documentary',
+    'music', 'western', 'crime', 'comedy', 'historical', 'adventure'
+  ];
+
+  for (const genre of expectedGenres) {
+    assert.ok(
+      sitemapXml.includes(`<loc>https://dvds-zone.co.uk/shop/genre/${genre}</loc>`),
+      `sitemap.xml must include /shop/genre/${genre}`
+    );
+  }
+
+  // Ensure no query parameters are in sitemap
+  assert.ok(!sitemapXml.includes('?filter='), 'Sitemap must not contain ?filter=');
+  assert.ok(!sitemapXml.includes('?max_price='), 'Sitemap must not contain ?max_price=');
+  assert.ok(!sitemapXml.includes('?genre='), 'Sitemap must not contain ?genre=');
+  assert.ok(!sitemapXml.includes('?format='), 'Sitemap must not contain ?format=');
 });
 
 console.log(`\n================================`);

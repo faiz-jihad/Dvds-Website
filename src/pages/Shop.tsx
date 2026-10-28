@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate, Link } from 'react-router-dom';
 import { Filter, SlidersHorizontal, X, RotateCcw, Tag, Flame, Sparkles, ArrowRight } from 'lucide-react';
 import { ProductCard } from '../components/product/ProductCard';
 import { Button } from '../components/common/Button';
@@ -11,17 +11,19 @@ import { Seo, toAbsoluteUrl } from '../components/common/Seo';
 import { ExclusiveCampaignBanner } from '../components/shop/ExclusiveCampaignBanner';
 
 export const Shop: React.FC = () => {
+  const { category: pathCategory, genre: pathGenre } = useParams<{ category?: string; genre?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Read URL parameters
-  const selectedCategory = searchParams.get('category') || 'all';
-  const selectedGenre = searchParams.get('genre') || 'all';
+  // Read URL parameters (path takes priority, then query param, default 'all')
+  const selectedCategory = pathCategory || searchParams.get('category') || 'all';
+  const selectedGenre = pathGenre || searchParams.get('genre') || 'all';
   const selectedFormat = searchParams.get('format') || 'all';
   const selectedRating = searchParams.get('rating') || 'all';
   const filterType = searchParams.get('filter') || 'all'; // new, bestseller, sale
   const sort = searchParams.get('sort') || 'featured';
-  const maxPriceParam = searchParams.get('maxPrice');
+  const maxPriceParam = searchParams.get('maxPrice') || searchParams.get('max_price');
   const [maxPrice, setMaxPrice] = useState<number | null>(maxPriceParam ? Number(maxPriceParam) : null);
 
   const productsQuery = useQuery({ queryKey: ['store', 'products'], queryFn: () => publicApi.getProducts() });
@@ -56,6 +58,22 @@ export const Shop: React.FC = () => {
 
   // Sync param updates
   const updateFilter = (key: string, value: string) => {
+    if (key === 'genre') {
+      if (value === 'all') {
+        navigate('/shop');
+      } else {
+        navigate(`/shop/genre/${encodeURIComponent(value)}`);
+      }
+      return;
+    }
+    if (key === 'category') {
+      if (value === 'all') {
+        navigate('/shop');
+      } else {
+        navigate(`/shop?category=${encodeURIComponent(value)}`);
+      }
+      return;
+    }
     const newParams = new URLSearchParams(searchParams);
     if (value === 'all' || value === '') {
       newParams.delete(key);
@@ -66,7 +84,7 @@ export const Shop: React.FC = () => {
   };
 
   const resetFilters = () => {
-    setSearchParams(new URLSearchParams());
+    navigate('/shop');
     setMaxPrice(catalogueMaxPrice);
   };
 
@@ -86,9 +104,9 @@ export const Shop: React.FC = () => {
     pageTitle = 'Special Offers & Price Drops';
     pageDescription = 'Browse physical media price drops, box sets, and rare allocations with 100% free Royal Mail UK delivery.';
   } else if (activeGenre) {
-    pageEyebrow = 'Collection';
-    pageTitle = `${activeGenre.name} Collection`;
-    pageDescription = `Explore our curated products and editions in ${activeGenre.name}.`;
+    pageEyebrow = 'Genre Collection';
+    pageTitle = `${activeGenre.name} DVDs & TV Box Sets`;
+    pageDescription = `Explore our curated collection of ${activeGenre.name} physical DVDs and TV box sets with 100% free UK delivery.`;
   } else if (activeCategory) {
     pageEyebrow = 'Category';
     pageTitle = activeCategory.name;
@@ -178,7 +196,12 @@ export const Shop: React.FC = () => {
     return <StoreDataState loading={productsQuery.isLoading || categoriesQuery.isLoading || genresQuery.isLoading} error={productsQuery.error || categoriesQuery.error || genresQuery.error} retry={() => { productsQuery.refetch(); categoriesQuery.refetch(); genresQuery.refetch(); }} />;
   }
 
-  const categoryParam = selectedCategory !== 'all' ? selectedCategory : null;
+  let canonicalPath = '/shop';
+  if (selectedGenre !== 'all' && activeGenre) {
+    canonicalPath = `/shop/genre/${encodeURIComponent(activeGenre.slug)}`;
+  } else if (selectedCategory !== 'all' && activeCategory) {
+    canonicalPath = `/shop?category=${encodeURIComponent(activeCategory.slug)}`;
+  }
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#07090E] text-dark dark:text-white min-h-screen py-6 sm:py-10 transition-colors">
@@ -186,7 +209,7 @@ export const Shop: React.FC = () => {
         title={`${pageTitle} — ${storeSettings?.store_name || 'DVDs Zone'} | Buy Physical Media`}
         description={`${pageDescription} All orders 100% free standard delivery across United Kingdom. Same-day dispatch, delivered to your door within 2 working days via Royal Mail.`}
         keywords={`${pageTitle}, buy DVDs online UK, physical media catalogue, TV box sets UK, cheap DVDs UK, classic movies on DVD, ${storeSettings?.store_name || 'DVDs Zone'}`}
-        canonicalPath={categoryParam ? `/shop?category=${encodeURIComponent(categoryParam)}` : '/shop'}
+        canonicalPath={canonicalPath}
         image="/catalog/the-mandalorian-seasons-1-3.jpeg"
         siteName={storeSettings?.store_name || 'DVDs Zone'}
         jsonLd={[
@@ -195,7 +218,7 @@ export const Shop: React.FC = () => {
             '@type': 'CollectionPage',
             name: pageTitle,
             description: pageDescription,
-            url: toAbsoluteUrl(categoryParam ? `/shop?category=${encodeURIComponent(categoryParam)}` : '/shop'),
+            url: toAbsoluteUrl(canonicalPath),
             mainEntity: {
               '@type': 'ItemList',
               numberOfItems: filteredProducts.length,
@@ -224,13 +247,22 @@ export const Shop: React.FC = () => {
                 name: 'Catalogue',
                 item: toAbsoluteUrl('/shop'),
               },
-              ...(categoryParam
+              ...(selectedGenre !== 'all' && activeGenre
+                ? [
+                    {
+                      '@type': 'ListItem',
+                      position: 3,
+                      name: `${activeGenre.name} DVDs`,
+                      item: toAbsoluteUrl(canonicalPath),
+                    },
+                  ]
+                : selectedCategory !== 'all' && activeCategory
                 ? [
                     {
                       '@type': 'ListItem',
                       position: 3,
                       name: pageTitle,
-                      item: toAbsoluteUrl(`/shop?category=${encodeURIComponent(categoryParam)}`),
+                      item: toAbsoluteUrl(canonicalPath),
                     },
                   ]
                 : []),
@@ -512,9 +544,8 @@ export const Shop: React.FC = () => {
                 )}
               </div>
               <div className="space-y-1 text-xs">
-                <button
-                  type="button"
-                  onClick={() => updateFilter('genre', 'all')}
+                <Link
+                  to="/shop"
                   className={`flex items-center justify-between w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
                     selectedGenre === 'all'
                       ? 'bg-gray-100 dark:bg-white/10 text-dark dark:text-white font-bold'
@@ -527,15 +558,14 @@ export const Shop: React.FC = () => {
                   }`}>
                     {allProducts.filter((p) => p.status === 'active').length}
                   </span>
-                </button>
+                </Link>
                 {genres.map((g) => {
                   const count = genreCounts[g.slug] || 0;
                   const isSelected = selectedGenre === g.slug || selectedGenre === g.id;
                   return (
-                    <button
+                    <Link
                       key={g.id}
-                      type="button"
-                      onClick={() => updateFilter('genre', isSelected ? 'all' : g.slug)}
+                      to={isSelected ? '/shop' : `/shop/genre/${g.slug}`}
                       className={`flex items-center justify-between w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
                         isSelected
                           ? 'bg-gray-100 dark:bg-white/10 text-dark dark:text-white font-bold'
@@ -550,7 +580,7 @@ export const Shop: React.FC = () => {
                           {count}
                         </span>
                       )}
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
@@ -562,24 +592,24 @@ export const Shop: React.FC = () => {
                 Category
               </h4>
               <div className="space-y-1 text-xs">
-                <button
-                  onClick={() => updateFilter('category', 'all')}
+                <Link
+                  to="/shop"
                   className={`block w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
                     selectedCategory === 'all' ? 'font-bold text-dark dark:text-white bg-gray-100 dark:bg-white/10' : 'text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
                   }`}
                 >
                   All Categories
-                </button>
+                </Link>
                 {categories.map((c) => (
-                  <button
+                  <Link
                     key={c.id}
-                    onClick={() => updateFilter('category', c.slug)}
+                    to={selectedCategory === c.slug ? '/shop' : `/shop?category=${c.slug}`}
                     className={`block w-full text-left py-1.5 px-2 rounded-lg transition-colors cursor-pointer ${
                       selectedCategory === c.slug ? 'font-bold text-dark dark:text-white bg-gray-100 dark:bg-white/10' : 'text-gray-600 dark:text-gray-400 hover:text-dark dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
                     }`}
                   >
                     {c.name}
-                  </button>
+                  </Link>
                 ))}
               </div>
             </div>

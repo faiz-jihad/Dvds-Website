@@ -65,23 +65,37 @@ async function getStoreSettings() {
   return null;
 }
 const FALLBACK_PRODUCTS = [
-  { slug: 'star-wars-the-book-of-boba-fett-season-1', title: 'Star Wars: The Book of Boba Fett - The Complete First Season', format: 'Box Set', price: 14.99, cover_image_url: '/catalog/the-book-of-boba-fett-season-1.jpeg', description: 'Legendary bounty hunter Boba Fett and mercenary Fennec Shand navigate the galaxy underworld. Complete seven-episode first season.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3 },
-  { slug: 'star-wars-the-mandalorian-seasons-1-3', title: 'Star Wars: The Mandalorian - Seasons 1-3 Box Set', format: 'Box Set', price: 24.99, cover_image_url: '/catalog/the-mandalorian-seasons-1-3.jpeg', description: 'Din Djarin crosses the lawless reaches of the galaxy with his foundling Grogu. Complete collector box set containing all 24 episodes.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4 },
-  { slug: 'star-wars-the-mandalorian-seasons-1-2', title: 'Star Wars: The Mandalorian - Seasons 1 & 2', format: 'Box Set', price: 19.99, cover_image_url: '/catalog/the-mandalorian-seasons-1-2.jpeg', description: 'The first 16 chapters of Din Djarin and Grogu journey across the post-Empire outer rim in custom packaging.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 5 },
-  { slug: 'star-wars-the-mandalorian-season-3', title: 'Star Wars: The Mandalorian - Season 3', format: 'Box Set', price: 14.99, cover_image_url: '/catalog/the-mandalorian-season-3.jpeg', description: 'The journeys of the Mandalorian through the Star Wars galaxy continue as Din Djarin reunites with Grogu.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3 },
-  { slug: 'the-chosen-seasons-1-3', title: 'The Chosen: Complete Seasons 1-3 Collector Edition', format: 'Box Set', price: 21.99, cover_image_url: '/catalog/the-chosen-seasons-1-3.jpeg', description: 'The ground-breaking historical drama series chronicling the life of Jesus through the eyes of those who met him.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4 },
-  { slug: 'greyhound-2020', title: 'Greyhound (2020)', format: 'DVD', price: 9.99, cover_image_url: '/catalog/greyhound.jpeg', description: 'Early in World War II, an inexperienced U.S. Navy captain must lead an Allied convoy being stalked by Nazi U-boat wolfpacks.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 6 },
-  { slug: 'the-beatles-get-back', title: 'The Beatles: Get Back - 3-Disc Collector Edition', format: 'Box Set', price: 22.99, cover_image_url: '/catalog/the-beatles-get-back.jpeg', description: 'Peter Jackson documentary event chronicling the warmth, camaraderie and creative genius of The Beatles.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4 },
-  { slug: 'friends-the-reunion', title: 'Friends: The Reunion - Special Collector Edition', format: 'DVD', price: 8.99, cover_image_url: '/catalog/friends-the-reunion.jpeg', description: 'Jennifer Aniston, Courteney Cox, Lisa Kudrow, Matt LeBlanc, Matthew Perry, and David Schwimmer return to Stage 24.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 5 },
-  { slug: 'seal-team-season-5', title: 'SEAL Team - Season Five', format: 'Box Set', price: 15.99, cover_image_url: '/catalog/seal-team-season-5.jpeg', description: 'The elite Bravo Team embarks on clandestine high-stakes global operations across the globe.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3 },
-  { slug: 'dutton-ranch-season-1', title: 'Dutton Ranch: Origins - Season One', format: 'Box Set', price: 16.99, cover_image_url: '/catalog/dutton-ranch-season-1.jpeg', description: 'The brutal generation of Duttons wrestling untamed Montana land against unforgiving wilderness and rivals.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4 },
-  { slug: 'marshals-season-1', title: 'Marshals - Season One', format: 'Box Set', price: 14.99, cover_image_url: '/catalog/marshals-season-1.jpeg', description: 'Federal deputy marshals pursue the nation most wanted fugitives across jurisdictional borders.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3 },
+  { slug: 'star-wars-the-book-of-boba-fett-season-1', title: 'Star Wars: The Book of Boba Fett - The Complete First Season', format: 'Box Set', price: 14.99, cover_image_url: '/catalog/the-book-of-boba-fett-season-1.jpeg', description: 'Legendary bounty hunter Boba Fett and mercenary Fennec Shand navigate the galaxy underworld. Complete seven-episode first season.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'adventure', 'science-fiction'] },
+  { slug: 'star-wars-the-mandalorian-seasons-1-3', title: 'Star Wars: The Mandalorian - Seasons 1-3 Box Set', format: 'Box Set', price: 24.99, cover_image_url: '/catalog/the-mandalorian-seasons-1-3.jpeg', description: 'Din Djarin crosses the lawless reaches of the galaxy with his foundling Grogu. Complete collector box set containing all 24 episodes.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['action', 'adventure', 'science-fiction'] },
+  { slug: 'star-wars-the-mandalorian-seasons-1-2', title: 'Star Wars: The Mandalorian - Seasons 1 & 2', format: 'Box Set', price: 19.99, cover_image_url: '/catalog/the-mandalorian-seasons-1-2.jpeg', description: 'The first 16 chapters of Din Djarin and Grogu journey across the post-Empire outer rim in custom packaging.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 5, genres: ['action', 'adventure', 'science-fiction'] },
+  { slug: 'star-wars-the-mandalorian-season-3', title: 'Star Wars: The Mandalorian - Season 3', format: 'Box Set', price: 14.99, cover_image_url: '/catalog/the-mandalorian-season-3.jpeg', description: 'The journeys of the Mandalorian through the Star Wars galaxy continue as Din Djarin reunites with Grogu.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'adventure', 'science-fiction'] },
+  { slug: 'the-chosen-seasons-1-3', title: 'The Chosen: Complete Seasons 1-3 Collector Edition', format: 'Box Set', price: 21.99, cover_image_url: '/catalog/the-chosen-seasons-1-3.jpeg', description: 'The ground-breaking historical drama series chronicling the life of Jesus through the eyes of those who met him.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['drama', 'faith', 'historical'] },
+  { slug: 'greyhound-2020', title: 'Greyhound (2020)', format: 'DVD', price: 9.99, cover_image_url: '/catalog/greyhound.jpeg', description: 'Early in World War II, an inexperienced U.S. Navy captain must lead an Allied convoy being stalked by Nazi U-boat wolfpacks.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 6, genres: ['action', 'drama', 'war'] },
+  { slug: 'the-beatles-get-back', title: 'The Beatles: Get Back - 3-Disc Collector Edition', format: 'Box Set', price: 22.99, cover_image_url: '/catalog/the-beatles-get-back.jpeg', description: 'Peter Jackson documentary event chronicling the warmth, camaraderie and creative genius of The Beatles.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['documentary', 'music'] },
+  { slug: 'friends-the-reunion', title: 'Friends: The Reunion - Special Collector Edition', format: 'DVD', price: 8.99, cover_image_url: '/catalog/friends-the-reunion.jpeg', description: 'Jennifer Aniston, Courteney Cox, Lisa Kudrow, Matt LeBlanc, Matthew Perry, and David Schwimmer return to Stage 24.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 5, genres: ['comedy', 'documentary'] },
+  { slug: 'seal-team-season-5', title: 'SEAL Team - Season Five', format: 'Box Set', price: 15.99, cover_image_url: '/catalog/seal-team-season-5.jpeg', description: 'The elite Bravo Team embarks on clandestine high-stakes global operations across the globe.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'drama', 'war'] },
+  { slug: 'dutton-ranch-season-1', title: 'Dutton Ranch: Origins - Season One', format: 'Box Set', price: 16.99, cover_image_url: '/catalog/dutton-ranch-season-1.jpeg', description: 'The brutal generation of Duttons wrestling untamed Montana land against unforgiving wilderness and rivals.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 4, genres: ['drama', 'western'] },
+  { slug: 'marshals-season-1', title: 'Marshals - Season One', format: 'Box Set', price: 14.99, cover_image_url: '/catalog/marshals-season-1.jpeg', description: 'Federal deputy marshals pursue the nation most wanted fugitives across jurisdictional borders.', region_code: 'Region 2 (UK/Europe)', stock_quantity: 3, genres: ['action', 'crime', 'drama', 'western'] },
 ];
 
 const FALLBACK_CATEGORIES = [
   { slug: 'tv-box-sets', name: 'TV Box Sets' },
   { slug: 'film', name: 'Film & Cinema' },
   { slug: 'documentary-music', name: 'Documentary & Music' },
+];
+
+const DEFAULT_GENRES = [
+  { id: 'g-action', name: 'Action & Military', slug: 'action' },
+  { id: 'g-scifi', name: 'Science Fiction', slug: 'science-fiction' },
+  { id: 'g-drama', name: 'Drama & Crime', slug: 'drama' },
+  { id: 'g-war', name: 'War & Military', slug: 'war' },
+  { id: 'g-documentary', name: 'Documentary', slug: 'documentary' },
+  { id: 'g-music', name: 'Music & Concerts', slug: 'music' },
+  { id: 'g-western', name: 'Western & Frontier', slug: 'western' },
+  { id: 'g-crime', name: 'Crime & Thriller', slug: 'crime' },
+  { id: 'g-comedy', name: 'Comedy & Classics', slug: 'comedy' },
+  { id: 'g-historical', name: 'Historical & Faith', slug: 'historical' },
+  { id: 'g-adventure', name: 'Adventure', slug: 'adventure' },
 ];
 
 async function getProductBySlug(slug) {
@@ -180,6 +194,17 @@ export async function generateDynamicSitemap(baseUrl) {
     xml += `    <loc>${escapeXml(`${baseUrl}/shop?category=${encodeURIComponent(cat.slug)}`)}</loc>\n`;
     xml += `    <changefreq>weekly</changefreq>\n`;
     xml += `    <priority>0.85</priority>\n`;
+    xml += `    <lastmod>${currentDate}</lastmod>\n`;
+    xml += `  </url>\n`;
+  }
+
+  // Dedicated Genre Landing Pages (Valuable persistent search targets)
+  for (const genre of DEFAULT_GENRES) {
+    if (!genre.slug) continue;
+    xml += `  <url>\n`;
+    xml += `    <loc>${escapeXml(`${baseUrl}/shop/genre/${encodeURIComponent(genre.slug)}`)}</loc>\n`;
+    xml += `    <changefreq>weekly</changefreq>\n`;
+    xml += `    <priority>0.80</priority>\n`;
     xml += `    <lastmod>${currentDate}</lastmod>\n`;
     xml += `  </url>\n`;
   }
@@ -453,9 +478,9 @@ function generateHomeHtml(baseUrl, settings) {
   `;
 }
 
-export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
+export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zone.co.uk') {
   try {
-    const urlObj = new URL(reqUrl, 'http://localhost');
+    const urlObj = new URL(reqUrl, baseUrl || 'https://dvds-zone.co.uk');
     const pathname = urlObj.pathname;
     const settings = await getStoreSettings();
     const storeName = settings?.store_name || 'DVDs Zone';
@@ -579,10 +604,137 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
       }
     }
 
-    // 2. SHOP CATALOGUE & CATEGORY ROUTES: /shop and /shop/:category
+    // 2. SHOP CATALOGUE, CATEGORY & DEDICATED GENRE ROUTES: /shop, /shop/genre/:genre, /shop/:category
     if (pathname === '/shop' || pathname.startsWith('/shop/')) {
+      const isGenrePath = pathname.startsWith('/shop/genre/');
+      const hasGenreQuery = urlObj.searchParams.has('genre');
+
+      if (isGenrePath || hasGenreQuery) {
+        let genreSlug = '';
+        if (isGenrePath) {
+          genreSlug = pathname.replace(/^\/shop\/genre\//, '').replace(/\/$/, '');
+        } else {
+          genreSlug = urlObj.searchParams.get('genre') || '';
+        }
+
+        const genre = genreSlug ? DEFAULT_GENRES.find((g) => g.slug === genreSlug || g.id === genreSlug) : null;
+
+        if (isGenrePath && !genre) {
+          // Genuine 404 for nonexistent/invalid genre route (e.g. /shop/genre/non-existent-genre)
+          const title = `Genre Not Found | ${storeName}`;
+          const description = `The requested genre collection could not be found. Browse our complete DVD catalogue at ${storeName}.`;
+          const canonicalUrl = `${baseUrl}/shop`;
+          modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+          modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+          modifiedHtml = modifiedHtml.replace(/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="noindex, nofollow" />`);
+          modifiedHtml = modifiedHtml.replace(/<meta\s+name="googlebot"\s+content="[^"]*"\s*\/?>/i, `<meta name="googlebot" content="noindex, nofollow" />`);
+          modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+          modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `
+            <div id="root">
+              <main style="max-width:800px;margin:50px auto;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif;">
+                <h1 style="font-size:28px;font-weight:800;color:#0f172a;margin-bottom:12px;">Genre Not Found</h1>
+                <p style="color:#64748b;margin-bottom:24px;">The DVD genre collection you are looking for is unavailable.</p>
+                <a href="${baseUrl}/shop" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 24px;border-radius:8px;font-weight:600;text-decoration:none;">Browse Full DVD Catalogue</a>
+              </main>
+            </div>
+          `.trim());
+          return new SeoResponse(modifiedHtml, 404);
+        }
+
+        if (genre) {
+          const title = `${genre.name} DVDs & TV Box Sets | ${storeName} UK`;
+          const description = `Explore our collection of ${genre.name} DVDs and TV box sets at ${storeName}. Discover genuine physical media releases with 100% free UK delivery.`;
+          // Clean persistent canonical URL for both /shop/genre/:slug and parameterized /shop?genre=:slug
+          const canonicalUrl = `${baseUrl}/shop/genre/${encodeURIComponent(genre.slug)}`;
+
+          modifiedHtml = modifiedHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+          modifiedHtml = modifiedHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}" />`);
+          modifiedHtml = modifiedHtml.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+          modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
+          modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`);
+          modifiedHtml = modifiedHtml.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`);
+          modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(title)}" />`);
+          modifiedHtml = modifiedHtml.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(description)}" />`);
+
+          // Matching products for this genre
+          const matchingProducts = FALLBACK_PRODUCTS.filter(p => Array.isArray(p.genres) && p.genres.includes(genre.slug));
+
+          // Schema.org CollectionPage + BreadcrumbList
+          const genreSchema = [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'CollectionPage',
+              name: `${genre.name} DVDs & TV Box Sets`,
+              description: description,
+              url: canonicalUrl,
+              mainEntity: {
+                '@type': 'ItemList',
+                numberOfItems: matchingProducts.length,
+                itemListElement: matchingProducts.map((p, idx) => ({
+                  '@type': 'ListItem',
+                  position: idx + 1,
+                  name: p.title,
+                  url: `${baseUrl}/product/${p.slug}`,
+                  image: `${baseUrl}${p.cover_image_url.startsWith('/') ? '' : '/'}${p.cover_image_url}`,
+                })),
+              },
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Home', item: `${baseUrl}/` },
+                { '@type': 'ListItem', position: 2, name: 'Catalogue', item: `${baseUrl}/shop` },
+                { '@type': 'ListItem', position: 3, name: `${genre.name} DVDs`, item: canonicalUrl },
+              ],
+            },
+          ];
+
+          const schemaScript = `\n    <script type="application/ld+json" id="server-genre-schema">\n    ${JSON.stringify(genreSchema)}\n    </script>\n`;
+          modifiedHtml = modifiedHtml.replace('</head>', `${schemaScript}</head>`);
+
+          // Pre-rendered crawler fallback HTML
+          const productsHtml = matchingProducts.map(p => `
+            <article style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#ffffff;">
+              <h3 style="font-size:15px;font-weight:700;margin:0 0 6px 0;"><a href="${baseUrl}/product/${p.slug}" style="color:#0f172a;text-decoration:none;">${escapeHtml(p.title)}</a></h3>
+              <p style="font-size:13px;color:#64748b;margin:0 0 10px 0;">${escapeHtml(p.format)} &bull; ${escapeHtml(p.region_code)}</p>
+              <p style="font-size:16px;font-weight:800;color:#2563eb;margin:0;">&pound;${p.price.toFixed(2)} <span style="font-size:12px;color:#16a34a;font-weight:600;">Free UK Delivery</span></p>
+            </article>
+          `).join('');
+
+          const genreCrawlerHtml = `
+            <div id="root">
+              <main style="max-width:1100px;margin:30px auto;padding:0 20px;font-family:system-ui,-apple-system,sans-serif;">
+                <nav aria-label="Breadcrumb" style="font-size:13px;color:#64748b;margin-bottom:16px;">
+                  <a href="${baseUrl}/" style="color:#2563eb;text-decoration:none;">Home</a> &gt;
+                  <a href="${baseUrl}/shop" style="color:#2563eb;text-decoration:none;">Catalogue</a> &gt;
+                  <span>${escapeHtml(genre.name)}</span>
+                </nav>
+                <header style="margin-bottom:24px;">
+                  <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:#2563eb;text-transform:uppercase;">Genre Collection</span>
+                  <h1 style="font-size:30px;font-weight:900;color:#0f172a;margin:6px 0 10px 0;">${escapeHtml(genre.name)} DVDs &amp; TV Box Sets UK</h1>
+                  <p style="font-size:15px;color:#475569;max-width:800px;line-height:1.6;">${escapeHtml(description)}</p>
+                </header>
+                <section>
+                  <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin-bottom:16px;">Available Releases (${matchingProducts.length})</h2>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:16px;">
+                    ${productsHtml}
+                  </div>
+                </section>
+              </main>
+            </div>
+          `.trim();
+
+          modifiedHtml = modifiedHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, genreCrawlerHtml);
+          return new SeoResponse(modifiedHtml, 200);
+        }
+      }
+
+      // Check for category
       let categorySlug = urlObj.searchParams.get('category');
-      if (!categorySlug && pathname.startsWith('/shop/')) {
+      if (!categorySlug && pathname.startsWith('/shop/category/')) {
+        categorySlug = pathname.replace(/^\/shop\/category\//, '').replace(/\/$/, '');
+      } else if (!categorySlug && pathname.startsWith('/shop/') && !pathname.startsWith('/shop/genre/')) {
         categorySlug = pathname.replace(/^\/shop\//, '').replace(/\/$/, '');
       }
 
@@ -599,6 +751,7 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl) {
         description = `Browse our collection of ${category.name} DVDs and TV box sets at ${storeName}. Free UK delivery with same-day dispatch via Royal Mail.`;
         canonicalUrl = `${baseUrl}/shop?category=${encodeURIComponent(category.slug)}`;
       } else {
+        // General shop catalogue (and all functional query parameter URLs: ?max_price=..., ?filter=..., ?format=..., ?sort=...)
         title = `DVD Movies & TV Box Sets UK Catalogue | ${storeName}`;
         description = `Shop DVDs and TV box sets at ${storeName}. Explore our collection of physical entertainment releases with UK delivery options.`;
         canonicalUrl = `${baseUrl}/shop`;

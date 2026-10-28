@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { injectSeoTags } from '../api/_seo-renderer.js';
 
 const rootDir = resolve(process.cwd());
 
@@ -103,3 +104,70 @@ test('10. GoogleReviews component has official ReviewsWidget container and embed
   assert.ok(comp.includes('5f7dfa8a-15b8-47ea-9bb9-fe31c19cdcf7'), 'GoogleReviews must default to 5f7dfa8a-15b8-47ea-9bb9-fe31c19cdcf7');
   assert.ok(comp.includes('https://reviewswidget.app/embed.js'), 'GoogleReviews must reference ReviewsWidget embed script');
 });
+
+test('11. Dedicated genre landing pages produce 200 and self-referencing canonicals', async () => {
+  const sampleHtml = '<!DOCTYPE html><html><head><title>Original</title><link rel="canonical" href="https://dvds-zone.co.uk/"><div id="root"></div></head><body></body></html>';
+  const dramaRes = await injectSeoTags(sampleHtml, '/shop/genre/drama');
+  assert.equal(dramaRes.status, 200);
+  assert.ok(dramaRes.html.includes('href="https://dvds-zone.co.uk/shop/genre/drama"'));
+  assert.ok(dramaRes.html.includes('Drama &amp; Crime DVDs &amp; TV Box Sets | DVDs Zone UK'));
+
+  const warRes = await injectSeoTags(sampleHtml, '/shop/genre/war');
+  assert.equal(warRes.status, 200);
+  assert.ok(warRes.html.includes('href="https://dvds-zone.co.uk/shop/genre/war"'));
+
+  const invalidRes = await injectSeoTags(sampleHtml, '/shop/genre/invalid-test-genre');
+  assert.equal(invalidRes.status, 404);
+});
+
+test('12. Parameterized genre queries canonicalize directly to dedicated clean routes', async () => {
+  const sampleHtml = '<!DOCTYPE html><html><head><title>Original</title><link rel="canonical" href="https://dvds-zone.co.uk/"><div id="root"></div></head><body></body></html>';
+  const res = await injectSeoTags(sampleHtml, '/shop?genre=drama');
+  assert.equal(res.status, 200);
+  assert.ok(res.html.includes('href="https://dvds-zone.co.uk/shop/genre/drama"'));
+
+  const multiRes = await injectSeoTags(sampleHtml, '/shop?genre=music&max_price=50');
+  assert.equal(multiRes.status, 200);
+  assert.ok(multiRes.html.includes('href="https://dvds-zone.co.uk/shop/genre/music"'));
+});
+
+test('13. Functional filter query combinations canonicalize to clean /shop parent page', async () => {
+  const sampleHtml = '<!DOCTYPE html><html><head><title>Original</title><link rel="canonical" href="https://dvds-zone.co.uk/"><div id="root"></div></head><body></body></html>';
+  const urls = [
+    '/shop',
+    '/shop?filter=new',
+    '/shop?filter=sale',
+    '/shop?format=box-set',
+    '/shop?max_price=50',
+    '/shop?sort=price-desc'
+  ];
+
+  for (const url of urls) {
+    const res = await injectSeoTags(sampleHtml, url);
+    assert.equal(res.status, 200);
+    assert.ok(res.html.includes('href="https://dvds-zone.co.uk/shop"'), `${url} must canonicalize to /shop`);
+  }
+});
+
+test('14. routes.tsx and Shop.tsx contain dedicated genre routing and crawlable links', () => {
+  const routesCode = readFileSync(resolve(rootDir, 'src/app/routes.tsx'), 'utf8');
+  assert.ok(routesCode.includes("path: 'shop/genre/:genre'"));
+
+  const shopCode = readFileSync(resolve(rootDir, 'src/pages/Shop.tsx'), 'utf8');
+  assert.ok(shopCode.includes('/shop/genre/${g.slug}'));
+  assert.ok(shopCode.includes("/shop/genre/${encodeURIComponent(activeGenre.slug)}"));
+});
+
+test('15. public/sitemap.xml includes all genre routes and excludes query filter URLs', () => {
+  const sitemapXml = readFileSync(resolve(rootDir, 'public/sitemap.xml'), 'utf8');
+  assert.ok(sitemapXml.includes('/shop/genre/drama'));
+  assert.ok(sitemapXml.includes('/shop/genre/crime'));
+  assert.ok(sitemapXml.includes('/shop/genre/documentary'));
+  assert.ok(sitemapXml.includes('/shop/genre/music'));
+  assert.ok(sitemapXml.includes('/shop/genre/science-fiction'));
+  assert.ok(sitemapXml.includes('/shop/genre/war'));
+  assert.ok(!sitemapXml.includes('?genre='));
+  assert.ok(!sitemapXml.includes('?filter='));
+  assert.ok(!sitemapXml.includes('?max_price='));
+});
+

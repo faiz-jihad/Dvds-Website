@@ -85,6 +85,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: 'shop', element: <Shop /> },
+      { path: 'shop/genre/:genre', element: <Shop /> },
+      { path: 'shop/category/:category', element: <Shop /> },
       { path: 'shop/:category', element: <Shop /> },
       { path: 'product/:slug', element: <ProductDetail /> },
       { path: 'search', element: <SearchPage /> },
