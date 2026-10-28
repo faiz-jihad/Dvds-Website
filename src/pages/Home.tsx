@@ -82,14 +82,14 @@ export const Home: React.FC = () => {
     <>
       <Seo
         title={
-          settings.seo_site_title && /dvds?\s*zone/i.test(settings.seo_site_title)
+          settings.seo_site_title && /dvds\s+zone/i.test(settings.seo_site_title) && /dvd\s+zone/i.test(settings.seo_site_title)
             ? settings.seo_site_title
-            : "DVDs Zone | DVD Movies & TV Box Sets UK"
+            : "DVDs Zone (DVD Zone UK) | DVD Movies & TV Box Sets UK"
         }
         description={
-          settings.seo_site_description && /dvds?\s*zone/i.test(settings.seo_site_description)
+          settings.seo_site_description && /dvds\s+zone/i.test(settings.seo_site_description) && /dvd\s+zone/i.test(settings.seo_site_description)
             ? settings.seo_site_description
-            : "Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options."
+            : "Shop DVDs and TV box sets at DVDs Zone (DVD Zone UK). Explore our collection of physical entertainment releases with UK delivery options."
         }
         keywords="dvdzone, dvd zone, dvds zone, DVDs Zone, DVD Zone, AZ Rayan DVDs, DVDs Zone UK, DVD Zone UK, dvds-zone.co.uk, buy DVDs UK, TV box sets UK, physical media store UK, Royal Mail free delivery DVDs"
         canonicalPath="/"
