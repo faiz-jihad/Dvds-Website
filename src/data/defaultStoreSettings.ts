@@ -5,9 +5,9 @@ export const MAX_PRODUCT_PRICE = 150;
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   id: 's1000000-0000-0000-0000-000000000001',
   seo_site_url: 'https://dvds-zone.co.uk',
-  seo_site_title: 'DVDs Zone (DVD Zone UK) | DVD Movies & TV Box Sets UK',
+  seo_site_title: 'DVD Zone — DVDs Zone | DVD Movies & TV Box Sets UK',
   seo_site_description:
-    'Shop DVDs and TV box sets at DVDs Zone (DVD Zone UK). Explore our collection of physical entertainment releases with UK delivery options.',
+    'DVD Zone (DVDs Zone UK) — Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options.',
   seo_social_image_url:
     'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&auto=format&fit=crop&q=80',
   seo_organization_description:

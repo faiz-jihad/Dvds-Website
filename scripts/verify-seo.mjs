@@ -33,23 +33,23 @@ runCheck('1. searchEngine.ts BRAND_QUERIES includes DVDs Zone, dvdzone, and AZ R
 });
 
 // 2. Check index.html primary title
-runCheck('2. index.html primary title is optimized for DVDs Zone and DVD Zone', () => {
+runCheck('2. index.html primary title is optimized for DVD Zone and DVDs Zone', () => {
   const indexHtml = readFileSync(resolve(rootDir, 'index.html'), 'utf8');
   assert.ok(
-    indexHtml.includes('<title>DVDs Zone (DVD Zone UK) | DVD Movies &amp; TV Box Sets UK</title>'),
-    'Title tag must match DVDs Zone (DVD Zone UK) | DVD Movies & TV Box Sets UK'
+    indexHtml.includes('<title>DVD Zone — DVDs Zone | DVD Movies &amp; TV Box Sets UK</title>'),
+    'Title tag must match DVD Zone — DVDs Zone | DVD Movies & TV Box Sets UK'
   );
 });
 
 // 3. Check index.html meta description, canonical, OpenGraph, Twitter
-runCheck('3. index.html meta description, OpenGraph, and Twitter cards use DVDs Zone and DVD Zone', () => {
+runCheck('3. index.html meta description, OpenGraph, and Twitter cards use DVD Zone and DVDs Zone', () => {
   const indexHtml = readFileSync(resolve(rootDir, 'index.html'), 'utf8');
   assert.ok(
-    indexHtml.includes('name="description" content="Shop DVDs and TV box sets at DVDs Zone (DVD Zone UK). Explore our collection of physical entertainment releases with UK delivery options."'),
+    indexHtml.includes('name="description" content="DVD Zone (DVDs Zone UK) — Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options."'),
     'Meta description must match production guideline'
   );
-  assert.ok(indexHtml.includes('property="og:title" content="DVDs Zone (DVD Zone UK) | DVD Movies &amp; TV Box Sets UK"'), 'og:title must match DVDs Zone (DVD Zone UK)');
-  assert.ok(indexHtml.includes('property="og:site_name" content="DVDs Zone"'), 'og:site_name must match DVDs Zone');
+  assert.ok(indexHtml.includes('property="og:title" content="DVD Zone — DVDs Zone | DVD Movies &amp; TV Box Sets UK"'), 'og:title must match DVD Zone — DVDs Zone');
+  assert.ok(indexHtml.includes('property="og:site_name" content="DVD Zone (DVDs Zone)"'), 'og:site_name must match DVD Zone (DVDs Zone)');
   assert.ok(indexHtml.includes('property="og:url" content="https://dvds-zone.co.uk/"'), 'og:url must be canonical https://dvds-zone.co.uk/');
   assert.ok(indexHtml.includes('name="twitter:card" content="summary_large_image"'), 'twitter:card must be summary_large_image');
   assert.ok(indexHtml.includes('rel="canonical" href="https://dvds-zone.co.uk/"'), 'canonical link must be https://dvds-zone.co.uk/');
@@ -124,7 +124,7 @@ runCheck('9. api/_seo-renderer.js has SeoResponse with 404 for missing products'
 runCheck('10. defaultStoreSettings.ts has store_name DVDs Zone and canonical titles', () => {
   const settingsCode = readFileSync(resolve(rootDir, 'src/data/defaultStoreSettings.ts'), 'utf8');
   assert.ok(settingsCode.includes("store_name: 'DVDs Zone'"), "Must have store_name 'DVDs Zone'");
-  assert.ok(settingsCode.includes("seo_site_title: 'DVDs Zone (DVD Zone UK) | DVD Movies & TV Box Sets UK'"), 'Must have DVDs Zone (DVD Zone UK) title');
+  assert.ok(settingsCode.includes("seo_site_title: 'DVD Zone — DVDs Zone | DVD Movies & TV Box Sets UK'"), 'Must have DVD Zone — DVDs Zone title');
 });
 
 // 11. Check publicApi.ts

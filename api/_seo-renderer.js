@@ -595,7 +595,7 @@ function generateHomeHtml(baseUrl, settings, products = FALLBACK_PRODUCTS, categ
       <!-- Hero & Application Purpose Statement -->
       <section style="background:#0b0f19;color:#ffffff;padding:40px;border-radius:12px;margin-bottom:40px;border:1px solid rgba(255,255,255,0.1);">
         <span style="display:inline-block;background:rgba(37,99,235,0.2);color:#60a5fa;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:15px;letter-spacing:1px;text-transform:uppercase;">UK Physical Media &amp; TV Box Sets Store &bull; DVD Zone / DVDs Zone</span>
-        <h1 style="font-size:32px;font-weight:800;margin:0 0 15px 0;line-height:1.2;">DVDs Zone — DVD Movies &amp; TV Box Sets UK (Official DVD Zone Store)</h1>
+        <h1 style="font-size:32px;font-weight:800;margin:0 0 15px 0;line-height:1.2;">DVD Zone — DVDs Zone — DVD Movies &amp; TV Box Sets UK</h1>
         <p style="font-size:16px;color:#cbd5e1;max-width:850px;margin:0 0 20px 0;line-height:1.7;">
           <strong>${escapeHtml(storeName)}</strong> (official UK store for <strong>DVD Zone</strong>, <strong>DVDs Zone</strong>, <strong>dvdzone</strong>, <strong>DVD Zone UK</strong>, <strong>DVDs Zone UK</strong>, and <strong>AZ Rayan DVDs</strong> at <a href="${baseUrl}" style="color:#60a5fa;">dvds-zone.co.uk</a>) is an online retailer selling physical DVDs and TV box sets operated by <strong>${escapeHtml(companyName)}</strong> (Company Registered in England and Wales No. ${escapeHtml(companyNumber)}, active since 2021). We supply authentic UK DVD box sets, Blu-ray discs, and television series with 100% Free UK standard delivery via Royal Mail.
         </p>
@@ -1246,13 +1246,13 @@ export async function injectSeoTags(rawHtml, reqUrl, baseUrl = 'https://dvds-zon
     if (pathname === '/' || pathname === '') {
       const { products: catalogueProducts, categories: catalogueCategories, genres: catalogueGenres } = await getCatalogueData();
       const homeTitle =
-        settings?.seo_site_title && /dvds\s+zone/i.test(settings.seo_site_title) && /dvd\s+zone/i.test(settings.seo_site_title)
+        settings?.seo_site_title && /^dvd\s+zone/i.test(settings.seo_site_title)
           ? settings.seo_site_title
-          : 'DVDs Zone (DVD Zone UK) | DVD Movies & TV Box Sets UK';
+          : 'DVD Zone — DVDs Zone | DVD Movies & TV Box Sets UK';
       const homeDescription =
-        settings?.seo_site_description && /dvds\s+zone/i.test(settings.seo_site_description) && /dvd\s+zone/i.test(settings.seo_site_description)
+        settings?.seo_site_description && /^dvd\s+zone/i.test(settings.seo_site_description)
           ? settings.seo_site_description
-          : 'Shop DVDs and TV box sets at DVDs Zone (DVD Zone UK). Explore our collection of physical entertainment releases with UK delivery options.';
+          : 'DVD Zone (DVDs Zone UK) — Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options.';
 
       modifiedHtml = applyMetaAndCanonical(modifiedHtml, {
         title: homeTitle,

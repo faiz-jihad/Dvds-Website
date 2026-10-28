@@ -327,7 +327,7 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 isDark ? 'text-white' : 'text-gray-900'
               )}
             >
-              DVDs Zone — DVD Movies &amp; TV Box Sets UK (Official DVD Zone Store)
+              DVD Zone — DVDs Zone — DVD Movies &amp; TV Box Sets UK
             </h1>
             <p className="text-xs sm:text-sm leading-relaxed">
               Welcome to <strong>DVDs Zone</strong> (also known as <strong>DVD Zone</strong>, <strong>dvdzone</strong>,{' '}
