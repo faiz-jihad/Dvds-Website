@@ -1,0 +1,33 @@
+name: Deploy to Production VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Auto-Build and Reload PM2 on VPS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Webhook on Production VPS
+        run: |
+          echo "Sending deployment trigger to https://dvds-zone.co.uk/api/deploy-webhook..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://dvds-zone.co.uk/api/deploy-webhook" \
+            -H "Content-Type: application/json" \
+            -H "x-deploy-token: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}" \
+            -d "{\"ref\":\"refs/heads/main\",\"head_commit\":{\"id\":\"${{ github.sha }}\",\"message\":\"${{ github.event.head_commit.message }}\"}}")
+          
+          HTTP_BODY=$(echo "$RESPONSE" | sed '$d')
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          echo "Response code: $HTTP_CODE"
+          echo "Response body: $HTTP_BODY"
+          
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "::error::Deployment webhook failed with HTTP $HTTP_CODE: $HTTP_BODY"
+            exit 1
+          fi
+          
+          echo "Deployment successfully triggered on VPS!"

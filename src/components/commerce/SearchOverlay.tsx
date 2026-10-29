@@ -11,14 +11,14 @@ import { ImdbBadge } from '../common/ImdbBadge';
 import { searchCatalogue, findSearchSuggestion } from '../../lib/searchEngine';
 
 const POPULAR_SEARCHES = [
-  'Oppenheimer',
-  'Star Wars',
   'Mandalorian',
-  'Interstellar',
-  'Christopher Nolan',
-  'Heat',
+  'Yellowstone',
+  'Stranger Things',
+  'The Chosen',
+  'The Boys',
+  'Boba Fett',
+  'SEAL Team',
   'Box Set',
-  '4K UHD',
 ];
 
 const FORMAT_TABS = [

@@ -58,7 +58,12 @@ app.post(['/api/stripe-webhook', '/api/stripe/webhook'], express.raw({ type: '*/
 });
 
 // JSON body parser for all other /api endpoints (max 10MB to accommodate base64 payment receipts)
-app.use('/api', express.json({ limit: '10mb' }));
+app.use('/api', express.json({
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  },
+}));
 
 // Known API rewrites (matching vercel.json)
 const API_REWRITES = {
@@ -213,7 +218,21 @@ app.use(async (req, res) => {
   }
 });
 
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+// Determine if server.js is running as the main process (directly via Node or managed by PM2)
+const isMain =
+  !process.env.NODE_TEST_CONTEXT &&
+  process.env.NODE_ENV !== 'test' &&
+  (
+    process.env.pm_id !== undefined ||
+    process.env.pm_exec_path !== undefined ||
+    !process.argv[1] ||
+    process.argv[1].endsWith('server.js') ||
+    process.argv[1].includes('pm2') ||
+    process.argv[1].includes('ProcessContainer') ||
+    (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href)
+  );
+
+if (isMain) {
   app.listen(PORT, () => {
     console.log(`\n======================================================`);
     console.log(` DVDs Zone Production Server running on port ${PORT}`);

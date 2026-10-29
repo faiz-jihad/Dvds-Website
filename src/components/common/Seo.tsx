@@ -59,7 +59,7 @@ export const Seo: React.FC<SeoProps> = ({
   title,
   description,
   keywords,
-  siteName = 'DVDs Zone',
+  siteName = 'DVD zone UK',
   siteUrl,
   canonicalPath,
   image,
@@ -76,7 +76,7 @@ export const Seo: React.FC<SeoProps> = ({
       : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 
     // Formatted page title
-    const fullTitle = title.includes('DVDs Zone') || title.includes('DVD Zone') || title.includes('DVD') ? title : `${title} — DVDs Zone`;
+    const fullTitle = title.includes('DVD zone') || title.includes('DVD Zone') || title.includes('DVDs Zone') || title.includes('DVD') ? title : `${title} — DVD zone UK`;
     document.title = fullTitle;
 
     upsertMeta('name', 'description', description);

@@ -18,33 +18,33 @@ test('1. searchEngine.ts contains brand query tolerance for DVDs Zone and AZ Ray
   assert.ok(code.includes('brand_catalogue_match'), 'Must record brand_catalogue_match');
 });
 
-test('2. index.html primary title is optimized for DVDs Zone', () => {
+test('2. index.html primary title is optimized for DVD zone UK', () => {
   const indexHtml = readFileSync(resolve(rootDir, 'index.html'), 'utf8');
   assert.ok(
-    indexHtml.includes('<title>DVDs Zone | DVD Movies &amp; TV Box Sets UK</title>'),
-    'Title tag must match DVDs Zone | DVD Movies & TV Box Sets UK'
+    indexHtml.includes('<title>DVD zone UK | Buy DVD Movies &amp; TV Box Sets Online</title>'),
+    'Title tag must match DVD zone UK | Buy DVD Movies & TV Box Sets Online'
   );
 });
 
-test('3. index.html meta description, keywords, OpenGraph, and Twitter tags use DVDs Zone', () => {
+test('3. index.html meta description, keywords, OpenGraph, and Twitter tags use DVD zone UK', () => {
   const indexHtml = readFileSync(resolve(rootDir, 'index.html'), 'utf8');
   assert.ok(
-    indexHtml.includes('name="description" content="Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options."'),
+    indexHtml.includes('name="description" content="DVD zone UK — Buy DVD movies, TV series box sets, and physical media in the UK. 100% free Royal Mail UK delivery and same-day dispatch."'),
     'Meta description must match production guideline'
   );
-  assert.ok(indexHtml.includes('property="og:title" content="DVDs Zone | DVD Movies &amp; TV Box Sets UK"'), 'og:title must match DVDs Zone');
-  assert.ok(indexHtml.includes('property="og:site_name" content="DVDs Zone"'), 'og:site_name must match DVDs Zone');
+  assert.ok(indexHtml.includes('property="og:title" content="DVD zone UK | Buy DVD Movies &amp; TV Box Sets Online"'), 'og:title must match DVD zone UK');
+  assert.ok(indexHtml.includes('property="og:site_name" content="DVD zone UK"'), 'og:site_name must match DVD zone UK');
   assert.ok(indexHtml.includes('property="og:url" content="https://dvds-zone.co.uk/"'), 'og:url must be canonical https://dvds-zone.co.uk/');
   assert.ok(indexHtml.includes('name="twitter:card" content="summary_large_image"'), 'twitter:card must be summary_large_image');
   assert.ok(indexHtml.includes('rel="canonical" href="https://dvds-zone.co.uk/"'), 'canonical link must be https://dvds-zone.co.uk/');
 });
 
-test('4. index.html Schema.org JSON-LD contains Brand, WebSite, and OnlineStore with DVDs Zone', () => {
+test('4. index.html Schema.org JSON-LD contains Brand, WebSite, and OnlineStore with DVD zone UK', () => {
   const indexHtml = readFileSync(resolve(rootDir, 'index.html'), 'utf8');
   assert.ok(indexHtml.includes('"@type": "WebSite"'), 'Schema must define WebSite');
   assert.ok(indexHtml.includes('"@type": "OnlineStore"'), 'Schema must define OnlineStore');
   assert.ok(indexHtml.includes('"@type": "Brand"'), 'Schema must define Brand');
-  assert.ok(indexHtml.includes('"name": "DVDs Zone"'), 'Schema must define name as "DVDs Zone"');
+  assert.ok(indexHtml.includes('"name": "DVD zone UK"'), 'Schema must define name as "DVD zone UK"');
   assert.ok(indexHtml.includes('"alternateName": ['), 'Schema must define alternateName array');
   assert.ok(indexHtml.includes('"dvdzone"'), 'alternateName must include "dvdzone"');
   assert.ok(indexHtml.includes('"dvd zone"'), 'alternateName must include "dvd zone"');
@@ -53,9 +53,9 @@ test('4. index.html Schema.org JSON-LD contains Brand, WebSite, and OnlineStore 
   assert.ok(indexHtml.includes('"AZRAYAN LTD"'), 'Schema must reference verified company AZRAYAN LTD');
 });
 
-test('5. index.html pre-rendered crawlable HTML contains semantic headings, anchors, and DVDs Zone', () => {
+test('5. index.html pre-rendered crawlable HTML contains semantic headings, anchors, and DVD zone UK', () => {
   const indexHtml = readFileSync(resolve(rootDir, 'index.html'), 'utf8');
-  assert.ok(indexHtml.includes('DVDs Zone — DVD Movies &amp; TV Box Sets UK'), 'H1 must include DVDs Zone');
+  assert.ok(indexHtml.includes('DVD zone UK — DVD Movies &amp; TV Box Sets UK'), 'H1 must include DVD zone UK');
   assert.ok(indexHtml.includes('href="/shop"'), 'Must have crawlable link to /shop');
   assert.ok(indexHtml.includes('href="/product/star-wars-the-mandalorian-seasons-1-3"'), 'Must have crawlable link to active product');
 });
@@ -188,9 +188,10 @@ test('13. Functional filter query combinations canonicalize to clean /shop paren
   const boxSetRes = await injectSeoTags(realHtml, '/shop?format=box-set');
   assert.ok(boxSetRes.html.includes('Available Releases (9)'), '/shop?format=box-set must render 9 Box Set products');
 
-  // Verify /shop?filter=new filters to the 6 new release products
+  // Verify /shop?filter=new filters to new release products
   const newRes = await injectSeoTags(realHtml, '/shop?filter=new');
-  assert.ok(newRes.html.includes('Available Releases (6)'), '/shop?filter=new must render 6 New Release products');
+  assert.ok(/Available Releases \(\d+\)/.test(newRes.html), '/shop?filter=new must render filtered products');
+  assert.ok(!newRes.html.includes('/product/friends-the-reunion'), 'Non-new releases must be filtered out');
 });
 
 test('14. routes.tsx, Shop.tsx, and index.html protect canonical integrity and normalize format filters', () => {

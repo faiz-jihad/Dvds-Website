@@ -43,6 +43,23 @@ async function getRawBody(req) {
   throw new CheckoutError('Unable to read raw webhook request payload.', 400);
 }
 
+/**
+ * Safely records a payment event in payment_events for idempotency/auditing.
+ * Uses the Supabase query-builder insert API directly without invalid chained .catch() calls.
+ * Ancillary failures are logged as warnings and do not crash or abort
+ * the primary payment processing flow.
+ */
+async function recordPaymentEventSafe(db, eventData) {
+  try {
+    const { error } = await db.from('payment_events').insert(eventData);
+    if (error) {
+      console.warn(`[stripe-webhook] Ancillary payment_events record failed for ${eventData.id}:`, error.message);
+    }
+  } catch (err) {
+    console.warn(`[stripe-webhook] Ancillary payment_events exception for ${eventData.id}:`, err.message);
+  }
+}
+
 export default async function stripeWebhookHandler(req, res) {
   if (typeof res.setHeader === 'function') {
     res.setHeader('Cache-Control', 'no-store');
@@ -178,17 +195,13 @@ export default async function stripeWebhookHandler(req, res) {
           );
 
           // Record event idempotency marker
-          await db
-            .from('payment_events')
-            .insert({
-              id: eventKey,
-              order_id: order.id,
-              provider: 'stripe',
-              event_type: event.type,
-              amount: numericAmount,
-            })
-            .maybeSingle()
-            .catch(() => {});
+          await recordPaymentEventSafe(db, {
+            id: eventKey,
+            order_id: order.id,
+            provider: 'stripe',
+            event_type: event.type,
+            amount: numericAmount,
+          });
 
           // Automatically send verified customer payment receipt
           try {
@@ -234,17 +247,13 @@ export default async function stripeWebhookHandler(req, res) {
             })
           );
 
-          await db
-            .from('payment_events')
-            .insert({
-              id: eventKey,
-              order_id: orderId,
-              provider: 'stripe',
-              event_type: event.type,
-              amount: session.amount_total ? Number((session.amount_total / 100).toFixed(2)) : null,
-            })
-            .maybeSingle()
-            .catch(() => {});
+          await recordPaymentEventSafe(db, {
+            id: eventKey,
+            order_id: orderId,
+            provider: 'stripe',
+            event_type: event.type,
+            amount: session.amount_total ? Number((session.amount_total / 100).toFixed(2)) : null,
+          });
 
           // Send admin payment failure alert & customer notification
           try {
@@ -282,17 +291,13 @@ export default async function stripeWebhookHandler(req, res) {
             })
           );
 
-          await db
-            .from('payment_events')
-            .insert({
-              id: eventKey,
-              order_id: orderId,
-              provider: 'stripe',
-              event_type: event.type,
-              amount: null,
-            })
-            .maybeSingle()
-            .catch(() => {});
+          await recordPaymentEventSafe(db, {
+            id: eventKey,
+            order_id: orderId,
+            provider: 'stripe',
+            event_type: event.type,
+            amount: null,
+          });
         }
         break;
       }
@@ -331,17 +336,13 @@ export default async function stripeWebhookHandler(req, res) {
             })
           );
 
-          await db
-            .from('payment_events')
-            .insert({
-              id: eventKey,
-              order_id: order.id,
-              provider: 'stripe',
-              event_type: event.type,
-              amount: refundAmount,
-            })
-            .maybeSingle()
-            .catch(() => {});
+          await recordPaymentEventSafe(db, {
+            id: eventKey,
+            order_id: order.id,
+            provider: 'stripe',
+            event_type: event.type,
+            amount: refundAmount,
+          });
 
           // Automatically dispatch confirmed refund notifications
           try {
@@ -430,17 +431,13 @@ export default async function stripeWebhookHandler(req, res) {
         );
 
         // Record event idempotency marker
-        await db
-          .from('payment_events')
-          .insert({
-            id: eventKey,
-            order_id: order.id,
-            provider: 'stripe',
-            event_type: event.type,
-            amount: numericAmount,
-          })
-          .maybeSingle()
-          .catch(() => {});
+        await recordPaymentEventSafe(db, {
+          id: eventKey,
+          order_id: order.id,
+          provider: 'stripe',
+          event_type: event.type,
+          amount: numericAmount,
+        });
 
         // Automatically send verified customer payment receipt
         try {

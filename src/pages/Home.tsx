@@ -84,35 +84,35 @@ export const Home: React.FC = () => {
         title={
           settings.seo_site_title && /^dvd\s+zone/i.test(settings.seo_site_title)
             ? settings.seo_site_title
-            : "DVD Zone — DVDs Zone | DVD Movies & TV Box Sets UK"
+            : "DVD zone UK | Buy DVD Movies & TV Box Sets Online"
         }
         description={
           settings.seo_site_description && /^dvd\s+zone/i.test(settings.seo_site_description)
             ? settings.seo_site_description
-            : "DVD Zone (DVDs Zone UK) — Shop DVDs and TV box sets at DVDs Zone. Explore our collection of physical entertainment releases with UK delivery options."
+            : "DVD zone UK — Buy DVD movies, TV series box sets, and physical media in the UK. 100% free Royal Mail UK delivery and same-day dispatch."
         }
-        keywords="dvdzone, dvd zone, dvds zone, DVDs Zone, DVD Zone, AZ Rayan DVDs, DVDs Zone UK, DVD Zone UK, dvds-zone.co.uk, buy DVDs UK, TV box sets UK, physical media store UK, Royal Mail free delivery DVDs"
+        keywords="DVD zone UK, DVD Zone UK, DVD zone, DVD Zone, DVDs Zone UK, DVDs Zone, dvdzone uk, dvdzone, dvdszone, AZ Rayan DVDs, dvds-zone.co.uk, buy DVDs UK, TV box sets UK, physical media store UK, Royal Mail free delivery DVDs"
         canonicalPath="/"
         image={
           settings.seo_social_image_url ||
           "/catalog/the-mandalorian-seasons-1-3.jpeg"
         }
-        siteName={settings.store_name || "DVDs Zone"}
+        siteName={settings.store_name || "DVD zone UK"}
         jsonLd={[
           {
             "@context": "https://schema.org",
             "@type": "Brand",
-            name: settings.store_name || "DVDs Zone",
+            name: settings.store_name || "DVD zone UK",
             alternateName: [
-              "dvdzone",
-              "dvd zone",
-              "dvds zone",
-              "DVD Zone",
-              "DVDZone",
-              "DVDsZone",
-              "AZ Rayan DVDs",
-              "DVDs Zone UK",
+              "DVD zone UK",
               "DVD Zone UK",
+              "DVD zone",
+              "DVD Zone",
+              "DVDs Zone",
+              "DVDs Zone UK",
+              "dvdzone",
+              "dvdzone uk",
+              "AZ Rayan DVDs",
               "dvds-zone.co.uk",
             ],
             url: toAbsoluteUrl("/"),
@@ -125,17 +125,17 @@ export const Home: React.FC = () => {
           {
             "@context": "https://schema.org",
             "@type": "WebSite",
-            name: settings.store_name || "DVDs Zone",
+            name: settings.store_name || "DVD zone UK",
             alternateName: [
-              "dvdzone",
-              "dvd zone",
-              "dvds zone",
-              "DVD Zone",
-              "DVDZone",
-              "DVDsZone",
-              "AZ Rayan DVDs",
-              "DVDs Zone UK",
+              "DVD zone UK",
               "DVD Zone UK",
+              "DVD zone",
+              "DVD Zone",
+              "DVDs Zone",
+              "DVDs Zone UK",
+              "dvdzone",
+              "dvdzone uk",
+              "AZ Rayan DVDs",
               "dvds-zone.co.uk",
             ],
             url: toAbsoluteUrl("/"),
