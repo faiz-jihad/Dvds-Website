@@ -145,7 +145,7 @@ const AdminHeroVideoPlayer: React.FC<AdminHeroVideoPlayerProps> = ({ videoId, st
         tabIndex={-1}
         aria-hidden="true"
         referrerPolicy="strict-origin-when-cross-origin"
-        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1`}
+        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&start=${startSec}${endSec > startSec ? `&end=${endSec}` : ''}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&modestbranding=1&fs=0&enablejsapi=1`}
         title="Admin YouTube Preview"
         allow="autoplay; encrypted-media; picture-in-picture"
         onLoad={() => {
@@ -457,6 +457,9 @@ export const AdminStoreSettings: React.FC = () => {
       },
     ];
     handleChange('hero_trailers', newTrailers);
+    if (!settings.hero_youtube_enabled) {
+      handleChange('hero_youtube_enabled', true);
+    }
     setPreviewTrailerIndex(newTrailers.length - 1);
   };
 
@@ -466,6 +469,9 @@ export const AdminStoreSettings: React.FC = () => {
     if (!currentTrailers[index]) return;
     currentTrailers[index] = { ...currentTrailers[index], ...updates };
     handleChange('hero_trailers', currentTrailers);
+    if (updates.youtube_url && !settings.hero_youtube_enabled) {
+      handleChange('hero_youtube_enabled', true);
+    }
   };
 
   const handleRemoveTrailer = (index: number) => {
@@ -1069,20 +1075,25 @@ export const AdminStoreSettings: React.FC = () => {
               <div className="pt-2 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
                   <div>
-                    <h3 className="text-sm font-bold text-dark flex items-center gap-2">
-                      <Film className="w-4 h-4 text-brand-blue" />
-                      <span>Hero Films &amp; Trailers (1 Title = 1 Trailer Link)</span>
-                    </h3>
-                    <p className="text-xs text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-dark flex items-center gap-2">
+                        <Film className="w-4 h-4 text-brand-blue" />
+                        <span>Hero Films &amp; Trailers (1 Title = 1 Trailer Link)</span>
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-blue-50 text-brand-blue border border-blue-200 text-[10px] font-bold uppercase tracking-wider">
+                        {heroTrailers.length} Film{heroTrailers.length !== 1 ? 's' : ''} in Hero Carousel
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">
                       Configure titles featured in the Hero carousel, linking custom YouTube trailers and timing durations for each.
                     </p>
                   </div>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="primary"
                     size="sm"
                     onClick={handleAddTrailer}
-                    className="gap-1.5 text-xs cursor-pointer shrink-0 self-start sm:self-auto"
+                    className="gap-1.5 text-xs cursor-pointer shrink-0 self-start sm:self-auto font-bold shadow-xs"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add Hero Film</span>
@@ -1299,6 +1310,23 @@ export const AdminStoreSettings: React.FC = () => {
                         </div>
                       );
                     })}
+
+                    {/* Bottom Add Another Hero Film action */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl border border-dashed border-gray-300 bg-white hover:bg-gray-50/80 transition-colors">
+                      <div className="text-xs text-gray-500">
+                        Currently <strong className="text-dark font-bold">{heroTrailers.length} film{heroTrailers.length !== 1 ? 's' : ''}</strong> configured in rotation. You can add more titles with dedicated YouTube trailers anytime.
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddTrailer}
+                        className="gap-1.5 text-xs cursor-pointer shrink-0 w-full sm:w-auto font-bold border-brand-blue/30 text-brand-blue hover:bg-blue-50"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Another Hero Film</span>
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>

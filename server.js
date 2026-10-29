@@ -232,12 +232,26 @@ const isMain =
     (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href)
   );
 
+process.on('uncaughtException', (err) => {
+  console.error('[UNCAUGHT EXCEPTION]', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[UNHANDLED REJECTION]', reason);
+});
+process.on('exit', (code) => {
+  console.log('[PROCESS EXIT EVENT]', code, new Error().stack);
+});
+
 if (isMain) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`\n======================================================`);
     console.log(` DVDs Zone Production Server running on port ${PORT}`);
     console.log(` Base site URL: ${process.env.SITE_URL || `http://localhost:${PORT}`}`);
     console.log(`======================================================\n`);
+  });
+
+  server.on('error', (err) => {
+    console.error('[SERVER LISTEN ERROR]', err);
   });
 }
 

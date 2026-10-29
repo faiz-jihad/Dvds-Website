@@ -321,25 +321,35 @@ export const AdminOrders: React.FC = () => {
 
   const handleDeleteOrder = async () => {
     if (!deletingOrder) return;
+    const orderToDelete = deletingOrder;
     setIsDeleting(true);
     try {
-      await adminApi.deleteOrder(deletingOrder.id);
-      await queryClient.invalidateQueries({ queryKey: ['admin'] });
-      await queryClient.invalidateQueries({ queryKey: ['order'] });
-      await queryClient.invalidateQueries({ queryKey: ['my-orders'] });
+      await adminApi.deleteOrder(orderToDelete.id);
+
+      // Optimistically update local query cache so KPI cards and order list decrement immediately
+      queryClient.setQueryData<Order[]>(['admin', 'orders'], (old) =>
+        old ? old.filter((o) => o.id !== orderToDelete.id) : []
+      );
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin'] }),
+        queryClient.invalidateQueries({ queryKey: ['order'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-orders'] }),
+        ordersQuery.refetch(),
+      ]);
 
       try {
         if (typeof localStorage !== 'undefined') {
-          localStorage.removeItem(`order_proof_${deletingOrder.id}`);
-          localStorage.removeItem(`order_proof_${deletingOrder.order_number}`);
+          localStorage.removeItem(`order_proof_${orderToDelete.id}`);
+          localStorage.removeItem(`order_proof_${orderToDelete.order_number}`);
         }
       } catch {}
 
-      if (selectedOrder?.id === deletingOrder.id) {
+      if (selectedOrder?.id === orderToDelete.id) {
         setSelectedOrder(null);
       }
 
-      addToast(`Transaction ${deletingOrder.order_number} has been deleted successfully.`, 'success');
+      addToast(`Transaction ${orderToDelete.order_number} has been deleted successfully.`, 'success');
       setDeletingOrder(null);
     } catch (err: any) {
       addToast(err instanceof Error ? err.message : 'Failed to delete transaction', 'error');

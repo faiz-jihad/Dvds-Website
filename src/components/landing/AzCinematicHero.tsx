@@ -377,10 +377,44 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
     }
   }, [settings?.hero_youtube_mute]);
 
-  // Automatically display the newest uploaded active products in the Hero carousel (max 6 products)
+  // Hero Carousel Titles:
+  // 1. If admin configured specific hero_trailers in Store Settings, use THOSE exact films in order!
+  // 2. Otherwise fall back to newest uploaded active products (max 6 products)
   const featured = React.useMemo(() => {
+    let configuredTrailers = settings?.hero_trailers;
+    if ((!configuredTrailers || configuredTrailers.length === 0) && typeof window !== 'undefined') {
+      try {
+        const local = localStorage.getItem('dvds_hero_trailers');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) configuredTrailers = parsed;
+        }
+      } catch {}
+    }
+
+    if (Array.isArray(configuredTrailers) && configuredTrailers.length > 0) {
+      const heroList: Product[] = [];
+      for (const item of configuredTrailers) {
+        const target = String(item.product_id || '').trim().toLowerCase();
+        if (!target) continue;
+        const matched = products.find((p) => {
+          const pId = String(p.id || '').trim().toLowerCase();
+          const pSlug = String(p.slug || '').trim().toLowerCase();
+          const pTitle = String(p.title || '').trim().toLowerCase();
+          const pSku = String(p.sku || '').trim().toLowerCase();
+          return pId === target || pSlug === target || pTitle === target || pSku === target;
+        });
+        if (matched && !heroList.some((existing) => existing.id === matched.id)) {
+          heroList.push(matched);
+        }
+      }
+      if (heroList.length > 0) {
+        return heroList;
+      }
+    }
+
     const active = products.filter((p) => p.status === 'active');
-    if (active.length === 0) return [];
+    if (active.length === 0) return products.slice(0, 6);
 
     // Sort by created_at descending so newly uploaded products always appear first at the front
     const sorted = [...active].sort((a, b) => {
@@ -393,7 +427,7 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
 
     // Return max 6 newest uploaded products
     return sorted.slice(0, 6);
-  }, [products]);
+  }, [products, settings?.hero_trailers]);
 
   const addItem = useCartStore((s) => s.addItem);
   const { openCartDrawer, addToast } = useUiStore();
@@ -465,7 +499,7 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
       } catch {}
     }
 
-    const adminTrailer = configuredTrailers?.find((t) => {
+    let adminTrailer = configuredTrailers?.find((t) => {
       const target = String(t.product_id || '').trim().toLowerCase();
       const pId = String(current.id || '').trim().toLowerCase();
       const pSlug = String(current.slug || '').trim().toLowerCase();
@@ -473,6 +507,9 @@ export const AzCinematicHero: React.FC<AzCinematicHeroProps> = ({ products, sett
       const pSku = String(current.sku || '').trim().toLowerCase();
       return (pId === target || pSlug === target || pTitle === target || pSku === target) && Boolean(t.youtube_url?.trim());
     });
+    if (!adminTrailer && configuredTrailers && configuredTrailers[activeIndex]?.youtube_url?.trim()) {
+      adminTrailer = configuredTrailers[activeIndex];
+    }
     if (adminTrailer) {
       return adminTrailer;
     }
