@@ -40,6 +40,7 @@ import {
   Send,
   Bell,
   RefreshCw,
+  Radio,
 } from 'lucide-react';
 import { extractYouTubeVideoId } from '../../components/landing/AzCinematicHero';
 import { adminApi } from '../../lib/adminApi';
@@ -2715,7 +2716,7 @@ export const AdminStoreSettings: React.FC = () => {
                         playNotificationChime();
                         addToast('Harmonic bell chime sounded!', 'info');
                       }}
-                      className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5"
+                      className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 shadow-2xs"
                     >
                       <Volume2 className="w-3.5 h-3.5" />
                       <span>Play Order Chime</span>
@@ -2724,12 +2725,36 @@ export const AdminStoreSettings: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        useNotificationStore.getState().sendTestNotification('admin');
+                        useNotificationStore.getState().sendTestPaidNotification();
+                        addToast('Dispatched test paid order notification with chime and vibration', 'success');
                       }}
-                      className="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5"
+                      className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 shadow-2xs"
                     >
                       <Bell className="w-3.5 h-3.5" />
-                      <span>Trigger Admin Alert</span>
+                      <span>Test Paid Order Alert</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        useNotificationStore.getState().sendTestNotification('admin');
+                      }}
+                      className="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <Bell className="w-3.5 h-3.5" />
+                      <span>Test New Order Alert</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const perm = await useNotificationStore.getState().requestPermission();
+                        addToast(`Mobile Push Permission: ${perm}`, perm === 'granted' ? 'success' : 'info');
+                      }}
+                      className="px-3 py-2 border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-300 text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <Radio className="w-3.5 h-3.5" />
+                      <span>Request Push Permission</span>
                     </button>
                   </div>
                 </div>

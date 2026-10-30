@@ -125,28 +125,41 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
         queryClient.invalidateQueries({ queryKey: ['my-orders'] });
         if (eventType === 'INSERT') {
           const orderNum = newRecord?.order_number || 'new';
-          const totalText = newRecord?.total_amount ? ` totalling £${Number(newRecord.total_amount).toFixed(2)}` : '';
-          // Admin duty: New order notification (role-gated to admin context)
-          useNotificationStore.getState().addNotification({
-            target: 'admin',
-            type: 'order',
-            title: 'New Order Received',
-            message: `Order #${orderNum}${totalText} placed by customer.`,
-            link: '/admin/orders',
-          });
-        } else if (eventType === 'UPDATE') {
-          const orderNum = newRecord?.order_number || 'order';
+          const totalText = newRecord?.total_amount ? ` (£${Number(newRecord.total_amount).toFixed(2)})` : '';
+          const isPaid = newRecord?.payment_status === 'paid' || newRecord?.status === 'processing';
+          const method = (newRecord?.payment_method || 'Online').toUpperCase();
 
-          // Admin duty: Payment confirmed alert
-          if (newRecord?.payment_status === 'paid') {
-            const totalText = newRecord?.total_amount ? ` (£${Number(newRecord.total_amount).toFixed(2)})` : '';
+          if (isPaid) {
             useNotificationStore.getState().addNotification({
               target: 'admin',
               type: 'order',
-              title: 'Payment Confirmed',
-              message: `Order #${orderNum}${totalText} is confirmed PAID via ${(newRecord.payment_method || 'Online').toUpperCase()}.`,
+              title: 'Order Paid — Ready to Fulfill',
+              message: `Order #${orderNum}${totalText} paid in full via ${method}. Consignment is ready for packing and dispatch.`,
               link: '/admin/orders',
-            });
+            }, { sendNativePush: true, playAudio: true, showToast: true });
+          } else {
+            useNotificationStore.getState().addNotification({
+              target: 'admin',
+              type: 'order',
+              title: 'New Order Received',
+              message: `Order #${orderNum}${totalText} placed by customer. Awaiting payment authorization.`,
+              link: '/admin/orders',
+            }, { sendNativePush: true, playAudio: true, showToast: true });
+          }
+        } else if (eventType === 'UPDATE') {
+          const orderNum = newRecord?.order_number || 'order';
+
+          // Admin duty: Payment confirmed alert (so admin immediately knows when paid)
+          if (newRecord?.payment_status === 'paid') {
+            const totalText = newRecord?.total_amount ? ` (£${Number(newRecord.total_amount).toFixed(2)})` : '';
+            const method = (newRecord?.payment_method || 'Online').toUpperCase();
+            useNotificationStore.getState().addNotification({
+              target: 'admin',
+              type: 'order',
+              title: 'Payment Cleared — Ready to Ship',
+              message: `Payment confirmed for Order #${orderNum}${totalText} via ${method}. Prepare consignment for dispatch.`,
+              link: '/admin/orders',
+            }, { sendNativePush: true, playAudio: true, showToast: true });
           }
 
           // Admin duty: Payment proof uploaded
@@ -154,10 +167,10 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
             useNotificationStore.getState().addNotification({
               target: 'admin',
               type: 'order',
-              title: 'Payment Proof Uploaded',
-              message: `Customer uploaded transfer proof for Order #${orderNum}. Ready for verification.`,
+              title: 'Payment Verification Uploaded',
+              message: `Customer submitted payment documentation for Order #${orderNum}. Pending review.`,
               link: '/admin/orders',
-            });
+            }, { sendNativePush: true, playAudio: true, showToast: true });
           }
 
           // Customer duty: Order status update notification (ONLY for the customer who owns this order)
@@ -254,6 +267,22 @@ export const RealtimeProvider: React.FC<React.PropsWithChildren> = ({ children }
             message: `New message from ${newRecord?.name || 'Customer'}: "${newRecord?.subject || 'Support'}"`,
             link: '/admin/support',
           });
+        }
+        break;
+
+      case 'admin_audit_log':
+        queryClient.invalidateQueries({ queryKey: ['admin', 'audit-log'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'activity'] });
+        if (eventType === 'INSERT' && newRecord?.action === 'LOGIN') {
+          const email = newRecord?.changes?.email || 'Administrator';
+          const role = (newRecord?.changes?.role || 'staff').toUpperCase();
+          useNotificationStore.getState().addNotification({
+            target: 'admin',
+            type: 'system',
+            title: 'Security Notice: Merchant Session Sign-In',
+            message: `User ${email} signed in as ${role} from an authorized terminal.`,
+            link: '/admin/activity',
+          }, { sendNativePush: true, playAudio: true, showToast: true });
         }
         break;
 

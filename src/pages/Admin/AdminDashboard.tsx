@@ -42,15 +42,15 @@ export const AdminDashboard: React.FC = () => {
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Link to="/admin/products">
-            <Button variant="primary" size="sm" className="gap-1.5">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <Link to="/admin/products" className="flex-1 sm:flex-initial">
+            <Button variant="primary" size="sm" className="w-full gap-1.5 justify-center">
               <Plus className="w-3.5 h-3.5" />
               Add New Product
             </Button>
           </Link>
-          <Link to="/admin/orders">
-            <Button variant="secondary" size="sm">
+          <Link to="/admin/orders" className="flex-1 sm:flex-initial">
+            <Button variant="secondary" size="sm" className="w-full justify-center">
               Manage Orders
             </Button>
           </Link>
@@ -158,7 +158,53 @@ export const AdminDashboard: React.FC = () => {
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Recent Orders Cards */}
+        <div className="block md:hidden divide-y divide-gray-100 dark:divide-white/5">
+          {stats.recentOrders.length === 0 ? (
+            <p className="p-6 text-center text-xs text-gray-500">No recent orders.</p>
+          ) : (
+            stats.recentOrders.map((order) => (
+              <div key={order.id} className="p-4 hover:bg-gray-50/70 dark:hover:bg-white/5 transition-colors space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Link
+                    to="/admin/orders"
+                    className="font-mono font-bold text-xs text-dark dark:text-white hover:text-brand-blue"
+                  >
+                    #{order.order_number}
+                  </Link>
+                  <span className="font-mono font-extrabold text-xs text-dark dark:text-white">
+                    {formatMoney(order.total_amount, order.currency)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-dark dark:text-white truncate max-w-[180px]">
+                    {order.shipping_address.full_name}
+                  </span>
+                  <span className="text-[11px] text-gray-400">
+                    {formatDateUK(order.created_at)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 font-extrabold text-[10px] uppercase">
+                    {order.payment_status}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
+                      order.fulfilment_status === 'fulfilled'
+                        ? 'bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300'
+                        : 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300'
+                    }`}
+                  >
+                    {order.fulfilment_status}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-xs">
             <thead className="bg-gray-50 dark:bg-[#141A26] border-b border-gray-200 dark:border-white/10 font-semibold text-gray-700 dark:text-gray-300">
               <tr>

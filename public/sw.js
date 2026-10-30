@@ -1,24 +1,22 @@
 // DVDs Zone - Push Notification Service Worker
-const SW_VERSION = 'v1.0.0';
+const SW_VERSION = 'v1.2.0';
 
 self.addEventListener('install', (event) => {
-  // Activate worker immediately
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  // Claim active clients so notifications work immediately
   event.waitUntil(self.clients.claim());
 });
 
-// Handle incoming Web Push from server
+// Handle incoming Web Push from server or external triggers
 self.addEventListener('push', (event) => {
   let data = {
-    title: 'DVDs Zone',
+    title: 'DVDs Zone UK',
     body: 'You have a new update.',
-    icon: '/brand/logo.png',
+    icon: '/favicon-192.png',
     badge: '/favicon.svg',
-    url: '/',
+    url: '/admin/orders',
   };
 
   if (event.data) {
@@ -32,16 +30,20 @@ self.addEventListener('push', (event) => {
 
   const notificationOptions = {
     body: data.body,
-    icon: data.icon || '/brand/logo.png',
+    icon: data.icon || '/favicon-192.png',
     badge: data.badge || '/favicon.svg',
-    vibrate: [100, 50, 100],
+    vibrate: [300, 100, 300, 100, 400],
+    requireInteraction: true,
+    renotify: true,
+    tag: data.tag || `dvds-alert-${Date.now()}`,
     data: {
-      url: data.url || '/',
+      url: data.url || '/admin/orders',
       dateOfArrival: Date.now(),
     },
-    actions: data.actions || [],
-    tag: data.tag || 'az-rayan-notification',
-    renotify: true,
+    actions: [
+      { action: 'open', title: 'View Order' },
+      { action: 'close', title: 'Dismiss' }
+    ],
   };
 
   event.waitUntil(
@@ -53,16 +55,24 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+  if (event.action === 'close') {
+    return;
+  }
+
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/admin/orders';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // If a tab is already open, navigate & focus it
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(targetUrl);
+          if ('navigate' in client) {
+            client.navigate(targetUrl);
+          }
           return client.focus();
         }
       }
+      // Otherwise open a new window
       if (self.clients.openWindow) {
         return self.clients.openWindow(targetUrl);
       }
@@ -75,9 +85,11 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
     const { title, options } = event.data;
     const notificationOptions = {
-      icon: '/brand/logo.png',
+      icon: '/favicon-192.png',
       badge: '/favicon.svg',
-      vibrate: [100, 50, 100],
+      vibrate: [300, 100, 300, 100, 400],
+      requireInteraction: true,
+      renotify: true,
       ...options,
     };
     self.registration.showNotification(title, notificationOptions);

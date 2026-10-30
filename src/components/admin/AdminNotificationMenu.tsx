@@ -127,9 +127,17 @@ export const AdminNotificationMenu: React.FC = () => {
         )}
       </button>
 
+      {/* Backdrop for mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 sm:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
       {/* Notification Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[340px] sm:w-[420px] rounded-xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0E131F] text-slate-900 dark:text-white shadow-xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
+        <div className="fixed inset-x-3 top-16 sm:absolute sm:top-full sm:right-0 sm:inset-x-auto sm:w-[420px] sm:mt-2 max-w-[calc(100vw-24px)] rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0E131F] text-slate-900 dark:text-white shadow-2xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#141A26] px-4 py-3">
             <div className="flex items-center gap-2">
@@ -165,19 +173,33 @@ export const AdminNotificationMenu: React.FC = () => {
             </div>
           </div>
 
-          {/* Desktop Push Notification Permission Banner */}
-          {permission !== 'granted' && (
-            <div className="border-b border-blue-100 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-950/30 px-4 py-2.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-xs text-blue-900 dark:text-blue-300 font-medium">
+          {/* Desktop & Mobile Push Notification Permission / Test Banner */}
+          {permission !== 'granted' ? (
+            <div className="border-b border-blue-100 dark:border-blue-900/40 bg-blue-50/70 dark:bg-blue-950/30 px-4 py-2.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs text-blue-950 dark:text-blue-200 font-medium min-w-0">
                 <Radio className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 animate-pulse shrink-0" />
-                <span>Enable push notifications for live store alerts</span>
+                <span className="truncate">Enable mobile push for paid orders</span>
               </div>
               <button
                 type="button"
                 onClick={() => requestPermission()}
-                className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-blue-700 transition-colors shadow-2xs cursor-pointer"
+                className="shrink-0 rounded-lg bg-blue-600 px-3 py-1 text-[11px] font-bold text-white hover:bg-blue-700 transition-colors shadow-2xs cursor-pointer"
               >
                 Enable
+              </button>
+            </div>
+          ) : (
+            <div className="border-b border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-950/20 px-4 py-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-[11px] text-emerald-800 dark:text-emerald-300 font-semibold">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span>Mobile Push Active</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => useNotificationStore.getState().sendTestPaidNotification()}
+                className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer bg-white dark:bg-white/5 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-md"
+              >
+                Test Paid Alert
               </button>
             </div>
           )}

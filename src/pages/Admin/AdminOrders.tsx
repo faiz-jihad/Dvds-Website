@@ -135,26 +135,26 @@ function getPaymentStatusBadge(status: string) {
     case 'paid':
       return {
         label: 'PAID',
-        dot: 'bg-brand-blue',
-        badge: 'bg-blue-50 text-brand-blue border-blue-200',
+        dot: 'bg-emerald-500',
+        badge: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-extrabold',
       };
     case 'awaiting_payment':
       return {
         label: 'AWAITING PAYMENT',
-        dot: 'bg-brand-red',
-        badge: 'bg-brand-red-soft text-brand-red border-brand-red/30',
+        dot: 'bg-amber-500',
+        badge: 'bg-amber-50 text-amber-800 border-amber-300 font-extrabold',
       };
     case 'failed':
       return {
         label: 'FAILED',
-        dot: 'bg-brand-red',
-        badge: 'bg-brand-red-soft text-brand-red border-brand-red/30',
+        dot: 'bg-rose-500',
+        badge: 'bg-rose-50 text-rose-800 border-rose-300 font-extrabold',
       };
     default:
       return {
         label: status ? status.replace('_', ' ').toUpperCase() : 'UNPAID',
         dot: 'bg-gray-400',
-        badge: 'bg-gray-100 text-gray-700 border-gray-200',
+        badge: 'bg-gray-100 text-gray-700 border-gray-300 font-bold',
       };
   }
 }
@@ -441,6 +441,7 @@ export const AdminOrders: React.FC = () => {
 
   // Metrics overview counts
   const awaitingPaymentOrders = orders.filter((o) => o.payment_status === 'awaiting_payment');
+  const paidOrders = orders.filter((o) => o.payment_status === 'paid');
   const processingOrders = orders.filter((o) => o.status === 'processing');
   const dispatchedOrders = orders.filter((o) => o.status === 'dispatched');
   const deliveredOrders = orders.filter((o) => o.status === 'delivered');
@@ -517,20 +518,38 @@ export const AdminOrders: React.FC = () => {
 
         <button
           type="button"
-          onClick={() => { setPaymentFilter('awaiting_payment'); setStatusFilter('all'); }}
+          onClick={() => { setPaymentFilter('paid'); setStatusFilter('all'); }}
           className={cn(
             'p-4 rounded-2xl border text-left transition-all cursor-pointer shadow-xs',
-            paymentFilter === 'awaiting_payment'
-              ? 'bg-brand-red-soft/40 border-brand-red/40 ring-2 ring-brand-red/10'
+            paymentFilter === 'paid'
+              ? 'bg-emerald-50/60 border-emerald-500/50 ring-2 ring-emerald-500/10'
               : 'bg-white border-gray-200 hover:border-gray-300'
           )}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-brand-red uppercase tracking-wider">Awaiting Payment</span>
-            <AlertCircle size={16} className="text-brand-red" />
+            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Paid &amp; Cleared</span>
+            <CheckCircle2 size={16} className="text-emerald-600" />
           </div>
-          <p className="text-2xl font-extrabold text-brand-red mt-2 font-display">{awaitingPaymentOrders.length}</p>
-          <p className="text-[11px] text-brand-red/80 mt-0.5">Bank transfers to verify</p>
+          <p className="text-2xl font-extrabold text-emerald-950 mt-2 font-display">{paidOrders.length}</p>
+          <p className="text-[11px] text-emerald-700 mt-0.5">Payment confirmed</p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { setPaymentFilter('awaiting_payment'); setStatusFilter('all'); }}
+          className={cn(
+            'p-4 rounded-2xl border text-left transition-all cursor-pointer shadow-xs',
+            paymentFilter === 'awaiting_payment'
+              ? 'bg-amber-50/40 border-amber-400/50 ring-2 ring-amber-400/10'
+              : 'bg-white border-gray-200 hover:border-gray-300'
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Awaiting Payment</span>
+            <AlertCircle size={16} className="text-amber-600" />
+          </div>
+          <p className="text-2xl font-extrabold text-amber-950 mt-2 font-display">{awaitingPaymentOrders.length}</p>
+          <p className="text-[11px] text-amber-700 mt-0.5">Pending verification</p>
         </button>
 
         <button
@@ -549,24 +568,6 @@ export const AdminOrders: React.FC = () => {
           </div>
           <p className="text-2xl font-extrabold text-indigo-950 mt-2 font-display">{processingOrders.length}</p>
           <p className="text-[11px] text-indigo-700 mt-0.5">Paid &amp; packing</p>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => { setStatusFilter('delivered'); setPaymentFilter('all'); }}
-          className={cn(
-            'p-4 rounded-2xl border text-left transition-all cursor-pointer shadow-xs',
-            statusFilter === 'delivered'
-              ? 'bg-emerald-50/40 border-emerald-400/50 ring-2 ring-emerald-400/10'
-              : 'bg-white border-gray-200 hover:border-gray-300'
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Delivered</span>
-            <CheckCircle2 size={16} className="text-emerald-600" />
-          </div>
-          <p className="text-2xl font-extrabold text-emerald-950 mt-2 font-display">{deliveredOrders.length}</p>
-          <p className="text-[11px] text-emerald-700 mt-0.5">Successfully fulfilled</p>
         </button>
       </div>
 
@@ -640,7 +641,146 @@ export const AdminOrders: React.FC = () => {
 
       {/* Orders Table Container */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Order Cards View (Amazon Merchant Standard) */}
+        <div className="block md:hidden divide-y divide-gray-100">
+          {filteredOrders.length === 0 ? (
+            <div className="p-8 text-center text-gray-400">
+              <Package size={36} className="mx-auto text-gray-300 mb-2" />
+              <p className="font-bold text-dark text-sm">No orders match your criteria</p>
+              <p className="text-xs mt-0.5">Try searching with a different keyword or resetting filters.</p>
+            </div>
+          ) : (
+            paginatedOrders.map((o) => {
+              const proof = getOrderProof(o);
+              const totalDiscs = o.items.reduce((sum, item) => sum + item.quantity, 0);
+              const statusBadge = getOrderStatusBadge(o.status);
+              const payBadge = getPaymentStatusBadge(o.payment_status);
+
+              return (
+                <article
+                  key={o.id}
+                  onClick={() => openOrder(o)}
+                  className="p-4 bg-white hover:bg-slate-50 transition-colors cursor-pointer space-y-3"
+                >
+                  {/* Card Top: Order #, Date, Copy button */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 font-mono font-extrabold text-sm text-dark">
+                      <Package size={15} className="text-brand-blue shrink-0" />
+                      <span>{o.order_number}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyToClipboard(o.order_number, 'Order reference');
+                        }}
+                        className="p-1 text-gray-400 hover:text-dark transition-colors"
+                        title="Copy reference"
+                      >
+                        <Copy size={12} />
+                      </button>
+                    </div>
+                    <span className="text-[11px] text-gray-500 font-medium">
+                      {formatDateUK(o.created_at)}
+                    </span>
+                  </div>
+
+                  {/* Status Badges Row (Payment prominent) */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Payment Badge */}
+                    <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold border uppercase shadow-2xs', payBadge.badge)}>
+                      <span className={cn('w-2 h-2 rounded-full', payBadge.dot)} />
+                      {payBadge.label}
+                    </span>
+
+                    {/* Fulfilment Badge */}
+                    <span className={cn('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase', statusBadge.badge)}>
+                      <span className={cn('w-1.5 h-1.5 rounded-full', statusBadge.dot)} />
+                      {statusBadge.label}
+                    </span>
+
+                    {/* Proof uploaded badge */}
+                    {proof && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        <Paperclip size={10} />
+                        <span>Proof Attached</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Customer & Location */}
+                  <div className="bg-slate-50/80 p-2.5 rounded-xl border border-gray-100 flex items-start justify-between gap-3 text-xs">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-dark truncate">
+                        {o.shipping_address?.full_name || 'Customer'}
+                      </p>
+                      <p className="text-[11px] text-gray-500 truncate">
+                        {o.email}
+                      </p>
+                      <p className="text-[11px] text-gray-400 truncate mt-0.5 flex items-center gap-1">
+                        <MapPin size={10} className="shrink-0" />
+                        <span>{[o.shipping_address?.city, o.shipping_address?.postcode, o.shipping_address?.country].filter(Boolean).join(', ') || 'United Kingdom'}</span>
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="block font-mono font-extrabold text-base text-dark">
+                        {formatMoney(o.total_amount, o.currency)}
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-mono">
+                        {totalDiscs} {totalDiscs === 1 ? 'disc' : 'discs'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Quick Actions Footer */}
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wider">
+                      Via {o.payment_method || o.payment_provider || 'Online'}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {o.payment_status === 'awaiting_payment' && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmingBankOrder(o);
+                          }}
+                          className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-2xs"
+                        >
+                          Verify Payment
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openOrder(o);
+                        }}
+                        className="px-3 py-1.5 bg-brand-blue hover:bg-blue-600 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-2xs flex items-center gap-1"
+                      >
+                        <Eye size={12} />
+                        <span>Manage</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeletingOrder(o);
+                        }}
+                        className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        title="Delete transaction"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[960px] text-left text-xs border-collapse">
             <thead className="bg-gray-50/80 border-b border-gray-200 text-[11px] font-extrabold uppercase tracking-wider text-gray-500 select-none">
               <tr>
@@ -909,7 +1049,7 @@ export const AdminOrders: React.FC = () => {
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-3">
                 Order Lifecycle Stepper
               </p>
-              <div className="grid grid-cols-4 gap-2 relative">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 relative">
                 {/* Step 1: Placed */}
                 <div className="flex flex-col items-center text-center">
                   <div className="w-7 h-7 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs shadow-xs mb-1.5">

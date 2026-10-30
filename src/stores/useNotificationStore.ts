@@ -43,6 +43,7 @@ interface NotificationState {
   updatePermission: () => void;
   requestPermission: () => Promise<NotificationPermission>;
   sendTestNotification: (target: NotificationRole) => void;
+  sendTestPaidNotification: () => void;
 }
 
 export const isNotificationTargetActive = (target: NotificationRole): boolean => {
@@ -51,15 +52,27 @@ export const isNotificationTargetActive = (target: NotificationRole): boolean =>
   const isAdminPath = path.startsWith('/admin');
 
   if (target === 'admin') {
-    // Only alert admin if user is in /admin routes or logged in as staff/admin
+    // 1. Alert admin if currently in /admin routes
     if (isAdminPath) return true;
+
+    // 2. Alert admin if authenticated in localStorage (even in background or store tabs)
     try {
+      if (localStorage.getItem('dvds_admin_logged_in') === 'true') return true;
+
+      const adminActive = localStorage.getItem('dvds_admin_active');
+      if (adminActive) {
+        const parsed = JSON.parse(adminActive);
+        if (parsed && (['admin', 'staff'].includes(parsed.role) || parsed.email)) {
+          return true;
+        }
+      }
+
       const profileRaw = localStorage.getItem('az_rayan_customer_profile');
       if (profileRaw) {
         const p = JSON.parse(profileRaw);
         if (
           ['admin', 'staff'].includes(p.role) ||
-          ['info@dvds-zone.co.uk', 'admin@dvds-zone.co.uk', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk', 'azrayanltd@gmail.com'].includes(p.email?.toLowerCase())
+          ['info@dvds-zone.co.uk', 'admin@dvds-zone.co.uk', 'admin@dvdszone.co.uk', 'admin@azrayan.co.uk', 'azrayanltd@gmail.com', 'faizalba74@gmail.com'].includes(p.email?.toLowerCase())
         ) {
           return true;
         }
@@ -287,19 +300,29 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         get().addNotification({
           target: 'admin',
           type: 'order',
-          title: 'Test Live Notification',
-          message: 'Order dispatch alerts, audio chime, and push notifications are operational.',
-          link: '/admin',
-        });
+          title: 'New Order Received',
+          message: 'Order #DVD-78291 (£34.99) placed by customer. Awaiting fulfillment.',
+          link: '/admin/orders',
+        }, { sendNativePush: true, playAudio: true, showToast: true });
       } else {
         get().addNotification({
           target: 'customer',
           type: 'order',
-          title: 'Test Order Alert',
-          message: 'Your customer order tracking and store updates are active.',
+          title: 'Order Status Update',
+          message: 'Your order #DVD-78291 is being prepared by our fulfillment center.',
           link: '/account/orders',
         });
       }
+    },
+
+    sendTestPaidNotification: () => {
+      get().addNotification({
+        target: 'admin',
+        type: 'order',
+        title: 'Payment Verified — Ready to Dispatch',
+        message: 'Payment of £49.99 confirmed via STRIPE (Apple Pay) for Order #DVD-84920. Package ready for processing.',
+        link: '/admin/orders',
+      }, { sendNativePush: true, playAudio: true, showToast: true });
     },
   };
 });

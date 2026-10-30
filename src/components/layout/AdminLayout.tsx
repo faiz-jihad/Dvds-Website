@@ -27,6 +27,8 @@ import {
   Sun,
   Moon,
   Star,
+  Bell,
+  Volume2,
 } from "lucide-react";
 import { cn } from "../../lib/formatters";
 import { useAdminAuth } from "../../auth/AdminAuth";
@@ -40,6 +42,7 @@ import { AdminNotificationMenu } from "../admin/AdminNotificationMenu";
 import { UserAvatar } from "../common/UserAvatar";
 import { useUiStore } from "../../stores/useUiStore";
 import { useThemeStore } from "../../stores/useThemeStore";
+import { useNotificationStore } from "../../stores/useNotificationStore";
 
 interface NavItem {
   label: string;
@@ -157,6 +160,10 @@ export const AdminLayout: React.FC = () => {
   const [dismissedSchemaWarning, setDismissedSchemaWarning] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const notifPermission = useNotificationStore((s) => s.permission);
+  const requestPermission = useNotificationStore((s) => s.requestPermission);
+  const sendTestPaidNotification = useNotificationStore((s) => s.sendTestPaidNotification);
 
   // Close user dropdown when clicking outside
   useEffect(() => {
@@ -363,6 +370,16 @@ export const AdminLayout: React.FC = () => {
             >
               <Menu className="h-5 w-5" />
             </button>
+
+            {/* Mobile Current Section Title */}
+            <div className="flex flex-col sm:hidden min-w-0">
+              <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                {breadcrumbs[breadcrumbs.length - 1]?.label || "Admin Console"}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium tracking-tight">
+                DVDs Zone UK Merchant
+              </span>
+            </div>
 
             {/* Breadcrumbs */}
             <nav
@@ -660,7 +677,45 @@ export const AdminLayout: React.FC = () => {
             <SidebarNav onLinkClick={() => setMobileNavOpen(false)} />
 
             {/* Drawer footer */}
-            <div className="border-t border-slate-100 dark:border-white/10 p-4 space-y-2 bg-slate-50/50 dark:bg-[#0A0D14]">
+            <div className="border-t border-slate-100 dark:border-white/10 p-4 space-y-2.5 bg-slate-50/50 dark:bg-[#0A0D14]">
+              {/* Mobile Push Notification Setup */}
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#131826] space-y-2 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Bell className="h-3.5 w-3.5 text-brand-blue" />
+                    <span>Mobile Push Alerts</span>
+                  </span>
+                  <span className={cn(
+                    "text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border",
+                    notifPermission === 'granted'
+                      ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800/40"
+                      : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800/40"
+                  )}>
+                    {notifPermission === 'granted' ? 'Active' : 'Not Enabled'}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-normal">
+                  Receive sound, vibration, and push notifications when orders are paid or placed.
+                </p>
+                {notifPermission !== 'granted' ? (
+                  <button
+                    type="button"
+                    onClick={() => requestPermission()}
+                    className="w-full py-2 px-3 rounded-lg bg-brand-blue hover:bg-blue-600 text-white text-[11px] font-bold transition-colors cursor-pointer shadow-2xs"
+                  >
+                    Enable Mobile Push Alerts
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => sendTestPaidNotification()}
+                    className="w-full py-1.5 px-3 rounded-lg border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 text-[11px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Volume2 className="h-3.5 w-3.5 text-brand-blue" />
+                    <span>Test Sound &amp; Vibration</span>
+                  </button>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={toggleTheme}

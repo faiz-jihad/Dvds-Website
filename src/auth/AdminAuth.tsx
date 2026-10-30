@@ -3,6 +3,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase, setAuthPersistence } from '../lib/supabase';
 import { UserRole } from '../types';
+import { useNotificationStore } from '../stores/useNotificationStore';
+import { requestNotificationPermission } from '../lib/pushNotifications';
 
 type AdminUser = { id: string; email: string; fullName: string; role: Extract<UserRole, 'admin' | 'staff'> };
 type LoginResult = { success: true } | { success: false; message: string };
@@ -59,6 +61,22 @@ export const AdminAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
       queryClient.removeQueries({ queryKey: ['admin'] });
       identity.current = nextIdentity;
     }
+    if (admin) {
+      try {
+        localStorage.setItem('dvds_admin_logged_in', 'true');
+        localStorage.setItem('dvds_admin_active', JSON.stringify({
+          id: admin.id,
+          email: admin.email,
+          role: admin.role,
+          fullName: admin.fullName
+        }));
+      } catch {}
+    } else {
+      try {
+        localStorage.removeItem('dvds_admin_logged_in');
+        localStorage.removeItem('dvds_admin_active');
+      } catch {}
+    }
     setUser(admin);
   }, [queryClient]);
   useEffect(() => {
@@ -87,7 +105,41 @@ export const AdminAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
   }, [applyUser]);
   const login = useCallback(async (email: string, password: string, remember: boolean): Promise<LoginResult> => {
     try {
-      applyUser(await authenticateAdmin(email, password, remember));
+      const admin = await authenticateAdmin(email, password, remember);
+      applyUser(admin);
+
+      // Professional Amazon-grade administrative login notification
+      useNotificationStore.getState().addNotification(
+        {
+          target: 'admin',
+          type: 'system',
+          title: 'Administrative Session Authenticated',
+          message: `Welcome back, ${admin.fullName || admin.email}. You are signed in as ${admin.role.toUpperCase()}. Real-time order and payment telemetry active.`,
+          link: '/admin',
+        },
+        { sendNativePush: true, playAudio: true, showToast: true }
+      );
+
+      // Verify or prompt for native mobile push permission on mobile device
+      requestNotificationPermission().catch(() => {});
+
+      // Record administrative login event in audit log if configured
+      if (supabase) {
+        void Promise.resolve(
+          supabase.from('admin_audit_log').insert({
+            action: 'LOGIN',
+            entity: 'admin_session',
+            entity_id: admin.id,
+            changes: {
+              email: admin.email,
+              role: admin.role,
+              fullName: admin.fullName,
+              authenticatedAt: new Date().toISOString(),
+            },
+          })
+        ).catch(() => {});
+      }
+
       return { success: true };
     } catch (error) {
       return { success: false, message: error instanceof Error ? error.message : 'Sign in failed. Please retry.' };

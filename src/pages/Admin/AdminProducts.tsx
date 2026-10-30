@@ -1060,9 +1060,106 @@ export const AdminProducts: React.FC = () => {
         </select>
       </div>
 
-      {/* Products Table */}
+      {/* Products Table Container */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Product Cards View */}
+        <div className="block md:hidden divide-y divide-gray-100">
+          {paginatedProducts.map((p) => (
+            <article key={p.id} className="p-4 bg-white hover:bg-slate-50 transition-colors space-y-3">
+              <div className="flex items-start gap-3">
+                <img
+                  src={p.cover_image_url}
+                  alt={p.title}
+                  className="w-14 aspect-dvd object-cover rounded-md border border-gray-200 shrink-0 shadow-2xs"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = 'none';
+                  }}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-bold text-xs text-dark line-clamp-2 leading-tight">
+                      {p.title}
+                    </h3>
+                  </div>
+                  <div className="text-[10px] text-gray-400 font-mono mt-1 flex flex-wrap items-center gap-1.5">
+                    <span>{p.sku}</span>
+                    <span>•</span>
+                    <span className="font-bold text-brand-blue">{p.format}</span>
+                    {p.spine_number && (
+                      <>
+                        <span>•</span>
+                        <span>#{p.spine_number}</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="font-mono font-extrabold text-sm text-dark">
+                      {formatGBP(p.price)}
+                    </span>
+                    <span
+                      className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-sm ${
+                        settingsQuery.data && p.stock_quantity <= settingsQuery.data.low_stock_threshold
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {p.stock_quantity} in stock
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Actions Footer */}
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => handleToggleProductStatus(p)}
+                  disabled={updatingStatusId === p.id}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border ${
+                    p.status === 'active'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                      : p.status === 'draft'
+                      ? 'bg-gray-100 text-gray-700 border-gray-300'
+                      : 'bg-amber-50 text-amber-800 border-amber-300'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      p.status === 'active'
+                        ? 'bg-emerald-600'
+                        : p.status === 'draft'
+                        ? 'bg-gray-400'
+                        : 'bg-amber-500'
+                    }`}
+                  />
+                  <span>{p.status}</span>
+                </button>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => openEditModal(p)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-slate-50 text-xs font-semibold text-dark shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <Edit2 className="w-3 h-3 text-brand-blue" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProductToDelete(p)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                    title="Archive film"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-xs">
             <thead className="bg-gray-50 border-b border-gray-200 font-semibold text-gray-700">
               <tr>
