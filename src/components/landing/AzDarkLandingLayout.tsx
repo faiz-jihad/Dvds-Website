@@ -306,15 +306,7 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
               DVD Zone — DVDs Zone — DVD Movies &amp; TV Box Sets UK
             </h1>
             <p className="text-xs sm:text-sm leading-relaxed">
-              Welcome to <strong>DVDs Zone</strong> (also known as <strong>DVD Zone</strong>, <strong>dvdzone</strong>,{' '}
-              <strong>DVD Zone UK</strong>, <strong>DVDs Zone UK</strong>, and <strong>AZ Rayan DVDs</strong> at{' '}
-              <Link to="/" className="text-brand-blue hover:underline font-semibold">
-                dvds-zone.co.uk
-              </Link>
-              ) — a UK online retailer of genuine Region 2 DVDs, complete television series box sets, and collector editions
-              operated by <strong>{settings?.registered_company_name || 'AZRAYAN LTD'}</strong> (Company No.{' '}
-              {settings?.company_number || '13894195'}). Every order includes <strong>100% Free UK Delivery</strong> via Royal
-              Mail with same-day dispatch.
+              Explore our collection of films and TV series. Our DVDs are Region 0 (region-free), so they are compatible with suitable DVD players in the UK and many other countries. Please check your player&apos;s compatibility before buying.
             </p>
           </div>
           <div className="mt-6 pt-5 border-t border-gray-200/60 dark:border-white/10 grid grid-cols-1 md:grid-cols-2 gap-6">
