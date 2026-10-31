@@ -1,16 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Filter } from 'lucide-react';
-import { Product, Category, Genre, StoreSettings } from '../../types';
+import { ArrowRight } from 'lucide-react';
+import type { Category, Genre, Product, StoreSettings } from '../../types';
+import { cn } from '../../lib/formatters';
 import { useThemeStore } from '../../stores/useThemeStore';
-import { AzCinematicHero } from './AzCinematicHero';
 import { AzCategoryChips } from './AzCategoryChips';
-import { AzMovieShelfRow } from './AzMovieShelfRow';
-import { AzDvdMovieCard } from './AzDvdMovieCard';
+import { AzCinematicHero } from './AzCinematicHero';
 import { AzCuratedCollectionBanner } from './AzCuratedCollectionBanner';
 import { AzDirectorSpotlightBanner } from './AzDirectorSpotlightBanner';
+import { AzDvdMovieCard } from './AzDvdMovieCard';
+import { AzMovieShelfRow } from './AzMovieShelfRow';
 import { CustomerReviewsCarousel } from './CustomerReviewsCarousel';
-import { cn } from '../../lib/formatters';
 
 interface AzDarkLandingLayoutProps {
   products: Product[];
@@ -31,13 +31,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
 
   // Active products pool
   const active = useMemo(() => products.filter((p) => p.status === 'active'), [products]);
-
-  // Featured hero products
-  const featured = useMemo(() => {
-    const list = active.filter((p) => p.stock_quantity > 0);
-    const highlighted = list.filter((p) => p.is_featured || p.is_best_seller || p.is_new_release);
-    return (highlighted.length >= 2 ? highlighted : list).slice(0, 6);
-  }, [active]);
 
   // Shelves data
   const shelfTrending = useMemo(
@@ -107,7 +100,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
         return active;
     }
   }, [active, activeFilter, budgetThreshold]);
-
   const filterTitle = useMemo(() => {
     if (activeFilter === 'trending') return 'Trending & Top Rated';
     if (activeFilter === 'new') return 'New Arrivals & Fresh Pressings';
@@ -122,12 +114,10 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
     }
     return 'All Physical Media';
   }, [activeFilter, genres, budgetThreshold]);
-
   return (
     <div className="flex-1 min-w-0 flex flex-col select-none">
       {/* ── 1. Cinematic Hero Movie Section + Automatic Slider ── */}
       <AzCinematicHero products={products} settings={settings} />
-
       {/* ── 3. Movie Category Section Chips ── */}
       <AzCategoryChips
         categories={categories}
@@ -137,7 +127,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
         onFilterChange={setActiveFilter}
         budgetThreshold={budgetThreshold}
       />
-
       {/* ── 4. Main Catalogue Body ── */}
       <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10 sm:space-y-14">
         {/* If a specific filter is chosen, show a full grid of matching titles */}
@@ -158,7 +147,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                   {filteredProducts.length} titles
                 </span>
               </div>
-
               <button
                 type="button"
                 onClick={() => setActiveFilter('all')}
@@ -172,7 +160,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 Clear Filter
               </button>
             </div>
-
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5 sm:gap-5">
                 {filteredProducts.map((p) => (
@@ -204,10 +191,8 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 viewAllHref="/shop?filter=trending"
               />
             )}
-
             {/* ── Director Spotlight Showcase Module (Configured in Storefront Settings) ── */}
             <AzDirectorSpotlightBanner settings={settings || null} products={active} />
-
             {/* Shelf 2: Fresh From The Vault */}
             {shelfNewReleases.length > 0 && (
               <AzMovieShelfRow
@@ -217,7 +202,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 viewAllHref="/shop?filter=new"
               />
             )}
-
             {/* Shelf 3: Critically Acclaimed Masterpieces */}
             {shelfCriticallyAcclaimed.length > 0 && (
               <AzMovieShelfRow
@@ -227,10 +211,8 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 viewAllHref="/shop"
               />
             )}
-
             {/* ── 5. Curated Box Set Showcase Section (Visual Break) ── */}
             <AzCuratedCollectionBanner products={active} />
-
             {/* Shelf 4: TV Series & Complete Seasons */}
             {shelfTvSeries.length > 0 && (
               <AzMovieShelfRow
@@ -240,7 +222,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 viewAllHref="/shop?format=box-set"
               />
             )}
-
             {/* Shelf 5: Dynamic Genre Shelves */}
             {dynamicGenreShelves.map(({ genre, products: gProducts }) => (
               <AzMovieShelfRow
@@ -251,7 +232,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 viewAllHref={`/shop/genre/${genre.slug}`}
               />
             ))}
-
             {/* Shelf 6: Special Offers & Clearance */}
             {shelfSale.length > 0 && (
               <AzMovieShelfRow
@@ -261,7 +241,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 viewAllHref="/shop?filter=sale"
               />
             )}
-
             {/* Shelf 7: Budget Collection Vault (Configured in Storefront Settings) */}
             {shelfBudget.length > 0 && budgetThreshold > 0 && (
               <AzMovieShelfRow
@@ -271,7 +250,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 viewAllHref={`/shop?max_price=${budgetThreshold}`}
               />
             )}
-
             {/* Complete Store Catalogue Grid: Guarantees 100% of active products are displayed & crawlable */}
             {active.length > 0 && (
               <section className="space-y-5 pt-4">
@@ -301,12 +279,10 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
             )}
           </div>
         )}
-
         {/* ── Verified Website Customer Reviews Carousel (Genuine verified purchases) ── */}
         <div className="pt-4 sm:pt-6">
           <CustomerReviewsCarousel />
         </div>
-
         {/* ── Official Brand Identity & Crawlable Taxonomy Directory (DVDs Zone / DVD Zone UK) ── */}
         <section
           aria-label="About DVDs Zone and Storefront Directory"
@@ -341,7 +317,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
               Mail with same-day dispatch.
             </p>
           </div>
-
           <div className="mt-6 pt-5 border-t border-gray-200/60 dark:border-white/10 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h2
@@ -380,7 +355,6 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 ))}
               </nav>
             </div>
-
             {genres.length > 0 && (
               <div>
                 <h2
@@ -411,9 +385,9 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
             )}
           </div>
         </section>
-
       </main>
     </div>
   );
 };
+
 export default AzDarkLandingLayout;
