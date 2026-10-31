@@ -303,7 +303,7 @@ export const AzDarkLandingLayout: React.FC<AzDarkLandingLayoutProps> = ({
                 isDark ? 'text-white' : 'text-gray-900'
               )}
             >
-              DVD Zone — DVDs Zone — DVD Movies &amp; TV Box Sets UK
+              DVD Zone UK &amp; TV Box Sets UK
             </h1>
             <p className="text-xs sm:text-sm leading-relaxed">
               Explore our collection of films and TV series. Our DVDs are Region 0 (region-free), so they are compatible with suitable DVD players in the UK and many other countries. Please check your player&apos;s compatibility before buying.
