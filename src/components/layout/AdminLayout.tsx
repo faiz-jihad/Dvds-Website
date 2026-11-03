@@ -167,7 +167,7 @@ export const AdminLayout: React.FC = () => {
   const notifPermission = useNotificationStore((s) => s.permission);
   const updatePermission = useNotificationStore((s) => s.updatePermission);
   const requestPermission = useNotificationStore((s) => s.requestPermission);
-  const sendTestPaidNotification = useNotificationStore((s) => s.sendTestPaidNotification);
+
 
   // Sync notification permission on mount
   useEffect(() => {
@@ -228,10 +228,10 @@ export const AdminLayout: React.FC = () => {
               {
                 target: 'admin',
                 type: 'order',
-                title: isPaid ? 'Pesanan Terbayar — Siap Kirim 📦' : 'Pesanan Baru Diterima 🛒',
+                title: isPaid ? 'Order Paid — Ready for Dispatch 📦' : 'New Customer Order 🛒',
                 message: isPaid
-                  ? `Order #${orderNum}${totalStr} telah dibayar via ${payMethod}. Paket siap diproses.`
-                  : `Order #${orderNum}${totalStr} baru saja dibuat pelanggan. Menunggu konfirmasi pembayaran.`,
+                  ? `Order #${orderNum}${totalStr} paid via ${payMethod}. Consignment is ready for packing.`
+                  : `Order #${orderNum}${totalStr} placed by customer. Awaiting payment authorization.`,
                 link: '/admin/orders',
               },
               { sendNativePush: true, playAudio: true, showToast: true }
@@ -242,8 +242,8 @@ export const AdminLayout: React.FC = () => {
               {
                 target: 'admin',
                 type: 'order',
-                title: 'Pembayaran Dikonfirmasi — Siap Kirim 💳',
-                message: `Pembayaran Order #${orderNum}${totalStr} via ${payMethod} berhasil dikonfirmasi. Siapkan pengiriman.`,
+                title: 'Payment Confirmed — Ready to Ship 💳',
+                message: `Payment confirmed for Order #${orderNum}${totalStr} via ${payMethod}. Package ready for fulfillment.`,
                 link: '/admin/orders',
               },
               { sendNativePush: true, playAudio: true, showToast: true }
@@ -563,20 +563,20 @@ export const AdminLayout: React.FC = () => {
                 type="button"
                 onClick={() => setPromptModalOpen(true)}
                 className="flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 hover:bg-amber-100/70 transition-colors cursor-pointer shadow-2xs"
-                title="Aktifkan Notifikasi Pesanan di HP"
+                title="Enable Mobile Order Alerts"
               >
                 <Bell className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 animate-bounce" />
-                <span className="hidden sm:inline">Aktifkan Notif HP</span>
+                <span className="hidden sm:inline">Enable Alerts</span>
               </button>
             ) : (
               <button
                 type="button"
-                onClick={() => sendTestPaidNotification()}
+
                 className="hidden sm:flex items-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50/60 dark:bg-emerald-950/20 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70 transition-colors cursor-pointer shadow-2xs"
-                title="Notifikasi HP Aktif — Klik untuk uji coba suara & getar"
+                title="Mobile push notifications active for incoming orders"
               >
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Notif HP Aktif</span>
+                <span>Alerts Active</span>
               </button>
             )}
 
@@ -846,11 +846,11 @@ export const AdminLayout: React.FC = () => {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => sendTestPaidNotification()}
+    
                     className="w-full py-1.5 px-3 rounded-lg border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 text-[11px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Volume2 className="h-3.5 w-3.5 text-brand-blue" />
-                    <span>Test Sound &amp; Vibration</span>
+                    <span>Operational Alerts Active</span>
                   </button>
                 )}
               </div>

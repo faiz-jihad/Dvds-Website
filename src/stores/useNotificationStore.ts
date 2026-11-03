@@ -299,8 +299,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
           {
             target: 'admin',
             type: 'system',
-            title: 'Notifikasi Pesanan HP Aktif! 🔔',
-            message: 'HP Anda akan berdering, bergetar, dan menampilkan notifikasi saat ada pesanan baru atau pembayaran masuk di DVDs Zone.',
+            title: 'Order Notifications Active 🔔',
+            message: 'Your device will receive instant sound, vibration, and push notifications whenever a new order is placed or paid.',
             link: '/admin/orders',
           },
           { sendNativePush: true, playAudio: true, showToast: true }

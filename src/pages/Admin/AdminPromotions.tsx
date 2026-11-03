@@ -47,9 +47,9 @@ export const AdminPromotions: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
       queryClient.invalidateQueries({ queryKey: ['store', 'settings'] });
       queryClient.invalidateQueries({ queryKey: ['store', 'active-promotions'] });
-      addToast(`Promo "${promo.code}" sekarang aktif di pop-up banner pengunjung!`, 'success');
+      addToast(`Promotion "${promo.code}" is now active in storefront promotional banners.`, 'success');
     } catch (err: any) {
-      addToast(err?.message || 'Gagal mengatur kupon pop-up banner', 'error');
+      addToast(err?.message || 'Failed to update promotional banner coupon', 'error');
     }
   };
 
@@ -383,7 +383,7 @@ export const AdminPromotions: React.FC = () => {
                               type="button"
                               onClick={() => handleSetAsPopupOffer(promotion)}
                               className="text-[10px] text-gray-500 hover:text-brand-blue font-medium underline text-left w-fit cursor-pointer"
-                              title="Tampilkan kupon ini di pop-up banner pengunjung"
+                              title="Feature this promotional voucher in storefront pop-up banners"
                             >
                               + Pasang ke Pop-up
                             </button>

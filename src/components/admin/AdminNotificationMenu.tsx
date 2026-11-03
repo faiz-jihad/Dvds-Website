@@ -194,13 +194,9 @@ export const AdminNotificationMenu: React.FC = () => {
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <span>Mobile Push Active</span>
               </div>
-              <button
-                type="button"
-                onClick={() => useNotificationStore.getState().sendTestPaidNotification()}
-                className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer bg-white dark:bg-white/5 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-md"
-              >
-                Test Paid Alert
-              </button>
+              <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-white dark:bg-white/5 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-md">
+                Operational
+              </span>
             </div>
           )}
 

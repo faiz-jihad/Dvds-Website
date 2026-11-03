@@ -2013,7 +2013,7 @@ export const AdminProducts: React.FC = () => {
                         </span>
                       </h4>
                       <p className="text-[10px] text-gray-500">
-                        Link video trailer YouTube untuk produk ini. Jika produk ini termasuk dalam 6 produk terbaru, video ini akan otomatis diputar sebagai background cinematic di beranda.
+                        YouTube video trailer link for this title. When featured among top recent releases, this video plays as a high-fidelity cinematic background on the storefront homepage.
                       </p>
                     </div>
                   </div>
@@ -2022,7 +2022,7 @@ export const AdminProducts: React.FC = () => {
                 <div className="space-y-3">
                   <div>
                     <FieldLabel
-                      label="YouTube Trailer URL atau Video ID"
+                      label="YouTube Trailer URL or Video ID"
                       hint="e.g. https://www.youtube.com/watch?v=AwwbhhjQ9Xk"
                     />
                     <div className="relative">
@@ -2030,7 +2030,7 @@ export const AdminProducts: React.FC = () => {
                         type="text"
                         value={trailerUrl}
                         onChange={(e) => setTrailerUrl(e.target.value)}
-                        placeholder="https://youtu.be/... atau Video ID"
+                        placeholder="https://youtu.be/... or Video ID"
                         className="w-full h-10 px-3 pr-24 border border-gray-200 rounded-lg text-xs text-dark focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition bg-white"
                       />
                       {extractYouTubeVideoId(trailerUrl) && (

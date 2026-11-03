@@ -340,18 +340,18 @@ export const AdminStoreSettings: React.FC = () => {
       setTestEmailResult({
         success: res.success,
         message: res.success
-          ? `Test email delivered successfully via ${res.provider?.name || 'Email Gateway'}!`
+          ? `Verification email delivered successfully via ${res.provider?.name || 'Email Gateway'}!`
           : 'Email dispatch failed. Please check provider API keys.',
         provider: res.provider?.name,
       });
-      addToast(`Test email dispatched via ${res.provider?.name || 'Gateway'}!`, res.success ? 'success' : 'error');
+      addToast(`Verification email dispatched via ${res.provider?.name || 'Gateway'}!`, res.success ? 'success' : 'error');
       emailLogsQuery.refetch();
     } catch (err: any) {
       setTestEmailResult({
         success: false,
-        message: err.message || 'Failed to dispatch test email',
+        message: err.message || 'Failed to dispatch verification email',
       });
-      addToast(err.message || 'Failed to send test email', 'error');
+      addToast(err.message || 'Failed to dispatch verification email', 'error');
     } finally {
       setIsSendingTestEmail(false);
     }
@@ -1951,13 +1951,13 @@ export const AdminStoreSettings: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <label className="block text-xs font-semibold text-gray-700">
-                    Pilih Kupon Promo untuk Pop-up Penawaran (Terhubung dari Menu Promotions)
+                    Select Promotional Offer Voucher (Linked from Promotions Catalog)
                   </label>
                   <Link
                     to="/admin/promotions"
                     className="inline-flex items-center gap-1 text-xs font-semibold text-brand-blue hover:underline"
                   >
-                    Kelola Semua Promo di Admin &gt; Promotions &rarr;
+                    Manage All Promotions in Admin &gt; Promotions &rarr;
                   </Link>
                 </div>
 
@@ -1976,21 +1976,21 @@ export const AdminStoreSettings: React.FC = () => {
                       }}
                       className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-dark shadow-2xs focus:border-brand-blue focus:outline-hidden"
                     >
-                      <option value="">-- Pilih Promo dari Menu Promotions --</option>
+                      <option value="">-- Select Promotion from Promotions Catalog --</option>
                       {promotions.map((p) => (
                         <option key={p.id} value={p.code}>
-                          {p.code} — {p.type === 'fixed_amount' ? formatGBP(p.value) : `${p.value}%`} OFF • Min {formatGBP(p.minimum_order)} {p.is_active ? '(Aktif)' : '(Dijeda)'}
+                          {p.code} — {p.type === 'fixed_amount' ? formatGBP(p.value) : `${p.value}%`} OFF • Min {formatGBP(p.minimum_order)} {p.is_active ? '(Active)' : '(Paused)'}
                         </option>
                       ))}
                     </select>
                     <p className="text-[11px] text-gray-500 mt-1.5">
-                      Kupon ini otomatis terhubung 1 pintu dengan menu <strong>Promotions</strong>. Pengunjung yang menyalin kode ini saat checkout akan langsung tervalidasi.
+                      This coupon is linked directly with the <strong>Promotions</strong> catalog. Customers copying this code will have it validated instantly at checkout.
                     </p>
                   </div>
 
                   <div>
                     <Input
-                      label="Kode Kupon Aktif"
+                      label="Active Voucher Code"
                       value={settings.vip_promo_code || ''}
                       onChange={(e) => {
                         const val = e.target.value.toUpperCase();
@@ -2001,21 +2001,21 @@ export const AdminStoreSettings: React.FC = () => {
                           handleChange('vip_min_spend', matched.minimum_order);
                         }
                       }}
-                      placeholder="Misal: RAYAN10"
-                      helperText="Kode kupon yang disalin oleh pengunjung."
+                      placeholder="e.g. ZONE10"
+                      helperText="Voucher code copied by visitors."
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/80 rounded-lg p-3.5 border border-gray-200/80">
                   <div className="text-xs">
-                    <span className="text-gray-500 block">Besaran Diskon:</span>
+                    <span className="text-gray-500 block">Discount Rate:</span>
                     <span className="font-bold text-dark text-sm">
                       {settings.vip_promo_discount ?? 10}%
                     </span>
                   </div>
                   <div className="text-xs">
-                    <span className="text-gray-500 block">Minimal Belanja:</span>
+                    <span className="text-gray-500 block">Minimum Spend:</span>
                     <span className="font-bold text-dark text-sm">
                       {formatGBP(settings.vip_min_spend ?? 15)}
                     </span>
@@ -2655,7 +2655,7 @@ export const AdminStoreSettings: React.FC = () => {
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-2xs space-y-6">
               <div className="border-b border-gray-100 pb-3">
                 <h3 className="font-display font-bold text-sm text-dark uppercase tracking-wider">
-                  Test Email &amp; In-App Notification Diagnostics
+                  Email &amp; In-App Notification Diagnostics
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
                   Verify your active delivery gateway, browser push workers, and audio chimes in real-time.
@@ -2670,7 +2670,7 @@ export const AdminStoreSettings: React.FC = () => {
                     Send Live Verification Email
                   </span>
                   <p className="text-xs text-gray-500">
-                    Dispatches an end-to-end verification email to test SMTP or API gateway delivery.
+                    Dispatches an end-to-end verification email to validate SMTP or API gateway delivery.
                   </p>
 
                   <div className="flex gap-2">
@@ -2688,7 +2688,7 @@ export const AdminStoreSettings: React.FC = () => {
                       className="px-4 py-2 bg-brand-blue hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 shrink-0"
                     >
                       {isSendingTestEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                      <span>Send Test</span>
+                      <span>Send Verification</span>
                     </button>
                   </div>
 
@@ -2706,7 +2706,7 @@ export const AdminStoreSettings: React.FC = () => {
                     In-App Audio &amp; Native Push Controls
                   </span>
                   <p className="text-xs text-gray-500">
-                    Test the harmonic dual-tone order bell and browser desktop notifications.
+                    Preview the harmonic dual-tone order bell and browser desktop notifications.
                   </p>
 
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -2726,12 +2726,12 @@ export const AdminStoreSettings: React.FC = () => {
                       type="button"
                       onClick={() => {
                         useNotificationStore.getState().sendTestPaidNotification();
-                        addToast('Dispatched test paid order notification with chime and vibration', 'success');
+                        addToast('Dispatched order notification with chime and vibration', 'success');
                       }}
                       className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 shadow-2xs"
                     >
                       <Bell className="w-3.5 h-3.5" />
-                      <span>Test Paid Order Alert</span>
+                      <span>Paid Order Alert Preview</span>
                     </button>
 
                     <button
@@ -2742,7 +2742,7 @@ export const AdminStoreSettings: React.FC = () => {
                       className="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 shadow-2xs"
                     >
                       <Bell className="w-3.5 h-3.5" />
-                      <span>Test New Order Alert</span>
+                      <span>New Order Alert Preview</span>
                     </button>
 
                     <button
