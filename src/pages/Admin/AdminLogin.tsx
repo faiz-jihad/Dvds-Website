@@ -4,6 +4,7 @@ import { ArrowLeft, Eye, EyeOff, Lock, Mail, AlertCircle, Sun, Moon } from 'luci
 import { useAdminAuth } from '../../auth/AdminAuth';
 import { sanitizeRedirectPath } from '../../lib/utils';
 import { useThemeStore } from '../../stores/useThemeStore';
+import { registerServiceWorker } from '../../lib/pushNotifications';
 
 export const AdminLogin: React.FC = () => {
   const { user, isLoading, login } = useAdminAuth();
@@ -45,6 +46,9 @@ export const AdminLogin: React.FC = () => {
     }
 
     setError('');
+    try {
+      registerServiceWorker();
+    } catch {}
     setSubmitting(true);
     const result = await login(email, password, remember);
     setSubmitting(false);

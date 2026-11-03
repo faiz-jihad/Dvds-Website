@@ -48,14 +48,35 @@ export const requestNotificationPermission = async (): Promise<NotificationPermi
   if (!isPushSupported()) return 'denied';
 
   try {
-    // Hardware vibration confirmation
+    // 1. Prime audio context on user gesture
+    try {
+      playNotificationChime();
+    } catch {}
+
+    // 2. Hardware vibration feedback
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
-        navigator.vibrate([100, 50, 100]);
+        navigator.vibrate([120, 60, 120]);
       } catch {}
     }
 
-    const permission = await Notification.requestPermission();
+    // 3. Request permission supporting both Promise & legacy callback (older Safari)
+    let permission: NotificationPermission;
+    try {
+      const res = Notification.requestPermission();
+      if (res && typeof (res as any).then === 'function') {
+        permission = await res;
+      } else {
+        permission = await new Promise<NotificationPermission>((resolve) => {
+          Notification.requestPermission((p) => resolve(p));
+        });
+      }
+    } catch {
+      permission = await new Promise<NotificationPermission>((resolve) => {
+        Notification.requestPermission((p) => resolve(p));
+      });
+    }
+
     if (permission === 'granted') {
       await registerServiceWorker();
     }

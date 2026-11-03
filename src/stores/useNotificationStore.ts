@@ -286,12 +286,26 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
     },
 
     updatePermission: () => {
-      set({ permission: getNotificationPermission() });
+      const current = getNotificationPermission();
+      set({ permission: current });
     },
 
     requestPermission: async () => {
       const res = await requestNotificationPermission();
       set({ permission: res });
+      if (res === 'granted') {
+        // Immediately dispatch a welcome push confirmation to verify sound & vibration on HP
+        get().addNotification(
+          {
+            target: 'admin',
+            type: 'system',
+            title: 'Notifikasi Pesanan HP Aktif! 🔔',
+            message: 'HP Anda akan berdering, bergetar, dan menampilkan notifikasi saat ada pesanan baru atau pembayaran masuk di DVDs Zone.',
+            link: '/admin/orders',
+          },
+          { sendNativePush: true, playAudio: true, showToast: true }
+        );
+      }
       return res;
     },
 

@@ -43,6 +43,8 @@ import { UserAvatar } from "../common/UserAvatar";
 import { useUiStore } from "../../stores/useUiStore";
 import { useThemeStore } from "../../stores/useThemeStore";
 import { useNotificationStore } from "../../stores/useNotificationStore";
+import { isSupabaseConfigured, supabase } from "../../lib/supabase";
+import { AdminNotificationPromptModal, AdminNotificationBanner } from "../admin/AdminNotificationPromptModal";
 
 interface NavItem {
   label: string;
@@ -159,11 +161,122 @@ export const AdminLayout: React.FC = () => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [dismissedSchemaWarning, setDismissedSchemaWarning] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [promptModalOpen, setPromptModalOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const notifPermission = useNotificationStore((s) => s.permission);
+  const updatePermission = useNotificationStore((s) => s.updatePermission);
   const requestPermission = useNotificationStore((s) => s.requestPermission);
   const sendTestPaidNotification = useNotificationStore((s) => s.sendTestPaidNotification);
+
+  // Sync notification permission on mount
+  useEffect(() => {
+    updatePermission();
+  }, [updatePermission]);
+
+  // Robust Order Polling Fallback: Ensures mobile admin (HP) gets notified even if WebSocket suspends
+  useEffect(() => {
+    const client = supabase;
+    if (!isSupabaseConfigured || !client) return;
+
+    let isMounted = true;
+    const STORAGE_KEY = 'dvds_admin_seen_order_records_v1';
+
+    const checkOrders = async () => {
+      try {
+        const { data: recentOrders, error } = await client
+          .from('orders')
+          .select('id, order_number, total_amount, payment_status, status, payment_method, created_at')
+          .order('created_at', { ascending: false })
+          .limit(15);
+
+        if (error || !recentOrders || !isMounted) return;
+
+        let knownMap: Record<string, string> = {};
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const isFirstLoad = !raw;
+
+        if (raw) {
+          try {
+            knownMap = JSON.parse(raw);
+          } catch {}
+        }
+
+        const nextMap: Record<string, string> = { ...knownMap };
+
+        if (isFirstLoad) {
+          // First run: seed existing orders so we do not spam old notifications
+          recentOrders.forEach((o) => {
+            nextMap[o.id] = o.payment_status || 'pending';
+          });
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(nextMap));
+          return;
+        }
+
+        // Subsequent polls: detect newly placed or newly paid orders
+        recentOrders.forEach((order) => {
+          const prevStatus = knownMap[order.id];
+          const currentStatus = order.payment_status || 'pending';
+          const isPaid = currentStatus === 'paid' || order.status === 'processing';
+          const totalStr = order.total_amount ? ` (£${Number(order.total_amount).toFixed(2)})` : '';
+          const orderNum = order.order_number || order.id.slice(0, 8);
+          const payMethod = (order.payment_method || 'Online').toUpperCase();
+
+          if (!prevStatus) {
+            nextMap[order.id] = currentStatus;
+            useNotificationStore.getState().addNotification(
+              {
+                target: 'admin',
+                type: 'order',
+                title: isPaid ? 'Pesanan Terbayar — Siap Kirim 📦' : 'Pesanan Baru Diterima 🛒',
+                message: isPaid
+                  ? `Order #${orderNum}${totalStr} telah dibayar via ${payMethod}. Paket siap diproses.`
+                  : `Order #${orderNum}${totalStr} baru saja dibuat pelanggan. Menunggu konfirmasi pembayaran.`,
+                link: '/admin/orders',
+              },
+              { sendNativePush: true, playAudio: true, showToast: true }
+            );
+          } else if (prevStatus !== 'paid' && isPaid) {
+            nextMap[order.id] = currentStatus;
+            useNotificationStore.getState().addNotification(
+              {
+                target: 'admin',
+                type: 'order',
+                title: 'Pembayaran Dikonfirmasi — Siap Kirim 💳',
+                message: `Pembayaran Order #${orderNum}${totalStr} via ${payMethod} berhasil dikonfirmasi. Siapkan pengiriman.`,
+                link: '/admin/orders',
+              },
+              { sendNativePush: true, playAudio: true, showToast: true }
+            );
+          } else {
+            nextMap[order.id] = currentStatus;
+          }
+        });
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextMap));
+      } catch {
+        // Non-blocking background order poll
+      }
+    };
+
+    checkOrders();
+    const interval = setInterval(checkOrders, 25000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkOrders();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+    };
+  }, []);
 
   // Close user dropdown when clicking outside
   useEffect(() => {
@@ -444,6 +557,29 @@ export const AdminLayout: React.FC = () => {
             {/* Clean White Store Notifications Dropdown */}
             <AdminNotificationMenu />
 
+            {/* Mobile Notification Status Pill / Button */}
+            {notifPermission !== "granted" ? (
+              <button
+                type="button"
+                onClick={() => setPromptModalOpen(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 hover:bg-amber-100/70 transition-colors cursor-pointer shadow-2xs"
+                title="Aktifkan Notifikasi Pesanan di HP"
+              >
+                <Bell className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 animate-bounce" />
+                <span className="hidden sm:inline">Aktifkan Notif HP</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => sendTestPaidNotification()}
+                className="hidden sm:flex items-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50/60 dark:bg-emerald-950/20 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70 transition-colors cursor-pointer shadow-2xs"
+                title="Notifikasi HP Aktif — Klik untuk uji coba suara & getar"
+              >
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Notif HP Aktif</span>
+              </button>
+            )}
+
             {/* Header Theme Switcher */}
             <button
               type="button"
@@ -623,6 +759,8 @@ export const AdminLayout: React.FC = () => {
 
         {/* Content Viewport */}
         <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#0B0F19] p-4 sm:p-6 lg:p-8 print:p-0 print:overflow-visible print:bg-white print:text-black">
+          {/* Notification Activation Alert Banner */}
+          <AdminNotificationBanner onOpenModal={() => setPromptModalOpen(true)} />
           {schemaQuery.error ? (
             <AdminDataState
               error={schemaQuery.error}
@@ -752,6 +890,12 @@ export const AdminLayout: React.FC = () => {
       )}
 
       {/* Toast Alert Container */}
+      {/* Admin Order Notification Mobile Auto-Prompt Modal */}
+      <AdminNotificationPromptModal
+        forceOpen={promptModalOpen}
+        onClose={() => setPromptModalOpen(false)}
+      />
+
       <ToastContainer />
     </div>
   );
